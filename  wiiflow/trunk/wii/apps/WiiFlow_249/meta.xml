@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+	<app version="1.1">
+		<name> WiiFlow</name>
+		<coder>Hibernatus</coder>
+		<version>1.1</version>
+		<release_date>04.10.2009</release_date>
+		<short_description>USB Loader (IOS249)</short_description>
+		<long_description>WiiFlow is a GUI for USB Loader that can be installed on HDD or SD. If you have a FAT partition on your HDD, WiiFlow will always use it instead of your SD card. See the readme to learn how to give priority to an SD card.
+
+Controls :
+- Main menu (coverflow) :
+-- Up / Down		Previous / next game (vertical)
+-- Left / Right		Previous / next game (horizontal)
+-- Minus / Plus		Previous / next page
+-- B+Minus / B+Plus	Alphabetic search
+-- A			Select game
+-- B+A			Launch game immediately
+-- B+Home		Reload
+-- Home			Exit
+-- 1 / 2		Previous / next mode
+
+- Game :
+-- A on box		Show the backside
+-- A out of screen	Launch game
+-- B			Back to coverflow
+-- Minus / Plus		Previous / next game (vertical)
+-- Left / Right		Previous / next game (horizontal)
+
+- Settings menus :
+-- Minus / Plus		Previous / next page
+
+- Coverflow settings :
+-- B+Minus / B+Plus	Previous / next page
+-- B			Faster adjustement (B+A instead of just A to click a button)
+-- B+1			Copy whole coverflow
+-- B+2			Paste coverflow
+</long_description>
+	</app>

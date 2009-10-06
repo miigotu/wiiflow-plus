@@ -1,0 +1,179 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!                                                          !!
+!!       To use forwarder channels, rename the folder       !!
+!!           WiiFlow_222 or WiiFlow_249 to wiiflow          !!
+!!                                                          !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+            --> Wiiflow StarNight Channel <--
+
+                      - Channels -
+
+* For the Forwarder Channel
+
+Name : Wiiflow StarNight Channel Forwarder-WSNF.wad
+ID : WSNF
+Blocks : 19
+Forwarder : SD:/apps/wiiflow/boot.dol
+            SD:/wiiflow/boot.dol
+            USB:/apps/wiiflow/boot.dol
+            USB:/wiiflow/boot.dol
+
+
+* For the Channel with dol include
+
+Name : Wiiflow StarNight Channel IOS222-WSNH.wad
+dol : /apps/WiiFlow_222/boot.dol
+ID : WSNH
+Blocks : 35
+
+Name : Wiiflow StarNight Channel IOS249-WSNW.wad
+dol : /apps/WiiFlow_249/boot.dol
+ID : WSNW
+Blocks : 35
+
+                       - Video -
+					   
+http://www.youtube.com/watch?v=vHJnep3twVY
+
+
+                      - Starring -
+
+Code : Jiiwah
+Graphx : Highjah & Oops
+Music : Oops
+Music Title : Le vol du condor - Les mysterieuses citee d'or.
+ 
+             (french cartoon)
+
+
+
+=============================================================
+
+
+
+                --> Spayrosam Channel <--
+
+
+                      - Channels -
+
+* For the Forwarder Channel
+
+Name : WiiFlow Spayrosam Channel Forwarder-WFSF.wad
+ID : WFSF
+Blocks : 18
+Forwarder : SD:/apps/wiiflow/boot.dol
+            SD:/wiiflow/boot.dol
+            USB:/apps/wiiflow/boot.dol
+            USB:/wiiflow/boot.dol
+
+
+* For the Channel with dol include
+
+Name : WiiFlow Spayrosam Channel IOS222-WFSH.wad
+dol : /apps/WiiFlow_222/boot.dol
+ID : WFSH
+Blocks : 36
+
+Name : WiiFlow Spayrosam Channel IOS249-WFSW.wad
+dol : /apps/WiiFlow_249/boot.dol
+ID : WFSW
+Blocks : 36
+
+
+
+                       - Video -
+					   
+http://www.youtube.com/watch?v=1HUn1qLHBm8
+
+                      - Starring -
+
+
+All Channel done by Spayrosam
+
+
+
+=============================================================
+
+
+
+                --> Carbonik Channel <--
+
+
+                      - Channels -
+
+* For the Forwarder Channel
+
+Name : WiiFlow Carbonik Channel Forwarder-WFBJ.wad
+ID : WFBJ
+Blocks : 22
+Forwarder : SD:/apps/wiiflow/boot.dol
+            SD:/wiiflow/boot.dol
+            USB:/apps/wiiflow/boot.dol
+            USB:/wiiflow/boot.dol
+
+
+* For the Channel with dol include
+
+Name : WiiFlow Carbonik Channel IOS222-WFBH.wad
+dol : /apps/WiiFlow_222/boot.dol
+ID : WFBH
+Blocks : 37
+
+Name : WiiFlow Carbonik Channel IOS249-WFBW.wad
+dol : /apps/WiiFlow_249/boot.dol
+ID : WFBW
+Blocks : 37
+
+                       - Video -
+					   
+http://www.youtube.com/watch?v=KYxDLrw8vvw
+
+
+                      - Starring -
+
+
+All Channel done by Benjay
+
+
+
+=============================================================
+
+
+
+                --> Static Channel <--
+
+                      - Channels -
+
+* For the Forwarder Channel
+
+Name : WiiFlow Static Channel Forwarder-WFHL.wad
+ID : WFHL
+Blocks : 10
+Forwarder : SD:/apps/wiiflow/boot.dol
+            SD:/wiiflow/boot.dol
+            USB:/apps/wiiflow/boot.dol
+            USB:/wiiflow/boot.dol
+
+
+* For the Channel with dol include
+
+Name : WiiFlow Static Channel IOS222-WFHH.wad
+dol : /apps/WiiFlow_222/boot.dol
+ID : WFHH
+Blocks : 28
+
+Name : WiiFlow Static Channel IOS249-WFHW.wad
+dol : /apps/WiiFlow_249/boot.dol
+ID : WFHW
+Blocks : 28
+
+                       - Video -
+					   
+http://www.youtube.com/watch?v=Jo7Sx9h2TRU
+
+                      - Starring -
+
+
+All Channel done by Cosmo

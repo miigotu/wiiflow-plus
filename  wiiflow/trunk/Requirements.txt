@@ -1,0 +1,3 @@
+WiiFlow 1.1 was compiled using one of the latest revisions of libogc and libfat (September 2009)
+The link script is a little modified (rvl.ld)
+You'll find the list of libraries in the Makefile
