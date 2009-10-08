@@ -30,6 +30,8 @@ extern const u8 favoritesoffs_png[];
 extern const u8 delete_png[];
 extern const u8 deletes_png[];
 
+extern int mainIOS;
+
 const CMenu::SOption CMenu::_languages[11] = {
 	{ "lngdef", L"Default" },
 	{ "lngjap", L"Japanese" },
@@ -254,7 +256,7 @@ void CMenu::_launchGame(const string &id)
 	int language = min((u32)m_cfg.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	int iosNum = CMenu::_ios[min((u32)m_cfg.getInt(id, "ios", 0), ARRAY_SIZE(CMenu::_ios) - 1u)];
 	if (iosNum == 0)
-		iosNum = MAIN_IOS;
+		iosNum = mainIOS;
 	bool mload = iosNum == 222 || iosNum == 223;
 	int minIOSRev = mload ? IOS_222_MIN_REV : IOS_249_MIN_REV;
 	bool blockIOSReload = m_cfg.getBool(id, "block_ios_reload", false);
@@ -275,7 +277,7 @@ void CMenu::_launchGame(const string &id)
 	m_cfg.setString(" GENERAL", "current_game", id);
 	m_cfg.save();
 	setLanguage(language);
-	if (iosNum != MAIN_IOS || (!cheat && !_networkFix()))
+	if (iosNum != mainIOS || (!cheat && !_networkFix()))
 	{
 		if (!loadIOS(iosNum, true))
 		{

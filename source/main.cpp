@@ -13,6 +13,9 @@
 extern const u8 wait_png[];
 extern const u8 wait_hdd_png[];
 
+extern int mainIOS;
+extern int mainIOSminRev;
+
 int old_main(int argc, char **argv)
 {
 	SYS_SetArena1Hi((void *)0x81200000);	// See loader/apploader.c
@@ -22,9 +25,29 @@ int old_main(int argc, char **argv)
 	bool wbfsOK = false;
 	int ret = 0;
 	bool hbc;
-
-	// Load Custom IOS
-	iosOK = loadIOS(MAIN_IOS, false) && IOS_GetRevision() >= MAIN_IOS_MIN_REV;
+	
+	// Narolez: check if ios argument is passed in argv[1]
+	if (argc > 1 && argv[1] != NULL && strcasestr(argv[1], "ios=") != 0)
+	{
+		if(strcasestr(argv[1], "ios=249") != 0)
+		{
+			mainIOS = 249;
+			mainIOSminRev = IOS_249_MIN_REV;
+		}
+		else if(strcasestr(argv[1], "ios=222-mload") != 0)
+		{
+			mainIOS = 222;
+			mainIOSminRev = IOS_222_MIN_REV;
+		}
+		else if(strcasestr(argv[1], "ios=223-mload") != 0)
+		{
+			mainIOS = 223;
+			mainIOSminRev = IOS_223_MIN_REV;
+		}
+	}
+	
+	// Load (passed) Custom IOS
+	iosOK = loadIOS(mainIOS, false) && IOS_GetRevision() >= mainIOSminRev;
 	// Launched through the HBC?
 	hbc = *(u32 *)0x80001800 != 0 && argc > 0 && argv[0] != NULL && strcasestr(argv[0], "boot.dol") != 0 && strcasestr(argv[0], ":/apps/") != 0;
 	// MEM2 usage :
@@ -52,7 +75,7 @@ int old_main(int argc, char **argv)
 			vid.waitMessage(texWaitHDD);
 			for (int i = 0; i < 40; ++i)
 			{
-				iosOK = loadIOS(MAIN_IOS, false);
+				iosOK = loadIOS(mainIOS, false);
 				if (!iosOK)
 					break;
 				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
@@ -77,7 +100,7 @@ int old_main(int argc, char **argv)
 		menu.init(hbc);
 		// 
 		if (!iosOK)
-			menu.error(sfmt("IOS %i rev%i or later is required", MAIN_IOS, MAIN_IOS_MIN_REV));
+			menu.error(sfmt("IOS %i rev%i or later is required", mainIOS, mainIOSminRev));
 		else if (!dipOK)
 			menu.error(L"Could not initialize DIP module!");
 		else if (!wbfsOK)

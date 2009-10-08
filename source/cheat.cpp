@@ -9,7 +9,7 @@
 #define FILEDIR_USB	"usb:/codes/%s.gct"
 
 extern const DISC_INTERFACE __io_wiisd;
-extern const DISC_INTERFACE __io_usbstorage;
+extern DISC_INTERFACE __io_usbstorage; // Narolez: const removed, fix for libogc r3752
 
 void loadCheatFile(SmartBuf &buffer, u32 &size, const char *gameId)
 {

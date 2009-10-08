@@ -12,12 +12,16 @@
 #include "disc.h"
 #include "usbstorage.h"
 #include "../mem2.hpp"
+#include "alt_ios.h"
 #include <malloc.h>
 #include <wiiuse/wpad.h>
 
 #define FMT_EHCMODULE_PATH	"sd:/wiiflow/ehcmodule%i.elf"
 
 extern int __Arena2Lo;
+
+int mainIOS = MAIN_IOS;
+int mainIOSminRev = MAIN_IOS_MIN_REV;
 
 static u32 ios_36[16] ATTRIBUTE_ALIGN(32) =
 {
@@ -183,7 +187,7 @@ bool loadIOS(int n, bool init)
 		DCFlushRange(backup, 0x200000);
 	}
 	iosOK = IOS_ReloadIOS(n) >= 0;
-	sleep(1);
+	if (n != 249) sleep(1); // Narolez: sleep after IOS reload lets power down/up the harddisk when cIOS 249 is used!
 	if (backup != 0)
 	{
 		memcpy(&__Arena2Lo, backup, 0x200000);
