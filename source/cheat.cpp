@@ -7,6 +7,8 @@
 
 #define FILEDIR	"sd:/codes/%s.gct"
 #define FILEDIR_USB	"usb:/codes/%s.gct"
+#define FILEDIR_GECKO "sd:/data/geckocodes/%s.gct"
+#define FILEDIR_GECKO_USB "usb:/data/geckocodes/%s.gct"
 
 extern const DISC_INTERFACE __io_wiisd;
 extern DISC_INTERFACE __io_usbstorage; // Narolez: const removed, fix for libogc r3752
@@ -20,11 +22,20 @@ void loadCheatFile(SmartBuf &buffer, u32 &size, const char *gameId)
 	buffer.release();
 	size = 0;
 	if (Fat_SDAvailable())
+	{
 		fp = fopen(sfmt(FILEDIR, gameId).c_str(), "rb");
+		if (fp == 0) fp = fopen(sfmt(FILEDIR_GECKO, gameId).c_str(), "rb");
+	}
+		
 	if (fp == 0 && Fat_USBAvailable())
+	{
 		fp = fopen(sfmt(FILEDIR_USB, gameId).c_str(), "rb");
+		if (fp == 0) fp = fopen(sfmt(FILEDIR_GECKO_USB, gameId).c_str(), "rb");
+	}
+
 	if (fp == 0)
 		return;
+
 	fseek(fp, 0, SEEK_END);
 	fileSize = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
@@ -42,10 +53,4 @@ void loadCheatFile(SmartBuf &buffer, u32 &size, const char *gameId)
 	fclose(fp);
 	buffer = fileBuf;
 	size = fileSize;
-}
-
-void loadCheat(const u8 *buffer, u32 size)
-{
-	memcpy((void*)0x800027E8, buffer, size);
-	*(vu8 *)0x80001807 = 0x01;
 }
