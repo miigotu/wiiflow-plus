@@ -47,7 +47,7 @@ static u8	Tmd_Buffer[0x49e4 + 0x1C] ALIGNED(32);
 #define        Bus_Speed		((u32*)0x800000f8)
 #define        CPU_Speed		((u32*)0x800000fc)
 
-void __Disc_SetLowMem(bool cheat)
+void __Disc_SetLowMem(void)
 {
 	// Patch in info missing from apploader reads
 	*Sys_Magic	= 0x0d15ea5e;
@@ -72,8 +72,7 @@ void __Disc_SetLowMem(bool cheat)
 	*(vu32 *)0x800000FC = 0x2B73A840;
 
 	/* Copy disc ID (online check) */
-	if (!cheat)
-		memcpy((void *)0x80003180, (void *)0x80000000, 4);
+	memcpy((void *)0x80003180, (void *)0x80000000, 4);
 
 	/* Flush cache */
 	DCFlushRange((void *)0x80000000, 0x3F00);
@@ -329,7 +328,7 @@ s32 Disc_BootPartition(u64 offset, bool yal, u8 vidMode, const u8 *cheat, u32 ch
 		ES_Identify(Certs, C_Length, Tmd, MD_Length, Ticket, T_Length, NULL);
 
 	/* Setup low memory */;
-	__Disc_SetLowMem(cheat != 0);
+	__Disc_SetLowMem();
 
 	/* Set an appropriate video mode */
 	__Disc_SetVMode(patchVidMode == 0 ? vidMode : 4);

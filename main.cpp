@@ -48,8 +48,10 @@ int old_main(int argc, char **argv)
 	
 	// Load (passed) Custom IOS
 	iosOK = loadIOS(mainIOS, false) && IOS_GetRevision() >= mainIOSminRev;
+
 	// Launched through the HBC?
-	hbc = *(u32 *)0x80001800 != 0 && argc > 0 && argv[0] != NULL && strcasestr(argv[0], "boot.dol") != 0 && strcasestr(argv[0], ":/apps/") != 0;
+    hbc = *((u32 *) 0x80001804) == 0x53545542 && *((u32 *) 0x80001808) == 0x48415858;
+	
 	// MEM2 usage :
 	// 36 MB for general purpose allocations
 	// 12 MB for covers (and temporary buffers)
