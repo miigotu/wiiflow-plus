@@ -1,6 +1,6 @@
 
 #include "cursor.hpp"
-#include "libpng/pngu/pngu.h"
+#include "pngu.h"
 
 #include <algorithm>
 

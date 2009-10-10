@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 
-#include "wstring.hpp"
+#include "wstringEx.hpp"
 #include "FreeTypeGX.h"
 #include "video.hpp"
 
@@ -27,7 +27,7 @@ public:
 class CText
 {
 public:
-	void setText(SFont font, const wstring &t);
+	void setText(SFont font, const wstringEx &t);
 	void setColor(const CColor &c);
 	void setFrame(float width, u16 style, bool ignoreNewlines = false, bool instant = false);
 	void tick(void);
@@ -35,7 +35,7 @@ public:
 private:
 	struct SWord
 	{
-		wstring text;
+		wstringEx text;
 		Vector3D pos;
 		Vector3D targetPos;
 	};
@@ -49,10 +49,10 @@ private:
 // Nothing to do with CText. Q&D helpers for string formating.
 const char *fmt(const char *format, ...);
 std::string sfmt(const char *format, ...);
-wstring wfmt(const wstring &format, ...);
-bool checkFmt(const wstring &ref, const wstring &format);
-wstring vectorToString(const std::vector<wstring> &vect, char sep);
-std::vector<wstring> stringToVector(const wstring &text, char sep);
+wstringEx wfmt(const wstringEx &format, ...);
+bool checkFmt(const wstringEx &ref, const wstringEx &format);
+wstringEx vectorToString(const std::vector<wstringEx> &vect, char sep);
+std::vector<wstringEx> stringToVector(const wstringEx &text, char sep);
 std::vector<std::string> stringToVector(const std::string &text, char sep);
 
 #endif // !defined(__TEXT_HPP)

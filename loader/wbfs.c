@@ -193,7 +193,7 @@ s32 __WBFS_ReadSDHC(void *fp, u32 lba, u32 count, void *iobuf)
 s32 __WBFS_WriteSDHC(void *fp, u32 lba, u32 count, void *iobuf)
 {
 	u32 cnt = 0;
-	s32 ret;
+	s32 ret = 0;
 
 	/* Do writes */
 	while (cnt < count) {
@@ -220,7 +220,7 @@ s32 __WBFS_WriteSDHC(void *fp, u32 lba, u32 count, void *iobuf)
 s32 WBFS_Init(u32 device, u32 timeout)
 {
 	u32 cnt;
-	s32 ret;
+	s32 ret = 0;
 
 	/* Wrong timeout */
 	if (!timeout)

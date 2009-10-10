@@ -65,7 +65,7 @@ int CMenu::main(void)
 	s32 padsState;
 	WPADData *wd;
 	u32 btn;
-	wstring curLetter;
+	wstringEx curLetter;
 	int repeatButton = 0;
 	u32 buttonHeld = (u32)-1;
 	string prevTheme = m_cfg.getString(" GENERAL", "theme", "default");

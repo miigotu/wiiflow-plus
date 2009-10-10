@@ -7,7 +7,7 @@
 
 #include "video.hpp"
 #include "smartptr.hpp"
-#include "wstring.hpp"
+#include "wstringEx.hpp"
 
 class CColor;
 class Vector3D;
@@ -22,7 +22,7 @@ public:
 	bool loaded(void) const { return m_loaded; }
 	bool has(const std::string &domain, const std::string &key) const;
 	// Set
-	void setWString(const std::string &domain, const std::string &key, const wstring &val);
+	void setWString(const std::string &domain, const std::string &key, const wstringEx &val);
 	void setString(const std::string &domain, const std::string &key, const std::string &val);
 	void setBool(const std::string &domain, const std::string &key, bool val);
 	void setOptBool(const std::string &domain, const std::string &key, int val);
@@ -31,7 +31,7 @@ public:
 	void setVector3D(const std::string &domain, const std::string &key, const Vector3D &val);
 	void setColor(const std::string &domain, const std::string &key, const CColor &val);
 	// Get
-	wstring getWString(const std::string &domain, const std::string &key, const wstring &defVal = wstring());
+	wstringEx getWString(const std::string &domain, const std::string &key, const wstringEx &defVal = wstringEx());
 	std::string getString(const std::string &domain, const std::string &key, const std::string &defVal = std::string());
 	bool getBool(const std::string &domain, const std::string &key, bool defVal = false);
 	int getOptBool(const std::string &domain, const std::string &key, int defVal = 2);

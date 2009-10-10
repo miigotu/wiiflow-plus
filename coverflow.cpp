@@ -9,9 +9,9 @@
 #include <zlib.h>
 
 #include "coverflow.hpp"
-#include "libpng/pngu/pngu.h"
+#include "pngu.h"
 #include "boxmesh.hpp"
-#include "wstring.hpp"
+#include "wstringEx.hpp"
 
 using namespace std;
 

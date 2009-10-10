@@ -45,7 +45,7 @@ string sfmt(const char *format, ...)
 	return s;
 }
 
-static inline bool fmtCount(const wstring &format, int &i, int &s)
+static inline bool fmtCount(const wstringEx &format, int &i, int &s)
 {
 	int state = 0;
 
@@ -83,7 +83,7 @@ static inline bool fmtCount(const wstring &format, int &i, int &s)
 }
 
 // Only handles the cases i need for translations : plain %i and %s
-bool checkFmt(const wstring &ref, const wstring &format)
+bool checkFmt(const wstringEx &ref, const wstringEx &format)
 {
 	int s;
 	int i;
@@ -96,7 +96,7 @@ bool checkFmt(const wstring &ref, const wstring &format)
 	return i == refi && s == refs;
 }
 
-wstring wfmt(const wstring &format, ...)
+wstringEx wfmt(const wstringEx &format, ...)
 {
 	// Don't care about performance
 	va_list va;
@@ -111,15 +111,15 @@ wstring wfmt(const wstring &format, ...)
 	va_start(va, format);
 	vsnprintf(tmp, length, f.c_str(), va);
 	va_end(va);
-	wstring ws;
+	wstringEx ws;
 	ws.fromUTF8(tmp);
 	delete[] tmp;
 	return ws;
 }
 
-wstring vectorToString(const vector<wstring> &vect, char sep)
+wstringEx vectorToString(const vector<wstringEx> &vect, char sep)
 {
-	wstring s;
+	wstringEx s;
 
 	for (u32 i = 0; i < vect.size(); ++i)
 	{
@@ -157,9 +157,9 @@ vector<string> stringToVector(const string &text, char sep)
 	return v;
 }
 
-vector<wstring> stringToVector(const wstring &text, char sep)
+vector<wstringEx> stringToVector(const wstringEx &text, char sep)
 {
-	vector<wstring> v;
+	vector<wstringEx> v;
 	if (text.empty())
 		return v;
 	u32 count = 1;
@@ -167,20 +167,20 @@ vector<wstring> stringToVector(const wstring &text, char sep)
 		if (text[i] == sep)
 			++count;
 	v.reserve(count);
-	wstring::size_type off = 0;
-	wstring::size_type i = 0;
+	wstringEx::size_type off = 0;
+	wstringEx::size_type i = 0;
 	do
 	{
 		i = text.find_first_of(sep, off);
-		if (i != wstring::npos)
+		if (i != wstringEx::npos)
 		{
-			wstring ws(text.substr(off, i - off));
+			wstringEx ws(text.substr(off, i - off));
 			v.push_back(ws);
 			off = i + 1;
 		}
 		else
 			v.push_back(text.substr(off));
-	} while (i != wstring::npos);
+	} while (i != wstringEx::npos);
 	return v;
 }
 
@@ -251,10 +251,10 @@ bool SFont::fromFile(const char *filename, u32 size, u32 lspacing)
 	return true;
 }
 
-void CText::setText(SFont font, const wstring &t)
+void CText::setText(SFont font, const wstringEx &t)
 {
 	CText::SWord w;
-	vector<wstring> lines;
+	vector<wstringEx> lines;
 
 	m_lines.clear();
 	m_font = font;
@@ -266,25 +266,25 @@ void CText::setText(SFont font, const wstring &t)
 	// 
 	for (u32 k = 0; k < lines.size(); ++k)
 	{
-		wstring &l = lines[k];
+		wstringEx &l = lines[k];
 		m_lines.push_back(CText::CLine());
 		m_lines.back().reserve(32);
-		wstring::size_type i = l.find_first_not_of(g_whitespaces);
-		wstring::size_type j;
-		while (i != wstring::npos)
+		wstringEx::size_type i = l.find_first_not_of(g_whitespaces);
+		wstringEx::size_type j;
+		while (i != wstringEx::npos)
 		{
 			j = l.find_first_of(g_whitespaces, i);
-			if (j != wstring::npos && j > i)
+			if (j != wstringEx::npos && j > i)
 			{
 				w.text.assign(l, i, j - i);
 				m_lines.back().push_back(w);
 				i = l.find_first_not_of(g_whitespaces, j);
 			}
-			else if (j == wstring::npos)
+			else if (j == wstringEx::npos)
 			{
 				w.text.assign(l, i, l.size() - i);
 				m_lines.back().push_back(w);
-				i = wstring::npos;
+				i = wstringEx::npos;
 			}
 		}
 	}

@@ -11,8 +11,8 @@ More info : http://frontier-dev.net
 #include <stdlib.h>
 #include <malloc.h>
 #include "pngu.h"
-#include "../png.h"
-#include "../../mem2.hpp"
+#include "png.h"
+#include "mem2.hpp"
 
 #define malloc MEM2_alloc
 #define free MEM2_free

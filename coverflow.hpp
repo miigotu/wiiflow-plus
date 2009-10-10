@@ -155,7 +155,7 @@ private:
 	struct CItem
 	{
 		std::string id;
-		wstring title;
+		wstringEx title;
 		std::string picPath;
 		std::string boxPicPath;
 		std::string discPicPath;

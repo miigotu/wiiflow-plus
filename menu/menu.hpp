@@ -17,7 +17,7 @@ public:
 	CMenu(CVideo &vid);
 	~CMenu(void) { cleanup(); }
 	void init(bool fromHBC);
-	void error(const wstring &msg);
+	void error(const wstringEx &msg);
 	int main(void);
 	void cleanup(void);
 private:
@@ -207,6 +207,7 @@ private:
 	u32 m_aboutLblAuthor;
 	u32 m_aboutLblInfo;
 	u32 m_aboutLblUser[4];
+	u32 m_aboutLblIOS;
 	u32 m_wbfsLblTitle;
 	u32 m_wbfsPBar;
 	u32 m_wbfsBtnBack;
@@ -283,7 +284,7 @@ private:
 	float m_thrdStepLen;
 	std::string m_coverDLGameId;
 	mutex_t m_mutex;
-	wstring m_thrdMessage;
+	wstringEx m_thrdMessage;
 	volatile float m_thrdProgress;
 	volatile bool m_thrdMessageAdded;
 	SSoundEffect m_gameSound;
@@ -442,18 +443,18 @@ private:
 	STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);
 	SSoundEffect _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, SSoundEffect def);
 	u16 _textStyle(const char *domain, const char *key, u16 def);
-	u32 _addButton(SThemeData &theme, const char *domain, SFont font, const wstring &text, int x, int y, u32 width, u32 height, const CColor &color);
+	u32 _addButton(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color);
 	u32 _addPicButton(SThemeData &theme, const char *domain, STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height);
-	u32 _addLabel(SThemeData &theme, const char *domain, SFont font, const wstring &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style);
-	u32 _addLabel(SThemeData &theme, const char *domain, SFont font, const wstring &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, STexture &bg);
+	u32 _addLabel(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style);
+	u32 _addLabel(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, STexture &bg);
 	u32 _addProgressBar(SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height);
 	void _setHideAnim(u32 id, const char *domain, int dx, int dy, float scaleX, float scaleY);
 	void _addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 size, const char *domain);
 	// 
-	const wstring _t(const char *key, const wchar_t *def = L"") { return m_loc.getWString(m_curLanguage, key, def); }
-	const wstring _fmt(const char *key, const wchar_t *def);
+	const wstringEx _t(const char *key, const wchar_t *def = L"") { return m_loc.getWString(m_curLanguage, key, def); }
+	const wstringEx _fmt(const char *key, const wchar_t *def);
 	// 
-	void _setThrdMsg(const wstring &msg, float progress);
+	void _setThrdMsg(const wstringEx &msg, float progress);
 	int _coverDownloader(bool missingOnly);
 	static int _coverDownloaderAll(CMenu *m);
 	static int _coverDownloaderMissing(CMenu *m);
@@ -464,7 +465,7 @@ private:
 	int _initNetwork(char *ip);
 	static void _addDiscProgress(int status, int total, void *user_data);
 	static int _gameInstaller(void *obj);
-	wstring _optBoolToString(int b);
+	wstringEx _optBoolToString(int b);
 	void _listDOL(std::vector<std::string> &v, const std::string &gameId);
 	void _startMusic(void);
 	void _stopMusic(void);

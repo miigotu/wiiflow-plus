@@ -5,7 +5,7 @@
 
 extern const u8 error_png[];
 
-void CMenu::error(const wstring &msg)
+void CMenu::error(const wstringEx &msg)
 {
 	s32 padsState;
 	WPADData *wd;

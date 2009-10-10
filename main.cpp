@@ -15,6 +15,7 @@ extern const u8 wait_hdd_png[];
 
 extern int mainIOS;
 extern int mainIOSminRev;
+extern int mainIOSRev;
 
 int old_main(int argc, char **argv)
 {
@@ -47,8 +48,10 @@ int old_main(int argc, char **argv)
 	}
 	
 	// Load (passed) Custom IOS
-	iosOK = loadIOS(mainIOS, false) && IOS_GetRevision() >= mainIOSminRev;
-
+	iosOK = loadIOS(mainIOS, false);
+	mainIOSRev = IOS_GetRevision();
+	iosOK = iosOK && mainIOSRev >= mainIOSminRev;
+	
 	// Launched through the HBC?
     hbc = *((u32 *) 0x80001804) == 0x53545542 && *((u32 *) 0x80001808) == 0x48415858;
 	

@@ -22,6 +22,7 @@ extern int __Arena2Lo;
 
 int mainIOS = MAIN_IOS;
 int mainIOSminRev = MAIN_IOS_MIN_REV;
+int mainIOSRev = 0;
 
 static u32 ios_36[16] ATTRIBUTE_ALIGN(32) =
 {

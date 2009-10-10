@@ -4,7 +4,7 @@
 #include <ogcsys.h>
 
 #include "texture.hpp"
-#include "libpng/pngu/pngu.h"
+#include "pngu.h"
 
 using namespace std;
 
