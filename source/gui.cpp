@@ -26,7 +26,7 @@ bool CButtonsMgr::init(void)
 	return true;
 }
 
-u32 CButtonsMgr::addButton(SFont font, const wstring &text, int x, int y, u32 width, u32 height, const CColor &color,
+u32 CButtonsMgr::addButton(SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color,
 	const SButtonTextureSet &texSet, const SSoundEffect &clickSound, const SSoundEffect &hoverSound)
 {
 	CButtonsMgr::SButton *b = new CButtonsMgr::SButton;
@@ -273,7 +273,7 @@ void CButtonsMgr::tick(void)
 		WPAD_Rumble(WPAD_CHAN_0, 0);
 }
 
-u32 CButtonsMgr::addLabel(SFont font, const wstring &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, const STexture &bg)
+u32 CButtonsMgr::addLabel(SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, const STexture &bg)
 {
 	CButtonsMgr::SLabel *b = new CButtonsMgr::SLabel;
 	SmartPtr<CButtonsMgr::SElement> elt(b);
@@ -329,7 +329,7 @@ u32 CButtonsMgr::addPicButton(STexture &texNormal, STexture &texSelected, int x,
 
 	texSet.center = texNormal;
 	texSet.centerSel = texSelected;
-	i = addButton(SFont(), wstring(), x, y, width, height, CColor(), texSet, clickSound, hoverSound);
+	i = addButton(SFont(), wstringEx(), x, y, width, height, CColor(), texSet, clickSound, hoverSound);
 	return i;
 }
 
@@ -340,11 +340,11 @@ u32 CButtonsMgr::addPicButton(const u8 *pngNormal, const u8 *pngSelected, int x,
 
 	texSet.center.fromPNG(pngNormal);
 	texSet.centerSel.fromPNG(pngSelected);
-	i = addButton(SFont(), wstring(), x, y, width, height, CColor(), texSet, clickSound, hoverSound);
+	i = addButton(SFont(), wstringEx(), x, y, width, height, CColor(), texSet, clickSound, hoverSound);
 	return i;
 }
 
-void CButtonsMgr::setText(u32 id, const wstring &text, bool unwrap)
+void CButtonsMgr::setText(u32 id, const wstringEx &text, bool unwrap)
 {
 	CButtonsMgr::SLabel *lbl;
 

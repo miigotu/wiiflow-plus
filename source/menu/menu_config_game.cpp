@@ -60,7 +60,7 @@ void CMenu::_hideGameSettings(bool instant)
 			m_btnMgr.hide(m_gameSettingsLblUser[i], instant);
 }
 
-wstring CMenu::_optBoolToString(int i)
+wstringEx CMenu::_optBoolToString(int i)
 {
 	switch (i)
 	{
@@ -76,9 +76,9 @@ wstring CMenu::_optBoolToString(int i)
 void CMenu::_showGameSettings(void)
 {
 	int i;
-	wstring title(_t("cfgg1", L"Settings"));
+	wstringEx title(_t("cfgg1", L"Settings"));
 	title += L" [";
-	title += wstring(m_cf.getId());
+	title += wstringEx(m_cf.getId());
 	title += L"]";
 	m_btnMgr.setText(m_gameSettingsLblTitle, title);
 	_setBg(m_gameSettingsBg, m_gameSettingsBg);
@@ -204,7 +204,7 @@ void CMenu::_showGameSettings(void)
 	if (i == 0)
 		m_btnMgr.setText(m_gameSettingsLblIOS, _t("def", L"Default"));
 	else
-		m_btnMgr.setText(m_gameSettingsLblIOS, wstring(sfmt("%i", CMenu::_ios[i])));
+		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i", CMenu::_ios[i])));
 	i = min((u32)m_cfg.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblPatchVidModesVal, _t(CMenu::_vidModePatch[i].id, CMenu::_vidModePatch[i].text));
 }

@@ -6,7 +6,7 @@
 
 #include "video.hpp"
 #include "FreeTypeGX.h"
-#include "wstring.hpp"
+#include "wstringEx.hpp"
 #include "smartptr.hpp"
 #include "text.hpp"
 #include "sound.hpp"
@@ -29,15 +29,15 @@ public:
 	bool init(void);
 	void setRumble(bool enabled) { m_rumbleEnabled = enabled; }
 	void reserve(u32 capacity) { m_elts.reserve(capacity); }
-	u32 addButton(SFont font, const wstring &text, int x, int y, u32 width, u32 height, const CColor &color,
+	u32 addButton(SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color,
 		const SButtonTextureSet &texSet, const SSoundEffect &clickSound = _noSound, const SSoundEffect &hoverSound = _noSound);
-	u32 addLabel(SFont font, const wstring &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, const STexture &bg = _noTexture);
+	u32 addLabel(SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, const STexture &bg = _noTexture);
 	u32 addPicButton(const u8 *pngNormal, const u8 *pngSelected, int x, int y, u32 width, u32 height,
 		const SSoundEffect &clickSound = _noSound, const SSoundEffect &hoverSound = _noSound);
 	u32 addPicButton(STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height,
 		const SSoundEffect &clickSound = _noSound, const SSoundEffect &hoverSound = _noSound);
 	u32 addProgressBar(int x, int y, u32 width, u32 height, SButtonTextureSet &texSet);
-	void setText(u32 id, const wstring &text, bool unwrap = false);
+	void setText(u32 id, const wstringEx &text, bool unwrap = false);
 	void setProgress(u32 id, float f, bool instant = false);
 	void hide(u32 id, int dx, int dy, float scaleX, float scaleY, bool instant = false);
 	void hide(u32 id, bool instant = false);
@@ -93,7 +93,7 @@ private:
 	{
 		SFont font;
 		SButtonTextureSet tex;
-		wstring text;
+		wstringEx text;
 		CColor textColor;
 		float click;
 		SSoundEffect clickSound;

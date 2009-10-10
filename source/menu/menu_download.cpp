@@ -3,7 +3,7 @@
 #include "loader/sys.h"
 #include "loader/wbfs.h"
 #include "http.h"
-#include "libpng/pngu/pngu.h"
+#include "pngu.h"
 
 #include "loader/fat.h"
 #include "loader/wdvd.h"
@@ -161,7 +161,7 @@ void CMenu::_showDownload(void)
 			m_btnMgr.show(m_downloadLblUser[i]);
 }
 
-void CMenu::_setThrdMsg(const wstring &msg, float progress)
+void CMenu::_setThrdMsg(const wstringEx &msg, float progress)
 {
 	if (m_thrdStop)
 		return;
@@ -412,7 +412,7 @@ void CMenu::_download(string gameId)
 	u32 btn;
 	lwp_t thread = 0;
 	int msg = 0;
-	wstring prevMsg;
+	wstringEx prevMsg;
 
 	WPAD_Rumble(WPAD_CHAN_0, 0);
 	_showDownload();
@@ -579,7 +579,7 @@ int CMenu::_titleDownloader(bool missingOnly)
 	Config titles;
 	char ip[16];
 	string langCode;
-	wstring ws;
+	wstringEx ws;
 	bool ok = false;
 	SmartBuf buffer;
 	const char *p;
@@ -641,7 +641,7 @@ int CMenu::_titleDownloader(bool missingOnly)
 						if (m != string::npos)
 						{
 							ok = true;
-							wstring w;
+							wstringEx w;
 							w.fromUTF8(l.substr(m, l[l.size() - 1] == '\r' ? l.size() - 1 - m : l.size() - m).c_str());
 							if (missingOnly)
 								titles.getWString("TITLES", l.substr(0, n), w);

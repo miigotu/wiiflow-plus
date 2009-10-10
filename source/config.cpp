@@ -243,7 +243,7 @@ bool Config::has(const std::string &domain, const std::string &key) const
 	return i->second.find(lowerCase(key)) != i->second.end();
 }
 
-void Config::setWString(const string &domain, const string &key, const wstring &val)
+void Config::setWString(const string &domain, const string &key, const wstringEx &val)
 {
 	if (domain.empty() || key.empty())
 		return;
@@ -309,7 +309,7 @@ void Config::setColor(const std::string &domain, const std::string &key, const C
 	m_domains[upperCase(domain)][lowerCase(key)] = sfmt("#%.2X%.2X%.2X%.2X", val.r, val.g, val.b, val.a);
 }
 
-wstring Config::getWString(const string &domain, const string &key, const wstring &defVal)
+wstringEx Config::getWString(const string &domain, const string &key, const wstringEx &defVal)
 {
 	if (domain.empty() || key.empty())
 		return defVal;
@@ -319,7 +319,7 @@ wstring Config::getWString(const string &domain, const string &key, const wstrin
 		data = defVal.toUTF8();
 		return defVal;
 	}
-	wstring ws;
+	wstringEx ws;
 	ws.fromUTF8(data.c_str());
 	return ws;
 }

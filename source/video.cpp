@@ -1,5 +1,6 @@
 
 #include "video.hpp"
+#include <string.h>
 
 #define DEFAULT_FIFO_SIZE	(256 * 1024)
 

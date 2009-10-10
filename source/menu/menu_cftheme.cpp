@@ -184,7 +184,7 @@ void CMenu::_showCFTheme(u32 curParam, int version, bool wide)
 	m_btnMgr.show(m_cfThemeBtnSave);
 	m_btnMgr.show(m_cfThemeBtnCancel);
 	m_btnMgr.show(m_cfThemeBtnAlt);
-	m_btnMgr.setText(m_cfThemeBtnAlt, wstring(sfmt("%i", version)));
+	m_btnMgr.setText(m_cfThemeBtnAlt, wstringEx(sfmt("%i", version)));
 //	if (p.domain == CMenu::SCFParamDesc::PDD_BOTH)
 		m_btnMgr.show(m_cfThemeBtnSelect);
 //	else

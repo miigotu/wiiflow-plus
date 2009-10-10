@@ -676,7 +676,7 @@ u16 CMenu::_textStyle(const char *domain, const char *key, u16 def)
 	return textStyle;
 }
 
-u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, const wstring &text, int x, int y, u32 width, u32 height, const CColor &color)
+u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color)
 {
 	SButtonTextureSet btnTexSet;
 	CColor c(color);
@@ -718,7 +718,7 @@ u32 CMenu::_addPicButton(CMenu::SThemeData &theme, const char *domain, STexture 
 	return m_btnMgr.addPicButton(tex1, tex2, x, y, width, height, clickSound, hoverSound);
 }
 
-u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, const wstring &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style)
+u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style)
 {
 	CColor c(color);
 
@@ -732,7 +732,7 @@ u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, c
 	return m_btnMgr.addLabel(font, text, x, y, width, height, c, style);
 }
 
-u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, const wstring &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, STexture &bg)
+u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, STexture &bg)
 {
 	STexture texBg;
 	SButtonTextureSet btnTexSet;
@@ -829,7 +829,7 @@ void CMenu::_initCF(void)
 		id = string((const char *)m_gameList[i].id, sizeof m_gameList[0].id);
 		if ((!m_favorites || m_cfg.getBool(id, "favorite", false)) && (!m_locked || !m_cfg.getBool(id, "adult_only", false)))
 		{
-			wstring w(titles.getWString("TITLES", id));
+			wstringEx w(titles.getWString("TITLES", id));
 			if (w.empty())
 				w = titles.getWString("TITLES", id.substr(0, 4), string(m_gameList[i].title, sizeof m_gameList[0].title));
 			m_cf.addItem(id.c_str(), w.c_str(), sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str());
@@ -1054,9 +1054,9 @@ void CMenu::_updateText(void)
 	_textGameSettings();
 }
 
-const wstring CMenu::_fmt(const char *key, const wchar_t *def)
+const wstringEx CMenu::_fmt(const char *key, const wchar_t *def)
 {
-	wstring ws = m_loc.getWString(m_curLanguage, key, def);
+	wstringEx ws = m_loc.getWString(m_curLanguage, key, def);
 	if (checkFmt(def, ws))
 		return ws;
 	return def;

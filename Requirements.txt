@@ -1,3 +1,1 @@
-WiiFlow 1.1 was compiled using one of the latest revisions of libogc and libfat (September 2009)
-The link script is a little modified (rvl.ld)
-You'll find the list of libraries in the Makefile
+WiiFlow 1.1 since R8 was compiled using devkitPPC r18 <http://www.devkitpro.org/devkitppc/devkitppc-release-18-is-final/>.

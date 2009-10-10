@@ -3,6 +3,8 @@
 
 #include <ogc/system.h>
 #include <algorithm>
+#include <string.h>
+
 
 class LockMutex
 {

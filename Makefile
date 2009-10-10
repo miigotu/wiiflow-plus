@@ -17,15 +17,15 @@ include $(DEVKITPPC)/wii_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source source/libpng source/libpng/pngu source/menu source/loader source/loader/libwbfs source/data
+SOURCES		:=	source source/menu source/loader source/loader/libwbfs source/data
 DATA		:=	data  
-INCLUDES	:=	source
+INCLUDES	:=	include source
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -g -Os -Wall $(MACHDEP) $(INCLUDE)
+CFLAGS	= -g -Os -Wall -fno-strict-aliasing $(MACHDEP) $(INCLUDE)
 CXXFLAGS	= -g -Os -Wall -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE)
 
 LDFLAGS	=	 -g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000,-wrap,malloc,-wrap,free,-wrap,memalign,-wrap,calloc,-wrap,realloc,-wrap,malloc_usable_size -T../rvl.ld
