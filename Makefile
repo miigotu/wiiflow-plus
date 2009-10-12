@@ -17,18 +17,22 @@ include $(DEVKITPPC)/wii_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source source/menu source/loader source/loader/libwbfs source/data
+SOURCES		:=	source source/cheats source/data source/gui source/loader \
+                source/loader/libwbfs source/memory source/menu source/music \
+				source/network  
 DATA		:=	data  
-INCLUDES	:=	include source
+INCLUDES	:=	source source/cheats source/gui source/loader \
+                source/loader/libwbfs source/memory source/menu \
+				source/music source/network  
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -g -Os -Wall -fno-strict-aliasing $(MACHDEP) $(INCLUDE)
-CXXFLAGS	= -g -Os -Wall -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE)
+CFLAGS	 = -g -O2 -Wall $(MACHDEP) $(INCLUDE)
+CXXFLAGS = -g -O2 -Wall -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE)
 
-LDFLAGS	=	 -g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000,-wrap,malloc,-wrap,free,-wrap,memalign,-wrap,calloc,-wrap,realloc,-wrap,malloc_usable_size -T../rvl.ld
+LDFLAGS	 = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000,-wrap,malloc,-wrap,free,-wrap,memalign,-wrap,calloc,-wrap,realloc,-wrap,malloc_usable_size -T../rvl.ld
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
