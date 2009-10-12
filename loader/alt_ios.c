@@ -11,7 +11,7 @@
 #include "wdvd.h"
 #include "disc.h"
 #include "usbstorage.h"
-#include "../mem2.hpp"
+#include "mem2.hpp"
 #include "alt_ios.h"
 #include <malloc.h>
 #include <wiiuse/wpad.h>

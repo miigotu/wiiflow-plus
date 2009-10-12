@@ -3,7 +3,7 @@
 
 /* Disc interfaces */
 extern const DISC_INTERFACE __io_wiisd;
-extern DISC_INTERFACE __io_usbstorage; // Narolez: const removed, fix for libogc r3752
+extern const DISC_INTERFACE __io_usbstorage; // Narolez: const removed, fix for libogc r3752
 
 static bool g_sdOK = false;
 static bool g_usbOK = false;
@@ -40,7 +40,7 @@ bool Fat_MountSDOnly(void)
 		g_sdOK = false;
 	}
 	if (!g_sdOK)
-		g_sdOK = fatMountSimple("sd", &__io_wiisd);
+		g_sdOK = fatMount("sd", &__io_wiisd, 0, 8, 64);
 	return g_sdOK;
 }
 
@@ -48,8 +48,8 @@ bool Fat_Mount(void)
 {
 	Fat_Unmount();
 	if (!g_sdOK)
-		g_sdOK = fatMountSimple("sd", &__io_wiisd);
+		g_sdOK = fatMount("sd", &__io_wiisd, 0, 8, 64);
 	if (!g_usbOK)
-		g_usbOK = fatMount("usb", &__io_usbstorage, 0, 4, 32);
+		g_usbOK = fatMount("usb", &__io_usbstorage, 0, 8, 64);
 	return g_sdOK || g_usbOK;
 }
