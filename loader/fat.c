@@ -3,10 +3,15 @@
 
 /* Disc interfaces */
 extern const DISC_INTERFACE __io_wiisd;
-extern const DISC_INTERFACE __io_usbstorage; // Narolez: const removed, fix for libogc r3752
+extern const DISC_INTERFACE __io_usbstorage;
+extern const DISC_INTERFACE __io_sdhc;
 
 static bool g_sdOK = false;
 static bool g_usbOK = false;
+
+#define CACHE                8
+#define SECTORS             64
+#define SDHC_SECTOR_SIZE 0x200
 
 bool Fat_SDAvailable(void)
 {
@@ -40,7 +45,10 @@ bool Fat_MountSDOnly(void)
 		g_sdOK = false;
 	}
 	if (!g_sdOK)
-		g_sdOK = fatMount("sd", &__io_wiisd, 0, 8, 64);
+		g_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SDHC_SECTOR_SIZE);
+	if (!g_sdOK)
+		g_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SECTORS);
+	
 	return g_sdOK;
 }
 
@@ -48,8 +56,10 @@ bool Fat_Mount(void)
 {
 	Fat_Unmount();
 	if (!g_sdOK)
-		g_sdOK = fatMount("sd", &__io_wiisd, 0, 8, 64);
+		g_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SDHC_SECTOR_SIZE);
+	if (!g_sdOK)
+		g_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SECTORS);
 	if (!g_usbOK)
-		g_usbOK = fatMount("usb", &__io_usbstorage, 0, 8, 64);
+		g_usbOK = fatMount("usb", &__io_usbstorage, 0, CACHE, SECTORS);
 	return g_sdOK || g_usbOK;
 }

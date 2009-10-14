@@ -11,7 +11,7 @@
 #define FILEDIR_GECKO_USB "usb:/data/geckocodes/%s.gct"
 
 extern const DISC_INTERFACE __io_wiisd;
-extern const DISC_INTERFACE __io_usbstorage; // Narolez: const removed, fix for libogc r3752
+extern const DISC_INTERFACE __io_usbstorage;
 
 void loadCheatFile(SmartBuf &buffer, u32 &size, const char *gameId)
 {
