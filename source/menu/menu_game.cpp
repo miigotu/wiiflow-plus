@@ -277,7 +277,8 @@ void CMenu::_launchGame(const string &id)
 	m_cfg.setString(" GENERAL", "current_game", id);
 	m_cfg.save();
 	setLanguage(language);
-	if (iosNum != mainIOS || (!cheat && !_networkFix()))
+	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing
+	if (iosNum != mainIOS || !_networkFix())
 	{
 		if (!loadIOS(iosNum, true))
 		{
@@ -314,10 +315,9 @@ void CMenu::_launchGame(const string &id)
 		return;
 	}
 	Fat_Unmount();
-	_stopSounds();
 	cleanup();
 	USBStorage_Deinit();
-	if (Disc_WiiBoot(mload, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode) < 0)
+	if (Disc_WiiBoot(videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode) < 0)
 		Sys_LoadMenu();
 }
 

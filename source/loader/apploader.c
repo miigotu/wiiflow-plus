@@ -18,6 +18,7 @@ typedef struct _SPatchCfg
 {
 	bool cheat;
 	u8 vidMode;
+	GXRModeObj *vmode;
 	bool vipatch;
 	bool countryString;
 	u8 patchVidModes;
@@ -40,7 +41,7 @@ static u8 *appldr = (u8 *)0x81200000;
 static u32 buffer[0x20] ATTRIBUTE_ALIGN(32);
 
 static void dolPatches(void *dst, int len, void *params);
-static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes);
+static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes);
 static bool Remove_001_Protection(void *Address, int Size);
 static void Anti_002_fix(void *Address, int Size);
 
@@ -48,88 +49,8 @@ static void __noprint(const char *fmt, ...)
 {
 }
 
-static bool compare_videomodes(GXRModeObj* mode1, GXRModeObj* mode2)
-{
-	return memcmp(mode1, mode2, sizeof *mode1) == 0;	// padding seems to always be 0
-}
 
-
-static void patch_videomode(GXRModeObj* mode1, GXRModeObj* mode2)
-{
-	memcpy(mode1, mode2, sizeof *mode1);
-}
-
-static GXRModeObj* PAL2NTSC[]={
-	&TVMpal480IntDf,		&TVNtsc480IntDf,
-	&TVPal264Ds,			&TVNtsc240Ds,
-	&TVPal264DsAa,			&TVNtsc240DsAa,
-	&TVPal264Int,			&TVNtsc240Int,
-	&TVPal264IntAa,			&TVNtsc240IntAa,
-	&TVPal524IntAa,			&TVNtsc480IntAa,
-	&TVPal528Int,			&TVNtsc480IntAa,
-	&TVPal528IntDf,			&TVNtsc480IntDf,
-	&TVPal574IntDfScale,	&TVNtsc480IntDf,
-	&TVEurgb60Hz240Ds,		&TVNtsc240Ds,
-	&TVEurgb60Hz240DsAa,	&TVNtsc240DsAa,
-	&TVEurgb60Hz240Int,		&TVNtsc240Int,
-	&TVEurgb60Hz240IntAa,	&TVNtsc240IntAa,
-	&TVEurgb60Hz480Int,		&TVNtsc480IntAa,
-	&TVEurgb60Hz480IntDf,	&TVNtsc480IntDf,
-	&TVEurgb60Hz480IntAa,	&TVNtsc480IntAa,
-	&TVEurgb60Hz480Prog,	&TVNtsc480Prog,
-	&TVEurgb60Hz480ProgSoft,&TVNtsc480Prog,
-	&TVEurgb60Hz480ProgAa,  &TVNtsc480Prog,
-	0,0
-};
-
-static GXRModeObj* NTSC2PAL[]={
-	&TVNtsc240Ds,			&TVPal264Ds,
-	&TVNtsc240DsAa,			&TVPal264DsAa,
-	&TVNtsc240Int,			&TVPal264Int,
-	&TVNtsc240IntAa,		&TVPal264IntAa,
-	&TVNtsc480IntDf,		&TVPal528IntDf,
-	&TVNtsc480IntAa,		&TVPal524IntAa,
-	&TVNtsc480Prog,			&TVPal528IntDf,
-	0,0
-};
-
-static GXRModeObj* NTSC2PAL60[]={
-	&TVNtsc240Ds,			&TVEurgb60Hz240Ds,
-	&TVNtsc240DsAa,			&TVEurgb60Hz240DsAa,
-	&TVNtsc240Int,			&TVEurgb60Hz240Int,
-	&TVNtsc240IntAa,		&TVEurgb60Hz240IntAa,
-	&TVNtsc480IntDf,		&TVEurgb60Hz480IntDf,
-	&TVNtsc480IntAa,		&TVEurgb60Hz480IntAa,
-	&TVNtsc480Prog,			&TVEurgb60Hz480Prog,
-	0,0
-};
-
-static bool Search_and_patch_Video_Modes(void *Address, u32 Size, GXRModeObj* Table[])
-{
-	u8 *Addr = (u8 *)Address;
-	bool found = 0;
-	u32 i;
-
-	while(Size >= sizeof(GXRModeObj))
-	{
-		for(i = 0; Table[i]; i+=2)
-		{
-			if(compare_videomodes(Table[i], (GXRModeObj*)Addr))
-			{
-				found = 1;
-				patch_videomode((GXRModeObj*)Addr, Table[i+1]);
-				Addr += (sizeof(GXRModeObj)-4);
-				Size -= (sizeof(GXRModeObj)-4);
-				break;
-			}
-		}
-		Addr += 4;
-		Size -= 4;
-	}
-	return found;
-}
-
-s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes)
+s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes)
 {
 	void *dst = NULL;
 	int len = 0;
@@ -181,7 +102,7 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, bool vipatch, bool
 	{
 		/* Read data from DVD */
 		WDVD_Read(dst, len, (u64)(offset << 2));
-		maindolpatches(dst, len, cheat, vidMode, vipatch, countryString, error002Fix, patchVidModes);
+		maindolpatches(dst, len, cheat, vidMode, vmode, vipatch, countryString, error002Fix, patchVidModes);
 	}
 	WDVD_Close();
 	/* Alternative dol */
@@ -190,6 +111,7 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, bool vipatch, bool
 		SPatchCfg patchCfg;
 		patchCfg.cheat = cheat;
 		patchCfg.vidMode = vidMode;
+		patchCfg.vmode = vmode;
 		patchCfg.vipatch = vipatch;
 		patchCfg.countryString = countryString;
 		patchCfg.patchVidModes = patchVidModes;
@@ -201,10 +123,10 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, bool vipatch, bool
 	else
 		/* Set entry point from apploader */
 		*entry = appldr_final();
+
 	/* ERROR 002 fix (WiiPower) */
 	if (error002Fix)
 		*(u32 *)0x80003140 = *(u32 *)0x80003188;
-//		*(u32 *)0x80003188 = *(u32 *)0x80003140;
 
 	return 0;
 }
@@ -213,7 +135,7 @@ static void dolPatches(void *dst, int len, void *params)
 {
 	const SPatchCfg *p = (const SPatchCfg *)params;
 
-	maindolpatches(dst, len, p->cheat, p->vidMode, p->vipatch, p->countryString, false, p->patchVidModes);
+	maindolpatches(dst, len, p->cheat, p->vidMode, p->vmode, p->vipatch, p->countryString, false, p->patchVidModes);
 	Remove_001_Protection(dst, len);
 }
 
@@ -304,59 +226,23 @@ static void __Patch_CoverRegister(void *buffer, u32 len)
 			memcpy(buffer + n, (void *)newcode, sizeof newcode);
 }
 
-static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes)
+static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes)
 {
-	GXRModeObj **table = 0;
-
 	__Patch_CoverRegister(dst, len);
-	if (vidMode == 4) // patch
-	{
-		switch (CONF_GetVideo())
-		{
-			case CONF_VIDEO_PAL:
-				table = CONF_GetEuRGB60() > 0 ? NTSC2PAL60 : NTSC2PAL;
-				break;
-			case CONF_VIDEO_MPAL:
-				table = NTSC2PAL;
-				break;
-			default:
-				table = PAL2NTSC;
-				break;
-		}
-		Search_and_patch_Video_Modes(dst, len, table);
-	}
+
+	if (vidMode > 0)
+		patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
 	if (cheat)
 		dogamehooks(dst, len);
 	if (vipatch)
 		vidolpatcher(dst, len);
 	if (configbytes[0] != 0xCD)
 		langpatcher(dst, len);
-	// 
 	if (err002fix && ((IOS_GetVersion() == 249 && IOS_GetRevision() < 13) || IOS_GetVersion() == 250))
 		Anti_002_fix(dst, len);
-	// Country Patch by WiiPower
-	if (countryString)
+	if (countryString) // Country Patch by WiiPower
 		PatchCountryStrings(dst, len);
-	// Patch video modes
-	if (patchVidModes > 0)
-	{
-		GXRModeObj *vmode = 0;
-		bool progressive = (CONF_GetProgressiveScan() > 0) && VIDEO_HaveComponentCable();
-		switch (vidMode)
-		{
-			case 1:
-				vmode = &TVPal528IntDf;
-				break;
-			case 2:
-				vmode = progressive ? &TVNtsc480Prog : &TVEurgb60Hz480IntDf;
-				break;
-			case 3:
-				vmode = progressive ? &TVNtsc480Prog : &TVNtsc480IntDf;
-				break;
-		}
-		if (vmode != 0)
-			applyVideoPatch(dst, len, vmode, patchVidModes - 1);
-	}
+
 	DCFlushRange(dst, len);
 }
 

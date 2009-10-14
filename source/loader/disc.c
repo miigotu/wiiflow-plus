@@ -12,6 +12,7 @@
 #include "wdvd.h"
 #include "sys.h"
 #include "fat.h"
+#include "videopatch.h"
 
 #define ALIGNED(x) __attribute__((aligned(x)))
 
@@ -20,24 +21,13 @@
 #define WII_MAGIC	0x5D1C9EA3
 
 /* Disc pointers */
-//static u32 *buffer = (u32 *)0x93000000;
 static u32 buffer[0x20] ALIGNED(32);
 static u8  *diskid = (u8  *)0x80000000;
 static char gameid[6 + 1];
 
+GXRModeObj *vmode = NULL;
+u32 vmode_reg = 0;
 
-#define CERTS_SIZE	0xA00
-static const char certs_fs[] ALIGNED(32) = "/sys/cert.sys";
-
-static signed_blob* Certs		= 0;
-static signed_blob* Ticket		= 0;
-static signed_blob* Tmd			= 0;
-
-static unsigned int C_Length	= 0;
-static unsigned int T_Length	= 0;
-static unsigned int MD_Length	= 0;
-
-static u8	Ticket_Buffer[0x800] ALIGNED(32);
 static u8	Tmd_Buffer[0x49e4 + 0x1C] ALIGNED(32);
 
 #define        Sys_Magic		((u32*)0x80000020)
@@ -78,19 +68,18 @@ void __Disc_SetLowMem(void)
 	DCFlushRange((void *)0x80000000, 0x3F00);
 }
 
-void __Disc_SetVMode(u8 videoselected)
+void __Disc_SelectVMode(u8 videoselected)
 {
-	GXRModeObj *vmode = NULL;
-	bool progressive;
-	u32 vmode_reg = 0;
+    vmode = VIDEO_GetPreferredMode(0);
 
 	/* Get video mode configuration */
-	progressive = (CONF_GetProgressiveScan() > 0) && VIDEO_HaveComponentCable();
+	bool progressive = (CONF_GetProgressiveScan() > 0) && VIDEO_HaveComponentCable();
+
 	/* Select video mode register */
 	switch (CONF_GetVideo())
 	{
 		case CONF_VIDEO_PAL:
-			vmode_reg = (CONF_GetEuRGB60() > 0) ? 5 : 1;
+			vmode_reg = 5; // (CONF_GetEuRGB60() > 0) ? 5 : 1;
 			break;
 
 		case CONF_VIDEO_MPAL:
@@ -101,21 +90,13 @@ void __Disc_SetVMode(u8 videoselected)
 			vmode_reg = 0;
 			break;
 	}
+
     switch (videoselected)
 	{
-		case 0:
+		case 0: // DEFAULT (DISC)
 			/* Select video mode */
 			switch (diskid[3])
 			{
-				// NTSC
-				case 'E':
-				case 'J':
-					if (CONF_GetVideo() != CONF_VIDEO_NTSC)
-					{
-						vmode_reg = 0;
-						vmode = progressive ? &TVNtsc480Prog : &TVNtsc480IntDf;
-					}
-					break;
 				// PAL
 				case 'D':
 				case 'F':
@@ -128,27 +109,50 @@ void __Disc_SetVMode(u8 videoselected)
 						vmode = progressive ? &TVNtsc480Prog : &TVEurgb60Hz480IntDf;
 					}
 					break;
+				// NTSC
+				case 'E':
+				case 'J':
+				default:
+					if (CONF_GetVideo() != CONF_VIDEO_NTSC)
+					{
+						vmode_reg = 0;
+						vmode = progressive ? &TVNtsc480Prog : &TVNtsc480IntDf;
+					}
+					break;
 			}
 			break;
-		case 1:
+		case 1: // PAL50
 			vmode =  &TVPal528IntDf;
 			vmode_reg = vmode->viTVMode >> 2;
 			break;
-		case 2:
-			vmode = progressive ? &TVNtsc480Prog : &TVEurgb60Hz480IntDf;
-			vmode_reg = vmode->viTVMode >> 2;
+		case 2: // PAL60
+			vmode = progressive ? &TVEurgb60Hz480Prog : &TVEurgb60Hz480IntDf;
+			vmode_reg = progressive ? TVEurgb60Hz480Prog.viTVMode >> 2 : vmode->viTVMode >> 2;
 			break;
-		case 3:
+		case 3: // NTSC
 			vmode = progressive ? &TVNtsc480Prog : &TVNtsc480IntDf;
 			vmode_reg = vmode->viTVMode >> 2;
 			break;
+		case 4: // AUTO PATCH
+		default:
+			break;
 	}
-	/* Set video mode register */
+}
+
+void __Disc_SetVMode(void)
+{	/* Set video mode register */
 	*(vu32 *)0x800000CC = vmode_reg;
+
 	/* Set video mode */
 	if (vmode != 0)
 	{
+		// Overwrite all progressive video modes as 
+		// they are broken in libogc
+		if (videomode_interlaced(vmode) == 0)
+			vmode = &TVNtsc480Prog;
+
 		VIDEO_Configure(vmode);
+
 		/* Setup video */
 		VIDEO_SetBlack(FALSE);
 		VIDEO_Flush();
@@ -283,55 +287,33 @@ s32 Disc_IsWii(void)
 	return 0;
 }
 
-extern void __exception_closeall(void);
-extern int __init_start;
 
-s32 Disc_BootPartition(u64 offset, bool yal, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode)
+s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode)
 {
 	entry_point p_entry;
-	s32 ret;
 
-#if 1
-	Sys_GetCerts(&Certs, &C_Length);
-	WDVD_UnencryptedRead(Ticket_Buffer, 0x800, offset);
-	Ticket = (signed_blob *)Ticket_Buffer;
-	T_Length = SIGNED_TIK_SIZE(Ticket);
-	/* Open specified partition */
-	ret = WDVD_OpenPartition(offset, 0, 0, 0, Tmd_Buffer);
+	s32 ret = WDVD_OpenPartition(offset, 0, 0, 0, Tmd_Buffer);
 	if (ret < 0)
 		return ret;
-	Tmd = (signed_blob *)Tmd_Buffer;
-	MD_Length = SIGNED_TMD_SIZE(Tmd);
-#else
-	ret = WDVD_OpenPartition(offset, 0, 0, 0, Tmd_Buffer);
-	if (ret < 0)
-		return ret;
-#endif
 
 	/* Disconnect Wiimote */
     WPAD_Flush(0);
     WPAD_Disconnect(0);
     WPAD_Shutdown();
 
-//	memset((void*)0x80004000, 0, (u32)&__init_start - 0x80004000);	// useless
-//	DCFlushRange((void*)0x80004000, (u32)&__init_start - 0x80004000);
-
-//	u32 level;
-//	level = IRQ_Disable();
-	/* Run apploader */
-	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidMode);
-	if (ret < 0)
-		return ret;
-
-	// Identify as the game
-	if (IS_VALID_SIGNATURE(Certs) &&  C_Length > 0 && IS_VALID_SIGNATURE(Tmd) && MD_Length > 0 && IS_VALID_SIGNATURE(Ticket) && T_Length > 0)
-		ES_Identify(Certs, C_Length, Tmd, MD_Length, Ticket, T_Length, NULL);
-
 	/* Setup low memory */;
 	__Disc_SetLowMem();
 
+	/* Select an appropriate video mode */
+	__Disc_SelectVMode(vidMode);
+
+	/* Run apploader */
+	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vmode, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidMode);
+	if (ret < 0)
+		return ret;
+
 	/* Set an appropriate video mode */
-	__Disc_SetVMode(patchVidMode == 0 ? vidMode : 4);
+	__Disc_SetVMode();
 
 	if (cheat != 0)
 	{
@@ -352,7 +334,7 @@ s32 Disc_BootPartition(u64 offset, bool yal, u8 vidMode, const u8 *cheat, u32 ch
 
 	/* Shutdown IOS subsystems */
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
-//	__exception_closeall();
+
 	/* Jump to entry point */
 	p_entry();
 
@@ -374,7 +356,7 @@ s32 Disc_OpenPartition(u32 mode, u8 *id)
 	return 0;
 }
 
-s32 Disc_WiiBoot(bool yal, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes)
+s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes)
 {
 	u64 offset;
 	s32 ret;
@@ -385,5 +367,5 @@ s32 Disc_WiiBoot(bool yal, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipa
 		return ret;
 
 	/* Boot partition */
-	return Disc_BootPartition(offset, yal, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes);
+	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes);
 }
