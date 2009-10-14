@@ -241,7 +241,7 @@ static bool __io_usb_Shutdown(void)
 	return true;
 }
 
-const DISC_INTERFACE __io_usbstorage = { // Narolez: const removed, fix for libogc r3752
+const DISC_INTERFACE __io_usbstorage = {
 	DEVICE_TYPE_WII_USB,
 	FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE | FEATURE_WII_USB,
 	(FN_MEDIUM_STARTUP)      &__io_usb_Startup,
