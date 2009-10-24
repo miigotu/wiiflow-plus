@@ -45,9 +45,9 @@ bool Fat_MountSDOnly(void)
 		g_sdOK = false;
 	}
 	if (!g_sdOK)
-		g_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SDHC_SECTOR_SIZE);
-	if (!g_sdOK)
 		g_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SECTORS);
+	if (!g_sdOK)
+		g_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SDHC_SECTOR_SIZE);
 	
 	return g_sdOK;
 }
@@ -56,10 +56,11 @@ bool Fat_Mount(void)
 {
 	Fat_Unmount();
 	if (!g_sdOK)
-		g_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SDHC_SECTOR_SIZE);
-	if (!g_sdOK)
 		g_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SECTORS);
+	if (!g_sdOK)
+		g_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SDHC_SECTOR_SIZE);
 	if (!g_usbOK)
 		g_usbOK = fatMount("usb", &__io_usbstorage, 0, CACHE, SECTORS);
+		
 	return g_sdOK || g_usbOK;
 }

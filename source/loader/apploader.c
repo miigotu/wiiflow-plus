@@ -214,7 +214,7 @@ static void PatchCountryStrings(void *Address, int Size)
 		}
 }
 
-static void __Patch_CoverRegister(void *buffer, u32 len)
+static void patch_NoDiscinDrive(void *buffer, u32 len)
 {
 	static const u8 oldcode[] = { 0x54, 0x60, 0xF7, 0xFF, 0x40, 0x82, 0x00, 0x0C, 0x54, 0x60, 0x07, 0xFF, 0x41, 0x82, 0x00, 0x0C };
 	static const u8 newcode[] = { 0x54, 0x60, 0xF7, 0xFF, 0x40, 0x82, 0x00, 0x0C, 0x54, 0x60, 0x07, 0xFF, 0x48, 0x00, 0x00, 0x0C };
@@ -228,7 +228,12 @@ static void __Patch_CoverRegister(void *buffer, u32 len)
 
 static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes)
 {
-	__Patch_CoverRegister(dst, len);
+	
+	// Patch NoDiscInDrive only for IOS 249 < rev13 or IOS 222/223
+	if (   (IOS_GetVersion() == 249 && IOS_GetRevision() < 13)
+	    || (IOS_GetVersion() == 222 || IOS_GetVersion() == 223) 
+	   )
+		patch_NoDiscinDrive(dst, len);
 
 	if (vidMode > 0)
 		patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
