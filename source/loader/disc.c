@@ -79,11 +79,11 @@ void __Disc_SelectVMode(u8 videoselected)
 	switch (CONF_GetVideo())
 	{
 		case CONF_VIDEO_PAL:
-			vmode_reg = 5; // (CONF_GetEuRGB60() > 0) ? 5 : 1;
+			vmode_reg = (CONF_GetEuRGB60() > 0) ? 5 : 1;
 			break;
 
 		case CONF_VIDEO_MPAL:
-			vmode_reg = 4;
+			vmode_reg = 2;
 			break;
 
 		case CONF_VIDEO_NTSC:
@@ -105,7 +105,7 @@ void __Disc_SelectVMode(u8 videoselected)
 				case 'Y':
 					if (CONF_GetVideo() != CONF_VIDEO_PAL)
 					{
-						vmode_reg = 5;
+						vmode_reg = 1;
 						vmode = progressive ? &TVNtsc480Prog : &TVEurgb60Hz480IntDf;
 					}
 					break;
@@ -126,7 +126,7 @@ void __Disc_SelectVMode(u8 videoselected)
 			vmode_reg = vmode->viTVMode >> 2;
 			break;
 		case 2: // PAL60
-			vmode = progressive ? &TVEurgb60Hz480Prog : &TVEurgb60Hz480IntDf;
+			vmode = progressive ? &TVNtsc480Prog : &TVEurgb60Hz480IntDf;
 			vmode_reg = progressive ? TVEurgb60Hz480Prog.viTVMode >> 2 : vmode->viTVMode >> 2;
 			break;
 		case 3: // NTSC
@@ -140,17 +140,13 @@ void __Disc_SelectVMode(u8 videoselected)
 }
 
 void __Disc_SetVMode(void)
-{	/* Set video mode register */
+{
+	/* Set video mode register */
 	*(vu32 *)0x800000CC = vmode_reg;
 
 	/* Set video mode */
 	if (vmode != 0)
 	{
-		// Overwrite all progressive video modes as 
-		// they are broken in libogc
-		if (videomode_interlaced(vmode) == 0)
-			vmode = &TVNtsc480Prog;
-
 		VIDEO_Configure(vmode);
 
 		/* Setup video */

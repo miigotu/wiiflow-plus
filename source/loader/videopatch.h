@@ -5,6 +5,5 @@
 
 void patchVideoModes(void *dst, u32 len, int vidMode, GXRModeObj *vmode, int patchVidModes); 
 
-int videomode_interlaced(GXRModeObj* mode);
 
 #endif // !defined(_VIDEOPATCH_H_)
