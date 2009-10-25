@@ -204,31 +204,6 @@ static void patch_videomode(GXRModeObj* mode1, GXRModeObj* mode2)
 	memcpy(mode1, mode2, sizeof *mode1);
 }
 
-int videomode_interlaced(GXRModeObj* mode)
-{
-	if ( compare_videomodes(&TVNtsc480Int, mode)
-	||   compare_videomodes(&TVNtsc480IntDf, mode)
-	||   compare_videomodes(&TVPal528Int, mode)
-	||   compare_videomodes(&TVPal528IntDf, mode)
-	||   compare_videomodes(&TVMpal480IntDf, mode)
-	||   compare_videomodes(&TVEurgb60Hz480Int, mode)
-	||   compare_videomodes(&TVEurgb60Hz480IntDf, mode) )
-	{
-		return 1;
-	}	
-	if ( compare_videomodes(&TVNtsc480Prog, mode)
-	||   compare_videomodes(&TVPal528Prog, mode) 
-	||   compare_videomodes(&TVPal528ProgSoft, mode)
-	||   compare_videomodes(&TVPal528ProgUnknown, mode)
-	||   compare_videomodes(&TVMpal480Prog, mode) 
-	||   compare_videomodes(&TVEurgb60Hz480Prog, mode) )
-	{
-		return 0;
-	}
-	return -1;
-}
-
-
 static GXRModeObj* PAL2NTSC[]={
 	&TVMpal480IntDf,		&TVNtsc480IntDf,
 	&TVPal264Ds,			&TVNtsc240Ds,
