@@ -79,21 +79,27 @@ void __Disc_SelectVMode(u8 videoselected)
 	switch (CONF_GetVideo())
 	{
 		case CONF_VIDEO_PAL:
-			vmode_reg = (CONF_GetEuRGB60() > 0) ? 5 : 1;
+			if (CONF_GetEuRGB60() > 0)
+			{
+				vmode_reg = VI_EURGB60;
+				vmode = progressive ? &TVNtsc480Prog : &TVEurgb60Hz480IntDf;
+			}
+			else
+				vmode_reg = VI_PAL;
 			break;
 
 		case CONF_VIDEO_MPAL:
-			vmode_reg = 2;
+			vmode_reg = VI_MPAL;
 			break;
 
 		case CONF_VIDEO_NTSC:
-			vmode_reg = 0;
+			vmode_reg = VI_NTSC;
 			break;
 	}
 
     switch (videoselected)
 	{
-		case 0: // DEFAULT (DISC)
+		case 0: // DEFAULT (DISC/GAME)
 			/* Select video mode */
 			switch (diskid[3])
 			{
@@ -105,8 +111,8 @@ void __Disc_SelectVMode(u8 videoselected)
 				case 'Y':
 					if (CONF_GetVideo() != CONF_VIDEO_PAL)
 					{
-						vmode_reg = 1;
-						vmode = progressive ? &TVNtsc480Prog : &TVEurgb60Hz480IntDf;
+						vmode_reg = VI_PAL;
+						vmode = progressive ? &TVNtsc480Prog : &TVNtsc480IntDf;
 					}
 					break;
 				// NTSC
@@ -115,8 +121,8 @@ void __Disc_SelectVMode(u8 videoselected)
 				default:
 					if (CONF_GetVideo() != CONF_VIDEO_NTSC)
 					{
-						vmode_reg = 0;
-						vmode = progressive ? &TVNtsc480Prog : &TVNtsc480IntDf;
+						vmode_reg = VI_NTSC;
+						vmode = progressive ? &TVNtsc480Prog : &TVEurgb60Hz480IntDf;
 					}
 					break;
 			}
@@ -133,7 +139,7 @@ void __Disc_SelectVMode(u8 videoselected)
 			vmode = progressive ? &TVNtsc480Prog : &TVNtsc480IntDf;
 			vmode_reg = vmode->viTVMode >> 2;
 			break;
-		case 4: // AUTO PATCH
+		case 4: // AUTO PATCH/SYSTEM
 		default:
 			break;
 	}

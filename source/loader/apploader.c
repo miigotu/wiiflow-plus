@@ -127,6 +127,8 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 	/* ERROR 002 fix (WiiPower) */
 	if (error002Fix)
 		*(u32 *)0x80003140 = *(u32 *)0x80003188;
+		
+	DCFlushRange((void*)0x80000000, 0x3f00);
 
 	return 0;
 }
@@ -137,6 +139,8 @@ static void dolPatches(void *dst, int len, void *params)
 
 	maindolpatches(dst, len, p->cheat, p->vidMode, p->vmode, p->vipatch, p->countryString, false, p->patchVidModes);
 	Remove_001_Protection(dst, len);
+	
+	DCFlushRange(dst, len);
 }
 
 static void PatchCountryStrings(void *Address, int Size)
@@ -228,15 +232,16 @@ static void patch_NoDiscinDrive(void *buffer, u32 len)
 
 static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes)
 {
-	
+	DCFlushRange(dst, len);
+
+	patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
+
 	// Patch NoDiscInDrive only for IOS 249 < rev13 or IOS 222/223
 	if (   (IOS_GetVersion() == 249 && IOS_GetRevision() < 13)
 	    || (IOS_GetVersion() == 222 || IOS_GetVersion() == 223) 
 	   )
 		patch_NoDiscinDrive(dst, len);
 
-	if (vidMode > 0)
-		patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
 	if (cheat)
 		dogamehooks(dst, len);
 	if (vipatch)
