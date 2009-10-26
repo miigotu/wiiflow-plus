@@ -278,30 +278,38 @@ void patchVideoModes(void *dst, u32 len, int vidMode, GXRModeObj *vmode, int pat
 {
 	GXRModeObj **table = 0;
 
-	switch(vidMode)
+	if (patchVidModes > 0 && vmode != 0)
+		applyVideoPatch(dst, len, vmode, patchVidModes - 1);
+	else
 	{
-		case 0: // default / disc --> no patch!
-			break;
-		case 1: // PAL50
-		case 2: // PAL60
-		case 3: // NTSC
-			if (patchVidModes > 0 && vmode != 0)
-				applyVideoPatch(dst, len, vmode, patchVidModes - 1);
-			break;
-		case 4: // auto patch
-			switch (CONF_GetVideo())
-			{
-				case CONF_VIDEO_PAL:
-					table = CONF_GetEuRGB60() > 0 ? NTSC2PAL60 : NTSC2PAL;
-					break;
-				case CONF_VIDEO_MPAL:
-					table = NTSC2PAL;
-					break;
-				default:
-					table = PAL2NTSC;
-					break;
-			}
-			Search_and_patch_Video_Modes(dst, len, table);
-			break;
+		switch(vidMode)
+		{
+			case 0: // default / disc / game
+				break;
+			case 1: // PAL50
+				Search_and_patch_Video_Modes(dst, len, NTSC2PAL);
+				break;
+			case 2: // PAL60
+				Search_and_patch_Video_Modes(dst, len, NTSC2PAL60);
+				break;
+			case 3: // NTSC
+				Search_and_patch_Video_Modes(dst, len, PAL2NTSC);
+				break;
+			case 4: // auto patch / system
+				switch (CONF_GetVideo())
+				{
+					case CONF_VIDEO_PAL:
+						table = CONF_GetEuRGB60() > 0 ? NTSC2PAL60 : NTSC2PAL;
+						break;
+					case CONF_VIDEO_MPAL:
+						table = NTSC2PAL;
+						break;
+					default:
+						table = PAL2NTSC;
+						break;
+				}
+				Search_and_patch_Video_Modes(dst, len, table);
+				break;
+		}
 	}
 }

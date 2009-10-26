@@ -4,7 +4,7 @@
 #include <wiiuse/wpad.h>
 
 #define APP_NAME		"WiiFlow"
-#define APP_VERSION		"1.1 R16"
+#define APP_VERSION		"1.1 R17"
 #define LOADER_AUTHOR	"Kwiirk & Waninkoko, Hermes"
 #define GUI_AUTHOR		"Hibernatus, Lustar, Narolez"
 #define THANKS			"CedWii, Benjay, Domi78, Oops, Celtiore, Jiiwah, FluffyKiwi, Roku93, Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical, WiiPower, Hermes, Wiimm"

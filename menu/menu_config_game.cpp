@@ -103,9 +103,6 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.show(m_gameSettingsLblAltDol);
 		m_btnMgr.show(m_gameSettingsBtnAltDolP);
 		m_btnMgr.show(m_gameSettingsBtnAltDolM);
-		for (u32 i = 0; i < ARRAY_SIZE(m_gameSettingsLblUser) / 3; ++i)
-			if (m_gameSettingsLblUser[i] != -1u)
-				m_btnMgr.show(m_gameSettingsLblUser[i]);
 	}
 	else
 	{
@@ -123,9 +120,6 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.hide(m_gameSettingsLblAltDol);
 		m_btnMgr.hide(m_gameSettingsBtnAltDolP);
 		m_btnMgr.hide(m_gameSettingsBtnAltDolM);
-		for (u32 i = 0; i < ARRAY_SIZE(m_gameSettingsLblUser) / 3; ++i)
-			if (m_gameSettingsLblUser[i] != -1u)
-				m_btnMgr.hide(m_gameSettingsLblUser[i]);
 	}
 	if (m_gameSettingsPage == 2)
 	{
@@ -139,9 +133,6 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.show(m_gameSettingsLblIOS);
 		m_btnMgr.show(m_gameSettingsBtnIOSP);
 		m_btnMgr.show(m_gameSettingsBtnIOSM);
-		for (u32 i = ARRAY_SIZE(m_gameSettingsLblUser) / 3; i < ARRAY_SIZE(m_gameSettingsLblUser) * 2 / 3; ++i)
-			if (m_gameSettingsLblUser[i] != -1u)
-				m_btnMgr.show(m_gameSettingsLblUser[i]);
 	}
 	else
 	{
@@ -155,9 +146,6 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.hide(m_gameSettingsLblIOS);
 		m_btnMgr.hide(m_gameSettingsBtnIOSP);
 		m_btnMgr.hide(m_gameSettingsBtnIOSM);
-		for (u32 i = ARRAY_SIZE(m_gameSettingsLblUser) / 3; i < ARRAY_SIZE(m_gameSettingsLblUser) * 2 / 3; ++i)
-			if (m_gameSettingsLblUser[i] != -1u)
-				m_btnMgr.hide(m_gameSettingsLblUser[i]);
 	}
 	if (m_gameSettingsPage == 3)
 	{
@@ -169,9 +157,6 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.show(m_gameSettingsLblPatchVidModesVal);
 		m_btnMgr.show(m_gameSettingsBtnPatchVidModesM);
 		m_btnMgr.show(m_gameSettingsBtnPatchVidModesP);
-		for (u32 i = ARRAY_SIZE(m_gameSettingsLblUser) * 2 / 3; i < ARRAY_SIZE(m_gameSettingsLblUser); ++i)
-			if (m_gameSettingsLblUser[i] != -1u)
-				m_btnMgr.show(m_gameSettingsLblUser[i]);
 	}
 	else
 	{
@@ -183,11 +168,12 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.hide(m_gameSettingsLblPatchVidModesVal);
 		m_btnMgr.hide(m_gameSettingsBtnPatchVidModesM);
 		m_btnMgr.hide(m_gameSettingsBtnPatchVidModesP);
-		for (u32 i = ARRAY_SIZE(m_gameSettingsLblUser) * 2 / 3; i < ARRAY_SIZE(m_gameSettingsLblUser); ++i)
-			if (m_gameSettingsLblUser[i] != -1u)
-				m_btnMgr.hide(m_gameSettingsLblUser[i]);
 	}
-	// 
+	
+	for (u32 i = 0; i < ARRAY_SIZE(m_gameSettingsLblUser); ++i)
+		if (m_gameSettingsLblUser[i] != -1u)
+			m_btnMgr.show(m_gameSettingsLblUser[i]);
+
 	string id(m_cf.getId());
 	m_btnMgr.setText(m_gameSettingsLblPage, wfmt(L"%i / %i", m_gameSettingsPage, 3));
 	m_btnMgr.setText(m_gameSettingsBtnOcarina, _optBoolToString(m_cfg.getOptBool(id, "cheat")));
