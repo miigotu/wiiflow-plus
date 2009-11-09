@@ -230,6 +230,29 @@ static void patch_NoDiscinDrive(void *buffer, u32 len)
 			memcpy(buffer + n, (void *)newcode, sizeof newcode);
 }
 
+bool NewSuperMarioBrosPatch(void *Address, int Size)
+{
+	if (memcmp("SMN", (char *)0x80000000, 3) == 0)
+	{
+		u8 SearchPattern[32] = 	{ 0x94, 0x21, 0xFF, 0xD0, 0x7C, 0x08, 0x02, 0xA6, 0x90, 0x01, 0x00, 0x34, 0x39, 0x61, 0x00, 0x30, 0x48, 0x12, 0xD9, 0x39, 0x7C, 0x7B, 0x1B, 0x78, 0x7C, 0x9C, 0x23, 0x78, 0x7C, 0xBD, 0x2B, 0x78 };
+		u8 PatchData[32] = 		{ 0x4E, 0x80, 0x00, 0x20, 0x7C, 0x08, 0x02, 0xA6, 0x90, 0x01, 0x00, 0x34, 0x39, 0x61, 0x00, 0x30, 0x48, 0x12, 0xD9, 0x39, 0x7C, 0x7B, 0x1B, 0x78, 0x7C, 0x9C, 0x23, 0x78, 0x7C, 0xBD, 0x2B, 0x78 };
+
+		void *Addr = Address;
+		void *Addr_end = Address+Size;
+
+		while(Addr <= Addr_end-sizeof(SearchPattern))
+		{
+			if(memcmp(Addr, SearchPattern, sizeof(SearchPattern))==0) 
+			{
+				memcpy(Addr,PatchData,sizeof(PatchData));
+				return true;
+			}
+			Addr += 4;
+		}
+	}
+	return false;
+}
+
 static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes)
 {
 	DCFlushRange(dst, len);
@@ -252,6 +275,9 @@ static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeOb
 		Anti_002_fix(dst, len);
 	if (countryString) // Country Patch by WiiPower
 		PatchCountryStrings(dst, len);
+
+	// NSMB Patch by WiiPower
+	NewSuperMarioBrosPatch(dst,len);
 
 	DCFlushRange(dst, len);
 }

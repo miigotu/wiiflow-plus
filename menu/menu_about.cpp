@@ -4,10 +4,10 @@
 #include <wiiuse/wpad.h>
 
 #define APP_NAME		"WiiFlow"
-#define APP_VERSION		"1.1 R17"
+#define APP_VERSION		"1.1 R20"
 #define LOADER_AUTHOR	"Kwiirk & Waninkoko, Hermes"
-#define GUI_AUTHOR		"Hibernatus, Lustar, Narolez"
-#define THANKS			"CedWii, Benjay, Domi78, Oops, Celtiore, Jiiwah, FluffyKiwi, Roku93, Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical, WiiPower, Hermes, Wiimm"
+#define GUI_AUTHOR		"Hibernatus, Narolez"
+#define THANKS			"Lustar, CedWii, Benjay, Domi78, Oops, Celtiore, Jiiwah, FluffyKiwi, Roku93, Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical, WiiPower, Hermes, Wiimm"
 #define THANKS_SITES	"devkitpro.org, wiibrew.org, wiitdb.com"
 #define THANKS_CODE		"CFG Loader, uLoader, USB Loader GX, NeoGamma"
 
