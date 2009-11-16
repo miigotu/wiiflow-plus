@@ -16,6 +16,7 @@
 #define TAG_LOC			"loc"
 #define TAG_REGION		"region"
 #define TITLES_URL		"http://www.wiitdb.com/titles.txt?LANG=%s"
+#define UPDATE_URL		"http://wiiflow.googlecode.com/svn/trunk/updates"
 
 using namespace std;
 
@@ -671,5 +672,18 @@ int CMenu::_titleDownloader(bool missingOnly)
 		LWP_MutexUnlock(m_mutex);
 	}
 	m_thrdWorking = false;
+	return 0;
+}
+
+
+int CMenu::_update(CMenu *m)
+{
+	if (!m->m_thrdWorking)
+		return 0;
+	return m->_updateDownloader();
+}
+
+int CMenu::_updateDownloader()
+{
 	return 0;
 }
