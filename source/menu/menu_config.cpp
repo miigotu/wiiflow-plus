@@ -42,20 +42,20 @@ void CMenu::_showConfig(void)
 	m_btnMgr.show(m_configLblDownload);
 	m_btnMgr.show(m_configBtnDownload);
 	m_btnMgr.show(m_configLblParental);
+	m_btnMgr.show(m_configLblPage);
+	m_btnMgr.show(m_configBtnPageM);
+	m_btnMgr.show(m_configBtnPageP);
 	if (m_locked)
 		m_btnMgr.show(m_configBtnUnlock);
 	else
 	{
 		m_btnMgr.show(m_configBtnSetCode);
-		m_btnMgr.show(m_configLblPage);
-		m_btnMgr.show(m_configBtnPageM);
-		m_btnMgr.show(m_configBtnPageP);
 	}
 	for (u32 i = 0; i < ARRAY_SIZE(m_configLblUser); ++i)
 		if (m_configLblUser[i] != -1u)
 			m_btnMgr.show(m_configLblUser[i]);
 	// 
-	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
+	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage + 1 : CMenu::_nbCfgPages));
 	m_btnMgr.setText(m_configBtnRumble, m_cfg.getBool(" GENERAL", "rumble") ? _t("on", L"On") : _t("off", L"Off"));
 	m_btnMgr.setText(m_configBtnBoxMode, m_cfg.getBool(" GENERAL", "box_mode") ? _t("on", L"On") : _t("off", L"Off"));
 }
@@ -129,7 +129,7 @@ int CMenu::_config1(void)
 			m_btnMgr.click(m_configBtnPageM);
 			break;
 		}
-		if (!m_locked && ((padsState & WPAD_BUTTON_PLUS) != 0 || ((padsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageP)))
+		if (((padsState & WPAD_BUTTON_PLUS) != 0 || ((padsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageP)))
 		{
 			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
 			m_btnMgr.click(m_configBtnPageP);

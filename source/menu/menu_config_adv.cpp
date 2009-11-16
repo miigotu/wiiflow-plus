@@ -51,18 +51,21 @@ void CMenu::_showConfigAdv(void)
 	m_btnMgr.show(m_configBtnPageM);
 	m_btnMgr.show(m_configBtnPageP);
 	// 
-	m_btnMgr.show(m_configAdvLblInstall);
-	m_btnMgr.show(m_configAdvBtnInstall);
-	m_btnMgr.show(m_configAdvLblTheme);
 	m_btnMgr.show(m_configAdvLblCurTheme);
 	m_btnMgr.show(m_configAdvBtnCurThemeM);
 	m_btnMgr.show(m_configAdvBtnCurThemeP);
-	m_btnMgr.show(m_configAdvLblLanguage);
-	m_btnMgr.show(m_configAdvLblCurLanguage);
-	m_btnMgr.show(m_configAdvBtnCurLanguageM);
-	m_btnMgr.show(m_configAdvBtnCurLanguageP);
-	m_btnMgr.show(m_configAdvLblCFTheme);
-	m_btnMgr.show(m_configAdvBtnCFTheme);
+	m_btnMgr.show(m_configAdvLblTheme);
+	if( !m_locked )
+	{
+		m_btnMgr.show(m_configAdvLblInstall);
+		m_btnMgr.show(m_configAdvBtnInstall);
+		m_btnMgr.show(m_configAdvLblLanguage);
+		m_btnMgr.show(m_configAdvLblCurLanguage);
+		m_btnMgr.show(m_configAdvBtnCurLanguageM);
+		m_btnMgr.show(m_configAdvBtnCurLanguageP);
+		m_btnMgr.show(m_configAdvLblCFTheme);
+		m_btnMgr.show(m_configAdvBtnCFTheme);
+	}
 	for (u32 i = 0; i < ARRAY_SIZE(m_configAdvLblUser); ++i)
 		if (m_configAdvLblUser[i] != -1u)
 			m_btnMgr.show(m_configAdvLblUser[i]);

@@ -278,8 +278,18 @@ void patchVideoModes(void *dst, u32 len, int vidMode, GXRModeObj *vmode, int pat
 {
 	GXRModeObj **table = 0;
 
-	if (patchVidModes > 0 && vmode != 0)
+	if (vidMode == 5) // system
+	{
+		return;
+	}
+	if (vidMode == 6) // progressive 480P(NTSC + patch all)
+	{
+		applyVideoPatch(dst, len, vmode, 2);
+	}
+	else if (patchVidModes > 0 && vmode != 0)
+	{
 		applyVideoPatch(dst, len, vmode, patchVidModes - 1);
+	}
 	else
 	{
 		switch(vidMode)
@@ -309,6 +319,8 @@ void patchVideoModes(void *dst, u32 len, int vidMode, GXRModeObj *vmode, int pat
 						break;
 				}
 				Search_and_patch_Video_Modes(dst, len, table);
+				break;
+			default:
 				break;
 		}
 	}

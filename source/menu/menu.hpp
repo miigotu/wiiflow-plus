@@ -460,8 +460,10 @@ private:
 	static int _coverDownloaderMissing(CMenu *m);
 	static bool _downloadProgress(void *obj, int size, int position);
 	int _titleDownloader(bool missingOnly);
+	int _updateDownloader(void);
 	static int _titleDownloaderAll(CMenu *m);
 	static int _titleDownloaderMissing(CMenu *m);
+	static int _update(CMenu *m);
 	int _initNetwork(char *ip);
 	static void _addDiscProgress(int status, int total, void *user_data);
 	static int _gameInstaller(void *obj);
@@ -480,7 +482,7 @@ private:
 	// 
 	struct SOption { const char id[10]; const wchar_t text[16]; };
 	static const SOption _languages[11];
-	static const SOption _videoModes[5];
+	static const SOption _videoModes[7];
 	static const SOption _vidModePatch[4];
 	static const int _ios[5];
 	static const SCFParamDesc _cfParams[];

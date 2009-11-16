@@ -46,12 +46,14 @@ const CMenu::SOption CMenu::_languages[11] = {
 	{ "lngkor", L"Korean" }
 };
 
-const CMenu::SOption CMenu::_videoModes[5] = {
+const CMenu::SOption CMenu::_videoModes[7] = {
 	{ "viddef", L"Default" },
 	{ "vidp50", L"PAL 50Hz" },
 	{ "vidp60", L"PAL 60Hz" },
 	{ "vidntsc", L"NTSC" },
-	{ "vidpatch", L"Auto Patch" }
+	{ "vidpatch", L"Auto Patch" },
+	{ "vidsys", L"System" },	
+	{ "vidprog", L"Progressive" }
 };
 
 const CMenu::SOption CMenu::_vidModePatch[4] = {
@@ -205,11 +207,12 @@ void CMenu::_game(bool launch)
 		// 
 		if (wd->ir.valid)
 		{
+			b = m_cfg.getBool(id, "favorite", false);
+			m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
+			m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
+
 			if (!m_locked)
 			{
-				b = m_cfg.getBool(id, "favorite", false);
-				m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
-				m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
 				b = m_cfg.getBool(id, "adult_only", false);
 				m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
 				m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);

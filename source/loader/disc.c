@@ -59,7 +59,6 @@ void __Disc_SetLowMem(void)
 	*(vu32 *)0x800030F0 = 0x0000001C;
 	*(vu32 *)0x8000318C = 0x00000000;
 	*(vu32 *)0x80003190 = 0x00000000;
-	*(vu32 *)0x800000FC = 0x2B73A840;
 
 	/* Copy disc ID (online check) */
 	memcpy((void *)0x80003180, (void *)0x80000000, 4);
@@ -139,7 +138,13 @@ void __Disc_SelectVMode(u8 videoselected)
 			vmode = progressive ? &TVNtsc480Prog : &TVNtsc480IntDf;
 			vmode_reg = vmode->viTVMode >> 2;
 			break;
-		case 4: // AUTO PATCH/SYSTEM
+		case 4: // AUTO PATCH TO SYSTEM
+		case 5: // SYSTEM
+			break;
+		case 6: // PROGRESSIVE 480P(NTSC + PATCH ALL)
+			vmode = &TVNtsc480Prog;
+			vmode_reg = vmode->viTVMode >> 2;
+			break;
 		default:
 			break;
 	}
@@ -154,14 +159,14 @@ void __Disc_SetVMode(void)
 	if (vmode != 0)
 	{
 		VIDEO_Configure(vmode);
-
-		/* Setup video */
-		VIDEO_SetBlack(FALSE);
-		VIDEO_Flush();
-		VIDEO_WaitVSync();
-		if (vmode->viTVMode & VI_NON_INTERLACE)
-			VIDEO_WaitVSync();
 	}
+	
+	/* Setup video  */
+	VIDEO_SetBlack(FALSE);
+	VIDEO_Flush();
+	VIDEO_WaitVSync();
+	if (vmode->viTVMode & VI_NON_INTERLACE)
+		VIDEO_WaitVSync();
 }
 
 void __Disc_SetTime(void)
