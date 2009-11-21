@@ -3,7 +3,7 @@
 
 /* Disc interfaces */
 extern const DISC_INTERFACE __io_wiisd;
-extern const DISC_INTERFACE __io_usbstorage;
+extern DISC_INTERFACE __io_usbstorage;
 extern const DISC_INTERFACE __io_sdhc;
 
 static bool g_sdOK = false;
