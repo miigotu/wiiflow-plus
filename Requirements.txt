@@ -1,1 +1,1 @@
-WiiFlow 1.1 since R8 was compiled using devkitPPC r18 <http://www.devkitpro.org/devkitppc/devkitppc-release-18-is-final/>.
+WiiFlow 1.1 since R23 was compiled using devkitPPC r19.
