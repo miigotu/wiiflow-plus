@@ -260,7 +260,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 	bool success;
 	vector<string> fmtURLFlat;
 	vector<string> fmtURLBox;
-	u32 bufferSize = 0x300000;	// Maximum download size 3 MB
+	u32 bufferSize = 0x400000;	// Maximum download size 4 MB
 	SmartBuf buffer;
 
 	// Use the cover space as a temporary buffer

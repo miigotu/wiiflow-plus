@@ -18,12 +18,12 @@ include $(DEVKITPPC)/wii_rules
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source source/cheats source/data source/gui source/loader \
-                source/loader/libwbfs source/memory source/menu source/music \
-				source/network  
+                source/loader/libwbfs source/libfat source/memory \
+				source/menu source/music source/network  
 DATA		:=	data  
 INCLUDES	:=	source source/cheats source/gui source/loader \
-                source/loader/libwbfs source/memory source/menu \
-				source/music source/network  
+                source/loader/libwbfs source/libfat source/memory \
+				source/menu source/music source/network  
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -37,7 +37,7 @@ LDFLAGS	 = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=  -ltremor -lfreetype -lwiiuse -lbte -lasnd -lpng -lz -lfat -logc -lm
+LIBS	:=  -ltremor -lfreetype -lwiiuse -lbte -lasnd -lpng -lz -logc -lm -lfat
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -148,6 +148,16 @@ $(OUTPUT).elf: $(OFILES)
 # This rule links in binary data with the .wav extension
 #---------------------------------------------------------------------------------
 %.wav.o	:	%.wav
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	$(bin2o)
+
+-include $(DEPENDS)
+
+#---------------------------------------------------------------------------------
+# This rule links in binary data with the .bin extension
+#---------------------------------------------------------------------------------
+%.bin.o	:	%.bin
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	$(bin2o)

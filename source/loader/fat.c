@@ -1,5 +1,8 @@
 #include <ogcsys.h>
 #include <fat.h>
+#include "usbstorage.h"
+#include "sdhc.h"
+
 
 /* Disc interfaces */
 extern const DISC_INTERFACE __io_wiisd;
@@ -9,9 +12,8 @@ extern const DISC_INTERFACE __io_sdhc;
 static bool g_sdOK = false;
 static bool g_usbOK = false;
 
-#define CACHE                8
-#define SECTORS             64
-#define SDHC_SECTOR_SIZE 0x200
+#define CACHE   32
+#define SECTORS 64
 
 bool Fat_SDAvailable(void)
 {
