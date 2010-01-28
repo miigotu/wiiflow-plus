@@ -28,6 +28,8 @@ static char gameid[6 + 1];
 GXRModeObj *vmode = NULL;
 u32 vmode_reg = 0;
 
+extern void __exception_closeall();
+
 static u8	Tmd_Buffer[0x49e4 + 0x1C] ALIGNED(32);
 
 #define        Sys_Magic		((u32*)0x80000020)
@@ -46,6 +48,7 @@ void __Disc_SetLowMem(void)
 	*Bus_Speed	= 0x0E7BE2C0;
 	*CPU_Speed	= 0x2B73A840;
 
+	/* http://www.wiibrew.org/wiki/Memory_Map */
 	/* Setup low memory */
 	*(vu32 *)0x80000030 = 0x00000000;
 	*(vu32 *)0x80000060 = 0x38A00040;
@@ -341,6 +344,10 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 
 	/* Shutdown IOS subsystems */
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
+	/*IRQ_Disable(); //Seems to break start of other games !?
+	__IOS_ShutdownSubsystems();
+	__exception_closeall();*/ 
+
 
 	/* Jump to entry point */
 	p_entry();

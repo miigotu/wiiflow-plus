@@ -11,6 +11,8 @@
 #include <vector>
 #include <map>
 
+#include "gct.h"
+
 class CMenu
 {
 public:
@@ -267,16 +269,34 @@ private:
 	u32 m_gameSettingsBtnPatchVidModesM;
 	u32 m_gameSettingsBtnPatchVidModesP;
 	u32 m_gameSettingsLblUser[3 * 2];
-	// 
+	
+	
+	u32 m_gameSettingsLblCheat;
+	u32 m_gameSettingsBtnCheat;
+	//Cheat menu
+	u32 m_cheatBtnBack;
+	u32 m_cheatBtnApply;
+	u32 m_cheatBtnDownload;
+	u32 m_cheatLblTitle;
+	u32 m_cheatLblPage;
+	u32 m_cheatBtnPageM;
+	u32 m_cheatBtnPageP;
+	u32 m_cheatLblItem[6];
+	u32 m_cheatBtnItem[6];
+	u32 m_cheatSettingsPage;
+	STexture m_cheatBg;
+	
+	GCTCheats m_cheatfile;
+	 
 	SZone m_mainPrevZone;
 	SZone m_mainNextZone;
 	SZone m_mainButtonsZone;
-	// 
+	 
 	u32 m_padLeftDelay;
 	u32 m_padRightDelay;
-	// 
+	 
 	u32 m_gameSettingsPage;
-	// 
+	 
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;
 	volatile bool m_thrdWorking;
@@ -363,6 +383,13 @@ private:
 	void _initWBFSMenu(SThemeData &theme);
 	void _initCFThemeMenu(SThemeData &theme);
 	void _initGameSettingsMenu(SThemeData &theme);
+	//Cheat Menu
+	void _CheatSettings();
+	void _hideCheatSettings(bool instant = false);
+	void _showCheatSettings(void);
+	void _initCheatSettingsMenu(SThemeData &theme);
+	void _textCheatSettings(void);
+	
 	void _textMain(void);
 	void _textError(void);
 	void _textYesNo(void);
