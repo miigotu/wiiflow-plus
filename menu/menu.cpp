@@ -12,7 +12,8 @@
 #include <fstream>
 #include <dirent.h>
 
-#define APPDATA_DIR		"wiiflow"
+//#define APPDATA_DIR		"wiiflow"
+#define APPDATA_DIR		"apps/wiiflow"
 #define CFG_FILENAME	"wiiflow.ini"
 #define LANG_FILENAME	"language.ini"
 
@@ -549,7 +550,9 @@ void CMenu::_buildMenus(void)
 	_initWBFSMenu(theme);
 	_initCFThemeMenu(theme);
 	_initGameSettingsMenu(theme);
-}
+	_initCheatSettingsMenu(theme); 
+ }
+
 
 SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, SFont def)
 {
