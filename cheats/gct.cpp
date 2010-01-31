@@ -220,7 +220,6 @@ int GCTCheats::createTXT(const char * filename) {
 	fstream file;
 
 	// save gct file
-
 	file.open(filename,ios::out);
 
 	file << sGameID << endl;

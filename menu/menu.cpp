@@ -12,8 +12,8 @@
 #include <fstream>
 #include <dirent.h>
 
-//#define APPDATA_DIR		"wiiflow"
-#define APPDATA_DIR		"apps/wiiflow"
+#define APPDATA_DIR		"wiiflow"
+#define APPDATA_DIR2	"apps/wiiflow"
 #define CFG_FILENAME	"wiiflow.ini"
 #define LANG_FILENAME	"language.ini"
 
@@ -86,13 +86,20 @@ void CMenu::init(bool fromHBC)
 	string themeName;
 	const char *drive = "sd";
 	const char *defaultLanguage;
+	string appdir = APPDATA_DIR;
 
 	m_noHBC = !fromHBC;
 	m_waitMessage.fromPNG(wait_png);
 	// Data path
 	if (Fat_SDAvailable() && Fat_USBAvailable())
-	{
-		m_cfg.load(sfmt("sd:/" APPDATA_DIR "/" CFG_FILENAME).c_str());
+	{		
+		//if (!m_cfg.load(sfmt("sd:/" APPDATA_DIR "/" CFG_FILENAME).c_str()))
+		if (!m_cfg.load(sfmt("sd:/%s/%s", appdir.c_str(),CFG_FILENAME).c_str()))
+		{
+				appdir = APPDATA_DIR2;
+				m_cfg.load(sfmt("sd:/%s/%s", appdir.c_str(),CFG_FILENAME).c_str());
+		}
+				
 		bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", true);
 		drive = dataOnUSB ? "usb" : "sd";
 //		if (!m_cfg.loaded() && dataOnUSB)
@@ -101,14 +108,24 @@ void CMenu::init(bool fromHBC)
 	else
 		drive = Fat_USBAvailable() ? "usb" : "sd";
 	// 
-	m_dataDir = sfmt("%s:/" APPDATA_DIR, drive);
-	m_cfg.load(sfmt("%s/" CFG_FILENAME, m_dataDir.c_str()).c_str());
-	// 
-	m_picDir = m_cfg.getString(" GENERAL", "dir_flat_covers", sfmt("%s:/" APPDATA_DIR "/covers", drive));
+	m_dataDir = sfmt("%s:/%s", drive,appdir.c_str());
+	if(!m_cfg.load(sfmt("%s/" CFG_FILENAME, m_dataDir.c_str()).c_str())) 
+	{
+			appdir = APPDATA_DIR2;
+			m_dataDir = sfmt("%s:/%s", drive,appdir.c_str());
+			m_cfg.load(sfmt("%s/" CFG_FILENAME, m_dataDir.c_str()).c_str());
+	}
+	//
+	m_picDir = m_cfg.getString(" GENERAL", "dir_flat_covers", sfmt("%s:/%s/covers", drive, appdir.c_str()));
+	m_boxPicDir = m_cfg.getString(" GENERAL", "dir_box_covers", sfmt("%s:/%s/boxcovers", drive, appdir.c_str()));
+	m_cacheDir = m_cfg.getString(" GENERAL", "dir_cache", sfmt("%s:/%s/cache", drive, appdir.c_str()));
+	m_themeDir = m_cfg.getString(" GENERAL", "dir_themes", sfmt("%s:/%s/themes", drive, appdir.c_str()));
+	m_musicDir = m_cfg.getString(" GENERAL", "dir_music", sfmt("%s:/%s/music", drive, appdir.c_str())); 
+	/*m_picDir = m_cfg.getString(" GENERAL", "dir_flat_covers", sfmt("%s:/" APPDATA_DIR "/covers", drive));
 	m_boxPicDir = m_cfg.getString(" GENERAL", "dir_box_covers", sfmt("%s:/" APPDATA_DIR "/boxcovers", drive));
 	m_cacheDir = m_cfg.getString(" GENERAL", "dir_cache", sfmt("%s:/" APPDATA_DIR "/cache", drive));
 	m_themeDir = m_cfg.getString(" GENERAL", "dir_themes", sfmt("%s:/" APPDATA_DIR "/themes", drive));
-	m_musicDir = m_cfg.getString(" GENERAL", "dir_music", sfmt("%s:/" APPDATA_DIR "/music", drive));
+	m_musicDir = m_cfg.getString(" GENERAL", "dir_music", sfmt("%s:/" APPDATA_DIR "/music", drive));*/
 	// 
 	m_cf.init();
 	// 
