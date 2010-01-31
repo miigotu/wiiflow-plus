@@ -85,6 +85,12 @@ void CMenu::_CheatSettings() {
 	}
 	
 	_showCheatSettings();
+	_textCheatSettings();
+	
+	if (txtavailable)
+		m_btnMgr.setText(m_cheatLblTitle,wfmt(L"%s",m_cheatfile.getGameName().c_str()));
+	else 
+		m_btnMgr.setText(m_cheatLblTitle,L"");
 	
 	while (true)
 	{
@@ -167,7 +173,7 @@ void CMenu::_CheatSettings() {
 				
 				u32 bufferSize = 0x100000;	// Maximum download size 1 MB
 				SmartBuf buffer;
-				block png;
+				block cheatfile;
 				FILE *file;
 				char ip[16];
 
@@ -179,8 +185,8 @@ void CMenu::_CheatSettings() {
 				m_networkInit = true;
 
 				buffer = smartCoverAlloc(bufferSize);
-				png = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, this);
-				if (png.data != NULL && png.size > 400) {
+				cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, this);
+				if (cheatfile.data != NULL && cheatfile.size > 80 && cheatfile.data[0] != '<') {
 					// cheat file was downloaded and presumably no 404
 					if (Fat_SDAvailable())
 						file = fopen(sfmt(TXTDIR_FLOW, m_cf.getId().c_str()).c_str(), "wb");
@@ -192,16 +198,15 @@ void CMenu::_CheatSettings() {
 							
 					if (file != NULL)
 					{
-						fwrite(png.data, 1, png.size, file);
+						fwrite(cheatfile.data, 1, cheatfile.size, file);
 						fclose(file);
 						break;
-
 					}
 				}
 				else
 				{
 					// cheat code not found, show result
-					m_btnMgr.setText(m_cheatLblItem[0], _t("cheat3", L"Download not found."));
+					m_btnMgr.setText(m_cheatLblItem[0], _t("cheat4", L"Download not found."));
 					m_btnMgr.setText(m_cheatLblItem[1], wfmt(L"http://www.geckocodes.org/codes/R/%s.txt",m_cf.getId().c_str()));
 					m_btnMgr.show(m_cheatLblItem[1]);
 				}
@@ -278,7 +283,7 @@ void CMenu::_showCheatSettings(void)
 	{
 		// no cheat found, allow downloading
 		m_btnMgr.show(m_cheatBtnDownload);
-		m_btnMgr.setText(m_cheatLblItem[0], _t("cheat2", L"Cheat file for game not found."));
+		m_btnMgr.setText(m_cheatLblItem[0], _t("cheat3", L"Cheat file for game not found."));
 		m_btnMgr.show(m_cheatLblItem[0]);
 		
 	}
@@ -288,7 +293,7 @@ void CMenu::_showCheatSettings(void)
 void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 {
 	m_cheatBg = _texture(theme.texSet, "DOWNLOAD/BG", "texture", theme.bg);
-	m_cheatLblTitle = _addLabel(theme, "CHEAT/TITLE", theme.titleFont, L"Cheats", 20, 30, 600, 60, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
+	m_cheatLblTitle = _addLabel(theme, "CHEAT/TITLE", theme.lblFont, L"Cheats", 20, 30, 600, 60, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnBack = _addButton(theme, "CHEAT/BACK_BTN", theme.btnFont, L"", 460, 410, 150, 56, theme.btnFontColor);
 	m_cheatBtnApply = _addButton(theme, "CHEAT/APPLY_BTN", theme.btnFont, L"", 240, 410, 150, 56, theme.btnFontColor);
 	m_cheatBtnDownload = _addButton(theme, "CHEAT/DOWNLOAD_BTN", theme.btnFont, L"", 240, 410, 200, 56, theme.btnFontColor);
@@ -326,7 +331,7 @@ void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 
 void CMenu::_textCheatSettings(void)
 {
-	m_btnMgr.setText(m_cheatBtnBack, _t("cd1", L"Back"));
-	m_btnMgr.setText(m_cheatBtnApply, _t("private1", L"Apply"));
-	m_btnMgr.setText(m_cheatBtnDownload, _t("cheat1", L"Download"));
+	m_btnMgr.setText(m_cheatBtnBack, _t("cheat1", L"Back"));
+	m_btnMgr.setText(m_cheatBtnApply, _t("cheat2", L"Apply"));
+	m_btnMgr.setText(m_cheatBtnDownload, _t("cfg4", L"Download"));
 }

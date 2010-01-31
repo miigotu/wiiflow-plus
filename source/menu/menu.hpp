@@ -270,7 +270,6 @@ private:
 	u32 m_gameSettingsBtnPatchVidModesP;
 	u32 m_gameSettingsLblUser[3 * 2];
 	
-	
 	u32 m_gameSettingsLblCheat;
 	u32 m_gameSettingsBtnCheat;
 	//Cheat menu
@@ -285,7 +284,6 @@ private:
 	u32 m_cheatBtnItem[6];
 	u32 m_cheatSettingsPage;
 	STexture m_cheatBg;
-	
 	GCTCheats m_cheatfile;
 	 
 	SZone m_mainPrevZone;

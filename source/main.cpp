@@ -70,9 +70,10 @@ int old_main(int argc, char **argv)
 	texWaitHDD.fromPNG(wait_hdd_png, GX_TF_RGB565, ALLOC_MALLOC);
 	Sys_Init();
 	Sys_ExitToWiiMenu(true);
-	// 
+
 	if (iosOK)
 	{
+		Fat_Mount(); // this will power up the drive if it is not ready
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		if (!wbfsOK)
 		{
