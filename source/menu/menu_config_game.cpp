@@ -4,6 +4,7 @@
 #include "loader/libwbfs/libwbfs.h"
 #include "loader/libwbfs/wiidisc.h"
 #include "menu.hpp"
+#include "loader/fat.h"
 
 #include <wiiuse/wpad.h>
 
@@ -355,7 +356,8 @@ void CMenu::_gameSettings(void)
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnCheat)
 			{
-				// Vip: Handler for Cheat Button
+				//Handler for Cheat Button
+				Fat_Mount();
 				_hideGameSettings();
 				_CheatSettings();
 				_showGameSettings();
