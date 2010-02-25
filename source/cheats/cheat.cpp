@@ -75,13 +75,11 @@ void CMenu::_CheatSettings() {
 	if (Fat_SDAvailable())
 	{
 		txtavailable = m_cheatfile.openTxtfile(sfmt(TXTDIR_FLOW, m_cf.getId().c_str()).c_str()); 
-		//if (txtavailable < 1) txtavailable = m_cheatfile.openTxtfile(sfmt(TXTDIR, m_cf.getId().c_str()).c_str()); 
 	}
 		
 	if (txtavailable <= 0 && Fat_USBAvailable())
 	{
 		txtavailable = m_cheatfile.openTxtfile(sfmt(TXTDIR_FLOW_USB, m_cf.getId().c_str()).c_str()); 
-		//if (txtavailable < 1) txtavailable = m_cheatfile.openTxtfile(sfmt(TXTDIR_USB, m_cf.getId().c_str()).c_str()); 
 	}
 	
 	_showCheatSettings();
@@ -147,16 +145,25 @@ void CMenu::_CheatSettings() {
 			
 			if (m_btnMgr.selected() == m_cheatBtnApply)
 			{
-				int operation_ok;
-
-				if (Fat_SDAvailable())
+				int operation_ok,check = 0;
+				//checks if at least one cheat is selected
+				for (unsigned int i=0; i < m_cheatfile.getCnt(); ++i) {
+					if (m_cheatfile.sCheatSelected[i] == true) 
+						{
+						check = 1;
+						break;
+						}
+					
+					}
+					
+				if (Fat_SDAvailable() && check)
 				{
 					operation_ok = m_cheatfile.createGCT(sfmt(FILEDIR, m_cf.getId().c_str()).c_str()); 
 					operation_ok = m_cheatfile.createTXT(sfmt(TXTDIR_FLOW, m_cf.getId().c_str()).c_str()); 
 					
 				}
 					
-				if (!Fat_SDAvailable() <= 0 && Fat_USBAvailable())
+				if (!Fat_SDAvailable() <= 0 && Fat_USBAvailable() && check)
 				{
 					operation_ok = m_cheatfile.createGCT(sfmt(FILEDIR_USB, m_cf.getId().c_str()).c_str()); 
 					operation_ok = m_cheatfile.createTXT(sfmt(TXTDIR_FLOW_USB, m_cf.getId().c_str()).c_str()); 
@@ -186,7 +193,7 @@ void CMenu::_CheatSettings() {
 
 				buffer = smartCoverAlloc(bufferSize);
 				cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, this);
-				if (cheatfile.data != NULL && cheatfile.size > 80 && cheatfile.data[0] != '<') {
+				if (cheatfile.data != NULL && cheatfile.size > 65 && cheatfile.data[0] != '<') {
 					// cheat file was downloaded and presumably no 404
 					if (Fat_SDAvailable())
 						file = fopen(sfmt(TXTDIR_FLOW, m_cf.getId().c_str()).c_str(), "wb");
@@ -235,15 +242,12 @@ void CMenu::_hideCheatSettings(bool instant)
 	}	
 }
 
+// CheatMenu
+// check for cheat txt file
+// if it exists, load it and show cheat texts on screen
+// if it does not exist, show download button
 void CMenu::_showCheatSettings(void)
 {
-	// TODO: move this function so that it is only invoked once
-	//   invoke showCheatSettings each time after next/prev page or setting of cheat
-	
-	// check for cheat txt file
-	// if it exists, load it and show cheat texts on screen
-	// if it does not exist, show download button
-	
 	_setBg(m_cheatBg, m_cheatBg);
 	m_btnMgr.show(m_cheatBtnBack);
 	m_btnMgr.show(m_cheatLblTitle);
@@ -262,8 +266,14 @@ void CMenu::_showCheatSettings(void)
 			// cheat in range?
 			if (((m_cheatSettingsPage-1)*5 + i + 1) <= m_cheatfile.getCnt()) 
 			{
+				//Limit to 70 characters otherwise the Cheatnames overlap
+				char tempcheatname[71];
+				strncpy(tempcheatname, m_cheatfile.getCheatName((m_cheatSettingsPage-1)*5 + i).c_str(),70);
+				tempcheatname[70] = '\0';
+				
 				// cheat avaiable, show elements and text
-				m_btnMgr.setText(m_cheatLblItem[i], m_cheatfile.getCheatName((m_cheatSettingsPage-1)*5 + i));
+				m_btnMgr.setText(m_cheatLblItem[i], wstringEx(tempcheatname));
+				//m_btnMgr.setText(m_cheatLblItem[i], m_cheatfile.getCheseleatName((m_cheatSettingsPage-1)*5 + i));
 				m_btnMgr.setText(m_cheatBtnItem[i], _optBoolToString(m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*5 + i]));
 				
 				m_btnMgr.show(m_cheatLblItem[i]);
@@ -302,15 +312,15 @@ void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 	m_cheatBtnPageM = _addPicButton(theme, "CHEAT/PAGE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 20, 410, 56, 56);
 	m_cheatBtnPageP = _addPicButton(theme, "CHEAT/PAGE_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 156, 410, 56, 56);
 
-	m_cheatLblItem[0] = _addLabel(theme, "CHEAT/ITEM_0", theme.lblFont, L"", 40, 100, 450, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_cheatLblItem[0] = _addLabel(theme, "CHEAT/ITEM_0", theme.lblFont, L"", 40, 100, 460, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnItem[0] = _addButton(theme, "CHEAT/ITEM_0_BTN", theme.btnFont, L"", 500, 100, 120, 56, theme.btnFontColor);
-	m_cheatLblItem[1] = _addLabel(theme, "CHEAT/ITEM_1", theme.lblFont, L"", 40, 160, 450, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_cheatLblItem[1] = _addLabel(theme, "CHEAT/ITEM_1", theme.lblFont, L"", 40, 160, 460, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnItem[1] = _addButton(theme, "CHEAT/ITEM_1_BTN", theme.btnFont, L"", 500, 160, 120, 56, theme.btnFontColor);
-	m_cheatLblItem[2] = _addLabel(theme, "CHEAT/ITEM_2", theme.lblFont, L"", 40, 220, 450, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_cheatLblItem[2] = _addLabel(theme, "CHEAT/ITEM_2", theme.lblFont, L"", 40, 220, 460, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnItem[2] = _addButton(theme, "CHEAT/ITEM_2_BTN", theme.btnFont, L"", 500, 220, 120, 56, theme.btnFontColor);
-	m_cheatLblItem[3] = _addLabel(theme, "CHEAT/ITEM_3", theme.lblFont, L"", 40, 280, 450, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_cheatLblItem[3] = _addLabel(theme, "CHEAT/ITEM_3", theme.lblFont, L"", 40, 280, 460, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnItem[3] = _addButton(theme, "CHEAT/ITEM_3_BTN", theme.btnFont, L"", 500, 280, 120, 56, theme.btnFontColor);
-	m_cheatLblItem[4] = _addLabel(theme, "CHEAT/ITEM_4", theme.lblFont, L"", 40, 340, 450, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_cheatLblItem[4] = _addLabel(theme, "CHEAT/ITEM_4", theme.lblFont, L"", 40, 340, 460, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnItem[4] = _addButton(theme, "CHEAT/ITEM_4_BTN", theme.btnFont, L"", 500, 340, 120, 56, theme.btnFontColor);
 
 	_setHideAnim(m_cheatBtnApply, "CHEAT/APPLY_BTN", 0, 0, -2.f, 0.f);

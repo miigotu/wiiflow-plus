@@ -32,7 +32,7 @@ GCTCheats::~GCTCheats(void) {
     string sCheatComment[MAXCHEATS];*/
 }
 
-int GCTCheats::getCnt() {
+unsigned int GCTCheats::getCnt() {
     return iCntCheats;
 }
 
@@ -44,7 +44,7 @@ string GCTCheats::getGameID(void) {
     return sGameID;
 }
 
-string GCTCheats::getCheat(int nr) {
+string GCTCheats::getCheat(unsigned int nr) {
     if (nr <= (iCntCheats-1)) {
         return sCheats[nr];
     } else {
@@ -52,7 +52,7 @@ string GCTCheats::getCheat(int nr) {
     }
 }
 
-string GCTCheats::getCheatName(int nr) {
+string GCTCheats::getCheatName(unsigned int nr) {
     if (nr <= (iCntCheats-1)) {
         return sCheatName[nr];
     } else {
@@ -60,7 +60,7 @@ string GCTCheats::getCheatName(int nr) {
     }
 }
 
-string GCTCheats::getCheatComment(int nr) {
+string GCTCheats::getCheatComment(unsigned int nr) {
     if (nr <= (iCntCheats-1)) {
         return sCheatComment[nr];
     } else {
@@ -68,7 +68,7 @@ string GCTCheats::getCheatComment(int nr) {
     }
 }
 
-int GCTCheats::createGCT(int nr,const char * filename) {
+int GCTCheats::createGCT(unsigned int nr,const char * filename) {
 
 	if (nr == 0)
 		return 0;
@@ -131,7 +131,6 @@ int GCTCheats::createGCT(const char * chtbuffer,const char * filename) {
     }
 
     filestr.write(footer,sizeof(footer));
-
     filestr.close();
 
     return 1;
@@ -177,7 +176,7 @@ int GCTCheats::createGCT(int nr[],int cnt,const char * filename) {
     return 1;
 }
 
-// Vip: This function creates gct from internal array
+//creates gct from internal array
 int GCTCheats::createGCT(const char * filename) {
 
     ofstream filestr;
@@ -192,7 +191,7 @@ int GCTCheats::createGCT(const char * filename) {
 
     filestr.write(header,sizeof(header));
 
-    for (int i=0; i < iCntCheats; ++i)
+    for (unsigned int i=0; i < iCntCheats; ++i)
 		if (sCheatSelected[i] == true) {
 			// cheat is selected, export it
 			string buf = getCheat(i);
@@ -214,7 +213,7 @@ int GCTCheats::createGCT(const char * filename) {
     return 1;
 }
 
-// Vip: This function creates txt from internal array
+//creates txt from internal array
 int GCTCheats::createTXT(const char * filename) {
 
 	fstream file;
@@ -225,22 +224,22 @@ int GCTCheats::createTXT(const char * filename) {
 	file << sGameID << endl;
 	file << sGameTitle << endl << endl;
 
-	for (int i=0; i < iCntCheats; ++i)
+	for (unsigned int i=0; i < iCntCheats; ++i)
 		if  (sCheatSelected[i]) {
 			file << sCheatName[i] << endl;
-			for (int j=0; j+8 < sCheats[i].size(); j+=16)
+			for (unsigned int j=0; j+8 < sCheats[i].size(); j+=16)
 				file << sCheats[i].substr(j,8) << " " << sCheats[i].substr(j+8,8) << endl;
-			// file << "org code: " << sCheats[i] << endl;
+
 			file << "#selected#" << sCheatComment[i] << endl;
 			file << endl;
 		}
 			
-	for (int i=0; i < iCntCheats; ++i)
+	for (unsigned int i=0; i < iCntCheats; ++i)
 		if  (!sCheatSelected[i]) {
 			file << sCheatName[i] << endl;
-			for (int j=0; j+8 < sCheats[i].size(); j+=16)
+			for (unsigned int j=0; j+8 < sCheats[i].size(); j+=16)
 				file << sCheats[i].substr(j,8) << " " << sCheats[i].substr(j+8,8) << endl;
-			// file << "org code: " << sCheats[i] << endl;
+
 			if (sCheatComment[i].size() > 1)
 				file << sCheatComment[i] << endl;
 			file << endl;
@@ -312,7 +311,6 @@ int GCTCheats::openTxtfile(const char * filename) {
                 size_t found=cheatdata.find(' ');
                 cheatdata.replace(found,1,"");
 			} else {
-                //printf("%i",str.size());
                 sCheatComment[i] = str;
             }
 			if (filestr.eof()) break;
@@ -323,7 +321,10 @@ int GCTCheats::openTxtfile(const char * filename) {
 			sCheats[i] = cheatdata;
 			sCheatSelected[i] = false;
 			// if comment starts with dynamic, it is selected
-			if (sCheatComment[i].compare(0,10,"#selected#") == 0) sCheatSelected[i] = true;
+			if (sCheatComment[i].compare(0,10,"#selected#") == 0) {
+			sCheatSelected[i] = true;
+			sCheatComment[i].erase(0,10);
+			}
 			i++;
 		}
 		else
