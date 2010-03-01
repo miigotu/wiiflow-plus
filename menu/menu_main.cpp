@@ -1,7 +1,9 @@
 
 #include "menu.hpp"
+#include "loader/wdvd.h"
 
 #include <wiiuse/wpad.h>
+#include <unistd.h>
 #include <fstream>
 
 using namespace std;
@@ -70,6 +72,9 @@ int CMenu::main(void)
 	u32 buttonHeld = (u32)-1;
 	string prevTheme = m_cfg.getString(" GENERAL", "theme", "default");
 	bool reload = false;
+	float angle = 0;
+	float mag = 0;
+	static u32 disc_check = 0, olddisc_check = 0;
 
 	WPAD_Rumble(WPAD_CHAN_0, 0);
 	m_padLeftDelay = 0;
@@ -79,12 +84,29 @@ int CMenu::main(void)
 	m_curGameId.clear();
 	_initCF();
 	_startMusic();
+
+	WDVD_GetCoverStatus(&disc_check);
+	
 	while (true)
 	{
+		olddisc_check = disc_check;
+		WDVD_GetCoverStatus(&disc_check);
+				
 		WPAD_ScanPads();
 		padsState = WPAD_ButtonsDown(0);
 		wd = WPAD_Data(0);
 		btn = _btnRepeat(wd->btns_h);
+		//Get Nunchuk values
+		angle = wd->exp.nunchuk.js.ang;
+		mag = wd->exp.nunchuk.js.mag;
+		
+		//check if Disc was inserted
+		if ((disc_check & 0x2) && (disc_check!=olddisc_check) && !m_locked) {
+		_hideMain();
+		_wbfsOp(CMenu::WO_ADD_GAME);
+		_showMain();
+		}
+		
 		if ((padsState & WPAD_BUTTON_HOME) != 0)
 		{
 			reload = (wd->btns_h & WPAD_BUTTON_B) != 0;
@@ -138,9 +160,9 @@ int CMenu::main(void)
 			m_cf.pageUp();
 		else if ((padsState & WPAD_BUTTON_PLUS) != 0)
 			m_cf.pageDown();
-		else if ((btn & WPAD_BUTTON_LEFT) != 0)
+		else if ((btn & WPAD_BUTTON_LEFT) != 0 || ((angle > 255 && angle < 285) && mag > 0.75))
 			m_cf.left();
-		else if ((btn & WPAD_BUTTON_RIGHT) != 0)
+		else if ((btn & WPAD_BUTTON_RIGHT) != 0 || ((angle > 75 && angle < 105) && mag > 0.75))
 			m_cf.right();
 		if ((padsState & WPAD_BUTTON_A) != 0)
 		{
