@@ -17,6 +17,7 @@ using namespace std;
 
 extern const u8 dvdskin_png[];
 extern const u8 dvdskin_red_png[];
+extern const u8 dvdskin_black_png[];
 extern const u8 nopic_png[];
 extern const u8 loading_png[];
 extern const u8 flatnopic_png[];
@@ -1269,7 +1270,12 @@ void CCoverFlow::_drawCoverBox(int i, bool mirror, CCoverFlow::DrawMode dm)
 			m_items[m_covers[i].index].id == "SMNK01" || m_items[m_covers[i].index].id == "SMNW01")
 		{
 			GX_InitTexObj(&texObj, m_dvdSkin_Red.data.get(), m_dvdSkin_Red.width, m_dvdSkin_Red.height, m_dvdSkin_Red.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
-		} else {
+		} 
+		else if (m_items[m_covers[i].index].id == "RZZJEL" || m_items[m_covers[i].index].id == "RZNJ01")
+		{
+			GX_InitTexObj(&texObj, m_dvdSkin_Black.data.get(), m_dvdSkin_Black.width, m_dvdSkin_Black.height, m_dvdSkin_Black.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
+		}
+		else {
 			GX_InitTexObj(&texObj, m_dvdSkin.data.get(), m_dvdSkin.width, m_dvdSkin.height, m_dvdSkin.format, GX_CLAMP, GX_CLAMP, GX_FALSE);	
 		}
 		GX_LoadTexObj(&texObj, GX_TEXMAP0);
@@ -1594,6 +1600,8 @@ bool CCoverFlow::start(const char *id)
 	if (STexture::TE_OK != m_dvdSkin.fromPNG(dvdskin_png))
 		return false;
 	if (STexture::TE_OK != m_dvdSkin_Red.fromPNG(dvdskin_red_png))
+		return false;
+	if (STexture::TE_OK != m_dvdSkin_Black.fromPNG(dvdskin_black_png))
 		return false;
 	if (m_box)
 	{
