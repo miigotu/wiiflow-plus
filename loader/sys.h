@@ -14,6 +14,7 @@ bool Sys_Exiting(void);
 void Sys_Test(void);
 void Sys_Exit(int);
 void Sys_ExitToWiiMenu(bool);
+bool Sys_SupportsExternalModule(void);
 
 s32  Sys_GetCerts(signed_blob **, u32 *);
 

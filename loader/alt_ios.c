@@ -7,7 +7,8 @@
 #include "dip_plugin_3.h"
 #include "ehcmodule_4.h"
 #include "dip_plugin_4.h"
-#include "fat.h"
+#include "ehcmodule_frag.h"
+#include "fs.h"
 #include "wdvd.h"
 #include "disc.h"
 #include "usbstorage.h"
@@ -83,8 +84,12 @@ static int load_ehc_module(void)
 			break;
 		case 4:
 		default:
+			ehcmodule = ehcmodule_frag;
+			size_ehcmodule = size_ehcmodule_frag;
+/*
 			ehcmodule = ehcmodule_4;
 			size_ehcmodule = size_ehcmodule_4;
+*/			
 			dip_plugin = dip_plugin_4;
 			size_dip_plugin = size_dip_plugin_4;
 			break;

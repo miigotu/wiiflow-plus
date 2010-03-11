@@ -11,8 +11,9 @@
 #include "disc.h"
 #include "wdvd.h"
 #include "sys.h"
-#include "fat.h"
+#include "fs.h"
 #include "videopatch.h"
+#include "wbfs.h"
 
 #define ALIGNED(x) __attribute__((aligned(x)))
 
@@ -271,6 +272,18 @@ s32 Disc_SetWBFS(u32 mode, u8 *id)
 	else
 		memset(gameid, 0, sizeof gameid);
 	return WDVD_SetWBFSMode(mode, id);
+}
+
+s32 Disc_SetUSB(const u8 *id) {
+	u32 part = 0;
+	if (wbfs_part_fs) {
+		part = wbfs_part_lba;
+	} else {
+		part = wbfs_part_idx ? wbfs_part_idx - 1 : 0;
+	}
+
+    /* Set USB mode */
+	return WDVD_SetUSBMode(id, part);
 }
 
 s32 Disc_ReadHeader(void *outbuf)

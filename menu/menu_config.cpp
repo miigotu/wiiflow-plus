@@ -1,11 +1,12 @@
 
 #include "menu.hpp"
+#include "sys.h"
 
 #include <wiiuse/wpad.h>
 
 using namespace std;
 
-const int CMenu::_nbCfgPages = 6;
+const int CMenu::_nbCfgPages = 7;
 static const int g_curPage = 1;
 
 void CMenu::_hideConfig(bool instant)
@@ -94,6 +95,10 @@ void CMenu::_config(int page)
 				WPAD_Rumble(WPAD_CHAN_0, 0);
 				nextPage = _config3();
 				break;
+			case 7:
+				WPAD_Rumble(WPAD_CHAN_0, 0);
+				nextPage = _config5();
+				break;
 		}
 	WPAD_Rumble(WPAD_CHAN_0, 0);
 	m_cfg.save();
@@ -177,6 +182,7 @@ int CMenu::_config1(void)
 		_mainLoopCommon(wd);
 	}
 	_hideConfig();
+	
 	return nextPage;
 }
 

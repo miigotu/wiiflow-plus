@@ -1,7 +1,6 @@
 
 #include "menu.hpp"
 #include "loader/wbfs.h"
-#include "loader/libwbfs/libwbfs.h"
 
 #include <wiiuse/wpad.h>
 
@@ -78,25 +77,26 @@ int CMenu::_gameInstaller(void *obj)
 	CMenu &m = *(CMenu *)obj;
 	int ret;
 	u32 size;
-	u32 freeBlocks;
 
-	if (WBFS_GetHandle() == NULL)
+	if (GetHddInfo() == NULL)
 	{
 		m.m_thrdWorking = false;
 		return -1;
 	}
-	size = wbfs_estimate_disc(WBFS_GetHandle(), __WBFS_ReadDVD, NULL, ALL_PARTITIONS);
-	freeBlocks = wbfs_count_usedblocks(WBFS_GetHandle());
-	if (size > freeBlocks)
+
+	f32 freespace, used;
+	WBFS_DiskSpace(&used, &freespace);
+	size = WBFS_EstimeGameSize();
+	if (size > freespace)
 	{
 		LWP_MutexLock(m.m_mutex);
-		m._setThrdMsg(wfmt(m._fmt("wbfsop10", L"Not enough space : %i blocks needed, %i available"), size, freeBlocks), 0.f);
+		m._setThrdMsg(wfmt(m._fmt("wbfsop10", L"Not enough space : %i blocks needed, %i available"), size, freespace), 0.f);
 		LWP_MutexUnlock(m.m_mutex);
 		ret = -1;
 	}
 	else
 	{
-		ret = wbfs_add_disc(WBFS_GetHandle(), __WBFS_ReadDVD, NULL, CMenu::_addDiscProgress, obj, ALL_PARTITIONS, 0);
+		ret = WBFS_AddGame(CMenu::_addDiscProgress, obj);
 		LWP_MutexLock(m.m_mutex);
 		if (ret == 0)
 			m._setThrdMsg(m._t("wbfsop8", L"Game installed"), 1.f);

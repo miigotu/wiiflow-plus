@@ -1,7 +1,7 @@
 #include <string.h>
 #include <gccore.h>
 #include "cheat.hpp"
-#include "loader/fat.h"
+#include "loader/fs.h"
 #include "text.hpp"
 
 #include "menu.hpp"

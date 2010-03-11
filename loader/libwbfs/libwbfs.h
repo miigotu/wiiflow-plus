@@ -8,6 +8,11 @@
    extern "C" {
 #endif /* __cplusplus */
 
+enum {
+	WBFS_DEVICE_USB = 1,	/* USB device */
+	WBFS_DEVICE_SDHC	/* SDHC device */
+};
+
 typedef u32 be32_t;
 typedef u16 be16_t;
 
@@ -150,6 +155,7 @@ wbfs_disc_t *wbfs_open_disc(wbfs_t* p, const u8 *diskid);
 void wbfs_close_disc(wbfs_disc_t*d);
 
 u32 wbfs_sector_used(wbfs_t *p,wbfs_disc_info_t *di);
+u32 wbfs_sector_used2(wbfs_t *p,wbfs_disc_info_t *di, u32 *last_blk);
 
 /*! @brief accessor to the wii disc
   @param d: a pointer to already open disc
@@ -204,13 +210,24 @@ u32 wbfs_extract_disc(wbfs_disc_t*d, rw_sector_callback_t write_dst_wii_sector,v
 /*! extract a file from the wii disc filesystem. 
   E.G. Allows to extract the opening.bnr to install a game as a system menu channel
  */
-u32 wbfs_extract_file(wbfs_disc_t*d, char *path);
+u32 wbfs_extract_file(wbfs_disc_t*d, char *path, void **data);
 
 
 u64 wbfs_estimate_disc(wbfs_t *p, read_wiidisc_callback_t read_src_wii_disc, void *callback_data, partition_selector_t sel);
 
 // remove some sanity checks
 void wbfs_set_force_mode(int force);
+
+u32 wbfs_size_disc(wbfs_t*p,read_wiidisc_callback_t read_src_wii_disc,
+                  void *callback_data,partition_selector_t sel,
+				  u32 *comp_size, u32 *real_size);
+
+typedef int (*_frag_append_t)(void *ff, u32 offset, u32 sector, u32 count);
+int wbfs_get_fragments(wbfs_disc_t *d, _frag_append_t append_fragment, void *callback_data);
+
+extern wbfs_t wbfs_iso_file;
+u32 wbfs_disc_sector_used(wbfs_disc_t *d, u32 *num_blk);
+int wbfs_iso_file_read(wbfs_disc_t*d,u32 offset, u8 *data, u32 len);
 
 #ifdef __cplusplus
    }

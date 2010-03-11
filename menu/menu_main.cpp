@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <fstream>
 
+#include "wbfs.h"
+#include "gecko.h"
+
 using namespace std;
 
 extern const u8 btnconfig_png[];

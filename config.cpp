@@ -3,7 +3,7 @@
 
 #include "config.hpp"
 #include "text.hpp"
-#include "loader/fat.h"
+#include "loader/fs.h"
 
 using namespace std;
 

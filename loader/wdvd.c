@@ -3,6 +3,8 @@
 #include <malloc.h>
 #include <ogcsys.h>
 
+#include "gecko.h"
+
 /* Constants */
 #define IOCTL_DI_READID		0x70
 #define IOCTL_DI_READ		0x71
@@ -15,8 +17,14 @@
 #define IOCTL_DI_SEEK		0xAB
 #define IOCTL_DI_STOPLASER	0xD2
 #define IOCTL_DI_OFFSET		0xD9
+#define IOCTL_DI_DISC_BCA	0xDA
 #define IOCTL_DI_STOPMOTOR	0xE3
 #define IOCTL_DI_SETWBFSMODE	0xF4
+#define IOCTL_DI_DISABLERESET	0xF6
+
+/** Hermes IOS222 **/
+#define DI_SETWBFSMODE	0xfe
+
 
 /* Variables */
 static u32 inbuf[8]  ATTRIBUTE_ALIGN(32);
@@ -298,6 +306,56 @@ s32 WDVD_SetWBFSMode(u32 mode, u8 *discid)
 		memcpy(&inbuf[2], discid, 6);
 
 	ret = IOS_Ioctl(di_fd, IOCTL_DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+	if (ret < 0)
+		return ret;
+
+	return (ret == 1) ? 0 : -ret;
+}
+
+s32 WDVD_SetUSBMode(const u8 *id, s32 partition) 
+{
+    s32 ret;
+
+    memset(inbuf, 0, sizeof(inbuf));
+
+    /* Set USB mode */
+    inbuf[0] = IOCTL_DI_SETWBFSMODE << 24;
+    inbuf[1] = (id) ? 1 : 0;
+
+    /* Copy ID */
+    if (id) {
+        memcpy(&inbuf[2], id, 6);
+		if (IOS_GetVersion() != 249) {
+			gprintf("Setting partition to %d\n", partition);
+			inbuf[5] = partition;
+		}
+    }
+
+    ret = IOS_Ioctl(di_fd, IOCTL_DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+    if (ret!=1) {
+        // Try old cIOS 222
+        /* Set USB mode */
+        inbuf[0] = DI_SETWBFSMODE << 24;
+        ret = IOS_Ioctl(di_fd, DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+    }
+
+    if (ret < 0)
+        return ret;
+
+    return (ret == 1) ? 0 : -ret;
+}
+
+s32 WDVD_Read_Disc_BCA(void *buf)
+{
+	s32 ret;
+
+	memset(inbuf, 0, sizeof(inbuf));
+
+	/* Disc read */
+	inbuf[0] = IOCTL_DI_DISC_BCA << 24;
+	//inbuf[1] = 64;
+
+	ret = IOS_Ioctl(di_fd, IOCTL_DI_DISC_BCA, inbuf, sizeof(inbuf), buf, 64);
 	if (ret < 0)
 		return ret;
 

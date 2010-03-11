@@ -70,6 +70,7 @@ private:
 	STexture m_config2Bg;
 	STexture m_config3Bg;
 	STexture m_config4Bg;
+	STexture m_config5Bg;
 	STexture m_configAdvBg;
 	STexture m_configSndBg;
 	STexture m_downloadBg;
@@ -160,6 +161,13 @@ private:
 	u32 m_config4LblSearchMode;
 	u32 m_config4BtnSearchMode;
 	u32 m_config4LblUser[4];
+	u32 m_config5LblPartitionName;
+	u32 m_config5LblPartition;
+	u32 m_config5BtnPartitionP;
+	u32 m_config5BtnPartitionM;
+	u32 m_config5LblInstallDirectory;
+	u32 m_config5BtnInstallDirectory;
+	u32 m_config5LblUser[2];
 	u32 m_configSndLblBnrVol;
 	u32 m_configSndLblBnrVolVal;
 	u32 m_configSndBtnBnrVolP;
@@ -372,6 +380,7 @@ private:
 	void _initConfig2Menu(SThemeData &theme);
 	void _initConfig3Menu(SThemeData &theme);
 	void _initConfig4Menu(SThemeData &theme);
+	void _initConfig5Menu(SThemeData &theme);
 	void _initConfigAdvMenu(SThemeData &theme);
 	void _initConfigSndMenu(SThemeData &theme);
 	void _initGameMenu(SThemeData &theme);
@@ -395,6 +404,7 @@ private:
 	void _textConfig2(void);
 	void _textConfig3(void);
 	void _textConfig4(void);
+	void _textConfig5(void);
 	void _textConfigAdv(void);
 	void _textConfigSnd(void);
 	void _textGame(void);
@@ -409,6 +419,7 @@ private:
 	void _hideConfig2(bool instant = false);
 	void _hideConfig3(bool instant = false);
 	void _hideConfig4(bool instant = false);
+	void _hideConfig5(bool instant = false);
 	void _hideConfigAdv(bool instant = false);
 	void _hideConfigSnd(bool instant = false);
 	void _hideGame(bool instant = false);
@@ -424,6 +435,7 @@ private:
 	void _showConfig2(void);
 	void _showConfig3(void);
 	void _showConfig4(void);
+	void _showConfig5(void);
 	void _showConfigAdv(void);
 	void _showConfigSnd(void);
 	void _showGame(void);
@@ -443,6 +455,7 @@ private:
 	int _config2(void);
 	int _config3(void);
 	int _config4(void);
+	int _config5(void);
 	int _configAdv(void);
 	int _configSnd(void);
 	void _game(bool launch = false);

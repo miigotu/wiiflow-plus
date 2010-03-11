@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "sys.h"
+#include "gecko.h"
 
 /* Constants */
 #define CERTS_LEN	0x280
@@ -120,4 +121,14 @@ s32 Sys_GetCerts(signed_blob **certs, u32 *len)
 	}
 
 	return ret;
+}
+
+bool Sys_SupportsExternalModule(void)
+{
+	u32 version = IOS_GetVersion();
+	u32 revision = IOS_GetRevision();
+	
+	bool retval = revision == 4 && (version == 222 || version == 223 || version == 224);
+	gprintf("IOS Version: %d, Revision %d, returning %d\n", version, revision, retval);
+	return retval;
 }

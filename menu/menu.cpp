@@ -2,7 +2,7 @@
 #include "menu.hpp"
 #include "loader/sys.h"
 #include "loader/wbfs.h"
-#include "loader/fat.h"
+#include "loader/fs.h"
 #include "oggplayer.h"
 
 #include <wiiuse/wpad.h>
@@ -12,10 +12,7 @@
 #include <fstream>
 #include <dirent.h>
 
-#define APPDATA_DIR		"wiiflow"
-#define APPDATA_DIR2	"apps/wiiflow"
-#define CFG_FILENAME	"wiiflow.ini"
-#define LANG_FILENAME	"language.ini"
+#include "gecko.h"
 
 // Sounds
 extern const u8 click_wav[];
@@ -100,6 +97,7 @@ void CMenu::init(bool fromHBC)
 				m_cfg.load(sfmt("sd:/%s/%s", appdir.c_str(),CFG_FILENAME).c_str());
 		}
 				
+		m_cfg.setBool(" GENERAL", "data_on_usb", true);
 		bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", true);
 		drive = dataOnUSB ? "usb" : "sd";
 //		if (!m_cfg.loaded() && dataOnUSB)
@@ -556,6 +554,7 @@ void CMenu::_buildMenus(void)
 	_initErrorMenu(theme);
 	_initConfigAdvMenu(theme);
 	_initConfigSndMenu(theme);
+	_initConfig5Menu(theme);
 	_initConfig4Menu(theme);
 	_initConfig3Menu(theme);
 	_initConfig2Menu(theme);
@@ -1065,6 +1064,7 @@ void CMenu::_updateText(void)
 	_textConfig2();
 	_textConfig3();
 	_textConfig4();
+	_textConfig5();
 	_textConfigSnd();
 	_textConfigAdv();
 	_textDownload();
@@ -1089,7 +1089,7 @@ bool CMenu::_loadGameList(void)
 	SmartBuf buffer;
 	u32 count;
 
-	ret = WBFS_Open();
+	ret = WBFS_OpenNamed((char *) m_cfg.getString(" GENERAL", "partition", "WBFS1").c_str());
 	if (ret < 0)
 	{
 		error(wfmt(_fmt("wbfs2", L"WBFS_Open failed : %i"), ret));

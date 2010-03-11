@@ -1,5 +1,6 @@
 
 #include "menu.hpp"
+#include "wbfs.h"
 
 #include <dirent.h>
 #include <wiiuse/wpad.h>
@@ -167,9 +168,16 @@ int CMenu::_configAdv(void)
 				break;
 			else if (m_btnMgr.selected() == m_configAdvBtnInstall)
 			{
-				_hideConfigAdv();
-				_wbfsOp(CMenu::WO_ADD_GAME);
-				_showConfigAdv();
+				if (!WBFS_IsReadOnly())
+				{
+					_hideConfigAdv();
+					_wbfsOp(CMenu::WO_ADD_GAME);
+					_showConfigAdv();
+				}
+				else
+				{
+					error(_t("wbfsop10", L"This filesystem is read-only. You cannot install games or remove them."));
+				}
 			}
 			else if (m_btnMgr.selected() == m_configAdvBtnCurThemeP)
 			{

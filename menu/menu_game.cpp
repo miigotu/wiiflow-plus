@@ -1,7 +1,7 @@
 
 #include "menu.hpp"
 #include "loader/patchcode.h"
-#include "loader/fat.h"
+#include "loader/fs.h"
 #include "loader/sys.h"
 #include "loader/wdvd.h"
 #include "loader/alt_ios.h"
@@ -12,8 +12,8 @@
 
 #include "loader/wbfs.h"
 #include "loader/usbstorage.h"
-#include "loader/libwbfs/libwbfs.h"
 #include "loader/libwbfs/wiidisc.h"
+#include "loader/frag.h"
 
 using namespace std;
 
@@ -115,7 +115,7 @@ void CMenu::_game(bool launch)
 	if (!launch)
 	{
 		WPAD_ScanPads();
-		_playGameSound();
+//		_playGameSound();
 		_showGame();
 	}
 	while (true)
@@ -157,11 +157,18 @@ void CMenu::_game(bool launch)
 				break;
 			else if (m_btnMgr.selected() == m_gameBtnDelete)
 			{
-				_hideGame();
-				_waitForGameSoundExtract();
-				if (_wbfsOp(CMenu::WO_REMOVE_GAME))
-					break;
-				_showGame();
+				if (!WBFS_IsReadOnly())
+				{
+					_hideGame();
+					_waitForGameSoundExtract();
+					if (_wbfsOp(CMenu::WO_REMOVE_GAME))
+						break;
+					_showGame();
+				}
+				else
+				{
+					error(_t("wbfsop10", L"This filesystem is read-only. You cannot install games or remove them."));
+				}
 			}
 			else if (m_btnMgr.selected() == m_gameBtnFavoriteOn || m_btnMgr.selected() == m_gameBtnFavoriteOff)
 				m_cfg.setBool(id, "favorite", !m_cfg.getBool(id, "favorite", false));
@@ -202,7 +209,7 @@ void CMenu::_game(bool launch)
 			else // ((padsState & WPAD_BUTTON_RIGHT) != 0)
 				m_cf.right();
 			_showGame();
-			_playGameSound();
+//			_playGameSound();
 		}
 		// 
 		if (wd->ir.valid)
@@ -240,11 +247,11 @@ static SmartBuf extractDOL(const char *dolName, u32 &size, const char *gameId)
 {
 	SmartBuf dolFile;
 	Disc_SetWBFS(0, NULL);
-	wbfs_disc_t *disc = wbfs_open_disc(WBFS_GetHandle(), (u8 *)gameId);
+	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId);
 	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
 	dolFile = SmartBuf(wd_extract_file(wdisc, &size, ALL_PARTITIONS, dolName, ALLOC_COVER), SmartBuf::SRCALL_COVER);
 	wd_close_disc(wdisc);
-	wbfs_close_disc(disc);
+	WBFS_CloseDisc(disc);
 	return dolFile;
 }
 
@@ -300,20 +307,38 @@ void CMenu::_launchGame(const string &id)
 		disableIOSReload();
 	if (!altdol.empty())
 		dolFile = extractDOL(altdol.c_str(), dolSize, id.c_str());
-	wbfs_close(WBFS_GetHandle());
 	if (cheat)
 		loadCheatFile(cheatFile, cheatSize, id.c_str());
-	if (Disc_SetWBFS(1, (u8 *)id.c_str()) < 0)
+
+	if (get_frag_list((u8 *)id.c_str()) < 0)
+	{
+		if (iosLoaded)
+			Sys_LoadMenu();
+		return;
+	}
+
+	if (set_frag_list((u8 *)id.c_str()) < 0)
+	{
+		if (iosLoaded)
+			Sys_LoadMenu();
+		return;
+	}
+
+//	if (Disc_SetWBFS(1, (u8 *)id.c_str()) < 0)
+	if (Disc_SetUSB((u8 *)id.c_str()) < 0)
 	{
 		error(L"Disc_SetWBFS failed");
 		if (iosLoaded)
 			Sys_LoadMenu();
 		return;
 	}
+	
+	WBFS_Close();
+	
 	if (Disc_Open() < 0)
 	{
 		error(L"Disc_Open failed");
-		if (iosLoaded)
+		if (iosLoaded) 	
 			Sys_LoadMenu();
 		return;
 	}
@@ -321,7 +346,9 @@ void CMenu::_launchGame(const string &id)
 	cleanup();
 	USBStorage_Deinit();
 	if (Disc_WiiBoot(videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode) < 0)
+	{
 		Sys_LoadMenu();
+	}
 }
 
 bool CMenu::_networkFix(void)
@@ -407,11 +434,11 @@ static void _extractBnr(SmartBuf &bnr, u32 &size, const string &gameId)
 {
 	bnr.release();
 	Disc_SetWBFS(0, NULL);
-	wbfs_disc_t *disc = wbfs_open_disc(WBFS_GetHandle(), (u8 *)gameId.c_str());
+	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str());
 	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
 	bnr = SmartBuf(wd_extract_file(wdisc, &size, ALL_PARTITIONS, "opening.bnr", ALLOC_MEM2), SmartBuf::SRCALL_MEM2);
 	wd_close_disc(wdisc);
-	wbfs_close_disc(disc);
+	WBFS_CloseDisc(disc);
 }
 
 struct IMD5Header
