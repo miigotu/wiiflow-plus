@@ -719,7 +719,7 @@ s32 WBFS_FAT_DVD_Size(u64 *comp_size, u64 *real_size)
 }
 
 bool WBFS_FAT_IsReadOnly(void) {
-	return wbfs_part_fs == PART_FS_FAT;
+	return wbfs_part_fs == PART_FS_NTFS;
 }
 
 s32 WBFS_FAT_GetFragList(u8 *id) {

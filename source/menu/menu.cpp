@@ -97,7 +97,6 @@ void CMenu::init(bool fromHBC)
 				m_cfg.load(sfmt("sd:/%s/%s", appdir.c_str(),CFG_FILENAME).c_str());
 		}
 				
-		m_cfg.setBool(" GENERAL", "data_on_usb", true);
 		bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", true);
 		drive = dataOnUSB ? "usb" : "sd";
 //		if (!m_cfg.loaded() && dataOnUSB)

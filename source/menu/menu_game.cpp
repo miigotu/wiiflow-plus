@@ -115,7 +115,7 @@ void CMenu::_game(bool launch)
 	if (!launch)
 	{
 		WPAD_ScanPads();
-//		_playGameSound();
+		_playGameSound();
 		_showGame();
 	}
 	while (true)
@@ -209,7 +209,7 @@ void CMenu::_game(bool launch)
 			else // ((padsState & WPAD_BUTTON_RIGHT) != 0)
 				m_cf.right();
 			_showGame();
-//			_playGameSound();
+			_playGameSound();
 		}
 		// 
 		if (wd->ir.valid)
@@ -435,10 +435,16 @@ static void _extractBnr(SmartBuf &bnr, u32 &size, const string &gameId)
 	bnr.release();
 	Disc_SetWBFS(0, NULL);
 	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str());
-	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
-	bnr = SmartBuf(wd_extract_file(wdisc, &size, ALL_PARTITIONS, "opening.bnr", ALLOC_MEM2), SmartBuf::SRCALL_MEM2);
-	wd_close_disc(wdisc);
-	WBFS_CloseDisc(disc);
+	if (disc != NULL)
+	{
+		wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
+		if (wdisc != NULL)
+		{
+			bnr = SmartBuf(wd_extract_file(wdisc, &size, ALL_PARTITIONS, "opening.bnr", ALLOC_MEM2), SmartBuf::SRCALL_MEM2);
+			wd_close_disc(wdisc);
+		}
+		WBFS_CloseDisc(disc);
+	}
 }
 
 struct IMD5Header

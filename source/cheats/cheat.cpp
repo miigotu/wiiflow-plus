@@ -239,7 +239,11 @@ void CMenu::_hideCheatSettings(bool instant)
 	for (int i=0;i<5;++i) {
 		m_btnMgr.hide(m_cheatBtnItem[i], instant);
 		m_btnMgr.hide(m_cheatLblItem[i], instant);
-	}	
+	}
+	
+	for (u32 i = 0; i < ARRAY_SIZE(m_cheatLblUser); ++i)
+		if (m_cheatLblUser[i] != -1u)
+			m_btnMgr.hide(m_cheatLblUser[i]);
 }
 
 // CheatMenu
@@ -251,6 +255,10 @@ void CMenu::_showCheatSettings(void)
 	_setBg(m_cheatBg, m_cheatBg);
 	m_btnMgr.show(m_cheatBtnBack);
 	m_btnMgr.show(m_cheatLblTitle);
+
+	for (u32 i = 0; i < ARRAY_SIZE(m_cheatLblUser); ++i)
+		if (m_cheatLblUser[i] != -1u)
+			m_btnMgr.show(m_cheatLblUser[i]);
 
 	if (m_cheatfile.getCnt() > 0) {
 
@@ -302,7 +310,8 @@ void CMenu::_showCheatSettings(void)
 
 void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 {
-	m_cheatBg = _texture(theme.texSet, "DOWNLOAD/BG", "texture", theme.bg);
+	_addUserLabels(theme, m_cheatLblUser, ARRAY_SIZE(m_cheatLblUser), "CHEAT");
+	m_cheatBg = _texture(theme.texSet, "CHEAT/BG", "texture", theme.bg);
 	m_cheatLblTitle = _addLabel(theme, "CHEAT/TITLE", theme.lblFont, L"Cheats", 20, 30, 600, 60, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnBack = _addButton(theme, "CHEAT/BACK_BTN", theme.btnFont, L"", 460, 410, 150, 56, theme.btnFontColor);
 	m_cheatBtnApply = _addButton(theme, "CHEAT/APPLY_BTN", theme.btnFont, L"", 240, 410, 150, 56, theme.btnFontColor);
