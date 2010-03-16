@@ -38,7 +38,10 @@ int old_main(int argc, char **argv)
 	bool hbc;
 	
 	gprintf("Argc: %d\n", argc);
-	gprintf("Argv: %s\n", argv[0]);
+	if (argc > 0)
+	{
+		gprintf("Argv: %s\n", argv[0]);
+	}
 	
 	// Narolez: check if ios argument is passed in argv[0]
 	if (argc > 0 && argv[0] != NULL && strcasestr(argv[0], "ios=") != 0)

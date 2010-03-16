@@ -355,11 +355,19 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 
 	usleep(100 * 1000);
 
+	u8 temp_data[4];
+
+	// fix for PeppaPig
+	memcpy((char *) &temp_data, (void*)0x800000F4,4);
+
 	/* Shutdown IOS subsystems */
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 	/*IRQ_Disable(); //Seems to break start of other games !?
 	__IOS_ShutdownSubsystems();
 	__exception_closeall();*/ 
+
+	// fix for PeppaPig
+	memcpy((void*)0x800000F4,(char *) &temp_data, 4);
 
 
 	/* Jump to entry point */
