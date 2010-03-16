@@ -709,7 +709,7 @@ s32 WBFS_GetCurrentPartition() {
 s32 WBFS_GetPartitionCount() {
 	if (InitPartitionList()) return -1;
 	if (!Sys_SupportsExternalModule()) return plist.wbfs_n;
-	return plist.num;
+	return plist.wbfs_n + plist.fat_n + plist.ntfs_n;
 }
 
 s32 WBFS_GetPartitionName(u32 index, char *buf) {

@@ -14,6 +14,8 @@
 #include "loader/usbstorage.h"
 #include "loader/libwbfs/wiidisc.h"
 #include "loader/frag.h"
+#include "loader/fst.h"
+#include "loader/wip.h"
 
 using namespace std;
 
@@ -308,7 +310,11 @@ void CMenu::_launchGame(const string &id)
 	if (!altdol.empty())
 		dolFile = extractDOL(altdol.c_str(), dolSize, id.c_str());
 	if (cheat)
-		loadCheatFile(cheatFile, cheatSize, id.c_str());
+		loadCheatFile(cheatFile, cheatSize, m_cheatDir.c_str(), id.c_str());
+	
+	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) id.c_str());
+	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) id.c_str());
+	ocarina_load_code((u8 *) id.c_str(), cheatFile.get(), cheatSize);
 
 	if (get_frag_list((u8 *)id.c_str()) < 0)
 	{
@@ -324,7 +330,6 @@ void CMenu::_launchGame(const string &id)
 		return;
 	}
 
-//	if (Disc_SetWBFS(1, (u8 *)id.c_str()) < 0)
 	if (Disc_SetUSB((u8 *)id.c_str()) < 0)
 	{
 		error(L"Disc_SetWBFS failed");

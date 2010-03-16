@@ -8,11 +8,9 @@
 #include "patchcode.h"
 #include "disc.h"
 #include "videopatch.h"
+#include "wip.h"
 
-/*KENOBI! - FISHEARS*/
-extern const unsigned char kenobiwii[];
-extern const int kenobiwii_size;
-/*KENOBI! - FISHEARS*/
+#include "gecko.h"
 
 typedef struct _SPatchCfg
 {
@@ -63,6 +61,8 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 	u32 appldr_len;
 	s32 ret;
 
+	wipreset();
+
 	SYS_SetArena1Hi((void *)0x816FFFF0);
 	/* Read apploader header */
 	ret = WDVD_Read(buffer, 0x20, APPLDR_OFFSET);
@@ -88,16 +88,6 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 	/* Initialize apploader */
 	appldr_init(__noprint);
 
-	if (cheat)
-	{
-		/*HOOKS STUFF - FISHEARS*/
-		memcpy((void *)0x80001800, kenobiwii, kenobiwii_size);
-		DCFlushRange((void *)0x80001800, kenobiwii_size);
-		hooktype = 1;
-		memcpy((void *)0x80001800, (char *)0x80000000, 6);	// For WiiRD
-		/*HOOKS STUFF - FISHEARS*/
-	}
-
 	while (appldr_main(&dst, &len, &offset))
 	{
 		/* Read data from DVD */
@@ -105,6 +95,14 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 		maindolpatches(dst, len, cheat, vidMode, vmode, vipatch, countryString, error002Fix, patchVidModes);
 	}
 	WDVD_Close();
+
+	gprintf("Applying wip patches...");
+	
+	do_wip_patches();
+	wipreset();
+
+	gprintf("done\n");
+	
 	/* Alternative dol */
 	if (altdol != 0)
 	{
@@ -225,9 +223,13 @@ static void patch_NoDiscinDrive(void *buffer, u32 len)
 	int n;
 
    /* Patch cover register */
-	for (n = 0; n < len - sizeof oldcode; n += 4)
-		if (memcmp(buffer + n, (void *)oldcode, sizeof oldcode) == 0) 
+	for (n = 0; n < len - sizeof oldcode; n += 4) // n is not 4 aligned here, so you can get an out of buffer thing
+	{
+		if (memcmp(buffer + n, (void *)oldcode, sizeof oldcode) == 0)
+		{
 			memcpy(buffer + n, (void *)newcode, sizeof newcode);
+		}
+	}
 }
 
 bool NewSuperMarioBrosPatch(void *Address, int Size)
@@ -265,14 +267,17 @@ bool NewSuperMarioBrosPatch(void *Address, int Size)
 static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes)
 {
 	DCFlushRange(dst, len);
-
-	patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
+	
+	gprintf("Applying patches...");
+	wipregisteroffset((u32) dst, len);
 
 	// Patch NoDiscInDrive only for IOS 249 < rev13 or IOS 222/223
-	if (   (IOS_GetVersion() == 249 && IOS_GetRevision() < 13)
+	if ((IOS_GetVersion() == 249 && IOS_GetRevision() < 13)
 	    || (IOS_GetVersion() == 222 || IOS_GetVersion() == 223) 
 	   )
 		patch_NoDiscinDrive(dst, len);
+	
+	patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
 
 	if (cheat)
 		dogamehooks(dst, len);
@@ -284,10 +289,11 @@ static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeOb
 		Anti_002_fix(dst, len);
 	if (countryString) // Country Patch by WiiPower
 		PatchCountryStrings(dst, len);
-
+	
 	// NSMB Patch by WiiPower
 	NewSuperMarioBrosPatch(dst,len);
 
+	gprintf("done\n");
 	DCFlushRange(dst, len);
 }
 

@@ -57,6 +57,10 @@ private:
 	std::string m_cacheDir;
 	std::string m_themeDir;
 	std::string m_musicDir;
+	std::string m_bcaDir;
+	std::string m_wipDir;
+	std::string m_cheatDir;
+	std::string m_txtCheatDir;
 	// 
 	STexture m_prevBg;
 	STexture m_nextBg;

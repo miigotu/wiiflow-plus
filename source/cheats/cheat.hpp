@@ -4,6 +4,6 @@
 
 #include "smartptr.hpp"
 
-void loadCheatFile(SmartBuf &buffer, u32 &size, const char *gameId);
+void loadCheatFile(SmartBuf &buffer, u32 &size, const char *cheatPath, const char *gameId);
 
 #endif	// !defined(__CHEAT_HPP)

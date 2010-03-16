@@ -129,7 +129,7 @@ int CMenu::_config5(void)
 			else if (m_btnMgr.selected() == m_config5BtnPartitionP)
 			{
 				char buf[5];
-				currentPartition = loopNum(currentPartition + 1, amountOfPartitions - 1);
+				currentPartition = loopNum(currentPartition + 1, amountOfPartitions);
 				gprintf("Next item: %d\n", currentPartition);
 				WBFS_GetPartitionName(currentPartition, (char *) &buf);
 				gprintf("Which is: %s\n", buf);
@@ -139,7 +139,7 @@ int CMenu::_config5(void)
 			else if (m_btnMgr.selected() == m_config5BtnPartitionM)
 			{
 				char buf[5];
-				currentPartition = loopNum(currentPartition - 1, amountOfPartitions - 1);
+				currentPartition = loopNum(currentPartition - 1, amountOfPartitions);
 				gprintf("Next item: %d\n", currentPartition);
 				WBFS_GetPartitionName(currentPartition, (char *) &buf);
 				gprintf("Which is: %s\n", buf);

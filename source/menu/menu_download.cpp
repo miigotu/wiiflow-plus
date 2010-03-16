@@ -340,9 +340,6 @@ int CMenu::_coverDownloader(bool missingOnly)
 						file = fopen(path.c_str(), "wb");
 						if (file != NULL)
 						{
-							fwrite("garbage", 7, 1, file);
-							fclose(file);
-							file = fopen(path.c_str(), "wb");
 							fwrite(png.data, png.size, 1, file);
 							fclose(file);
 						}
@@ -383,9 +380,6 @@ int CMenu::_coverDownloader(bool missingOnly)
 								file = fopen(path.c_str(), "wb");
 								if (file != NULL)
 								{
-									fwrite("garbage", 7, 1, file);
-									fclose(file);
-									file = fopen(path.c_str(), "wb");
 									fwrite(png.data, png.size, 1, file);
 									fclose(file);
 								}

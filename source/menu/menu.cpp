@@ -118,12 +118,11 @@ void CMenu::init(bool fromHBC)
 	m_cacheDir = m_cfg.getString(" GENERAL", "dir_cache", sfmt("%s:/%s/cache", drive, appdir.c_str()));
 	m_themeDir = m_cfg.getString(" GENERAL", "dir_themes", sfmt("%s:/%s/themes", drive, appdir.c_str()));
 	m_musicDir = m_cfg.getString(" GENERAL", "dir_music", sfmt("%s:/%s/music", drive, appdir.c_str())); 
-	/*m_picDir = m_cfg.getString(" GENERAL", "dir_flat_covers", sfmt("%s:/" APPDATA_DIR "/covers", drive));
-	m_boxPicDir = m_cfg.getString(" GENERAL", "dir_box_covers", sfmt("%s:/" APPDATA_DIR "/boxcovers", drive));
-	m_cacheDir = m_cfg.getString(" GENERAL", "dir_cache", sfmt("%s:/" APPDATA_DIR "/cache", drive));
-	m_themeDir = m_cfg.getString(" GENERAL", "dir_themes", sfmt("%s:/" APPDATA_DIR "/themes", drive));
-	m_musicDir = m_cfg.getString(" GENERAL", "dir_music", sfmt("%s:/" APPDATA_DIR "/music", drive));*/
-	// 
+	m_bcaDir = m_cfg.getString(" GENERAL", "dir_bca", sfmt("%s:/%s/codes", drive, appdir.c_str())); ;
+	m_wipDir = m_cfg.getString(" GENERAL", "dir_wip", sfmt("%s:/%s/codes", drive, appdir.c_str())); ;
+	m_cheatDir = m_cfg.getString(" GENERAL", "dir_cheat", sfmt("%s:/%s/codes", drive, appdir.c_str())); ;
+	m_txtCheatDir = m_cfg.getString(" GENERAL", "dir_txtcheat", sfmt("%s:/%s/txtcodes", drive, appdir.c_str())); ;
+
 	m_cf.init();
 	// 
 	struct stat dummy;
@@ -134,6 +133,10 @@ void CMenu::init(bool fromHBC)
 		mkdir(m_boxPicDir.c_str(), 0777);
 		mkdir(m_cacheDir.c_str(), 0777);
 		mkdir(m_themeDir.c_str(), 0777);
+		mkdir(m_bcaDir.c_str(), 0777);
+		mkdir(m_wipDir.c_str(), 0777);
+		mkdir(m_cheatDir.c_str(), 0777);
+		mkdir(m_txtCheatDir.c_str(), 0777);
 	}
 	// INI files
 	m_loc.load(sfmt("%s/" LANG_FILENAME, m_dataDir.c_str()).c_str());

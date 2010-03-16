@@ -12,6 +12,7 @@
 #include "wdvd.h"
 #include "sys.h"
 #include "fs.h"
+#include "fst.h"
 #include "videopatch.h"
 #include "wbfs.h"
 
@@ -21,6 +22,9 @@
 #define PTABLE_OFFSET	0x40000
 #define WII_MAGIC	0x5D1C9EA3
 
+//appentrypoint 
+u32 appentrypoint;
+	
 /* Disc pointers */
 static u32 buffer[0x20] ALIGNED(32);
 static u8  *diskid = (u8  *)0x80000000;
@@ -58,6 +62,7 @@ void __Disc_SetLowMem(void)
 	*(vu32 *)0x800000F0 = 0x01800000;       // Simulated Memory Size
 	*BI2 = 0x817E5480;
 	*(vu32 *)0x800000F8 = 0x0E7BE2C0;
+	*(vu32 *)0xCD00643C = 0x00000000;       // 32Mhz on Bus
 
 	// From NeoGamme R4 (WiiPower)
 	*(vu32 *)0x800030F0 = 0x0000001C;
@@ -323,7 +328,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
     WPAD_Flush(0);
     WPAD_Disconnect(0);
     WPAD_Shutdown();
-
+	
 	/* Setup low memory */;
 	__Disc_SetLowMem();
 
@@ -338,12 +343,12 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	/* Set an appropriate video mode */
 	__Disc_SetVMode();
 
+	do_bca_code();
 	if (cheat != 0)
 	{
-		memcpy((void *)0x800027E8, cheat, cheatSize);
-		*(vu8 *)0x80001807 = 0x01;
+		ocarina_do_code();
 	}
-	DCFlushRange((void*)0x80000000, 0xA00000);
+//	DCFlushRange((void*)0x80000000, 0xA00000);
 
 	/* Set time */
 	__Disc_SetTime();
@@ -369,9 +374,31 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	// fix for PeppaPig
 	memcpy((void*)0x800000F4,(char *) &temp_data, 4);
 
-
-	/* Jump to entry point */
-	p_entry();
+	appentrypoint = (u32) p_entry;
+	
+	if (cheat != 0)
+	{
+		__asm__(
+			"lis %r3, appentrypoint@h\n"
+			"ori %r3, %r3, appentrypoint@l\n"
+			"lwz %r3, 0(%r3)\n"
+			"mtlr %r3\n"
+			"lis %r3, 0x8000\n"
+			"ori %r3, %r3, 0x18A8\n"
+			"mtctr %r3\n"
+			"bctr\n"
+		);
+	}
+	else
+	{
+		__asm__(
+			"lis %r3, appentrypoint@h\n"
+			"ori %r3, %r3, appentrypoint@l\n"
+			"lwz %r3, 0(%r3)\n"
+			"mtlr %r3\n"
+			"blr\n"
+		);
+	}
 
 	return 0;
 }
