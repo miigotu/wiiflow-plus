@@ -86,6 +86,7 @@ int CMenu::main(void)
 	_showMain();
 	m_curGameId.clear();
 	_initCF();
+	_searchMusic();
 	_startMusic();
 
 	WDVD_GetCoverStatus(&disc_check);

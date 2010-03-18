@@ -1182,20 +1182,32 @@ static void listOGGMP3(const char *path, vector<string> &oggFiles)
 	}
 }
 
+void CMenu::_searchMusic(void)
+{
+	listOGGMP3(m_musicDir.c_str(), music_files);
+	if (music_files.empty())
+		return;
+		
+	if (m_cfg.getBool(" GENERAL", "randomize_music", true))
+		random_shuffle(music_files.begin(), music_files.end());
+		
+	current_music = music_files.begin();
+}
+
 void CMenu::_startMusic(void)
 {
-	vector<string> v;
-	u32 rand_num;
 	SmartBuf buffer;
 
-	_stopMusic();
-	listOGGMP3(m_musicDir.c_str(), v);
-	if (v.empty())
+	if (music_files.empty())
 		return;
-	srand(time(NULL));
-	rand_num = rand();
-	ifstream file(sfmt("%s/%s", m_musicDir.c_str(), v[rand_num % v.size()].c_str()).c_str(), ios::in | ios::binary);
-	m_music_ismp3 = v[rand_num % v.size()].substr(v[rand_num % v.size()].size() - 4, 4) == ".MP3";
+		
+	if (current_music == music_files.end())
+		current_music = music_files.begin();
+
+	_stopMusic();
+
+	ifstream file(sfmt("%s/%s", m_musicDir.c_str(), (*current_music).c_str()).c_str(), ios::in | ios::binary);
+	m_music_ismp3 = (*current_music).substr((*current_music).size() - 4, 4) == ".MP3";
 	if (!file.is_open())
 		return;
 	file.seekg(0, ios::end);
@@ -1219,6 +1231,8 @@ void CMenu::_startMusic(void)
 	}
 	SetVolumeOgg(m_cfg.getInt(" GENERAL", "sound_volume_music", 255));
 	MP3Player_Volume(m_cfg.getInt(" GENERAL", "sound_volume_music", 255));
+	
+	current_music++;
 }
 
 void CMenu::_stopMusic(void)

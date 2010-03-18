@@ -327,6 +327,8 @@ private:
 	
 	bool m_music_ismp3;
 	u32 m_music_fileSize;
+	vector<string> music_files;
+	vector<string>::iterator current_music;
 private:
 	enum WBFS_OP { WO_ADD_GAME, WO_REMOVE_GAME, WO_FORMAT };
 	typedef std::pair<std::string, u32> FontDesc;
@@ -515,6 +517,7 @@ private:
 	static int _gameInstaller(void *obj);
 	wstringEx _optBoolToString(int b);
 	void _listDOL(std::vector<std::string> &v, const std::string &gameId);
+	void _searchMusic(void);
 	void _startMusic(void);
 	void _stopMusic(void);
 	void _pauseMusic(void);
