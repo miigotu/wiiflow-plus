@@ -35,6 +35,7 @@ s32 wbfsDev = WBFS_MIN_DEVICE;
 int wbfs_part_fs  = PART_FS_WBFS;
 u32 wbfs_part_idx = 0;
 u32 wbfs_part_lba = 0;
+u32 partlistIndex = 0;
 
 /* WBFS HDD */
 wbfs_t *hdd = NULL;
@@ -404,6 +405,7 @@ s32 WBFS_OpenNamed(char *partition)
 	if (i >= plist.num) goto err;
 	// set partition lba sector
 	part_lba = plist.pentry[i].sector;
+	partlistIndex = i;
 
 	if (WBFS_OpenPart(part_fs, part_idx, part_lba, plist.pentry[i].size, partition)) {
 		goto err;
@@ -703,7 +705,7 @@ char *fstfilename2(FST_ENTRY *fst, u32 index)
 }
 
 s32 WBFS_GetCurrentPartition() {
-	return wbfs_part_idx;
+	return partlistIndex;
 }
 
 s32 WBFS_GetPartitionCount() {

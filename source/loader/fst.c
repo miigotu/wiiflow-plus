@@ -31,7 +31,7 @@
 #include "fs.h"
 #include "mload.h"
 #include "gecko.h"
-#include "dip_plugin_4.h"
+#include "mload_modules.h"
 
 #include "patchcode.h"
 
@@ -735,9 +735,7 @@ u32 do_bca_code(u8 *gameid)
 {
 	if ((IOS_GetVersion() == 222 || IOS_GetVersion() == 223) && IOS_GetRevision() >= 4)
 	{
-		mload_seek(*((u32 *) (dip_plugin_4+15*4)), SEEK_SET);	// offset 15 (bca_data area)
-		mload_write(bcaCode, 64);
-		mload_close();
+		Set_DIP_BCA_Datas(gameid);
 	}
 	return 0;
 }

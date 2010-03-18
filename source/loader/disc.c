@@ -15,6 +15,7 @@
 #include "fst.h"
 #include "videopatch.h"
 #include "wbfs.h"
+#include "patchcode.h"
 
 #define ALIGNED(x) __attribute__((aligned(x)))
 
@@ -344,7 +345,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	__Disc_SetVMode();
 
 	do_bca_code();
-	if (cheat != 0)
+	if (cheat != 0 && hooktype != 0)
 	{
 		ocarina_do_code();
 	}

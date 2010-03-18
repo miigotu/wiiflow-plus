@@ -324,6 +324,9 @@ private:
 	lwp_t m_gameSoundThread;
 	mutex_t m_gameSndMutex;
 	u8 m_bnrSndVol;
+	
+	bool m_music_ismp3;
+	u32 m_music_fileSize;
 private:
 	enum WBFS_OP { WO_ADD_GAME, WO_REMOVE_GAME, WO_FORMAT };
 	typedef std::pair<std::string, u32> FontDesc;
@@ -516,6 +519,7 @@ private:
 	void _stopMusic(void);
 	void _pauseMusic(void);
 	void _resumeMusic(void);
+	void _loopMusic(void);
 	void _stopSounds(void);
 	// 
 	void _playGameSound(void);
@@ -527,7 +531,7 @@ private:
 	static const SOption _languages[11];
 	static const SOption _videoModes[7];
 	static const SOption _vidModePatch[4];
-	static const int _ios[5];
+	static const int _ios[6];
 	static const SCFParamDesc _cfParams[];
 	static const int _nbCfgPages;
 };

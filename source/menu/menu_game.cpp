@@ -4,6 +4,7 @@
 #include "loader/fs.h"
 #include "loader/sys.h"
 #include "loader/wdvd.h"
+#include "loader/mload_modules.h"
 #include "loader/alt_ios.h"
 #include "cheat.hpp"
 #include <wiiuse/wpad.h>
@@ -65,7 +66,7 @@ const CMenu::SOption CMenu::_vidModePatch[4] = {
 	{ "vmpall", L"All" }
 };
 
-const int CMenu::_ios[5] = {0, 249, 250, 222, 223};
+const int CMenu::_ios[6] = {0, 249, 250, 222, 223, 224};
 
 static inline int loopNum(int i, int s)
 {
@@ -269,10 +270,13 @@ void CMenu::_launchGame(const string &id)
 	int iosNum = CMenu::_ios[min((u32)m_cfg.getInt(id, "ios", 0), ARRAY_SIZE(CMenu::_ios) - 1u)];
 	if (iosNum == 0)
 		iosNum = mainIOS;
-	bool mload = iosNum == 222 || iosNum == 223;
+	bool mload = iosNum == 222 || iosNum == 223 || iosNum == 224;
 	int minIOSRev = mload ? IOS_222_MIN_REV : IOS_249_MIN_REV;
 	bool blockIOSReload = m_cfg.getBool(id, "block_ios_reload", false);
 	u8 patchVidMode = min((u32)m_cfg.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
+	hooktype = (u32) m_cfg.getInt(id, "hooktype", 1); // hooktype is defined in patchcode.h
+	debuggerselect = m_cfg.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
+	
 	SmartBuf cheatFile;
 	u32 cheatSize = 0;
 	SmartBuf dolFile;
@@ -287,6 +291,8 @@ void CMenu::_launchGame(const string &id)
 	if (strcasecmp(altdol.c_str(), "main.dol") == 0)
 		altdol.clear();
 	m_cfg.setString(" GENERAL", "current_game", id);
+	m_cfg.setInt(id, "playcount", m_cfg.getInt(id, "playcount", 0) + 1);
+	
 	m_cfg.save();
 	setLanguage(language);
 	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing

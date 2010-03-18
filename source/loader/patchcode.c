@@ -189,7 +189,6 @@ bool dogamehooks(void *addr, u32 len)
 {
 	//TODO for oggzee: when using Ocarina check if a hook as patched
 
-	hooktype = 1; // TODO for oggzee: Create an option for hooktype
 	/*
 0 No Hook
 1 VBI

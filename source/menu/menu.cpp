@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <dirent.h>
+#include <mp3player.h>
 
 #include "gecko.h"
 
@@ -853,7 +854,8 @@ void CMenu::_initCF(void)
 			wstringEx w(titles.getWString("TITLES", id));
 			if (w.empty())
 				w = titles.getWString("TITLES", id.substr(0, 4), string(m_gameList[i].title, sizeof m_gameList[0].title));
-			m_cf.addItem(id.c_str(), w.c_str(), sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str());
+			int playcount = m_cfg.getInt(id, "playcount", 0);
+			m_cf.addItem(id.c_str(), w.c_str(), sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount);
 		}
 	}
 	m_cf.setBoxMode(m_cfg.getBool(" GENERAL", "box_mode", true));
@@ -927,6 +929,7 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 	LWP_MutexUnlock(m_gameSndMutex);
 	if (withCF && m_gameSoundThread == 0)
 		m_cf.startPicLoader();
+	_loopMusic();
 }
 
 void CMenu::_setBg(const STexture &tex, const STexture &lqTex)
@@ -1149,11 +1152,12 @@ bool CMenu::_loadGameList(void)
 	return true;
 }
 
-static void listOGG(const char *path, vector<string> &oggFiles)
+static void listOGGMP3(const char *path, vector<string> &oggFiles)
 {
 	DIR *d;
 	struct dirent *dir;
 	string fileName;
+	string fileExt;
 
 	oggFiles.clear();
 	d = opendir(path);
@@ -1166,8 +1170,12 @@ static void listOGG(const char *path, vector<string> &oggFiles)
 			for (u32 i = 0; i < fileName.size(); ++i)
 				if (fileName[i] >= 'a' && fileName[i] <= 'z')
 					fileName[i] &= 0xDF;
-			if (fileName.size() > 4 && fileName.substr(fileName.size() - 4, 4) == ".OGG")
-				oggFiles.push_back(fileName);
+			if (fileName.size() > 4)
+			{
+				fileExt = fileName.substr(fileName.size() - 4, 4);
+				if (fileExt == ".OGG" || fileExt == ".MP3")
+					oggFiles.push_back(fileName);
+			}
 			dir = readdir(d);
 		}
 		closedir(d);
@@ -1177,34 +1185,45 @@ static void listOGG(const char *path, vector<string> &oggFiles)
 void CMenu::_startMusic(void)
 {
 	vector<string> v;
-	u32 fileSize;
+	u32 rand_num;
 	SmartBuf buffer;
 
 	_stopMusic();
-	listOGG(m_musicDir.c_str(), v);
+	listOGGMP3(m_musicDir.c_str(), v);
 	if (v.empty())
 		return;
 	srand(time(NULL));
-	ifstream file(sfmt("%s/%s", m_musicDir.c_str(), v[rand() % v.size()].c_str()).c_str(), ios::in | ios::binary);
+	rand_num = rand();
+	ifstream file(sfmt("%s/%s", m_musicDir.c_str(), v[rand_num % v.size()].c_str()).c_str(), ios::in | ios::binary);
+	m_music_ismp3 = v[rand_num % v.size()].substr(v[rand_num % v.size()].size() - 4, 4) == ".MP3";
 	if (!file.is_open())
 		return;
 	file.seekg(0, ios::end);
-	fileSize = file.tellg();
+	m_music_fileSize = file.tellg();
 	file.seekg(0, ios::beg);
-	buffer = smartMem2Alloc(fileSize);
+	buffer = smartMem2Alloc(m_music_fileSize);
 	if (!buffer)
 		return;
-	file.read((char *)buffer.get(), fileSize);
+	file.read((char *)buffer.get(), m_music_fileSize);
 	if (file.fail())
 		return;
 	file.close();
 	m_music = buffer;
-	PlayOgg(mem_open((char *)m_music.get(), fileSize), 0, OGG_INFINITE_TIME);
+	if(m_music_ismp3)
+	{
+		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
+	}
+	else
+	{
+		PlayOgg(mem_open((char *)m_music.get(), m_music_fileSize), 0, OGG_INFINITE_TIME);
+	}
 	SetVolumeOgg(m_cfg.getInt(" GENERAL", "sound_volume_music", 255));
+	MP3Player_Volume(m_cfg.getInt(" GENERAL", "sound_volume_music", 255));
 }
 
 void CMenu::_stopMusic(void)
 {
+	MP3Player_Stop();
 	StopOgg();
 	m_music.release();
 }
@@ -1217,6 +1236,15 @@ void CMenu::_pauseMusic(void)
 void CMenu::_resumeMusic(void)
 {
 	PauseOgg(0);
+}
+
+void CMenu::_loopMusic(void)
+{		
+	if((m_music_ismp3 && !MP3Player_IsPlaying()) || StatusOgg() == OGG_STATUS_EOF)
+	{
+		_startMusic();
+	}
+	return;
 }
 
 void CMenu::_stopSounds(void)

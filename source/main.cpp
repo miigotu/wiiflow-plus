@@ -61,9 +61,14 @@ int old_main(int argc, char **argv)
 			mainIOS = 223;
 			mainIOSminRev = IOS_223_MIN_REV;
 		}
+		else if (strcasestr(argv[0], "ios=224-mload") != 0)
+		{
+			mainIOS = 224;
+			mainIOSminRev = IOS_224_MIN_REV;
+		}
 	}
 	
-	Fat_Mount(); // Wake up certain drives
+//	Fat_Mount(); // Wake up certain drives
 
 	gprintf("Loading cIOS: %d\n", mainIOS);
 

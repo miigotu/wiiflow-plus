@@ -53,11 +53,12 @@ CCoverFlow::CCover::CCover(void)
 	targetScale = Vector3D(1.f, 1.f, 1.f);
 }
 
-CCoverFlow::CItem::CItem(const char *itemId, const wchar_t *itemTitle, const char *itemPic, const char *itemBoxPic) :
+CCoverFlow::CItem::CItem(const char *itemId, const wchar_t *itemTitle, const char *itemPic, const char *itemBoxPic, int playcount) :
 	id(itemId),
 	title(itemTitle),
 	picPath(itemPic),
-	boxPicPath(itemBoxPic)
+	boxPicPath(itemBoxPic),
+	playcount(playcount)
 {
 	state = CCoverFlow::STATE_Loading;
 	boxTexture = false;
@@ -592,11 +593,11 @@ void CCoverFlow::reserve(u32 capacity)
 	m_items.reserve(capacity);
 }
 
-void CCoverFlow::addItem(const char *id, const wchar_t *title, const char *picPath, const char *boxPicPath)
+void CCoverFlow::addItem(const char *id, const wchar_t *title, const char *picPath, const char *boxPicPath, int playcount)
 {
 	if (!m_covers.empty())
 		return;
-	m_items.push_back(CCoverFlow::CItem(id, title, picPath, boxPicPath));
+	m_items.push_back(CCoverFlow::CItem(id, title, picPath, boxPicPath, playcount));
 }
 
 // Draws a plane in the Z-Buffer only.
@@ -1592,6 +1593,11 @@ void CCoverFlow::_instantTarget(int i)
 	cvr.txtColor = cvr.txtTargetColor;
 }
 
+bool CCoverFlow::_sortByPlayCount(CItem item1, CItem item2)
+{
+	return item1.playcount > item2.playcount;
+}
+
 bool CCoverFlow::start(const char *id)
 {
 	if (m_items.empty())
@@ -1623,6 +1629,7 @@ bool CCoverFlow::start(const char *id)
 	}
 	// Sort items
 	sort(m_items.begin(), m_items.end());
+//	sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByPlayCount);
 	m_covers.clear();
 	m_covers.resize(m_range);
 	m_jump = 0;
