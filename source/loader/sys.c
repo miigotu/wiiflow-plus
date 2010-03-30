@@ -125,10 +125,32 @@ s32 Sys_GetCerts(signed_blob **certs, u32 *len)
 
 bool Sys_SupportsExternalModule(void)
 {
-	u32 version = IOS_GetVersion();
+//	u32 version = IOS_GetVersion();
 	u32 revision = IOS_GetRevision();
 	
-	bool retval = revision == 4 && (version == 222 || version == 223 || version == 224);
-	gprintf("IOS Version: %d, Revision %d, returning %d\n", version, revision, retval);
+	bool retval = (is_ios_type(IOS_TYPE_WANIN) && revision >= 18) || (is_ios_type(IOS_TYPE_HERMES) && revision >= 4);
+	gprintf("IOS Version: %d, Revision %d, returning %d\n", IOS_GetVersion(), revision, retval);
 	return retval;
 }
+
+int get_ios_type()
+{
+	switch (IOS_GetVersion()) {
+		case 249:
+		case 250:
+			return IOS_TYPE_WANIN;
+		case 222:
+		case 223:
+			if (IOS_GetRevision() == 1)
+				return IOS_TYPE_KWIIRK;
+		case 224:
+			return IOS_TYPE_HERMES;
+	}
+	return IOS_TYPE_UNK;
+}
+
+int is_ios_type(int type)
+{
+	return (get_ios_type() == type);
+}
+

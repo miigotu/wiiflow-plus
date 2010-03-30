@@ -27,7 +27,7 @@ extern int mainIOSRev;
 int old_main(int argc, char **argv)
 {
 	geckoinit = InitGecko();
-	__exception_setreload(5);
+//	__exception_setreload(5);
 
 	SYS_SetArena1Hi((void *)0x81200000);	// See loader/apploader.c
 	CVideo vid;

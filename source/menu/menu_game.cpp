@@ -322,14 +322,8 @@ void CMenu::_launchGame(const string &id)
 	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) id.c_str());
 	ocarina_load_code((u8 *) id.c_str(), cheatFile.get(), cheatSize);
 
-	if (get_frag_list((u8 *)id.c_str()) < 0)
-	{
-		if (iosLoaded)
-			Sys_LoadMenu();
-		return;
-	}
-
-	if (set_frag_list((u8 *)id.c_str()) < 0)
+	int ret = get_frag_list((u8 *)id.c_str());
+	if (ret < 0)
 	{
 		if (iosLoaded)
 			Sys_LoadMenu();

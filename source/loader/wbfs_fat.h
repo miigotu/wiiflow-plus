@@ -22,7 +22,6 @@ s32  WBFS_FAT_DVD_Size(u64 *comp_size, u64 *real_size);
 int  WBFS_FAT_find_fname(u8 *id, char *fname, int len);
 
 bool WBFS_FAT_IsReadOnly(void);
-s32 WBFS_FAT_GetFragList(u8 *id);
 
 #ifdef __cplusplus
 }

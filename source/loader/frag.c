@@ -9,9 +9,14 @@
 #include "fs.h"
 #include "libwbfs/libwbfs.h"
 #include "wbfs.h"
+#include "wbfs_fat.h"
 #include "usbstorage.h"
 #include "frag.h"
 #include "utils.h"
+#include "sys.h"
+#include "wdvd.h"
+
+int _FAT_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
 
 FragList *frag_list = NULL;
 
@@ -143,36 +148,123 @@ int frag_remap(FragList *ff, FragList *log, FragList *phy)
 	return 0;
 }
 
-
 int get_frag_list(u8 *id)
 {
-	return WBFS_GetFragList(id);
+	char fname[1024];
+	char fname1[1024];
+	struct stat st;
+	FragList *fs = NULL;
+	FragList *fa = NULL;
+	FragList *fw = NULL;
+	int ret;
+	int i, j;
+	int is_wbfs = 0;
+	int ret_val = -1;
+
+	if (wbfs_part_fs == PART_FS_WBFS) return 0;
+
+	ret = WBFS_FAT_find_fname(id, fname, sizeof(fname));
+	if (!ret) return -2;
+
+	if (strcasecmp(strrchr(fname,'.'), ".wbfs") == 0) {
+		is_wbfs = 1;
+	}
+
+	fs = malloc(sizeof(FragList));
+	fa = malloc(sizeof(FragList));
+	fw = malloc(sizeof(FragList));
+
+	frag_init(fa, MAX_FRAG);
+
+	for (i=0; i<10; i++) {
+		frag_init(fs, MAX_FRAG);
+		if (i > 0) {
+			fname[strlen(fname)-1] = '0' + i;
+			if (stat(fname, &st) == -1) break;
+		}
+		strcpy(fname1, fname);
+		if (wbfs_part_fs == PART_FS_FAT) {
+			ret = _FAT_get_fragments(fname, &_frag_append, fs);
+			if (ret) {
+				// don't return failure, let it fallback to old method
+				//ret_val = ret;
+				ret_val = 0;
+				goto out;
+			}
+		} else if (wbfs_part_fs == PART_FS_NTFS) {
+			ret = _NTFS_get_fragments(fname, &_frag_append, fs);
+			if (ret) {
+//				if (ret == -50 || ret == -500) {
+//				}
+				ret_val = ret;
+				goto out;
+			}
+			// offset to start of partition
+			for (j=0; j<fs->num; j++) {
+				fs->frag[j].sector += fs_ntfs_sec;
+			}
+		}
+		frag_concat(fa, fs);
+	}
+
+	frag_list = malloc(sizeof(FragList));
+	frag_init(frag_list, MAX_FRAG);
+	if (is_wbfs) {
+		// if wbfs file format, remap.
+		wbfs_disc_t *d = WBFS_OpenDisc(id);
+		if (!d) { ret_val = -4; goto out; }
+		frag_init(fw, MAX_FRAG);
+		ret = wbfs_get_fragments(d, &_frag_append, fw);
+		if (ret) { ret_val = -5; goto out; }
+		WBFS_CloseDisc(d);
+		// DEBUG: frag_list->num = MAX_FRAG-10; // stress test
+		ret = frag_remap(frag_list, fw, fa);
+		if (ret) { ret_val = -6; goto out; }
+	} else {
+		// .iso does not need remap just copy
+		memcpy(frag_list, fa, sizeof(FragList));
+	}
+
+	ret_val = 0;
+
+out:
+	if (ret_val) {
+		// error
+		SAFE_FREE(frag_list);
+	}
+	SAFE_FREE(fs);
+	SAFE_FREE(fa);
+	SAFE_FREE(fw);
+	return ret_val;
 }
 
 int set_frag_list(u8 *id)
 {
 	if (wbfs_part_fs == PART_FS_WBFS) return 0;
 	if (frag_list == NULL) {
-		if (wbfs_part_fs == PART_FS_FAT) {
-			// fall back to old fat method
-//			printf("FAT: fallback to old method\n");
-	   		return 0;
-		}
-		// ntfs has no fallback, return error
 		return -1;
 	}
 
 	// (+1 for header which is same size as fragment)
 	int size = sizeof(Fragment) * (frag_list->num + 1);
-	int ret = USBStorage_WBFS_SetFragList(frag_list, size);
+	int ret;
+	DCFlushRange(frag_list, size);
+	if (is_ios_type(IOS_TYPE_HERMES)) {
+		ret = USBStorage_WBFS_SetFragList(frag_list, size);
+	} else {
+		ret = WDVD_SetFragList(wbfsDev, frag_list, size);
+	}
 	if (ret) {
-//		printf("set_frag: %d\n", ret);
 		return ret;
 	}
 
 	// verify id matches
 	char discid[8];
 	memset(discid, 0, sizeof(discid));
-	ret = USBStorage_WBFS_Read(0, 6, discid);
-	return 0;
+	if (is_ios_type(IOS_TYPE_HERMES)) {
+		ret = USBStorage_WBFS_Read(0, 8, discid);
+	} else { 
+		ret = WDVD_UnencryptedRead(discid, 8, 0);
+	}
+	return (memcmp(id, discid, 6) != 0) ? -1 : 0;
 }

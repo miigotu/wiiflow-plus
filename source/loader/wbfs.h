@@ -51,7 +51,6 @@ s32 WBFS_GetPartitionName(u32, char *);
 bool WBFS_IsReadOnly(void);
 wbfs_t *GetHddInfo(void);
 f32 WBFS_EstimeGameSize(void);
-s32 WBFS_GetFragList(u8 *id);
 
 #ifdef __cplusplus
 }

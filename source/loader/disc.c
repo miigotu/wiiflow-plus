@@ -16,6 +16,10 @@
 #include "videopatch.h"
 #include "wbfs.h"
 #include "patchcode.h"
+#include "frag.h"
+#include "usbstorage.h"
+
+#include "gecko.h"
 
 #define ALIGNED(x) __attribute__((aligned(x)))
 
@@ -281,15 +285,35 @@ s32 Disc_SetWBFS(u32 mode, u8 *id)
 }
 
 s32 Disc_SetUSB(const u8 *id) {
-	u32 part = 0;
-	if (wbfs_part_fs) {
-		part = wbfs_part_lba;
-	} else {
-		part = wbfs_part_idx ? wbfs_part_idx - 1 : 0;
+	if (is_ios_type(IOS_TYPE_HERMES)) {
+		u32 part = 0;
+		if (wbfs_part_fs) {
+			part = wbfs_part_lba;
+		} else {
+			part = wbfs_part_idx ? wbfs_part_idx - 1 : 0;
+		}
+		
+		int ret;
+		if (id && *id) {
+			ret = set_frag_list((u8 *) id);
+		} else {
+			ret = USBStorage_WBFS_SetFragList(NULL, 0);
+		}
+		
+		if (ret) {
+			return ret;
+		}
+		
+		/* Set USB mode */
+		return WDVD_SetUSBMode(id, part);
+	}
+	
+	if (WBFS_DEVICE_USB && wbfs_part_fs) {
+		return set_frag_list((u8 *) id);
 	}
 
-    /* Set USB mode */
-	return WDVD_SetUSBMode(id, part);
+	gprintf("Setting disc usb thing for wanin\n");
+	return WDVD_SetWBFSMode(WBFS_DEVICE_USB, (u8 *) id);
 }
 
 s32 Disc_ReadHeader(void *outbuf)

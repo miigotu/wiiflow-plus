@@ -747,10 +747,3 @@ wbfs_t *GetHddInfo(void) {
 f32 WBFS_EstimeGameSize(void) {
     return wbfs_estimate_disc(hdd, __WBFS_ReadDVD, NULL, ONLY_GAME_PARTITION);
 }
-
-s32 WBFS_GetFragList(u8 *id) {
-	if (wbfs_part_fs) {
-		return WBFS_FAT_GetFragList(id);
-	}
-	return 0;
-}

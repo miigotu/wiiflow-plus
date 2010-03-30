@@ -32,6 +32,7 @@
 #include "mload.h"
 #include "gecko.h"
 #include "mload_modules.h"
+#include "sys.h"
 
 #include "patchcode.h"
 
@@ -733,7 +734,7 @@ u8 bcaCode[64] ATTRIBUTE_ALIGN(32);
 
 u32 do_bca_code(u8 *gameid)
 {
-	if ((IOS_GetVersion() == 222 || IOS_GetVersion() == 223) && IOS_GetRevision() >= 4)
+	if (is_ios_type(IOS_TYPE_HERMES) && IOS_GetRevision() >= 4)
 	{
 		Set_DIP_BCA_Datas(gameid);
 	}
@@ -742,7 +743,7 @@ u32 do_bca_code(u8 *gameid)
 
 u32 load_bca_code(u8 *bcaPath, u8 *gameid)
 {
-	if ((IOS_GetVersion() == 222 || IOS_GetVersion() == 223) && IOS_GetRevision() >= 4)
+	if (is_ios_type(IOS_TYPE_HERMES) && IOS_GetRevision() >= 4)
 	{
 		FILE *fp = NULL;
 		u32 filesize;
