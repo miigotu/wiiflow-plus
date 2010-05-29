@@ -53,6 +53,7 @@ wbfs_t*wbfs_open_hd(rw_sector_callback_t read_hdsector,
                 {
                         wbfs_t*p = wbfs_open_partition(read_hdsector,write_hdsector,
                                                 callback_data,hd_sector_size,0,part_lba,reset);
+                        wbfs_iofree(tmp_buffer);
                         return p;
                 }
         }

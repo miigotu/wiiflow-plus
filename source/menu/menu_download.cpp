@@ -26,10 +26,14 @@ static const char FMT_BPIC_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ
 "|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid6}.png"\
-"|http://www.muntrue.nl/covers/ALL/512/340/fullcover/{gameid6}.png";
+"|http://www.muntrue.nl/covers/ALL/512/340/fullcover/{gameid6}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png";
 static const char FMT_PIC_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid6}.png"\
-"|http://www.muntrue.nl/covers/ALL/160/225/boxart/{gameid6}.png";
+"|http://www.muntrue.nl/covers/ALL/160/225/boxart/{gameid6}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png";
 
 class LockMutex
 {

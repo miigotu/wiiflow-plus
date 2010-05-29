@@ -2,120 +2,133 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "gecko.h"
 
 #include "fs.h"
 
-#define MAX_DOL_ENTRY 64
-
-u32 doltableoffset[MAX_DOL_ENTRY];
-u32 doltablelength[MAX_DOL_ENTRY];
-u32 doltableentries;
-
-void wipreset()
+typedef struct
 {
-	doltableentries = 0;
+    u32 offset;
+    u32 srcaddress;
+    u32 dstaddress;
+} WIP_Code;
+
+static WIP_Code * CodeList = NULL;
+static u32 CodesCount = 0;
+static u32 ProcessedLength = 0;
+static u32 Counter = 0;
+
+void do_wip_code(u8 * dst, u32 len)
+{
+    if(!CodeList)
+        return;
+
+    if(Counter < 3)
+    {
+        Counter++;
+        return;
+    }
+
+    int i = 0;
+    int n = 0;
+    int offset = 0;
+
+    for(i = 0; i < CodesCount; i++)
+    {
+        for(n = 0; n < 4; n++)
+        {
+            offset = CodeList[i].offset+n-ProcessedLength;
+
+            if(offset < 0 || offset >= len)
+                continue;
+
+            if(dst[offset] == ((u8 *)&CodeList[i].srcaddress)[n])
+            {
+                dst[offset] = ((u8 *)&CodeList[i].dstaddress)[n];
+                gprintf("WIP: %08X Address Patched.\n", CodeList[i].offset+n);
+            }
+            else
+            {
+                gprintf("WIP: %08X Address does not match with WIP entrie.\n", CodeList[i].offset+n);
+                gprintf("Destination: %02X | Should be: %02X.\n", dst[offset], ((u8 *)&CodeList[i].srcaddress)[n]);
+            }
+        }
+    }
+    ProcessedLength += len;
+    Counter++;
 }
 
-void wipregisteroffset(u32 dst, u32 len)
+void wip_reset_counter()
 {
-	if (doltableentries >= MAX_DOL_ENTRY) return;
-	doltableoffset[doltableentries] = dst;
-	doltablelength[doltableentries] = len;
-	doltableentries++;
+    ProcessedLength = 0;
+    //alternative dols don't need a skip. only main.dol.
+    Counter = 3;
 }
 
-void patchu8(u32 offset, u8 value)
+void free_wip()
 {
-	u32 i = 0;
-	u32 tempoffset = 0;
-
-	while ((doltablelength[i] <= offset-tempoffset) && (i+1 < doltableentries))
-	{
-		tempoffset+=doltablelength[i];
-		i++;
-	}
-	if (offset-tempoffset < doltablelength[i])
-	{
-		*(u8 *)(offset-tempoffset+doltableoffset[i]) = value;
-	}
+        if(CodeList)
+        free(CodeList);
+    CodeList = NULL;
+    CodesCount = 0;
+    ProcessedLength = 0;
 }
 
-void wipparsebuffer(u8 *buffer, u32 length)
-// The buffer needs a 0 at the end to properly terminate the string functions
+int load_wip_patches(u8 *dir, u8 *gameid)
 {
-	u32 pos = 0;
-	u32 offset;
-	char buf[10];
-	
-	while (pos < length)
-	{
-		if ( *(char *)(buffer + pos) != '#' && *(char *)(buffer + pos) != ';' && *(char *)(buffer + pos) != 10 && *(char *)(buffer + pos) != 13 && *(char *)(buffer + pos) != 32 && *(char *)(buffer + pos) != 0 )
-		{
-			memcpy(buf, (char *)(buffer + pos), 8);
-			buf[8] = 0;
-			offset = strtol(buf,NULL,16);
-
-			pos += (u32)strchr((char *)(buffer + pos), 32)-(u32)(buffer + pos) + 1;
-			pos += (u32)strchr((char *)(buffer + pos), 32)-(u32)(buffer + pos) + 1;
-			
-			while (pos < length && *(char *)(buffer + pos) != 10 && *(char *)(buffer + pos) != 13 && *(char *)(buffer + pos) != 0)
-			{
-				memcpy(buf, (char *)(buffer + pos), 2);
-				buf[2] = 0;
-			
-				patchu8(offset, strtol(buf,NULL,16));
-				offset++;
-				pos +=2;		
-			}	
-		}
-		if (strchr((char *)(buffer + pos), 10) == NULL)
-		{
-			return;
-		} else
-		{
-			pos += (u32)strchr((char *)(buffer + pos), 10)-(u32)(buffer + pos) + 1;
-		}
-	}
-}
-
-u8 *wip_buffer = NULL;
-int wip_size = 0;
-
-u32 load_wip_patches(u8 *wippath, u8 *gameid)
-{
-	FILE *fp = NULL;
 	char filepath[150];
-	memset(filepath, 0, 150);
-	
-	wip_size = 0;
+	char GameID[8];
+	memset(GameID, 0, sizeof(GameID));
+    memcpy(GameID, gameid, 6);
+	snprintf(filepath, sizeof(filepath), "%s/%s.wip", dir, GameID);
 
-	sprintf(filepath, "%s/%s.wip", wippath, gameid);
-
-	if (fp) {
-		u32 ret = 0;
-
-		fseek(fp, 0, SEEK_END);
-		wip_size = ftell(fp);
-		
-		wip_buffer = realloc(wip_buffer, wip_size + 8);
-		wip_buffer[wip_size] = 0;
-		
-		fseek(fp, 0, SEEK_SET);
-		ret = fread(wip_buffer, 1, wip_size, fp);
-		fclose(fp);
-		
-		if (ret == wip_size)
-		{
-			return 0;
-		}
+	FILE * fp = fopen(filepath, "rb");
+	if (!fp)
+	{
+        memset(GameID, 0, sizeof(GameID));
+        memcpy(GameID, gameid, 3);
+		snprintf(filepath, sizeof(filepath), "%s/%s.wip", dir, GameID);
+		fp = fopen(filepath, "rb");
 	}
-	return -2;
-}
 
-void do_wip_patches()
-{
-	if (wip_buffer == NULL || wip_size <= 0) return;
-	wipparsebuffer(wip_buffer, wip_size);
-	//SAFE_FREE(wip_buffer);
-	//wip_size = 0;
+    if (!fp)
+        return -1;
+
+    char line[255];
+    gprintf("\nLoading WIP code from %s.\n", filepath);
+
+    while (fgets(line, sizeof(line), fp))
+    {
+        if (line[0] == '#') continue;
+
+        if(strlen(line) < 26) continue;
+
+        u32 offset = (u32) strtoul(line, NULL, 16);
+        u32 srcaddress = (u32) strtoul(line+9, NULL, 16);
+        u32 dstaddress = (u32) strtoul(line+18, NULL, 16);
+
+        if(!CodeList)
+            CodeList = malloc(sizeof(WIP_Code));
+
+        WIP_Code * tmp = realloc(CodeList, (CodesCount+1)*sizeof(WIP_Code));
+        if(!tmp)
+        {
+            if(CodeList)
+                free(CodeList);
+            CodeList = NULL;
+            fclose(fp);
+            return -1;
+        }
+
+        CodeList = tmp;
+
+        CodeList[CodesCount].offset = offset;
+        CodeList[CodesCount].srcaddress = srcaddress;
+        CodeList[CodesCount].dstaddress = dstaddress;
+        CodesCount++;
+    }
+    fclose(fp);
+    gprintf("\n");
+
+	return 0;
 }

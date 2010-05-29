@@ -22,6 +22,20 @@ extern u32 wbfs_part_idx;
 extern u32 wbfs_part_lba;
 extern char wbfs_fs_drive[16];
 
+typedef struct {
+	union
+	{
+		struct
+		{
+			u8 filetype;
+			u32 name_offset : 24;
+		};
+		u32 tname;
+	};
+	u32 fileoffset;
+	u32 filelen;
+} __attribute__((packed)) FST_ENTRY;
+
 /* Prototypes */
 s32 WBFS_Init(u32, u32);
 s32 WBFS_Open(void);

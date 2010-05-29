@@ -61,6 +61,9 @@ private:
 	std::string m_wipDir;
 	std::string m_cheatDir;
 	std::string m_txtCheatDir;
+	std::string m_videoDir;
+	std::string m_riivolutionDir;
+	std::string m_fanartDir;
 	// 
 	STexture m_prevBg;
 	STexture m_nextBg;
@@ -329,6 +332,7 @@ private:
 	u32 m_music_fileSize;
 	vector<string> music_files;
 	vector<string>::iterator current_music;
+	bool m_video_playing;
 private:
 	enum WBFS_OP { WO_ADD_GAME, WO_REMOVE_GAME, WO_FORMAT };
 	typedef std::pair<std::string, u32> FontDesc;

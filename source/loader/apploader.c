@@ -9,6 +9,8 @@
 #include "disc.h"
 #include "videopatch.h"
 #include "wip.h"
+#include "wbfs.h"
+#include "riivolution.h"
 
 #include "gecko.h"
 
@@ -20,6 +22,7 @@ typedef struct _SPatchCfg
 	bool vipatch;
 	bool countryString;
 	u8 patchVidModes;
+	u8 patchDiscCheck;
 } SPatchCfg;
 
 /* Apploader function pointers */
@@ -39,16 +42,17 @@ static u8 *appldr = (u8 *)0x81200000;
 static u32 buffer[0x20] ATTRIBUTE_ALIGN(32);
 
 static void dolPatches(void *dst, int len, void *params);
-static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes);
+static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes, u8 patchDiscCheck);
 static bool Remove_001_Protection(void *Address, int Size);
 static void Anti_002_fix(void *Address, int Size);
+static bool PrinceOfPersiaPatch();
 
 static void __noprint(const char *fmt, ...)
 {
 }
 
 
-s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes)
+s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck)
 {
 	void *dst = NULL;
 	int len = 0;
@@ -60,8 +64,6 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 
 	u32 appldr_len;
 	s32 ret;
-
-	wipreset();
 
 	SYS_SetArena1Hi((void *)0x816FFFF0);
 	/* Read apploader header */
@@ -88,24 +90,38 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 	/* Initialize apploader */
 	appldr_init(__noprint);
 
+	u32 dolStart = 0x90000000;
+	u32 dolEnd = 0;
+	
 	while (appldr_main(&dst, &len, &offset))
 	{
 		/* Read data from DVD */
 		WDVD_Read(dst, len, (u64)(offset << 2));
-		maindolpatches(dst, len, cheat, vidMode, vmode, vipatch, countryString, error002Fix, patchVidModes);
+		maindolpatches(dst, len, cheat, vidMode, vmode, vipatch, countryString, error002Fix, patchVidModes, patchDiscCheck);
+		
+		if ((u32) dst < dolStart) dolStart = (u32) dst;
+		if ((u32) dst + len > dolEnd) dolEnd = (u32) dst + len;
 	}
+	PrinceOfPersiaPatch();
+
+    //this patch should be run on the entire dol at 1 time
+	if (!altdol && rtrn)
+	{
+		if (PatchReturnTo((void *) dolStart, dolEnd - dolStart, rtrn))
+		{
+			DCFlushRange((void *) dolStart, dolEnd - dolStart);
+		}
+	}
+
+	FST_ENTRY *fst = (FST_ENTRY *)*(u32 *)0x80000038;
+	do_riivolution_files(fst);
 	WDVD_Close();
-
-	gprintf("Applying wip patches...");
-	
-	do_wip_patches();
-	wipreset();
-
-	gprintf("done\n");
 	
 	/* Alternative dol */
 	if (altdol != 0)
 	{
+		wip_reset_counter();
+	
 		SPatchCfg patchCfg;
 		patchCfg.cheat = cheat;
 		patchCfg.vidMode = vidMode;
@@ -113,10 +129,16 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 		patchCfg.vipatch = vipatch;
 		patchCfg.countryString = countryString;
 		patchCfg.patchVidModes = patchVidModes;
+		patchCfg.patchDiscCheck = patchDiscCheck;
 		void *altEntry = (void *)load_dol(altdol, altdolLen, dolPatches, &patchCfg);
 		if (altEntry == 0)
 			return -1;
 		*entry = altEntry;
+		
+		if(rtrn && PatchReturnTo((void *) altdol, altdolLen, rtrn))
+		{
+			DCFlushRange((void *) altdol, altdolLen);
+		}
 	}
 	else
 		/* Set entry point from apploader */
@@ -125,7 +147,7 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 	/* ERROR 002 fix (WiiPower) */
 	if (error002Fix)
 		*(u32 *)0x80003140 = *(u32 *)0x80003188;
-		
+			
 	DCFlushRange((void*)0x80000000, 0x3f00);
 
 	return 0;
@@ -135,7 +157,7 @@ static void dolPatches(void *dst, int len, void *params)
 {
 	const SPatchCfg *p = (const SPatchCfg *)params;
 
-	maindolpatches(dst, len, p->cheat, p->vidMode, p->vmode, p->vipatch, p->countryString, false, p->patchVidModes);
+	maindolpatches(dst, len, p->cheat, p->vidMode, p->vmode, p->vipatch, p->countryString, false, p->patchVidModes, p->patchDiscCheck);
 	Remove_001_Protection(dst, len);
 	
 	DCFlushRange(dst, len);
@@ -232,6 +254,39 @@ static void patch_NoDiscinDrive(void *buffer, u32 len)
 	}
 }
 
+static bool PrinceOfPersiaPatch()
+{
+    if (memcmp("SPX", (char *)0x80000000, 3) == 0 || memcmp("RPW", (char *)0x80000000, 3) == 0) {
+        u8 *p = (u8 *)0x807AEB6A;
+        *p++ = 0x6F;
+        *p++ = 0x6A;
+        *p++ = 0x7A;
+        *p++ = 0x6B;
+        p = (u8 *)0x807AEB75;
+        *p++ = 0x69;
+        *p++ = 0x39;
+        *p++ = 0x7C;
+        *p++ = 0x7A;
+        p = (u8 *)0x807AEB82;
+        *p++ = 0x68;
+        *p++ = 0x6B;
+        *p++ = 0x73;
+        *p++ = 0x76;
+        p = (u8 *)0x807AEB92;
+        *p++ = 0x75;
+        *p++ = 0x70;
+        *p++ = 0x80;
+        *p++ = 0x71;
+        p = (u8 *)0x807AEB9D;
+        *p++ = 0x6F;
+        *p++ = 0x3F;
+        *p++ = 0x82;
+        *p++ = 0x80;
+        return true;
+    }
+    return false;
+}
+
 bool NewSuperMarioBrosPatch(void *Address, int Size)
 {
 	if (memcmp("SMN", (char *)0x80000000, 3) == 0)
@@ -264,17 +319,16 @@ bool NewSuperMarioBrosPatch(void *Address, int Size)
 	return false;
 }
 
-static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes)
+static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes, u8 patchDiscCheck)
 {
 	DCFlushRange(dst, len);
 	
 	gprintf("Applying patches...");
-	wipregisteroffset((u32) dst, len);
 
 	// Patch NoDiscInDrive only for IOS 249 < rev13 or IOS 222/223
-	if ((IOS_GetVersion() == 249 && IOS_GetRevision() < 13)
-	    || (IOS_GetVersion() == 222 || IOS_GetVersion() == 223) 
-	   )
+	if (patchDiscCheck && 
+		((IOS_GetVersion() == 249 && IOS_GetRevision() < 13) ||
+	    (IOS_GetVersion() == 222 || IOS_GetVersion() == 223)))
 		patch_NoDiscinDrive(dst, len);
 	
 	patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
@@ -293,6 +347,8 @@ static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeOb
 	// NSMB Patch by WiiPower
 	NewSuperMarioBrosPatch(dst,len);
 
+	do_wip_code((u8 *) dst, len);
+	
 	gprintf("done\n");
 	DCFlushRange(dst, len);
 }

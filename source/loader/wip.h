@@ -5,11 +5,10 @@
 extern "C" {
 #endif /* __cplusplus */
 
-void wipreset();
-void wipregisteroffset(u32 dst, u32 len);
-void wipparsebuffer(u8 *buffer, u32 length);
+void wip_reset_counter();
+void free_wip();
+void do_wip_code(u8 * dst, u32 len);
 void load_wip_patches(u8 *wippath, u8 *discid);
-void do_wip_patches();
 
 #ifdef __cplusplus
 }

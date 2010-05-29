@@ -30,6 +30,11 @@ extern sec_t fs_wbfs_sec;
 extern int   fs_ntfs_mount;
 extern sec_t fs_ntfs_sec;
 
+extern bool g_sdOK;
+extern bool g_usbOK;
+extern bool g_wbfsOK;
+extern bool g_ntfsOK;
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

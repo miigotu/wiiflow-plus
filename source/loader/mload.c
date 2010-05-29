@@ -16,6 +16,7 @@
 */
 
 #include "mload.h"
+#include "gecko.h"
 
 static const char mload_fs[] ATTRIBUTE_ALIGN(32) = "/dev/mload";
 
@@ -414,7 +415,7 @@ int ret;
 
 	if(mload_init()<0) return -1;
 	
-	ret= IOS_IoctlvFormat(hid, mload_fd, MLOAD_SETW, "ii:", addr, dat);
+	ret= IOS_IoctlvFormat(hid, mload_fd, MLOAD_SET_LOG_MODE, "ii:", addr, dat);
 	
 return ret;
 }
@@ -526,4 +527,14 @@ int wanin_mload_get_IOS_base()
 	return ret;
 }
 
+int mload_set_gecko_debug()
+{
+	int ret;
+	u32 log_mode = 2; // GECKO
+	if(mload_init()<0) return -1;
 
+	gprintf("Setting debug mode...");
+	ret = IOS_IoctlvFormat(hid, mload_fd, MLOAD_SET_LOG_MODE, ":d", &log_mode, sizeof(log_mode));
+	gprintf("%d\n", ret);
+	return ret;
+}

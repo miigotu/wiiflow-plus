@@ -97,7 +97,7 @@ void CMenu::init(bool fromHBC)
 				appdir = APPDATA_DIR2;
 				m_cfg.load(sfmt("sd:/%s/%s", appdir.c_str(),CFG_FILENAME).c_str());
 		}
-				
+		
 		bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", true);
 		drive = dataOnUSB ? "usb" : "sd";
 //		if (!m_cfg.loaded() && dataOnUSB)
@@ -106,6 +106,7 @@ void CMenu::init(bool fromHBC)
 	else
 		drive = Fat_USBAvailable() ? "usb" : "sd";
 	// 
+	
 	m_dataDir = sfmt("%s:/%s", drive,appdir.c_str());
 	if(!m_cfg.load(sfmt("%s/" CFG_FILENAME, m_dataDir.c_str()).c_str())) 
 	{
@@ -119,10 +120,13 @@ void CMenu::init(bool fromHBC)
 	m_cacheDir = m_cfg.getString(" GENERAL", "dir_cache", sfmt("%s:/%s/cache", drive, appdir.c_str()));
 	m_themeDir = m_cfg.getString(" GENERAL", "dir_themes", sfmt("%s:/%s/themes", drive, appdir.c_str()));
 	m_musicDir = m_cfg.getString(" GENERAL", "dir_music", sfmt("%s:/%s/music", drive, appdir.c_str())); 
-	m_bcaDir = m_cfg.getString(" GENERAL", "dir_bca", sfmt("%s:/%s/codes", drive, appdir.c_str())); ;
-	m_wipDir = m_cfg.getString(" GENERAL", "dir_wip", sfmt("%s:/%s/codes", drive, appdir.c_str())); ;
-	m_cheatDir = m_cfg.getString(" GENERAL", "dir_cheat", sfmt("%s:/%s/codes", drive, appdir.c_str())); ;
-	m_txtCheatDir = m_cfg.getString(" GENERAL", "dir_txtcheat", sfmt("%s:/%s/txtcodes", drive, appdir.c_str())); ;
+	m_bcaDir = m_cfg.getString(" GENERAL", "dir_bca", sfmt("%s:/%s/codes", drive, appdir.c_str()));
+	m_wipDir = m_cfg.getString(" GENERAL", "dir_wip", sfmt("%s:/%s/codes", drive, appdir.c_str()));
+	m_cheatDir = m_cfg.getString(" GENERAL", "dir_cheat", sfmt("%s:/%s/codes", drive, appdir.c_str()));
+	m_txtCheatDir = m_cfg.getString(" GENERAL", "dir_txtcheat", sfmt("%s:/%s/txtcodes", drive, appdir.c_str()));
+	m_videoDir = m_cfg.getString(" GENERAL", "dir_trailers", sfmt("%s:/%s/trailers", drive, appdir.c_str()));
+	m_riivolutionDir = m_cfg.getString(" GENERAL", "dir_riivolution", sfmt("%s:/%s/riivolution", drive, appdir.c_str()));
+	m_fanartDir = m_cfg.getString(" GENERAL", "dir_fanart", sfmt("%s:/%s/fanart", drive, appdir.c_str()));
 
 	m_cf.init();
 	// 
@@ -138,6 +142,11 @@ void CMenu::init(bool fromHBC)
 		mkdir(m_wipDir.c_str(), 0777);
 		mkdir(m_cheatDir.c_str(), 0777);
 		mkdir(m_txtCheatDir.c_str(), 0777);
+		mkdir(m_videoDir.c_str(), 0777);
+		mkdir(m_riivolutionDir.c_str(), 0777);
+		mkdir(m_fanartDir.c_str(), 0777);
+		
+		mkdir(sfmt("%s/background", m_fanartDir.c_str()).c_str(), 0777);
 	}
 	// INI files
 	m_loc.load(sfmt("%s/" LANG_FILENAME, m_dataDir.c_str()).c_str());
@@ -929,7 +938,8 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 	LWP_MutexUnlock(m_gameSndMutex);
 	if (withCF && m_gameSoundThread == 0)
 		m_cf.startPicLoader();
-	_loopMusic();
+	if (!m_video_playing)
+		_loopMusic();
 }
 
 void CMenu::_setBg(const STexture &tex, const STexture &lqTex)
@@ -1245,11 +1255,16 @@ void CMenu::_stopMusic(void)
 void CMenu::_pauseMusic(void)
 {
 	PauseOgg(1);
+	MP3Player_Stop();
 }
 
 void CMenu::_resumeMusic(void)
 {
 	PauseOgg(0);
+	if(m_music_ismp3)
+	{
+		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
+	}	
 }
 
 void CMenu::_loopMusic(void)

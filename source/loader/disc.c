@@ -18,6 +18,7 @@
 #include "patchcode.h"
 #include "frag.h"
 #include "usbstorage.h"
+#include "wip.h"
 
 #include "gecko.h"
 
@@ -309,6 +310,7 @@ s32 Disc_SetUSB(const u8 *id) {
 	}
 	
 	if (WBFS_DEVICE_USB && wbfs_part_fs) {
+		gprintf("Setting frag list for wanin\n");
 		return set_frag_list((u8 *) id);
 	}
 
@@ -341,7 +343,7 @@ s32 Disc_IsWii(void)
 }
 
 
-s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode)
+s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode, u32 rtrn, u8 patchDiscCheck)
 {
 	entry_point p_entry;
 
@@ -361,7 +363,9 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	__Disc_SelectVMode(vidMode);
 
 	/* Run apploader */
-	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vmode, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidMode);
+	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vmode, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidMode, rtrn, patchDiscCheck);
+	free_wip();
+	
 	if (ret < 0)
 		return ret;
 
@@ -443,7 +447,7 @@ s32 Disc_OpenPartition(u32 mode, u8 *id)
 	return 0;
 }
 
-s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes)
+s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck)
 {
 	u64 offset;
 	s32 ret;
@@ -454,5 +458,5 @@ s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool 
 		return ret;
 
 	/* Boot partition */
-	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes);
+	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes, rtrn, patchDiscCheck);
 }

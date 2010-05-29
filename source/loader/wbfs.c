@@ -510,7 +510,7 @@ s32 WBFS_AddGame(progress_callback_t spinner, void *spinner_data)
 		return -1;
 
 	/* Add game to device */
-	partition_selector_t part_sel = ONLY_GAME_PARTITION;
+	partition_selector_t part_sel = ALL_PARTITIONS;
 	int copy_1_1 = 0;
 /*
 	switch (CFG.install_partitions) {
@@ -608,7 +608,7 @@ s32 WBFS_DVD_Size(u64 *comp_size, u64 *real_size)
 		return -1;
 
 	/* Add game to device */
-	partition_selector_t part_sel = ONLY_GAME_PARTITION;
+	partition_selector_t part_sel = ALL_PARTITIONS;
 /*
 	if (CFG.install_partitions) {
 		part_sel = ALL_PARTITIONS;
@@ -634,8 +634,9 @@ s32 WBFS_DiskSpace(f32 *used, f32 *free)
 	u32 cnt;
 
 	/* No device open */
-	if (!hdd)
+	if (!hdd) {
 		return -1;
+	}
 
 	/* Count used blocks */
 	cnt = wbfs_count_usedblocks(hdd);
@@ -676,13 +677,6 @@ void WBFS_CloseDisc(wbfs_disc_t *disc)
 	/* Close disc */
 	wbfs_close_disc(disc);
 }
-
-typedef struct {
-	u8 filetype;
-	char name_offset[3];
-	u32 fileoffset;
-	u32 filelen;
-} __attribute__((packed)) FST_ENTRY;
 
 static inline u32 _be32(const u8 *p)
 {
@@ -745,5 +739,5 @@ wbfs_t *GetHddInfo(void) {
 }
 
 f32 WBFS_EstimeGameSize(void) {
-    return wbfs_estimate_disc(hdd, __WBFS_ReadDVD, NULL, ONLY_GAME_PARTITION);
+    return wbfs_estimate_disc(hdd, __WBFS_ReadDVD, NULL, ALL_PARTITIONS);
 }

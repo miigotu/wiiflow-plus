@@ -76,7 +76,7 @@ int CMenu::_gameInstaller(void *obj)
 {
 	CMenu &m = *(CMenu *)obj;
 	int ret;
-	u32 size;
+//	u32 size;
 
 	if (GetHddInfo() == NULL)
 	{
@@ -84,13 +84,15 @@ int CMenu::_gameInstaller(void *obj)
 		return -1;
 	}
 
-	f32 freespace, used;
-	WBFS_DiskSpace(&used, &freespace);
-	size = WBFS_EstimeGameSize();
-	if (size > freespace)
+	u64 comp_size = 0, real_size = 0;
+	f32 free, used;
+	WBFS_DiskSpace(&used, &free);
+	WBFS_DVD_Size(&comp_size, &real_size);
+	
+	if ((f32)comp_size + (f32)128*1024 >= free * GB_SIZE)
 	{
 		LWP_MutexLock(m.m_mutex);
-		m._setThrdMsg(wfmt(m._fmt("wbfsop10", L"Not enough space : %i blocks needed, %i available"), size, freespace), 0.f);
+		m._setThrdMsg(wfmt(m._fmt("wbfsop10", L"Not enough space : %lld blocks needed, %i available"), comp_size, free), 0.f);
 		LWP_MutexUnlock(m.m_mutex);
 		ret = -1;
 	}
@@ -194,6 +196,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 							out = true;
 							break;
 						}
+						cfPos = string((char *) header.id);
 						m_btnMgr.setText(m_wbfsLblDialog, wfmt(_fmt("wbfsop6", L"Installing [%s] %s..."), string((const char *)header.id, sizeof header.id).c_str(), string((const char *)header.title, sizeof header.title).c_str()));
 						done = true;
 						m_thrdWorking = true;
@@ -235,15 +238,13 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 	}
 	WPAD_Rumble(WPAD_CHAN_0, 0);
 	_hideWBFS();
-	if (done && op == CMenu::WO_REMOVE_GAME)
+	if (done && (op == CMenu::WO_REMOVE_GAME || op == CMenu::WO_ADD_GAME))
 	{
 		m_cf.clear();
 		_loadGameList();
 		_initCF();
 		m_cf.findId(cfPos.c_str(), true);
 	}
-	if (done && op == CMenu::WO_ADD_GAME)
-		m_gameList.clear();
 	return done;
 }
 

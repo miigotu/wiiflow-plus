@@ -52,6 +52,9 @@
 #define MLOAD_SETH				0x4D4C44C4
 #define MLOAD_SETB				0x4D4C44C5
 
+#define MLOAD_SET_LOG_MODE		0x4D4C44D0
+#define MLOAD_GET_LOG_BUFFER	0x4D4C44D1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -221,6 +224,7 @@ int mload_seth(const void * addr, u16 dat);
 int mload_setb(const void * addr, u8 dat);
 
 int wanin_mload_get_IOS_base();
+int mload_set_gecko_debug();
 
 #ifdef __cplusplus
   }

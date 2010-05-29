@@ -27,7 +27,7 @@ extern int mainIOSRev;
 int old_main(int argc, char **argv)
 {
 	geckoinit = InitGecko();
-//	__exception_setreload(5);
+	__exception_setreload(5);
 
 	SYS_SetArena1Hi((void *)0x81200000);	// See loader/apploader.c
 	CVideo vid;
@@ -100,6 +100,11 @@ int old_main(int argc, char **argv)
 	if (iosOK)
 	{
 		Fat_Mount(); // this will power up the drive if it is not ready
+		
+		gprintf("SD Available: %d\n", Fat_SDAvailable());
+		gprintf("USB Available: %d\n", Fat_USBAvailable());
+		
+		
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		if (!wbfsOK)
 		{

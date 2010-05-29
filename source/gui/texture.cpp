@@ -34,6 +34,47 @@ static inline u32 coordsRGB565(u32 x, u32 y, u32 w)
 	return (((y >> 2) * (w >> 2) + (x >> 2)) << 4) + ((y & 3) << 2) + (x & 3);
 }
 
+void STexture::_convertToFlippedRGBA8(u8 *dst, const u8 * src, u32 width, u32 height)
+{
+    u32 block, i, c, ar, gb;
+
+    for (block = 0; block < height; block += 4)
+    {
+        for (i = 0; i < width; i += 4)
+        {
+            /* Alpha and Red */
+            for (c = 0; c < 4; ++c)
+            {
+                for (ar = 0; ar < 4; ++ar)
+                {
+                    u32 y = height - 1 - (c + block);
+                    u32 x = ar + i;
+                    u32 offset = ((((y >> 2) * (width >> 2) + (x >> 2)) << 5) + ((y & 3) << 2) + (x & 3)) << 1;
+                    /* Alpha pixels */
+                    dst[offset] = 255;
+                    /* Red pixels */
+                    dst[offset+1] = src[((i + ar) + ((block + c) * width)) * 3];
+                }
+            }
+
+            /* Green and Blue */
+            for (c = 0; c < 4; ++c)
+            {
+                for (gb = 0; gb < 4; ++gb)
+                {
+                    u32 y = height - 1 - (c + block);
+                    u32 x = gb + i;
+                    u32 offset = ((((y >> 2) * (width >> 2) + (x >> 2)) << 5) + ((y & 3) << 2) + (x & 3)) << 1;
+                    /* Green pixels */
+                    dst[offset+32] = src[(((i + gb) + ((block + c) * width)) * 3) + 1];
+                    /* Blue pixels */
+                    dst[offset+33] = src[(((i + gb) + ((block + c) * width)) * 3) + 2];
+                }
+            }
+        }
+    }
+}
+
 void STexture::_convertToRGBA8(u8 *dst, const u8 *src, u32 width, u32 height)
 {
 	u32 i;
@@ -191,6 +232,58 @@ STexture::TexErr STexture::fromPNGFile(const char *filename, u8 f, Alloc alloc, 
 	if (!ptrPng)
 		return STexture::TE_NOMEM;
 	return fromPNG(ptrPng.get(), f, alloc, minMipSize, maxMipSize);
+}
+
+STexture::TexErr STexture::fromRAW(const u8 *buffer, u32 w, u32 h, u8 f, Alloc alloc)
+{
+	SmartBuf tmpData;
+
+	switch (f)
+	{
+		case GX_TF_RGBA8:
+		case GX_TF_RGB565:
+		case GX_TF_CMPR:
+			break;
+		default:
+			f = GX_TF_RGBA8;
+	}
+
+	switch (alloc)
+	{
+		case ALLOC_MEM2:
+			tmpData = smartMem2Alloc(GX_GetTexBufferSize(w, h, f, GX_FALSE, 0));
+			break;
+		case ALLOC_MALLOC:
+			tmpData = smartMemAlign32(GX_GetTexBufferSize(w, h, f, GX_FALSE, 0));
+			break;
+		case ALLOC_COVER:
+			tmpData = smartCoverAlloc(GX_GetTexBufferSize(w, h, f, GX_FALSE, 0));
+			break;
+	}
+	if (!tmpData)
+	{
+		return STexture::TE_NOMEM;
+	}
+
+	format = f;
+	width = w;
+	height = h;
+	maxLOD = 0;
+	data = tmpData;
+	switch (f)
+	{
+		case GX_TF_RGBA8:
+			STexture::_convertToFlippedRGBA8(tmpData.get(), buffer, width, height);
+			break;
+		case GX_TF_RGB565:
+			STexture::_convertToRGB565(tmpData.get(), buffer, width, height);
+			break;
+		case GX_TF_CMPR:
+			STexture::_convertToCMPR(tmpData.get(), buffer, width, height);
+			break;
+	}
+	DCFlushRange(data.get(), GX_GetTexBufferSize(width, height, format, GX_FALSE, 0));
+	return STexture::TE_OK;
 }
 
 STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minMipSize, u32 maxMipSize)

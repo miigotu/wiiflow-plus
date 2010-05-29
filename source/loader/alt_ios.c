@@ -16,6 +16,7 @@
 #include "alt_ios.h"
 #include "mload_modules.h"
 #include "sys.h"
+#include "wbfs.h"
 
 #include <malloc.h>
 #include <wiiuse/wpad.h>
@@ -59,20 +60,16 @@ static int load_ehc_module_ex(void)
 
 void load_dip_249()
 {
-	gprintf("load_dip_249\n");
 	int ret;
 	if (is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 18)
 	{
-		gprintf("mload_init\n");
 		if(mload_init()<0) {
 			return;
 		}
-		gprintf("mload_module\n");
-		ret = mload_module(dip_plugin_249, size_dip_plugin_249);
-		gprintf("mload_close\n");
+		mload_set_gecko_debug();
+		ret = mload_module((void *) dip_plugin_249, dip_plugin_249_size);
 		mload_close();
 	}
-	gprintf("mload done\n");
 }
 
 void try_hello()
@@ -102,6 +99,14 @@ void try_hello()
 bool loadIOS(int n, bool init)
 {
 	bool iosOK;
+	
+	sec_t ntfs_sec, wbfs_sec;
+	bool mnt_ntfs, mnt_wbfs;
+	
+	ntfs_sec = fs_ntfs_sec;
+	wbfs_sec = fs_wbfs_sec;
+	mnt_ntfs = g_ntfsOK;
+	mnt_wbfs = g_wbfsOK;
 
 	if (init)
 	{
@@ -109,10 +114,14 @@ bool loadIOS(int n, bool init)
 		WPAD_Disconnect(0);
 		WPAD_Shutdown();
 		Fat_Unmount();
+		if (mnt_ntfs) {
+			NTFS_Unmount();
+		}
+		if (mnt_wbfs) {
+			WBFS_Unmount();
+		}
 		WDVD_Close();
 		USBStorage_Deinit();
-//		if (IOS_GetVersion() == 222 || IOS_GetVersion() == 223)
-//			mload_close();
 		usleep(500000);
 	}
 	void *backup = COVER_allocMem1(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
@@ -122,7 +131,7 @@ bool loadIOS(int n, bool init)
 		DCFlushRange(backup, 0x200000);
 	}
 	iosOK = IOS_ReloadIOS(n) >= 0;
-	if (n != 249) sleep(1); // Narolez: sleep after IOS reload lets power down/up the harddisk when cIOS 249 is used!
+	if (!is_ios_type(IOS_TYPE_WANIN)) sleep(1); // Narolez: sleep after IOS reload lets power down/up the harddisk when cIOS 249 is used!
 	if (backup != 0)
 	{
 		memcpy(&__Arena2Lo, backup, 0x200000);
@@ -142,6 +151,12 @@ bool loadIOS(int n, bool init)
 	if (init)
 	{
 		Fat_Mount();
+		if (mnt_ntfs) {
+			NTFS_Mount(ntfs_sec);
+		}
+		if (mnt_wbfs) {
+			WBFS_Mount(wbfs_sec);
+		}
 		Disc_Init();
 		WPAD_Init();
 		WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);

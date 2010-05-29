@@ -24,12 +24,12 @@ extern sec_t _FAT_startSector;
 
 extern s32 wbfsDev;
 
-static bool g_sdOK = false;
-static bool g_usbOK = false;
-static bool g_wbfsOK = false;
-static bool g_ntfsOK = false;
+bool g_sdOK = false;
+bool g_usbOK = false;
+bool g_wbfsOK = false;
+bool g_ntfsOK = false;
 
-#define CACHE   4
+#define CACHE   32
 #define SECTORS 64
 #define SECTORS_SD 32
 
@@ -256,4 +256,58 @@ void NTFS_Unmount()
 		fs_ntfs_mount = 0;
 		fs_ntfs_sec = 0;
 	}
+}
+
+static void *fat_pool = NULL;
+static size_t fat_size;
+#define FAT_SLOTS (CACHE * 3)
+#define FAT_SLOT_SIZE (512 * SECTORS)
+#define FAT_SLOT_SIZE_MIN (512 * SECTORS_SD)
+static int fat_alloc[FAT_SLOTS];
+
+void _FAT_mem_init()
+{
+	if (fat_pool) return;
+	fat_size = FAT_SLOTS * FAT_SLOT_SIZE;
+	fat_pool = LARGE_memalign(32, fat_size);
+}
+
+void* _FAT_mem_allocate(size_t size)
+{
+	return malloc(size);
+}
+
+void* _FAT_mem_align(size_t size)
+{
+	if (size < FAT_SLOT_SIZE_MIN || size > FAT_SLOT_SIZE) goto fallback;
+	if (fat_pool == NULL) goto fallback;
+	int i;
+	for (i=0; i<FAT_SLOTS; i++) {
+		if (fat_alloc[i] == 0) {
+			void *ptr = fat_pool + i * FAT_SLOT_SIZE;
+			fat_alloc[i] = 1;
+			return ptr;
+		}	
+	}
+	fallback:
+	return memalign (32, size);		
+}
+
+void _FAT_mem_free(void *mem)
+{
+	if (fat_pool == NULL || mem < fat_pool || mem >= fat_pool + fat_size) {
+		free(mem);
+		return;
+	}
+	int i;
+	for (i=0; i<FAT_SLOTS; i++) {
+		if (fat_alloc[i]) {
+			void *ptr = fat_pool + i * FAT_SLOT_SIZE;
+			if (mem == ptr) {
+				fat_alloc[i] = 0;
+				return;
+			}
+		}	
+	}
+	// FATAL
 }

@@ -15,6 +15,7 @@
 #include "utils.h"
 #include "sys.h"
 #include "wdvd.h"
+#include "gecko.h"
 
 int _FAT_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
 
@@ -24,6 +25,22 @@ void frag_init(FragList *ff, int maxnum)
 {
 	memset(ff, 0, sizeof(Fragment) * (maxnum+1));
 	ff->maxnum = maxnum;
+}
+
+void frag_dump(FragList *ff)
+{
+	int i;
+	gprintf("frag list: %d %d 0x%x\n", ff->num, ff->size, ff->size);
+	for (i=0; i<ff->num; i++) {
+		if (i>10) {
+			gprintf("...\n");
+			break;
+		}
+		gprintf(" %d : %8x %8x %8x\n", i,
+				ff->frag[i].offset,
+				ff->frag[i].count,
+				ff->frag[i].sector);
+	}
 }
 
 int frag_append(FragList *ff, u32 offset, u32 sector, u32 count)
@@ -148,9 +165,8 @@ int frag_remap(FragList *ff, FragList *log, FragList *phy)
 	return 0;
 }
 
-int get_frag_list(u8 *id)
+int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 {
-	char fname[1024];
 	char fname1[1024];
 	struct stat st;
 	FragList *fs = NULL;
@@ -160,11 +176,6 @@ int get_frag_list(u8 *id)
 	int i, j;
 	int is_wbfs = 0;
 	int ret_val = -1;
-
-	if (wbfs_part_fs == PART_FS_WBFS) return 0;
-
-	ret = WBFS_FAT_find_fname(id, fname, sizeof(fname));
-	if (!ret) return -2;
 
 	if (strcasecmp(strrchr(fname,'.'), ".wbfs") == 0) {
 		is_wbfs = 1;
@@ -207,8 +218,8 @@ int get_frag_list(u8 *id)
 		frag_concat(fa, fs);
 	}
 
-	frag_list = malloc(sizeof(FragList));
-	frag_init(frag_list, MAX_FRAG);
+	*fl = malloc(sizeof(FragList));
+	frag_init(*fl, MAX_FRAG);
 	if (is_wbfs) {
 		// if wbfs file format, remap.
 		wbfs_disc_t *d = WBFS_OpenDisc(id);
@@ -218,11 +229,11 @@ int get_frag_list(u8 *id)
 		if (ret) { ret_val = -5; goto out; }
 		WBFS_CloseDisc(d);
 		// DEBUG: frag_list->num = MAX_FRAG-10; // stress test
-		ret = frag_remap(frag_list, fw, fa);
+		ret = frag_remap(*fl, fw, fa);
 		if (ret) { ret_val = -6; goto out; }
 	} else {
 		// .iso does not need remap just copy
-		memcpy(frag_list, fa, sizeof(FragList));
+		memcpy(*fl, fa, sizeof(FragList));
 	}
 
 	ret_val = 0;
@@ -230,12 +241,23 @@ int get_frag_list(u8 *id)
 out:
 	if (ret_val) {
 		// error
-		SAFE_FREE(frag_list);
+		SAFE_FREE(fl);
 	}
 	SAFE_FREE(fs);
 	SAFE_FREE(fa);
 	SAFE_FREE(fw);
 	return ret_val;
+}
+
+int get_frag_list(u8 *id)
+{
+	char fname[1024];
+
+	if (wbfs_part_fs == PART_FS_WBFS) return 0;
+
+	if (!WBFS_FAT_find_fname(id, fname, sizeof(fname))) return -2;
+	
+	return get_frag_list_for_file((char *) fname, id, &frag_list);
 }
 
 int set_frag_list(u8 *id)
@@ -252,6 +274,7 @@ int set_frag_list(u8 *id)
 	if (is_ios_type(IOS_TYPE_HERMES)) {
 		ret = USBStorage_WBFS_SetFragList(frag_list, size);
 	} else {
+		gprintf("Calling WDVD_SetFragList\n");
 		ret = WDVD_SetFragList(wbfsDev, frag_list, size);
 	}
 	if (ret) {

@@ -31,6 +31,7 @@ typedef int (*frag_append_t)(void *ff, u32 offset, u32 sector, u32 count);
 int _FAT_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
 
 void frag_init(FragList *ff, int maxnum);
+void frag_dump(FragList *ff);
 int  frag_append(FragList *ff, u32 offset, u32 sector, u32 count);
 int  _frag_append(void *ff, u32 offset, u32 sector, u32 count);
 int  frag_concat(FragList *ff, FragList *src);
@@ -43,6 +44,7 @@ int frag_get(FragList *ff, u32 offset, u32 count,
 
 int frag_remap(FragList *ff, FragList *log, FragList *phy);
 
+int get_frag_list_for_file(char *fname, u8 *id, FragList **fl);
 int get_frag_list(u8 *id);
 int set_frag_list(u8 *id);
 
