@@ -3,6 +3,7 @@
 #include "oggplayer.h"
 
 #include <wiiuse/wpad.h>
+#include <mp3player.h>
 
 using namespace std;
 
@@ -158,6 +159,7 @@ int CMenu::_configSnd(void)
 				m_cfg.setInt(" GENERAL", "sound_volume_music", min(m_cfg.getInt(" GENERAL", "sound_volume_music", 255) + step, 255));
 				_showConfigSnd();
 				SetVolumeOgg(m_cfg.getInt(" GENERAL", "sound_volume_music", 255));
+				MP3Player_Volume(m_cfg.getInt(" GENERAL", "sound_volume_music", 255));
 				repeat = true;
 			}
 			else if (m_btnMgr.selected() == m_configSndBtnMusicVolM)
@@ -165,6 +167,7 @@ int CMenu::_configSnd(void)
 				m_cfg.setInt(" GENERAL", "sound_volume_music", max(m_cfg.getInt(" GENERAL", "sound_volume_music", 255) - step, 0));
 				_showConfigSnd();
 				SetVolumeOgg(m_cfg.getInt(" GENERAL", "sound_volume_music", 255));
+				MP3Player_Volume(m_cfg.getInt(" GENERAL", "sound_volume_music", 255));
 				repeat = true;
 			}
 			else if (m_btnMgr.selected() == m_configSndBtnCFVolP)

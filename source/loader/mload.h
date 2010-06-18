@@ -27,6 +27,9 @@
 #include "unistd.h"
 
 #define MLOAD_MLOAD_THREAD_ID	0x4D4C4400
+#define MLOAD_GET_IOS_BASE	    0x4D4C4401
+#define MLOAD_GET_MLOAD_VERSION 0x4D4C4402
+
 #define MLOAD_LOAD_MODULE		0x4D4C4480
 #define MLOAD_RUN_MODULE		0x4D4C4481
 #define MLOAD_RUN_THREAD        0x4D4C4482
@@ -38,6 +41,7 @@
 #define MLOAD_MEMSET			0x4D4C4491
 
 #define MLOAD_GET_EHCI_DATA		0x4D4C44A0
+#define MLOAD_GET_LOG			0x4D4C44A1
 
 #define MLOAD_SET_ES_IOCTLV		0x4D4C44B0
 
@@ -47,6 +51,9 @@
 #define MLOAD_SETW				0x4D4C44C3
 #define MLOAD_SETH				0x4D4C44C4
 #define MLOAD_SETB				0x4D4C44C5
+
+#define MLOAD_SET_LOG_MODE		0x4D4C44D0
+#define MLOAD_GET_LOG_BUFFER	0x4D4C44D1
 
 #ifdef __cplusplus
 extern "C" {
@@ -191,6 +198,23 @@ int mload_set_ES_ioctlv_vector(void *starlet_addr);
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+
+// to get log buffer
+// this function return the size of the log buffer and prepare it to read with mload_read() the datas
+
+int mload_get_log();
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+
+// to get IOS base for dev/es  to create the cIOS
+
+int mload_get_IOS_base();
+
+int mload_get_version();
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
 int mload_getw(const void * addr, u32 *dat);
 int mload_geth(const void * addr, u16 *dat);
 int mload_getb(const void * addr, u8 *dat);
@@ -198,6 +222,9 @@ int mload_getb(const void * addr, u8 *dat);
 int mload_setw(const void * addr, u32 dat);
 int mload_seth(const void * addr, u16 dat);
 int mload_setb(const void * addr, u8 dat);
+
+int wanin_mload_get_IOS_base();
+int mload_set_gecko_debug();
 
 #ifdef __cplusplus
   }

@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <fstream>
 
+#include "wbfs.h"
+#include "gecko.h"
+
 using namespace std;
 
 extern const u8 btnconfig_png[];
@@ -83,6 +86,7 @@ int CMenu::main(void)
 	_showMain();
 	m_curGameId.clear();
 	_initCF();
+	_searchMusic();
 	_startMusic();
 
 	WDVD_GetCoverStatus(&disc_check);
@@ -101,10 +105,10 @@ int CMenu::main(void)
 		mag = wd->exp.nunchuk.js.mag;
 		
 		//check if Disc was inserted
-		if ((disc_check & 0x2) && (disc_check!=olddisc_check) && !m_locked) {
-		_hideMain();
-		_wbfsOp(CMenu::WO_ADD_GAME);
-		_showMain();
+		if ((disc_check & 0x2) && (disc_check!=olddisc_check) && !m_locked && !WBFS_IsReadOnly()) {
+			_hideMain();
+			_wbfsOp(CMenu::WO_ADD_GAME);
+			_showMain();
 		}
 		
 		if ((padsState & WPAD_BUTTON_HOME) != 0)

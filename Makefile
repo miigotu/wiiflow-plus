@@ -17,27 +17,45 @@ include $(DEVKITPPC)/wii_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source source/cheats source/data source/gui source/loader \
-                source/loader/libwbfs source/libfat source/memory \
-				source/menu source/music source/network  
+SOURCES		:=	source \
+				source/cheats \
+				source/data \
+				source/gui \
+				source/loader \
+                source/loader/libwbfs \
+				source/loader/wbfs \
+				source/memory \
+				source/menu \
+				source/music \
+				source/network \
+				source/libs/libfat \
+				source/libs/libntfs
 DATA		:=	data  
-INCLUDES	:=	source source/cheats source/gui source/loader \
-                source/loader/libwbfs source/libfat source/memory \
-				source/menu source/music source/network  
+INCLUDES	:=	source \
+				source/cheats \
+				source/gui \
+				source/loader \
+                source/loader/libwbfs \
+				source/loader/wbfs \
+				source/memory \
+				source/menu \
+				source/music \
+				source/network \
+				source/libs
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	 = -g -O2 -Wall $(MACHDEP) $(INCLUDE)
-CXXFLAGS = -g -O2 -Wall -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE)
+CFLAGS	 = -g -O2 -Wall $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DMAIN_IOS=249
+CXXFLAGS = -g -O2 -Wall -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H
 
 LDFLAGS	 = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000,-wrap,malloc,-wrap,free,-wrap,memalign,-wrap,calloc,-wrap,realloc,-wrap,malloc_usable_size -T../rvl.ld
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=  -ltremor -lfreetype -lwiiuse -lbte -lasnd -lpng -lz -logc -lm -lfat
+LIBS	:=  -ltremor -lfreetype -lwiiuse -lbte -lasnd -lpng -lz -logc -lm -lmad -ljpeg
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -62,6 +80,7 @@ export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 #---------------------------------------------------------------------------------
 # automatically build a list of object files for our project
 #---------------------------------------------------------------------------------
+SVNREV		:=	$(shell bash ./svnrev.sh)
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
@@ -100,7 +119,38 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 
 #---------------------------------------------------------------------------------
 $(BUILD):
+	@bash ./buildtype.sh
 	@[ -d $@ ] || mkdir -p $@
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+
+#---------------------------------------------------------------------------------
+ios222:
+	@bash ./buildtype.sh 222
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
+	make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+
+#---------------------------------------------------------------------------------
+ios223:
+	@bash ./buildtype.sh 223
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+
+#---------------------------------------------------------------------------------
+ios224:
+	@bash ./buildtype.sh 224
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+
+#---------------------------------------------------------------------------------
+ios249:
+	@bash ./buildtype.sh 249
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+
+#---------------------------------------------------------------------------------
+ios250:
+	@bash ./buildtype.sh 250
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------

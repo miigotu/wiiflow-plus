@@ -5,12 +5,14 @@
 #include "http.h"
 #include "pngu.h"
 
-#include "loader/fat.h"
+#include "loader/fs.h"
 #include "loader/wdvd.h"
 #include "loader/usbstorage.h"
 
 #include <network.h>
 #include <wiiuse/wpad.h>
+
+#include "gecko.h"
 
 #define TAG_GAME_ID		"gameid"
 #define TAG_LOC			"loc"
@@ -24,10 +26,14 @@ static const char FMT_BPIC_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ
 "|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid6}.png"\
-"|http://www.muntrue.nl/covers/ALL/512/340/fullcover/{gameid6}.png";
+"|http://www.muntrue.nl/covers/ALL/512/340/fullcover/{gameid6}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png";
 static const char FMT_PIC_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid6}.png"\
-"|http://www.muntrue.nl/covers/ALL/160/225/boxart/{gameid6}.png";
+"|http://www.muntrue.nl/covers/ALL/160/225/boxart/{gameid6}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png";
 
 class LockMutex
 {
@@ -329,6 +335,20 @@ int CMenu::_coverDownloader(bool missingOnly)
 				png = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
 				if (png.data != NULL)
 				{
+					if (savePNG)
+					{
+						path = sfmt("%s/%s.png", m_boxPicDir.c_str(), coverList[i].c_str());
+						LWP_MutexLock(m_mutex);
+						_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), path.c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
+						LWP_MutexUnlock(m_mutex);
+						file = fopen(path.c_str(), "wb");
+						if (file != NULL)
+						{
+							fwrite(png.data, png.size, 1, file);
+							fclose(file);
+						}
+					}
+
 					LWP_MutexLock(m_mutex);
 					_setThrdMsg(wfmt(_fmt("dlmsg10", L"Making %s"), sfmt("%s.wfc", coverList[i].c_str()).c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
 					LWP_MutexUnlock(m_mutex);
@@ -336,19 +356,6 @@ int CMenu::_coverDownloader(bool missingOnly)
 					{
 						++count;
 						success = true;
-						if (savePNG)
-						{
-							path = sfmt("%s/%s.png", m_boxPicDir.c_str(), coverList[i].c_str());
-							LWP_MutexLock(m_mutex);
-							_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), path.c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
-							LWP_MutexUnlock(m_mutex);
-							file = fopen(path.c_str(), "wb");
-							if (file != NULL)
-							{
-								fwrite(png.data, 1, png.size, file);
-								fclose(file);
-							}
-						}
 					}
 				}
 			}
@@ -369,6 +376,19 @@ int CMenu::_coverDownloader(bool missingOnly)
 						png = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
 						if (png.data != NULL)
 						{
+							if (savePNG)
+							{
+								LWP_MutexLock(m_mutex);
+								_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), path.c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
+								LWP_MutexUnlock(m_mutex);
+								file = fopen(path.c_str(), "wb");
+								if (file != NULL)
+								{
+									fwrite(png.data, png.size, 1, file);
+									fclose(file);
+								}
+							}
+
 							LWP_MutexLock(m_mutex);
 							_setThrdMsg(wfmt(_fmt("dlmsg10", L"Making %s"), sfmt("%s.wfc", coverList[i].c_str()).c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
 							LWP_MutexUnlock(m_mutex);
@@ -376,18 +396,6 @@ int CMenu::_coverDownloader(bool missingOnly)
 							{
 								++countFlat;
 								success = true;
-								if (savePNG)
-								{
-									LWP_MutexLock(m_mutex);
-									_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), path.c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
-									LWP_MutexUnlock(m_mutex);
-									file = fopen(path.c_str(), "wb");
-									if (file != NULL)
-									{
-										fwrite(png.data, 1, png.size, file);
-										fclose(file);
-									}
-								}
 							}
 						}
 					}

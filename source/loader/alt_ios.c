@@ -5,68 +5,33 @@
 #include "dip_plugin_2.h"
 #include "ehcmodule_3.h"
 #include "dip_plugin_3.h"
-#include "ehcmodule_4.h"
+#include "ehcmodule_frag.h"
 #include "dip_plugin_4.h"
-#include "fat.h"
+#include "dip_plugin_249.h"
+#include "fs.h"
 #include "wdvd.h"
 #include "disc.h"
 #include "usbstorage.h"
 #include "mem2.hpp"
 #include "alt_ios.h"
+#include "mload_modules.h"
+#include "sys.h"
+#include "wbfs.h"
+
 #include <malloc.h>
 #include <wiiuse/wpad.h>
+
+#include "alt_ios_gen.h"
+
+#include "gecko.h"
 
 #define FMT_EHCMODULE_PATH	"sd:/wiiflow/ehcmodule%i.elf"
 
 extern int __Arena2Lo;
 
-int mainIOS = MAIN_IOS;
-int mainIOSminRev = MAIN_IOS_MIN_REV;
 int mainIOSRev = 0;
-
-static u32 ios_36[16] ATTRIBUTE_ALIGN(32) =
+static int load_ehc_module_ex(void)
 {
-	0, // DI_EmulateCmd
-	0,
-	0x2022DDAC, // dvd_read_controlling_data
-	0x20201010+1, // handle_di_cmd_reentry (thumb)
-	0x20200b9c+1, // ios_shared_alloc_aligned (thumb)
-	0x20200b70+1, // ios_shared_free (thumb)
-	0x20205dc0+1, // ios_memcpy (thumb)
-	0x20200048+1, // ios_fatal_di_error (thumb)
-	0x20202b4c+1, // ios_doReadHashEncryptedState (thumb)
-	0x20203934+1, // ios_printf (thumb)
-};
-
-static u32 ios_38[16] ATTRIBUTE_ALIGN(32) =
-{
-	0, // DI_EmulateCmd
-	0,
-	0x2022cdac, // dvd_read_controlling_data
-	0x20200d38+1, // handle_di_cmd_reentry (thumb)
-	0x202008c4+1, // ios_shared_alloc_aligned (thumb)
-	0x20200898+1, // ios_shared_free (thumb)
-	0x20205b80+1, // ios_memcpy (thumb)
-	0x20200048+1, // ios_fatal_di_error (thumb)
-	0x20202874+1, // ios_doReadHashEncryptedState (thumb)
-	0x2020365c+1, // ios_printf (thumb)
-};
-
-static u32 patch_data[8] ATTRIBUTE_ALIGN(32);
-
-static int load_ehc_module(void)
-{
-	static void *external_ehcmodule = 0;
-	static u32 size_external_ehcmodule = 0;
-	int is_ios = 0;
-	int my_thread_id = 0;
-	data_elf my_data_elf;
-	void *ehcmodule = 0;
-	u32 size_ehcmodule;
-	void *dip_plugin = 0;
-	u32 size_dip_plugin;
-	char modulePath[sizeof FMT_EHCMODULE_PATH + 4];
-
 	switch (IOS_GetRevision())
 	{
 		case 2:
@@ -83,91 +48,65 @@ static int load_ehc_module(void)
 			break;
 		case 4:
 		default:
-			ehcmodule = ehcmodule_4;
-			size_ehcmodule = size_ehcmodule_4;
+			ehcmodule = ehcmodule_frag;
+			size_ehcmodule = size_ehcmodule_frag;
 			dip_plugin = dip_plugin_4;
 			size_dip_plugin = size_dip_plugin_4;
 			break;
 	}
-	if (external_ehcmodule == 0)
-	{
-		FILE *fp = 0;
-		Fat_MountSDOnly();
-		snprintf(modulePath, sizeof modulePath, FMT_EHCMODULE_PATH, IOS_GetRevision());
-		if (Fat_SDAvailable())
-			fp = fopen(modulePath, "rb");
-		if (fp != 0)
-		{
-			fseek(fp, 0, SEEK_END);
-			size_external_ehcmodule = ftell(fp);
-			fseek(fp, 0, SEEK_SET);
-			external_ehcmodule = memalign(32, size_external_ehcmodule);
-			if (external_ehcmodule != 0)
-				if (fread(external_ehcmodule, 1, size_external_ehcmodule, fp) != size_external_ehcmodule)
-				{
-					free(external_ehcmodule);
-					external_ehcmodule = 0;
-				}
-			fclose(fp);
-		}
-	}
-	if (external_ehcmodule == 0)
-	{
-		if (mload_init() < 0)
-			return -1;
-		mload_elf((void *)ehcmodule, &my_data_elf);
-		my_thread_id = mload_run_thread(my_data_elf.start, my_data_elf.stack, my_data_elf.size_stack, my_data_elf.prio);
-		if (my_thread_id < 0)
-			return -1;
-		//if(mload_module(ehcmodule, size_ehcmodule)<0) return -1;
-	}
-	else
-	{
-		//if(mload_module(external_ehcmodule, size_external_ehcmodule)<0) return -1;
-		if (mload_init() < 0)
-			return -1;
-		mload_elf((void *)external_ehcmodule, &my_data_elf);
-		my_thread_id = mload_run_thread(my_data_elf.start, my_data_elf.stack, my_data_elf.size_stack, my_data_elf.prio);
-		if (my_thread_id < 0)
-			return -1;
-	}
-	usleep(350 * 1000);
-	// Test for IOS
-	mload_seek(0x20207c84, SEEK_SET);
-	mload_read(patch_data, 4);
-	if (patch_data[0] == 0x6e657665)
-		is_ios = 38;
-	else
-		is_ios = 36;
-	if (is_ios == 36)
-	{
-		// IOS 36
-		memcpy(ios_36, dip_plugin, 4);		// copy the entry_point
-		memcpy(dip_plugin, ios_36, 4 * 10);	// copy the adresses from the array
-		mload_seek(0x1377E000, SEEK_SET);	// copy dip_plugin in the starlet
-		mload_write(dip_plugin, size_dip_plugin);
-		// enables DIP plugin
-		mload_seek(0x20209040, SEEK_SET);
-		mload_write(ios_36, 4);
-	}
-	if (is_ios == 38)
-	{
-		// IOS 38
-		memcpy(ios_38, dip_plugin, 4);		// copy the entry_point
-		memcpy(dip_plugin, ios_38, 4 * 10);	// copy the adresses from the array
-		mload_seek(0x1377E000, SEEK_SET);	// copy dip_plugin in the starlet
-		mload_write(dip_plugin, size_dip_plugin);
-		// enables DIP plugin
-		mload_seek(0x20208030, SEEK_SET);
-		mload_write(ios_38, 4);
-	}
-	mload_close();
+	load_ehc_module();
 	return 0;
+}
+
+void load_dip_249()
+{
+	int ret;
+	if (is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 18)
+	{
+		if(mload_init()<0) {
+			return;
+		}
+		mload_set_gecko_debug();
+		ret = mload_module((void *) dip_plugin_249, dip_plugin_249_size);
+		mload_close();
+	}
+}
+
+void try_hello()
+{
+	int ret;
+	gprintf("mload init\n");
+	if(mload_init()<0) {
+		sleep(3);
+		return;
+	}
+	u32 base;
+	int size;
+   	mload_get_load_base(&base, &size);
+	gprintf("base: %08x %x\n", base, size);
+	mload_close();
+	gprintf("disc init:\n");
+	ret = Disc_Init();
+	gprintf("= %d\n", ret);
+	u32 x = 6;
+	s32 WDVD_hello(u32 *status);
+	ret = WDVD_hello(&x);
+	gprintf("hello: %d %x %d\n", ret, x, x);
+	ret = WDVD_hello(&x);
+	gprintf("hello: %d %x %d\n", ret, x, x);
 }
 
 bool loadIOS(int n, bool init)
 {
 	bool iosOK;
+	
+	sec_t ntfs_sec, wbfs_sec;
+	bool mnt_ntfs, mnt_wbfs;
+	
+	ntfs_sec = fs_ntfs_sec;
+	wbfs_sec = fs_wbfs_sec;
+	mnt_ntfs = g_ntfsOK;
+	mnt_wbfs = g_wbfsOK;
 
 	if (init)
 	{
@@ -175,10 +114,14 @@ bool loadIOS(int n, bool init)
 		WPAD_Disconnect(0);
 		WPAD_Shutdown();
 		Fat_Unmount();
+		if (mnt_ntfs) {
+			NTFS_Unmount();
+		}
+		if (mnt_wbfs) {
+			WBFS_Unmount();
+		}
 		WDVD_Close();
 		USBStorage_Deinit();
-//		if (IOS_GetVersion() == 222 || IOS_GetVersion() == 223)
-//			mload_close();
 		usleep(500000);
 	}
 	void *backup = COVER_allocMem1(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
@@ -188,43 +131,35 @@ bool loadIOS(int n, bool init)
 		DCFlushRange(backup, 0x200000);
 	}
 	iosOK = IOS_ReloadIOS(n) >= 0;
-	if (n != 249) sleep(1); // Narolez: sleep after IOS reload lets power down/up the harddisk when cIOS 249 is used!
+	if (!is_ios_type(IOS_TYPE_WANIN)) sleep(1); // Narolez: sleep after IOS reload lets power down/up the harddisk when cIOS 249 is used!
 	if (backup != 0)
 	{
 		memcpy(&__Arena2Lo, backup, 0x200000);
 		DCFlushRange(&__Arena2Lo, 0x200000);
 		COVER_free(backup);
 	}
-	if (iosOK && (n == 222 || n == 223))
-		load_ehc_module();
+	if (iosOK)
+	{
+		if (is_ios_type(IOS_TYPE_HERMES))
+			load_ehc_module_ex();
+		else if (is_ios_type(IOS_TYPE_WANIN))
+		{
+			load_dip_249();
+//			try_hello();
+		}
+	}
 	if (init)
 	{
 		Fat_Mount();
+		if (mnt_ntfs) {
+			NTFS_Mount(ntfs_sec);
+		}
+		if (mnt_wbfs) {
+			WBFS_Mount(wbfs_sec);
+		}
 		Disc_Init();
 		WPAD_Init();
 		WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
 	}
 	return iosOK;
-}
-
-void disableIOSReload(void)
-{
-	const u8 *dip_plugin = 0;
-	if (mload_init() < 0)
-		return;
-	switch (IOS_GetRevision())
-	{
-		case 2:
-			return;
-		case 3:
-			dip_plugin = dip_plugin_3;
-			break;
-		case 4:
-		default:
-			dip_plugin = dip_plugin_4;
-			break;
-	}
-	patch_data[0] = *((u32 *)(dip_plugin + 16 * 4));
-	mload_set_ES_ioctlv_vector((void *)patch_data[0]);
-	mload_close();
 }

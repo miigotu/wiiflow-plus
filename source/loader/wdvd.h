@@ -22,6 +22,10 @@ s32 WDVD_Read(void *, u32, u64);
 s32 WDVD_WaitForDisc(void);
 s32 WDVD_GetCoverStatus(u32 *);
 s32 WDVD_SetWBFSMode(u32, u8 *);
+s32 WDVD_SetUSBMode(const u8 *, s32);
+s32 WDVD_Read_Disc_BCA(void *);
+s32 WDVD_SetFragList(int device, void *fraglist, int size);
+s32 WDVD_SetRiivolutionFiles(void *riivolutionlist, int size);
 
 #ifdef __cplusplus
 }

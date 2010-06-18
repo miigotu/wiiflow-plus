@@ -16,6 +16,7 @@
 */
 
 #include "mload.h"
+#include "gecko.h"
 
 static const char mload_fs[] ATTRIBUTE_ALIGN(32) = "/dev/mload";
 
@@ -414,7 +415,7 @@ int ret;
 
 	if(mload_init()<0) return -1;
 	
-	ret= IOS_IoctlvFormat(hid, mload_fd, MLOAD_SETW, "ii:", addr, dat);
+	ret= IOS_IoctlvFormat(hid, mload_fd, MLOAD_SET_LOG_MODE, "ii:", addr, dat);
 	
 return ret;
 }
@@ -439,4 +440,101 @@ int ret;
 	ret= IOS_IoctlvFormat(hid, mload_fd, MLOAD_SETB, "ib:", addr, dat);
 
 return ret;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+// to get log buffer
+// this function return the size of the log buffer and prepare it to read with mload_read() the datas
+
+int mload_get_log()
+{
+int ret;
+
+	if(mload_init()<0) return -1;
+	
+	ret= IOS_IoctlvFormat(hid, mload_fd, MLOAD_GET_LOG, ":");
+
+return ret;
+
+}
+
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+// to get IOS base for dev/es  to create the cIOS
+
+int mload_get_IOS_base()
+{
+int ret;
+
+	if(mload_init()<0) return -1;
+	
+	ret= IOS_IoctlvFormat(hid, mload_fd, MLOAD_GET_IOS_BASE, ":");
+
+return ret;
+
+}
+
+
+int mload_get_version()
+{
+	int ret;
+	if(mload_init()<0) return -1;
+	ret = IOS_IoctlvFormat(hid, mload_fd, MLOAD_GET_MLOAD_VERSION, ":");
+	return ret;
+}
+
+
+
+/* IOS info structure */
+typedef struct {
+	/* Syscall base */
+	u32 syscall;
+
+	/* Module versions */
+	u32 dipVersion;
+	u32 esVersion;
+	u32 ffsVersion;
+	u32 iopVersion;
+} iosInfo;
+
+int wanin_mload_get_IOS_base()
+{
+	int ret;
+	iosInfo ios;
+	memset(&ios, 0, sizeof(ios));
+
+	if(mload_init()<0) return -1;
+	
+	ret= IOS_IoctlvFormat(hid, mload_fd, MLOAD_GET_IOS_BASE, ":d", &ios, sizeof(ios));
+	//printf("get_ios_base: %d %x\n", ret, ios.dipVersion);
+	if (ret == 0) {
+		switch(ios.dipVersion) {
+			case 0x48776F72: /* DIP: 07/11/08 14:34:26 */
+				return 37;
+
+			case 0x4888E14C: /* DIP: 07/24/08 20:08:44 */
+				return 38;
+
+			case 0x4A262AF5: /* DIP: 06/03/09 07:49:09 */
+				return 57;
+
+			case 0x492ACA9D: /* DIP: 11/24/08 15:39:09 */
+				return 60;
+		}
+	}
+	return ret;
+}
+
+int mload_set_gecko_debug()
+{
+	int ret;
+	u32 log_mode = 2; // GECKO
+	if(mload_init()<0) return -1;
+
+	gprintf("Setting debug mode...");
+	ret = IOS_IoctlvFormat(hid, mload_fd, MLOAD_SET_LOG_MODE, ":d", &log_mode, sizeof(log_mode));
+	gprintf("%d\n", ret);
+	return ret;
 }

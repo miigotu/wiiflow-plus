@@ -99,6 +99,11 @@ extern "C" void *COVER_alloc(unsigned int s)
 	return g_mem1hicovers.allocate(s);
 }
 
+extern "C" void *FAT_alloc(unsigned int s)
+{
+	return MEM2_alloc(s);
+}
+
 extern "C" void MEM2_free(void *p)
 {
 	for (int n = 0; n < 8; ++n)
@@ -119,6 +124,11 @@ extern "C" void COVER_free(void *p)
 		g_mem1locovers.release(p);
 	else
 		g_mem1hicovers.release(p);
+}
+
+extern "C" void FAT_free(void *p)
+{
+	MEM2_free(p);
 }
 
 extern "C" void *MEM2_realloc(void *p, unsigned int s)

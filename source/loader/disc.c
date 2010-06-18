@@ -11,8 +11,16 @@
 #include "disc.h"
 #include "wdvd.h"
 #include "sys.h"
-#include "fat.h"
+#include "fs.h"
+#include "fst.h"
 #include "videopatch.h"
+#include "wbfs.h"
+#include "patchcode.h"
+#include "frag.h"
+#include "usbstorage.h"
+#include "wip.h"
+
+#include "gecko.h"
 
 #define ALIGNED(x) __attribute__((aligned(x)))
 
@@ -20,6 +28,9 @@
 #define PTABLE_OFFSET	0x40000
 #define WII_MAGIC	0x5D1C9EA3
 
+//appentrypoint 
+u32 appentrypoint;
+	
 /* Disc pointers */
 static u32 buffer[0x20] ALIGNED(32);
 static u8  *diskid = (u8  *)0x80000000;
@@ -57,6 +68,7 @@ void __Disc_SetLowMem(void)
 	*(vu32 *)0x800000F0 = 0x01800000;       // Simulated Memory Size
 	*BI2 = 0x817E5480;
 	*(vu32 *)0x800000F8 = 0x0E7BE2C0;
+	*(vu32 *)0xCD00643C = 0x00000000;       // 32Mhz on Bus
 
 	// From NeoGamme R4 (WiiPower)
 	*(vu32 *)0x800030F0 = 0x0000001C;
@@ -273,6 +285,39 @@ s32 Disc_SetWBFS(u32 mode, u8 *id)
 	return WDVD_SetWBFSMode(mode, id);
 }
 
+s32 Disc_SetUSB(const u8 *id) {
+	if (is_ios_type(IOS_TYPE_HERMES)) {
+		u32 part = 0;
+		if (wbfs_part_fs) {
+			part = wbfs_part_lba;
+		} else {
+			part = wbfs_part_idx ? wbfs_part_idx - 1 : 0;
+		}
+		
+		int ret;
+		if (id && *id) {
+			ret = set_frag_list((u8 *) id);
+		} else {
+			ret = USBStorage_WBFS_SetFragList(NULL, 0);
+		}
+		
+		if (ret) {
+			return ret;
+		}
+		
+		/* Set USB mode */
+		return WDVD_SetUSBMode(id, part);
+	}
+	
+	if (WBFS_DEVICE_USB && wbfs_part_fs) {
+		gprintf("Setting frag list for wanin\n");
+		return set_frag_list((u8 *) id);
+	}
+
+	gprintf("Setting disc usb thing for wanin\n");
+	return WDVD_SetWBFSMode(WBFS_DEVICE_USB, (u8 *) id);
+}
+
 s32 Disc_ReadHeader(void *outbuf)
 {
 	/* Read disc header */
@@ -298,7 +343,7 @@ s32 Disc_IsWii(void)
 }
 
 
-s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode)
+s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode, u32 rtrn, u8 patchDiscCheck)
 {
 	entry_point p_entry;
 
@@ -310,7 +355,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
     WPAD_Flush(0);
     WPAD_Disconnect(0);
     WPAD_Shutdown();
-
+	
 	/* Setup low memory */;
 	__Disc_SetLowMem();
 
@@ -318,19 +363,21 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	__Disc_SelectVMode(vidMode);
 
 	/* Run apploader */
-	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vmode, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidMode);
+	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vmode, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidMode, rtrn, patchDiscCheck);
+	free_wip();
+	
 	if (ret < 0)
 		return ret;
 
 	/* Set an appropriate video mode */
 	__Disc_SetVMode();
 
-	if (cheat != 0)
+	do_bca_code();
+	if (cheat != 0 && hooktype != 0)
 	{
-		memcpy((void *)0x800027E8, cheat, cheatSize);
-		*(vu8 *)0x80001807 = 0x01;
+		ocarina_do_code();
 	}
-	DCFlushRange((void*)0x80000000, 0xA00000);
+//	DCFlushRange((void*)0x80000000, 0xA00000);
 
 	/* Set time */
 	__Disc_SetTime();
@@ -342,15 +389,45 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 
 	usleep(100 * 1000);
 
+	u8 temp_data[4];
+
+	// fix for PeppaPig
+	memcpy((char *) &temp_data, (void*)0x800000F4,4);
+
 	/* Shutdown IOS subsystems */
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 	/*IRQ_Disable(); //Seems to break start of other games !?
 	__IOS_ShutdownSubsystems();
 	__exception_closeall();*/ 
 
+	// fix for PeppaPig
+	memcpy((void*)0x800000F4,(char *) &temp_data, 4);
 
-	/* Jump to entry point */
-	p_entry();
+	appentrypoint = (u32) p_entry;
+	
+	if (cheat != 0)
+	{
+		__asm__(
+			"lis %r3, appentrypoint@h\n"
+			"ori %r3, %r3, appentrypoint@l\n"
+			"lwz %r3, 0(%r3)\n"
+			"mtlr %r3\n"
+			"lis %r3, 0x8000\n"
+			"ori %r3, %r3, 0x18A8\n"
+			"mtctr %r3\n"
+			"bctr\n"
+		);
+	}
+	else
+	{
+		__asm__(
+			"lis %r3, appentrypoint@h\n"
+			"ori %r3, %r3, appentrypoint@l\n"
+			"lwz %r3, 0(%r3)\n"
+			"mtlr %r3\n"
+			"blr\n"
+		);
+	}
 
 	return 0;
 }
@@ -370,7 +447,7 @@ s32 Disc_OpenPartition(u32 mode, u8 *id)
 	return 0;
 }
 
-s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes)
+s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck)
 {
 	u64 offset;
 	s32 ret;
@@ -381,5 +458,5 @@ s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool 
 		return ret;
 
 	/* Boot partition */
-	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes);
+	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes, rtrn, patchDiscCheck);
 }

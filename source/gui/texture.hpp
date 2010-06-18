@@ -19,12 +19,14 @@ struct STexture
 	// This function doesn't use MEM2 if the PNG is loaded from memory and there's no mip mapping
 	TexErr fromPNG(const u8 *buffer, u8 f = -1, Alloc alloc = ALLOC_MEM2, u32 minMipSize = 0, u32 maxMipSize = 0);
 	TexErr fromPNGFile(const char *filename, u8 f = -1, Alloc alloc = ALLOC_MEM2, u32 minMipSize = 0, u32 maxMipSize = 0);
+	TexErr fromRAW(const u8 *buffer, u32 w, u32 h, u8 f = -1, Alloc alloc = ALLOC_MEM2);
 private:
 	static void _resize(u8 *dst, u32 dstWidth, u32 dstHeight, const u8 *src, u32 srcWidth, u32 srcHeight);
 	static void _resizeD2x2(u8 *dst, const u8 *src, u32 srcWidth, u32 srcHeight);
 	static SmartBuf _genMipMaps(const u8 *src, u32 width, u32 height, u8 maxLOD, u32 lod0Width, u32 lod0Height);
 	static void _calcMipMaps(u8 &maxLOD, u8 &minLOD, u32 &lod0Width, u32 &lod0Height, u32 width, u32 height, u32 minSize, u32 maxSize);
 	static void _convertToRGBA8(u8 *dst, const u8 *src, u32 width, u32 height);
+	static void _convertToFlippedRGBA8(u8 *dst, const u8 *src, u32 width, u32 height);
 	static void _convertToRGB565(u8 *dst, const u8 *src, u32 width, u32 height);
 	static void _convertToCMPR(u8 *dst, const u8 *src, u32 width, u32 height);
 };

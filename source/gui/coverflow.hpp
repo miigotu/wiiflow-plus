@@ -25,7 +25,7 @@ public:
 	// Cover list management
 	void clear(void);
 	void reserve(u32 capacity);
-	void addItem(const char *id, const wchar_t *title, const char *picPath, const char *boxPicPath);
+	void addItem(const char *id, const wchar_t *title, const char *picPath, const char *boxPicPath, int playcount);
 	bool empty(void) const { return m_items.empty(); }
 	// 
 	bool start(const char *id = 0);
@@ -159,11 +159,12 @@ private:
 		std::string picPath;
 		std::string boxPicPath;
 		std::string discPicPath;
+		int playcount;
 		STexture texture;
 		volatile bool boxTexture;
 		volatile enum TexState state;
 		// 
-		CItem(const char *itemId, const wchar_t *itemTitle, const char *itemPic, const char *itemBoxPic);
+		CItem(const char *itemId, const wchar_t *itemTitle, const char *itemPic, const char *itemBoxPic, int playcount);
 		bool operator<(const CItem &i) const;
 	};
 	struct CCover
@@ -290,6 +291,7 @@ private:
 	void _instantTarget(int i);
 	void _transposeCover(std::vector<CCover> &dst, u32 rows, u32 columns, int pos);
 	void _playSound(void);
+	static bool _sortByPlayCount(CItem item1, CItem item2);
 private:
 	static int _picLoader(CCoverFlow *cf);
 	static float _step(float cur, float tgt, float spd);

@@ -1,10 +1,9 @@
 
 #include "menu.hpp"
 #include "loader/wbfs.h"
-#include "loader/libwbfs/libwbfs.h"
 #include "loader/libwbfs/wiidisc.h"
 #include "menu.hpp"
-#include "loader/fat.h"
+#include "loader/fs.h"
 
 #include <wiiuse/wpad.h>
 
@@ -488,9 +487,9 @@ static void addDolToList(void *o, const char *fileName)
 void CMenu::_listDOL(vector<string> &v, const string &gameId)
 {
 	Disc_SetWBFS(0, NULL);
-	wbfs_disc_t *disc = wbfs_open_disc(WBFS_GetHandle(), (u8 *)gameId.c_str());
+	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str());
 	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
 	wd_list_dols(wdisc, ALL_PARTITIONS, addDolToList, (void *)&v);
 	wd_close_disc(wdisc);
-	wbfs_close_disc(disc);
+	WBFS_CloseDisc(disc);
 }

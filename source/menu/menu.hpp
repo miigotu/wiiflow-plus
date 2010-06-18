@@ -57,6 +57,13 @@ private:
 	std::string m_cacheDir;
 	std::string m_themeDir;
 	std::string m_musicDir;
+	std::string m_bcaDir;
+	std::string m_wipDir;
+	std::string m_cheatDir;
+	std::string m_txtCheatDir;
+	std::string m_videoDir;
+	std::string m_riivolutionDir;
+	std::string m_fanartDir;
 	// 
 	STexture m_prevBg;
 	STexture m_nextBg;
@@ -70,6 +77,7 @@ private:
 	STexture m_config2Bg;
 	STexture m_config3Bg;
 	STexture m_config4Bg;
+	STexture m_config5Bg;
 	STexture m_configAdvBg;
 	STexture m_configSndBg;
 	STexture m_downloadBg;
@@ -160,6 +168,13 @@ private:
 	u32 m_config4LblSearchMode;
 	u32 m_config4BtnSearchMode;
 	u32 m_config4LblUser[4];
+	u32 m_config5LblPartitionName;
+	u32 m_config5LblPartition;
+	u32 m_config5BtnPartitionP;
+	u32 m_config5BtnPartitionM;
+	u32 m_config5LblInstallDirectory;
+	u32 m_config5BtnInstallDirectory;
+	u32 m_config5LblUser[2];
 	u32 m_configSndLblBnrVol;
 	u32 m_configSndLblBnrVolVal;
 	u32 m_configSndBtnBnrVolP;
@@ -283,6 +298,7 @@ private:
 	u32 m_cheatLblItem[6];
 	u32 m_cheatBtnItem[6];
 	u32 m_cheatSettingsPage;
+	u32 m_cheatLblUser[5];
 	STexture m_cheatBg;
 	GCTCheats m_cheatfile;
 	 
@@ -311,6 +327,12 @@ private:
 	lwp_t m_gameSoundThread;
 	mutex_t m_gameSndMutex;
 	u8 m_bnrSndVol;
+	
+	bool m_music_ismp3;
+	u32 m_music_fileSize;
+	vector<string> music_files;
+	vector<string>::iterator current_music;
+	bool m_video_playing;
 private:
 	enum WBFS_OP { WO_ADD_GAME, WO_REMOVE_GAME, WO_FORMAT };
 	typedef std::pair<std::string, u32> FontDesc;
@@ -372,6 +394,7 @@ private:
 	void _initConfig2Menu(SThemeData &theme);
 	void _initConfig3Menu(SThemeData &theme);
 	void _initConfig4Menu(SThemeData &theme);
+	void _initConfig5Menu(SThemeData &theme);
 	void _initConfigAdvMenu(SThemeData &theme);
 	void _initConfigSndMenu(SThemeData &theme);
 	void _initGameMenu(SThemeData &theme);
@@ -395,6 +418,7 @@ private:
 	void _textConfig2(void);
 	void _textConfig3(void);
 	void _textConfig4(void);
+	void _textConfig5(void);
 	void _textConfigAdv(void);
 	void _textConfigSnd(void);
 	void _textGame(void);
@@ -409,6 +433,7 @@ private:
 	void _hideConfig2(bool instant = false);
 	void _hideConfig3(bool instant = false);
 	void _hideConfig4(bool instant = false);
+	void _hideConfig5(bool instant = false);
 	void _hideConfigAdv(bool instant = false);
 	void _hideConfigSnd(bool instant = false);
 	void _hideGame(bool instant = false);
@@ -424,6 +449,7 @@ private:
 	void _showConfig2(void);
 	void _showConfig3(void);
 	void _showConfig4(void);
+	void _showConfig5(void);
 	void _showConfigAdv(void);
 	void _showConfigSnd(void);
 	void _showGame(void);
@@ -443,6 +469,7 @@ private:
 	int _config2(void);
 	int _config3(void);
 	int _config4(void);
+	int _config5(void);
 	int _configAdv(void);
 	int _configSnd(void);
 	void _game(bool launch = false);
@@ -494,10 +521,12 @@ private:
 	static int _gameInstaller(void *obj);
 	wstringEx _optBoolToString(int b);
 	void _listDOL(std::vector<std::string> &v, const std::string &gameId);
+	void _searchMusic(void);
 	void _startMusic(void);
 	void _stopMusic(void);
 	void _pauseMusic(void);
 	void _resumeMusic(void);
+	void _loopMusic(void);
 	void _stopSounds(void);
 	// 
 	void _playGameSound(void);
@@ -509,7 +538,7 @@ private:
 	static const SOption _languages[11];
 	static const SOption _videoModes[7];
 	static const SOption _vidModePatch[4];
-	static const int _ios[5];
+	static const int _ios[6];
 	static const SCFParamDesc _cfParams[];
 	static const int _nbCfgPages;
 };

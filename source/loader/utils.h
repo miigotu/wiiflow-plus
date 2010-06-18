@@ -16,6 +16,8 @@ extern "C" {
 /* Prototypes */
 u32 swap32(u32);
 
+#define SAFE_FREE(P) if(P){free(P);P=NULL;}
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

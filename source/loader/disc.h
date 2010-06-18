@@ -43,10 +43,11 @@ s32  Disc_Init(void);
 s32  Disc_Open(void);
 s32  Disc_Wait(void);
 s32  Disc_SetWBFS(u32, u8 *);
+s32  Disc_SetUSB(const u8 *);
 s32  Disc_ReadHeader(void *);
 s32  Disc_IsWii(void);
-s32  Disc_BootPartition(u64, u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8);
-s32  Disc_WiiBoot(u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8);
+s32  Disc_BootPartition(u64, u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8);
+s32  Disc_WiiBoot(u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8);
 s32 Disc_OpenPartition(u32, u8 *);
 
 #ifdef __cplusplus

@@ -2,7 +2,7 @@
 #include "menu.hpp"
 #include "loader/sys.h"
 #include "loader/wbfs.h"
-#include "loader/fat.h"
+#include "loader/fs.h"
 #include "oggplayer.h"
 
 #include <wiiuse/wpad.h>
@@ -11,11 +11,9 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <dirent.h>
+#include <mp3player.h>
 
-#define APPDATA_DIR		"wiiflow"
-#define APPDATA_DIR2	"apps/wiiflow"
-#define CFG_FILENAME	"wiiflow.ini"
-#define LANG_FILENAME	"language.ini"
+#include "gecko.h"
 
 // Sounds
 extern const u8 click_wav[];
@@ -99,7 +97,7 @@ void CMenu::init(bool fromHBC)
 				appdir = APPDATA_DIR2;
 				m_cfg.load(sfmt("sd:/%s/%s", appdir.c_str(),CFG_FILENAME).c_str());
 		}
-				
+		
 		bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", true);
 		drive = dataOnUSB ? "usb" : "sd";
 //		if (!m_cfg.loaded() && dataOnUSB)
@@ -108,6 +106,7 @@ void CMenu::init(bool fromHBC)
 	else
 		drive = Fat_USBAvailable() ? "usb" : "sd";
 	// 
+	
 	m_dataDir = sfmt("%s:/%s", drive,appdir.c_str());
 	if(!m_cfg.load(sfmt("%s/" CFG_FILENAME, m_dataDir.c_str()).c_str())) 
 	{
@@ -121,12 +120,14 @@ void CMenu::init(bool fromHBC)
 	m_cacheDir = m_cfg.getString(" GENERAL", "dir_cache", sfmt("%s:/%s/cache", drive, appdir.c_str()));
 	m_themeDir = m_cfg.getString(" GENERAL", "dir_themes", sfmt("%s:/%s/themes", drive, appdir.c_str()));
 	m_musicDir = m_cfg.getString(" GENERAL", "dir_music", sfmt("%s:/%s/music", drive, appdir.c_str())); 
-	/*m_picDir = m_cfg.getString(" GENERAL", "dir_flat_covers", sfmt("%s:/" APPDATA_DIR "/covers", drive));
-	m_boxPicDir = m_cfg.getString(" GENERAL", "dir_box_covers", sfmt("%s:/" APPDATA_DIR "/boxcovers", drive));
-	m_cacheDir = m_cfg.getString(" GENERAL", "dir_cache", sfmt("%s:/" APPDATA_DIR "/cache", drive));
-	m_themeDir = m_cfg.getString(" GENERAL", "dir_themes", sfmt("%s:/" APPDATA_DIR "/themes", drive));
-	m_musicDir = m_cfg.getString(" GENERAL", "dir_music", sfmt("%s:/" APPDATA_DIR "/music", drive));*/
-	// 
+	m_bcaDir = m_cfg.getString(" GENERAL", "dir_bca", sfmt("%s:/%s/codes", drive, appdir.c_str()));
+	m_wipDir = m_cfg.getString(" GENERAL", "dir_wip", sfmt("%s:/%s/codes", drive, appdir.c_str()));
+	m_cheatDir = m_cfg.getString(" GENERAL", "dir_cheat", sfmt("%s:/%s/codes", drive, appdir.c_str()));
+	m_txtCheatDir = m_cfg.getString(" GENERAL", "dir_txtcheat", sfmt("%s:/%s/txtcodes", drive, appdir.c_str()));
+	m_videoDir = m_cfg.getString(" GENERAL", "dir_trailers", sfmt("%s:/%s/trailers", drive, appdir.c_str()));
+	m_riivolutionDir = m_cfg.getString(" GENERAL", "dir_riivolution", sfmt("%s:/%s/riivolution", drive, appdir.c_str()));
+	m_fanartDir = m_cfg.getString(" GENERAL", "dir_fanart", sfmt("%s:/%s/fanart", drive, appdir.c_str()));
+
 	m_cf.init();
 	// 
 	struct stat dummy;
@@ -137,6 +138,15 @@ void CMenu::init(bool fromHBC)
 		mkdir(m_boxPicDir.c_str(), 0777);
 		mkdir(m_cacheDir.c_str(), 0777);
 		mkdir(m_themeDir.c_str(), 0777);
+		mkdir(m_bcaDir.c_str(), 0777);
+		mkdir(m_wipDir.c_str(), 0777);
+		mkdir(m_cheatDir.c_str(), 0777);
+		mkdir(m_txtCheatDir.c_str(), 0777);
+		mkdir(m_videoDir.c_str(), 0777);
+		mkdir(m_riivolutionDir.c_str(), 0777);
+		mkdir(m_fanartDir.c_str(), 0777);
+		
+		mkdir(sfmt("%s/background", m_fanartDir.c_str()).c_str(), 0777);
 	}
 	// INI files
 	m_loc.load(sfmt("%s/" LANG_FILENAME, m_dataDir.c_str()).c_str());
@@ -556,6 +566,7 @@ void CMenu::_buildMenus(void)
 	_initErrorMenu(theme);
 	_initConfigAdvMenu(theme);
 	_initConfigSndMenu(theme);
+	_initConfig5Menu(theme);
 	_initConfig4Menu(theme);
 	_initConfig3Menu(theme);
 	_initConfig2Menu(theme);
@@ -852,7 +863,8 @@ void CMenu::_initCF(void)
 			wstringEx w(titles.getWString("TITLES", id));
 			if (w.empty())
 				w = titles.getWString("TITLES", id.substr(0, 4), string(m_gameList[i].title, sizeof m_gameList[0].title));
-			m_cf.addItem(id.c_str(), w.c_str(), sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str());
+			int playcount = m_cfg.getInt(id, "playcount", 0);
+			m_cf.addItem(id.c_str(), w.c_str(), sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount);
 		}
 	}
 	m_cf.setBoxMode(m_cfg.getBool(" GENERAL", "box_mode", true));
@@ -926,6 +938,8 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 	LWP_MutexUnlock(m_gameSndMutex);
 	if (withCF && m_gameSoundThread == 0)
 		m_cf.startPicLoader();
+	if (!m_video_playing)
+		_loopMusic();
 }
 
 void CMenu::_setBg(const STexture &tex, const STexture &lqTex)
@@ -1065,6 +1079,7 @@ void CMenu::_updateText(void)
 	_textConfig2();
 	_textConfig3();
 	_textConfig4();
+	_textConfig5();
 	_textConfigSnd();
 	_textConfigAdv();
 	_textDownload();
@@ -1089,7 +1104,7 @@ bool CMenu::_loadGameList(void)
 	SmartBuf buffer;
 	u32 count;
 
-	ret = WBFS_Open();
+	ret = WBFS_OpenNamed((char *) m_cfg.getString(" GENERAL", "partition", "WBFS1").c_str());
 	if (ret < 0)
 	{
 		error(wfmt(_fmt("wbfs2", L"WBFS_Open failed : %i"), ret));
@@ -1147,11 +1162,12 @@ bool CMenu::_loadGameList(void)
 	return true;
 }
 
-static void listOGG(const char *path, vector<string> &oggFiles)
+static void listOGGMP3(const char *path, vector<string> &oggFiles)
 {
 	DIR *d;
 	struct dirent *dir;
 	string fileName;
+	string fileExt;
 
 	oggFiles.clear();
 	d = opendir(path);
@@ -1164,45 +1180,74 @@ static void listOGG(const char *path, vector<string> &oggFiles)
 			for (u32 i = 0; i < fileName.size(); ++i)
 				if (fileName[i] >= 'a' && fileName[i] <= 'z')
 					fileName[i] &= 0xDF;
-			if (fileName.size() > 4 && fileName.substr(fileName.size() - 4, 4) == ".OGG")
-				oggFiles.push_back(fileName);
+			if (fileName.size() > 4)
+			{
+				fileExt = fileName.substr(fileName.size() - 4, 4);
+				if (fileExt == ".OGG" || fileExt == ".MP3")
+					oggFiles.push_back(fileName);
+			}
 			dir = readdir(d);
 		}
 		closedir(d);
 	}
 }
 
+void CMenu::_searchMusic(void)
+{
+	listOGGMP3(m_musicDir.c_str(), music_files);
+	if (music_files.empty())
+		return;
+		
+	if (m_cfg.getBool(" GENERAL", "randomize_music", true))
+		random_shuffle(music_files.begin(), music_files.end());
+		
+	current_music = music_files.begin();
+}
+
 void CMenu::_startMusic(void)
 {
-	vector<string> v;
-	u32 fileSize;
 	SmartBuf buffer;
 
-	_stopMusic();
-	listOGG(m_musicDir.c_str(), v);
-	if (v.empty())
+	if (music_files.empty())
 		return;
-	srand(time(NULL));
-	ifstream file(sfmt("%s/%s", m_musicDir.c_str(), v[rand() % v.size()].c_str()).c_str(), ios::in | ios::binary);
+		
+	if (current_music == music_files.end())
+		current_music = music_files.begin();
+
+	_stopMusic();
+
+	ifstream file(sfmt("%s/%s", m_musicDir.c_str(), (*current_music).c_str()).c_str(), ios::in | ios::binary);
+	m_music_ismp3 = (*current_music).substr((*current_music).size() - 4, 4) == ".MP3";
 	if (!file.is_open())
 		return;
 	file.seekg(0, ios::end);
-	fileSize = file.tellg();
+	m_music_fileSize = file.tellg();
 	file.seekg(0, ios::beg);
-	buffer = smartMem2Alloc(fileSize);
+	buffer = smartMem2Alloc(m_music_fileSize);
 	if (!buffer)
 		return;
-	file.read((char *)buffer.get(), fileSize);
+	file.read((char *)buffer.get(), m_music_fileSize);
 	if (file.fail())
 		return;
 	file.close();
 	m_music = buffer;
-	PlayOgg(mem_open((char *)m_music.get(), fileSize), 0, OGG_INFINITE_TIME);
+	if(m_music_ismp3)
+	{
+		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
+	}
+	else
+	{
+		PlayOgg(mem_open((char *)m_music.get(), m_music_fileSize), 0, OGG_INFINITE_TIME);
+	}
 	SetVolumeOgg(m_cfg.getInt(" GENERAL", "sound_volume_music", 255));
+	MP3Player_Volume(m_cfg.getInt(" GENERAL", "sound_volume_music", 255));
+	
+	current_music++;
 }
 
 void CMenu::_stopMusic(void)
 {
+	MP3Player_Stop();
 	StopOgg();
 	m_music.release();
 }
@@ -1210,11 +1255,25 @@ void CMenu::_stopMusic(void)
 void CMenu::_pauseMusic(void)
 {
 	PauseOgg(1);
+	MP3Player_Stop();
 }
 
 void CMenu::_resumeMusic(void)
 {
 	PauseOgg(0);
+	if(m_music_ismp3)
+	{
+		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
+	}	
+}
+
+void CMenu::_loopMusic(void)
+{		
+	if((m_music_ismp3 && !MP3Player_IsPlaying()) || StatusOgg() == OGG_STATUS_EOF)
+	{
+		_startMusic();
+	}
+	return;
 }
 
 void CMenu::_stopSounds(void)

@@ -1,9 +1,10 @@
 
 #include "menu.hpp"
 #include "loader/patchcode.h"
-#include "loader/fat.h"
+#include "loader/fs.h"
 #include "loader/sys.h"
 #include "loader/wdvd.h"
+#include "loader/mload_modules.h"
 #include "loader/alt_ios.h"
 #include "cheat.hpp"
 #include <wiiuse/wpad.h>
@@ -12,8 +13,15 @@
 
 #include "loader/wbfs.h"
 #include "loader/usbstorage.h"
-#include "loader/libwbfs/libwbfs.h"
 #include "loader/libwbfs/wiidisc.h"
+#include "loader/frag.h"
+#include "loader/fst.h"
+#include "loader/wip.h"
+#include "loader/riivolution.h"
+
+#include "gui/WiiMovie.hpp"
+
+#include "gecko.h"
 
 using namespace std;
 
@@ -63,7 +71,7 @@ const CMenu::SOption CMenu::_vidModePatch[4] = {
 	{ "vmpall", L"All" }
 };
 
-const int CMenu::_ios[5] = {0, 249, 250, 222, 223};
+const int CMenu::_ios[6] = {0, 249, 250, 222, 223, 224};
 
 static inline int loopNum(int i, int s)
 {
@@ -87,7 +95,18 @@ void CMenu::_hideGame(bool instant)
 
 void CMenu::_showGame(void)
 {
-	_setBg(m_gameBg, m_gameBgLQ);
+	// begin fanart replacement --Miigotu
+	string id(m_cf.getId());
+	string fanartPath = sfmt("%s/background/%.3s.png", m_fanartDir.c_str(), id.c_str());
+	STexture fanbg;
+	if (STexture::TE_OK == fanbg.fromPNGFile(fanartPath.c_str(), GX_TF_RGBA8, ALLOC_MEM2)) {
+		_setBg(fanbg, fanbg);
+	} else {
+		_setBg(m_gameBg, m_gameBgLQ);
+	}
+
+	//end fanart replacement
+
 	m_btnMgr.show(m_gameBtnPlay);
 	m_btnMgr.show(m_gameBtnBack);
 	for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
@@ -118,6 +137,7 @@ void CMenu::_game(bool launch)
 		_playGameSound();
 		_showGame();
 	}
+
 	while (true)
 	{
 		string id(m_cf.getId());
@@ -136,6 +156,41 @@ void CMenu::_game(bool launch)
 			m_btnMgr.up();
 		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
 			m_btnMgr.down();
+		if ((padsState & WPAD_BUTTON_UP) != 0)
+		{
+			string videoPath = sfmt("%s/%.3s.thp", m_videoDir.c_str(), id.c_str());
+		
+			FILE *fp = fopen(videoPath.c_str(), "rb");
+			if (fp)
+			{
+				fclose(fp);
+				
+				_hideGame();
+						
+				WiiMovie movie(videoPath.c_str());
+				movie.SetScreenSize(m_cfg.getInt(" GENERAL", "tv_width", 640), m_cfg.getInt(" GENERAL", "tv_height", 480), m_cfg.getInt(" GENERAL", "tv_x", 0), m_cfg.getInt(" GENERAL", "tv_y", 0));
+				movie.SetVolume(m_cfg.getInt(" GENERAL", "sound_volume_bnr", 255));
+				movie.Play();
+				
+				m_gameSound.stop();
+				m_video_playing = true;
+				
+				STexture videoBg;
+				while ((padsState & WPAD_BUTTON_B) == 0 && movie.GetNextFrame(&videoBg))
+				{
+					_setBg(videoBg, videoBg);
+					m_bgCrossFade = 10;
+					WPAD_ScanPads();
+					padsState = WPAD_ButtonsDown(0);
+					_mainLoopCommon(wd, false); // Redraw the background every frame
+				}
+//				_setBg(m_gameBg, m_gameBgLQ);
+				
+				_showGame();
+				m_video_playing = false;
+				m_gameSound.play(m_bnrSndVol);
+			}
+		}
 		if ((padsState & WPAD_BUTTON_1) != 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1), m_numCFVersions);
@@ -157,11 +212,18 @@ void CMenu::_game(bool launch)
 				break;
 			else if (m_btnMgr.selected() == m_gameBtnDelete)
 			{
-				_hideGame();
-				_waitForGameSoundExtract();
-				if (_wbfsOp(CMenu::WO_REMOVE_GAME))
-					break;
-				_showGame();
+				if (!WBFS_IsReadOnly())
+				{
+					_hideGame();
+					_waitForGameSoundExtract();
+					if (_wbfsOp(CMenu::WO_REMOVE_GAME))
+						break;
+					_showGame();
+				}
+				else
+				{
+					error(_t("wbfsop10", L"This filesystem is read-only. You cannot install games or remove them."));
+				}
 			}
 			else if (m_btnMgr.selected() == m_gameBtnFavoriteOn || m_btnMgr.selected() == m_gameBtnFavoriteOff)
 				m_cfg.setBool(id, "favorite", !m_cfg.getBool(id, "favorite", false));
@@ -240,11 +302,11 @@ static SmartBuf extractDOL(const char *dolName, u32 &size, const char *gameId)
 {
 	SmartBuf dolFile;
 	Disc_SetWBFS(0, NULL);
-	wbfs_disc_t *disc = wbfs_open_disc(WBFS_GetHandle(), (u8 *)gameId);
+	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId);
 	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
 	dolFile = SmartBuf(wd_extract_file(wdisc, &size, ALL_PARTITIONS, dolName, ALLOC_COVER), SmartBuf::SRCALL_COVER);
 	wd_close_disc(wdisc);
-	wbfs_close_disc(disc);
+	WBFS_CloseDisc(disc);
 	return dolFile;
 }
 
@@ -254,16 +316,34 @@ void CMenu::_launchGame(const string &id)
 	bool cheat = m_cfg.testOptBool(id, "cheat", m_cfg.getBool(" GENERAL", "cheat", false));
 	bool countryPatch = m_cfg.testOptBool(id, "country_patch", m_cfg.getBool(" GENERAL", "country_patch", false));
 	bool err002Fix = m_cfg.testOptBool(id, "error_002_fix", m_cfg.getBool(" GENERAL", "error_002_fix", true));
+	bool patchDiscCheck = !m_cfg.testOptBool(id, "disable_dvd_patch", false);
 	u8 videoMode = (u8)min((u32)m_cfg.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
 	string altdol = m_cfg.getString(id, "dol");
 	int language = min((u32)m_cfg.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
+	const char *rtrn = m_cfg.getString(id, "returnto", m_cfg.getString(" GENERAL", "returnto")).c_str();
 	int iosNum = CMenu::_ios[min((u32)m_cfg.getInt(id, "ios", 0), ARRAY_SIZE(CMenu::_ios) - 1u)];
 	if (iosNum == 0)
 		iosNum = mainIOS;
-	bool mload = iosNum == 222 || iosNum == 223;
+	bool mload = iosNum == 222 || iosNum == 223 || iosNum == 224;
 	int minIOSRev = mload ? IOS_222_MIN_REV : IOS_249_MIN_REV;
 	bool blockIOSReload = m_cfg.getBool(id, "block_ios_reload", false);
 	u8 patchVidMode = min((u32)m_cfg.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
+	hooktype = (u32) m_cfg.getInt(id, "hooktype", 1); // hooktype is defined in patchcode.h
+	debuggerselect = m_cfg.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
+	
+	int rtrnID = 0;
+	if (rtrn != NULL && strlen(rtrn) == 4)
+	{
+		rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
+	}
+
+	if (id == "RPWE41" || id == "RPWZ41" || id == "SPXP41") // Prince of Persia, Rival Swords
+	{
+		cheat = false;
+		hooktype = 0;
+		debuggerselect = false;
+	}
+	
 	SmartBuf cheatFile;
 	u32 cheatSize = 0;
 	SmartBuf dolFile;
@@ -278,9 +358,31 @@ void CMenu::_launchGame(const string &id)
 	if (strcasecmp(altdol.c_str(), "main.dol") == 0)
 		altdol.clear();
 	m_cfg.setString(" GENERAL", "current_game", id);
+	m_cfg.setInt(id, "playcount", m_cfg.getInt(id, "playcount", 0) + 1);
+	
 	m_cfg.save();
 	setLanguage(language);
 	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing
+	
+	// Do every disc related action before reloading IOS
+	
+	if (get_frag_list((u8 *)id.c_str()) < 0) {
+		return;
+	}
+	if (cheat)
+		loadCheatFile(cheatFile, cheatSize, m_cheatDir.c_str(), id.c_str());
+	
+	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) id.c_str());
+	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) id.c_str());
+	ocarina_load_code((u8 *) id.c_str(), cheatFile.get(), cheatSize);
+/*	
+	if (id == "SMNP01") {
+		gprintf("Loading riivolution test files\n");
+		load_riivolution_files((u8 *) m_riivolutionDir.c_str(), (u8 *) id.c_str(), (u8 *) "Most Popular NSMB Levels");
+		gprintf("Riivolution files loaded\n");
+	}
+*/
+	// Reload IOS, if requested
 	if (iosNum != mainIOS || !_networkFix())
 	{
 		if (!loadIOS(iosNum, true))
@@ -300,28 +402,33 @@ void CMenu::_launchGame(const string &id)
 		disableIOSReload();
 	if (!altdol.empty())
 		dolFile = extractDOL(altdol.c_str(), dolSize, id.c_str());
-	wbfs_close(WBFS_GetHandle());
-	if (cheat)
-		loadCheatFile(cheatFile, cheatSize, id.c_str());
-	if (Disc_SetWBFS(1, (u8 *)id.c_str()) < 0)
+
+	s32 ret = Disc_SetUSB((u8 *)id.c_str());
+	if (ret < 0)
 	{
+		gprintf("Set USB failed: %d\n", ret);
 		error(L"Disc_SetWBFS failed");
 		if (iosLoaded)
 			Sys_LoadMenu();
 		return;
 	}
+	
+	WBFS_Close();
+	
 	if (Disc_Open() < 0)
 	{
 		error(L"Disc_Open failed");
-		if (iosLoaded)
+		if (iosLoaded) 	
 			Sys_LoadMenu();
 		return;
 	}
 	Fat_Unmount();
 	cleanup();
 	USBStorage_Deinit();
-	if (Disc_WiiBoot(videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode) < 0)
+	if (Disc_WiiBoot(videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck) < 0)
+	{
 		Sys_LoadMenu();
+	}
 }
 
 bool CMenu::_networkFix(void)
@@ -374,6 +481,7 @@ void CMenu::_initGameMenu(CMenu::SThemeData &theme)
 	m_gameBg = _texture(theme.texSet, "GAME/BG", "texture", theme.bg);
 	if (m_theme.loaded() && STexture::TE_OK == bgLQ.fromPNGFile(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GAME/BG", "texture").c_str()).c_str(), GX_TF_CMPR, ALLOC_MEM2, 64, 64))
 		m_gameBgLQ = bgLQ;
+
 	m_gameBtnPlay = _addButton(theme, "GAME/PLAY_BTN", theme.btnFont, L"", 420, 354, 200, 56, fontColor);
 	m_gameBtnBack = _addButton(theme, "GAME/BACK_BTN", theme.btnFont, L"", 420, 410, 200, 56, fontColor);
 	m_gameBtnFavoriteOn = _addPicButton(theme, "GAME/FAVORITE_ON", texFavOn, texFavOnSel, 460, 170, 48, 48);
@@ -407,11 +515,17 @@ static void _extractBnr(SmartBuf &bnr, u32 &size, const string &gameId)
 {
 	bnr.release();
 	Disc_SetWBFS(0, NULL);
-	wbfs_disc_t *disc = wbfs_open_disc(WBFS_GetHandle(), (u8 *)gameId.c_str());
-	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
-	bnr = SmartBuf(wd_extract_file(wdisc, &size, ALL_PARTITIONS, "opening.bnr", ALLOC_MEM2), SmartBuf::SRCALL_MEM2);
-	wd_close_disc(wdisc);
-	wbfs_close_disc(disc);
+	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str());
+	if (disc != NULL)
+	{
+		wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
+		if (wdisc != NULL)
+		{
+			bnr = SmartBuf(wd_extract_file(wdisc, &size, ALL_PARTITIONS, "opening.bnr", ALLOC_MEM2), SmartBuf::SRCALL_MEM2);
+			wd_close_disc(wdisc);
+		}
+		WBFS_CloseDisc(disc);
+	}
 }
 
 struct IMD5Header

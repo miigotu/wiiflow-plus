@@ -18,20 +18,20 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <gccore.h>
-#include "geckomenu.h"
+#include <sys/unistd.h>
+
 #include "apploader.h"
 #include "patchcode.h"
-#include "fwrite_patch.h"
+#include "gecko.h"
 
 extern void patchhook(u32 address, u32 len);
 extern void patchhook2(u32 address, u32 len);
 extern void patchhook3(u32 address, u32 len);
-extern void patchhook4(u32 address, u32 len);
+
 extern void multidolpatchone(u32 address, u32 len);
 extern void multidolpatchtwo(u32 address, u32 len);
 
@@ -51,23 +51,17 @@ extern void patchupdatecheck(u32 address, u32 len);
 
 extern void movedvdhooks(u32 address, u32 len);
 
-
-extern void patchhookdol(u32 address, u32 len);
+extern void multidolhook(u32 address);
 extern void langvipatch(u32 address, u32 len, u8 langbyte);
 extern void vipatch(u32 address, u32 len);
-extern u32 regionfreeselect;
-
-static const u32 viwiihooks[4] = {
-	0x7CE33B78,0x38870034,0x38A70038,0x38C7004C 
-};
 
 static const u32 multidolpatch1[2] = {
 	0x3C03FFB4,0x28004F43
-};	
+};
 
 static const u32 healthcheckhook[2] = {
 	0x41810010,0x881D007D
-};	
+};
 
 static const u32 updatecheckhook[3] = {
 	0x80650050,0x80850054,0xA0A50058
@@ -110,184 +104,243 @@ static const u32 movedvdpatch[3] = {
 	0x2C040000, 0x41820120, 0x3C608109
 };
 
-	
-
 static const u32 regionfreehooks[5] = {
 	0x7C600774, 0x2C000001, 0x41820030,0x40800010,0x2C000000
+};
+
+static const u32 cIOScode[16] = {
+	0x7f06c378, 0x7f25cb78, 0x387e02c0, 0x4cc63182
+};
+
+static const u32 cIOSblock[16] = {
+	0x2C1800F9, 0x40820008, 0x3B000024
 };
 
 static const u32 fwritepatch[8] = {
 	0x9421FFD0,0x7C0802A6,0x90010034,0xBF210014,0x7C9B2378,0x7CDC3378,0x7C7A1B78,0x7CB92B78  // bushing fwrite
 };
 
-static const u32 kpadhooks[4] = {
+static const u32 vipatchcode[3] = {
+0x4182000C,0x4180001C,0x48000018
+};
+
+const u32 viwiihooks[4] = {
+	0x7CE33B78,0x38870034,0x38A70038,0x38C7004C
+};
+
+const u32 kpadhooks[4] = {
 	0x9A3F005E,0x38AE0080,0x389FFFFC,0x7E0903A6
 };
 
-static const u32 kpadoldhooks[6] = {
+const u32 kpadoldhooks[6] = {
 	0x801D0060, 0x901E0060, 0x801D0064, 0x901E0064, 0x801D0068, 0x901E0068
 };
 
-static const u32 joypadhooks[4] = {
+const u32 joypadhooks[4] = {
 	0x3AB50001, 0x3A73000C, 0x2C150004, 0x3B18000C
 };
 
-static const u32 langpatch[3] = {
+const u32 gxdrawhooks[4] = {
+	0x3CA0CC01, 0x38000061, 0x3C804500, 0x98058000
+};
+
+const u32 gxflushhooks[4] = {
+	0x90010014, 0x800305FC, 0x2C000000, 0x41820008
+};
+
+const u32 ossleepthreadhooks[4] = {
+	0x90A402E0, 0x806502E4, 0x908502E4, 0x2C030000
+};
+
+const u32 axnextframehooks[4] = {
+	0x3800000E, 0x7FE3FB78, 0xB0050000, 0x38800080
+};
+
+const u32 wpadbuttonsdownhooks[4] = {
+	0x7D6B4A14, 0x816B0010, 0x7D635B78, 0x4E800020
+};
+
+const u32 wpadbuttonsdown2hooks[4] = {
+	0x7D6B4A14, 0x800B0010, 0x7C030378, 0x4E800020
+};
+
+const u32 multidolhooks[4] = {
+	0x7C0004AC, 0x4C00012C, 0x7FE903A6, 0x4E800420
+};
+
+const u32 multidolchanhooks[4] = {
+	0x4200FFF4, 0x48000004, 0x38800000, 0x4E800020
+};
+
+const u32 langpatch[3] = {
 	0x7C600775, 0x40820010, 0x38000000
 };
 
-static const u32 vipatchcode[3] = {
-	0x4182000C,0x4180001C,0x48000018
+static const u32 oldpatch002[3] = {
+	0x2C000000, 0x40820214, 0x3C608000
 };
 
-static const u32 wpadlibogc[5] = {
-//	0x38A00140, 0x7C095878, 0x7D600078, 0x901F0010,0x913F0014
-//	0x7FA00124, 0x8001001C, 0x83810008, 0x83A1000C,0x7C0803A6
-	0x90A402E0,0x806502E4,0x908502E4,0x2C030000,0x906402E4
+static const u32 newpatch002[3] = {
+	0x2C000000, 0x48000214, 0x3C608000
 };
 
-void dogamehooks(void *addr, u32 len)
+//---------------------------------------------------------------------------------
+bool dogamehooks(void *addr, u32 len)
+//---------------------------------------------------------------------------------
 {
+	//TODO for oggzee: when using Ocarina check if a hook as patched
+
+	/*
+0 No Hook
+1 VBI
+2 KPAD read
+3 Joypad Hook
+4 GXDraw Hook
+5 GXFlush Hook
+6 OSSleepThread Hook
+7 AXNextFrame Hook
+	*/
+
 	void *addr_start = addr;
 	void *addr_end = addr+len;
+	bool hookpatched = false;
 
 	while(addr_start < addr_end)
 	{
-		
 		switch(hooktype)
 		{
-		
-			case 0:
-					
+
+			case 0x00:
+				hookpatched = true;
 			break;
-			
-			case 1:
-				if(memcmp(addr_start, viwiihooks, sizeof(viwiihooks))==0){
-				//	printf("\n\n\n");
-				//	printf("found at address %x\n", addr_start);
-				//	sleep(2);
+
+			case 0x01:
+				if(memcmp(addr_start, viwiihooks, sizeof(viwiihooks))==0)
+				{
 					patchhook((u32)addr_start, len);
-					patched = 1;
-					hooktype = 1;
+					hookpatched = true;
+				}
+				if(memcmp(addr_start, multidolhooks, sizeof(multidolhooks))==0)
+				{
+					multidolhook((u32)addr_start+sizeof(multidolhooks)-4);
+					hookpatched = true;
 				}
 			break;
 
-/*
-			case 2:
-				if(memcmp(addr_start, kpadhooks, sizeof(kpadhooks))==0){
+			case 0x02:
+
+				if(memcmp(addr_start, kpadhooks, sizeof(kpadhooks))==0)
+				{
 					patchhook((u32)addr_start, len);
-					patched = 1;
+					hookpatched = true;
 				}
 
-				if(memcmp(addr_start, kpadoldhooks, sizeof(kpadoldhooks))==0){
+				if(memcmp(addr_start, kpadoldhooks, sizeof(kpadoldhooks))==0)
+				{
 					patchhook((u32)addr_start, len);
-					patched = 1;
+					hookpatched = true;
+				}
+				if(memcmp(addr_start, multidolhooks, sizeof(multidolhooks))==0)
+				{
+					multidolhook((u32)addr_start+sizeof(multidolhooks)-4);
+					hookpatched = true;
 				}
 			break;
-		
-			case 3:
-				if(memcmp(addr_start, joypadhooks, sizeof(joypadhooks))==0){
+
+			case 0x03:
+
+				if(memcmp(addr_start, joypadhooks, sizeof(joypadhooks))==0)
+				{
 					patchhook((u32)addr_start, len);
-					patched = 1;
+					hookpatched = true;
+				}
+				if(memcmp(addr_start, multidolhooks, sizeof(multidolhooks))==0)
+				{
+					multidolhook((u32)addr_start+sizeof(multidolhooks)-4);
+					hookpatched = true;
 				}
 			break;
 
-			case 4:
-				if(memcmp(addr_start, recoveryhooks, sizeof(recoveryhooks))==0){
-						patchhook3((u32)addr_start, len);
-					}
-			break;
-*/
-			case 2:
+			case 0x04:
 
-				if(memcmp(addr_start, viwiihooks, sizeof(viwiihooks))==0){
-						patchhook2((u32)addr_start, len);
+				if(memcmp(addr_start, gxdrawhooks, sizeof(gxdrawhooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					hookpatched = true;
 				}
-				
-			break;
-
-/*
-			case 6:
-				// jap region free	
-				if(memcmp(addr_start, regionfreehooks, sizeof(regionfreehooks))==0){
-						regionfreejap((u32)addr_start, len);
-					}
-
-				// usa region free
-				if(memcmp(addr_start, regionfreehooks, sizeof(regionfreehooks))==0){
-					regionfreeusa((u32)addr_start, len);
-				}
-
-				// pal region free
-				if(memcmp(addr_start, regionfreehooks, sizeof(regionfreehooks))==0){
-					regionfreepal((u32)addr_start, len);
-				}
-
-				// skip disc update
-				if(memcmp(addr_start, updatecheckhook, sizeof(updatecheckhook))==0){
-					patchupdatecheck((u32)addr_start, len);
+				if(memcmp(addr_start, multidolhooks, sizeof(multidolhooks))==0)
+				{
+					multidolhook((u32)addr_start+sizeof(multidolhooks)-4);
+					hookpatched = true;
 				}
 			break;
 
+			case 0x05:
 
-			case 7:
-				if(memcmp(addr_start, healthcheckhook, sizeof(healthcheckhook))==0){
-					removehealthcheck((u32)addr_start, len);
+				if(memcmp(addr_start, gxflushhooks, sizeof(gxflushhooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					hookpatched = true;
+				}
+				if(memcmp(addr_start, multidolhooks, sizeof(multidolhooks))==0)
+				{
+					multidolhook((u32)addr_start+sizeof(multidolhooks)-4);
+					hookpatched = true;
 				}
 			break;
 
-			// no copy flags
-			case 8:
-					// Remove the actual flag so can copy back
-				if(memcmp(addr_start, nocopyflag5, sizeof(nocopyflag5))==0){
-					copyflagcheck5((u32)addr_start, len);
-				}
-			
-			
-				if(memcmp(addr_start, nocopyflag1, sizeof(nocopyflag1))==0){
-					copyflagcheck1((u32)addr_start, len);
-				}
+			case 0x06:
 
-				if(memcmp(addr_start, nocopyflag2, sizeof(nocopyflag2))==0){
-					copyflagcheck2((u32)addr_start, len);
+				if(memcmp(addr_start, ossleepthreadhooks, sizeof(ossleepthreadhooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					hookpatched = true;
 				}
-				
-				// no VC and GH3 save
-				if(memcmp(addr_start, nocopyflag3, sizeof(nocopyflag2))==0){
-					copyflagcheck3((u32)addr_start, len);
+				if(memcmp(addr_start, multidolhooks, sizeof(multidolhooks))==0)
+				{
+					multidolhook((u32)addr_start+sizeof(multidolhooks)-4);
+					hookpatched = true;
 				}
-				// no VC and GH3 save display remove
-				if(memcmp(addr_start, nocopyflag4, sizeof(nocopyflag4))==0){
-					copyflagcheck4((u32)addr_start, len);
-				}
-				
 			break;
 
-			case 9:
-				if(memcmp(addr_start, movedvdpatch, sizeof(movedvdpatch))==0){
-					movedvdhooks((u32)addr_start, len);
+			case 0x07:
+
+				if(memcmp(addr_start, axnextframehooks, sizeof(axnextframehooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					hookpatched = true;
+				}
+				if(memcmp(addr_start, multidolhooks, sizeof(multidolhooks))==0)
+				{
+					multidolhook((u32)addr_start+sizeof(multidolhooks)-4);
+					hookpatched = true;
 				}
 			break;
-*/
-			// multidol
-			case 3:
 
-				if(memcmp(addr_start, multidolpatch1, sizeof(multidolpatch1))==0){
-						multidolpatchone((u32)addr_start, len);
+			case 0x08:
+
+				//if(memcmp(addr_start, customhook, customhooksize)==0)
+				//{
+				//	patchhook((u32)addr_start, len);
+				//	hookpatched = true;
+				//}
+				if(memcmp(addr_start, multidolhooks, sizeof(multidolhooks))==0)
+				{
+					multidolhook((u32)addr_start+sizeof(multidolhooks)-4);
+					hookpatched = true;
 				}
-				if(memcmp(addr_start, multidolpatch2, sizeof(multidolpatch2))==0){
-						multidolpatchtwo((u32)addr_start, len);
-				}
-                        break;
-                }
+			break;
+		}
 		addr_start += 4;
-        }
+	}
+	return hookpatched;
 }
 
 // Not used yet, for patching DOL once loaded into memory and befor execution
+/*
 void patchdol(void *addr, u32 len)
 {
-	
+
 	void *addr_start = addr;
 	void *addr_end = addr+len;
 
@@ -304,46 +357,46 @@ void patchdol(void *addr, u32 len)
 		addr_start += 4;
 	}
 }
-
+*/
 void langpatcher(void *addr, u32 len)
 {
-	
+
 	void *addr_start = addr;
 	void *addr_end = addr+len;
 
 	while(addr_start < addr_end)
 	{
-		
+
 		if(memcmp(addr_start, langpatch, sizeof(langpatch))==0) {
 			if(configbytes[0] != 0xCD){
 				langvipatch((u32)addr_start, len, configbytes[0]);
-			}	
+			}
 		}
 		addr_start += 4;
 	}
 }
-
+/*
 void patchdebug(void *addr, u32 len)
 {
-	
+
 	void *addr_start = addr;
 	void *addr_end = addr+len;
 
 	while(addr_start < addr_end)
 	{
-		
+
 		if(memcmp(addr_start, fwritepatch, sizeof(fwritepatch))==0) {
 
 			memcpy(addr_start,fwrite_patch_bin,fwrite_patch_bin_len);
-			// apply patch	
+			// apply patch
 		}
 		addr_start += 4;
 	}
 }
-
+*/
 void vidolpatcher(void *addr, u32 len)
 {
-	
+
 	void *addr_start = addr;
 	void *addr_end = addr+len;
 
@@ -356,4 +409,136 @@ void vidolpatcher(void *addr, u32 len)
 	}
 }
 
+//giantpune's magic super patch to return to channels
+bool PatchReturnTo(void *Address, int Size, u32 id) {
+    if( !id )return 0;
+    //new __OSLoadMenu() (SM2.0 and higher)
+    u8 SearchPattern[ 12 ] = 	{ 0x38, 0x80, 0x00, 0x02, 0x38, 0x60, 0x00, 0x01, 0x38, 0xa0, 0x00, 0x00 };
 
+    //old _OSLoadMenu() (used in launch games)
+    u8 SearchPatternB[ 12 ] = 	{ 0x38, 0xC0, 0x00, 0x02, 0x38, 0xA0, 0x00, 0x01, 0x38, 0xE0, 0x00, 0x00 };
+
+    //identifier for the safe place
+    u8 SearchPattern2[ 12 ] = 	{ 0x4D, 0x65, 0x74, 0x72, 0x6F, 0x77, 0x65, 0x72, 0x6B, 0x73, 0x20, 0x54 };
+
+
+    int found = 0;
+    int patched = 0;
+    u8 oldSDK = 0;
+    u32 ad[ 4 ] = { 0, 0, 0, 0 };
+
+    void *Addr = Address;
+    void *Addr_end = Address+Size;
+
+    while (Addr <= Addr_end - 12 ) {
+	//find a safe place or the patch to hang out
+	if ( ! ad[ 3 ] && memcmp( Addr, SearchPattern2, 12 )==0 ) {
+	    ad[ 3 ] = (u32)Addr + 0x30;
+	    gprintf("found a safe place @ %08x\n", ad[ 3 ]);
+	    //hexdump( Addr, 0x50 );
+	}
+	//find __OSLaunchMenu() and remember some addresses in it
+	else if ( memcmp( Addr, SearchPattern, 12 )==0 ) {
+	    ad[ found++ ] = (u32)Addr;
+	}
+	else if ( ad[ 0 ] && memcmp( Addr, SearchPattern, 8 )==0 ) //after the first match is found, only search the first 8 bytes for the other 2
+	{
+	    if( !ad[ 1 ] ) ad[ found++ ] = (u32)Addr;
+	    else if( !ad[ 2 ] ) ad[ found++ ] = (u32)Addr;
+	    if( found >= 3 )break;
+	}
+	Addr += 4;
+    }
+    //check for the older-ass version of the SDK
+    if( found < 3 && ad[ 3 ] )
+    {
+	Addr = Address;
+	ad[ 0 ] = 0; ad[ 1 ] = 0;
+	ad[ 2 ] = 0;
+	found = 0;
+	oldSDK = 1;
+
+	while (Addr <= Addr_end - 12 ) {
+	    //find __OSLaunchMenu() and remember some addresses in it
+	    if ( memcmp( Addr, SearchPatternB, 12 )==0 ) {
+		ad[ found++ ] = (u32)Addr;
+	    }
+	    else if ( ad[ 0 ] && memcmp( Addr, SearchPatternB, 8 ) == 0 ) //after the first match is found, only search the first 8 bytes for the other 2
+	    {
+		if( !ad[ 1 ] ) ad[ found++ ] = (u32)Addr;
+		else if( !ad[ 2 ] ) ad[ found++ ] = (u32)Addr;
+		if( found >= 3 )break;
+	    }
+	    Addr += 4;
+	}
+    }
+
+    //if the function is found and if it is not too far into the main.dol
+    if( found == 3 && ( ad[ 2 ] - ad[ 3 ] < 0x1000001 ) && ad[ 3 ] )
+    {
+	gprintf("patch __OSLaunchMenu( 0x00010001, 0x%08x )\n", id);
+	u32 nop = 0x60000000;
+
+	//the magic that writes the TID to the registers
+	u8 jump[ 20 ] = { 0x3C, 0x60, 0x00, 0x01, 0x60, 0x63, 0x00, 0x01,
+			  0x3C, 0x80, 0x4A, 0x4F, 0x60, 0x84, 0x44, 0x49,
+			  0x4E, 0x80, 0x00, 0x20 };
+	if( oldSDK )
+	{
+	    jump[ 1 ] = 0xA0; //3CA00001 60A50001
+	    jump[ 5 ] = 0xA5; //3CC04A4F 60C64449
+	    jump[ 9 ] = 0xC0;
+	    jump[ 13 ] = 0xC6;
+	}
+	//patch the thing to use the new TID
+	jump[ 10 ] = (u8)( id >> 24 );
+	jump[ 11 ] = (u8)( id >> 16 );
+	jump[ 14 ] = (u8)( id >> 8 );
+	jump[ 15 ] = (u8)id;
+
+	void* addr = (u32*)ad[ 3 ];
+
+	//write new stuff to memory main.dol in a unused part of the main.dol
+	memcpy( addr, jump, sizeof( jump ) );
+
+	//ES_GetTicketViews()
+	u32 newval = ( ad[ 3 ] - ad[ 0 ] );
+	newval &= 0x03FFFFFC;
+	newval |= 0x48000001;
+	addr = (u32*)ad[ 0 ];
+	memcpy( addr, &newval, sizeof( u32 ) );
+	memcpy( addr + 4, &nop, sizeof( u32 ) );
+	gprintf("\t%p -> %08x\n", addr, newval );
+
+	//ES_GetTicketViews() again
+	newval = ( ad[ 3 ] - ad[ 1 ] );
+	newval &= 0x03FFFFFC;
+	newval |= 0x48000001;
+	addr = (u32*)ad[ 1 ];
+	memcpy( addr, &newval, sizeof( u32 ) );
+	memcpy( addr + 4, &nop, sizeof( u32 ) );
+	gprintf("\t%p -> %08x\n", addr, newval );
+
+	//ES_LaunchTitle()
+	newval = ( ad[ 3 ] - ad[ 2 ] );
+	newval &= 0x03FFFFFC;
+	newval |= 0x48000001;
+	addr = (u32*)ad[ 2 ];
+	memcpy( addr, &newval, sizeof( u32 ) );
+	memcpy( addr + 4, &nop, sizeof( u32 ) );
+	gprintf("\t%p -> %08x\n", addr, newval );
+
+	patched = 1;
+    }
+    else
+    {
+	gprintf("not patched\n");
+	gprintf("found %d addresses\n", found);
+	int i;
+	for( i = 0; i< 4; i++)
+	    gprintf("ad[ %d ]: %08x\n", i, ad[ i ] );
+	gprintf("offset : %08x\n", ad[ 2 ] - ad[ 3 ] );
+
+    }
+    return patched;
+}

@@ -1,26 +1,17 @@
 #include <string.h>
 #include <gccore.h>
 #include "cheat.hpp"
-#include "loader/fat.h"
+#include "loader/fs.h"
 #include "text.hpp"
 
 #include "menu.hpp"
 #include "http.h"
 
-#define FILEDIR	"sd:/codes/%s.gct"
-#define FILEDIR_USB	"usb:/codes/%s.gct"
-#define FILEDIR_GECKO "sd:/codes/%s.gct"
-#define FILEDIR_GECKO_USB "usb:/codes/%s.gct"
+#define GECKOURL "http://www.geckocodes.org/codes/R/%s.txt"
 
-#define TXTDIR_FLOW "sd:/txtcodes/%s.txt"
-#define TXTDIR_FLOW_USB "usb:/txtcodes/%s.txt"
+#define CHEATSPERPAGE 4
 
-#define GECKOURL "http://www.geckocodes.org//codes//R//%s.txt"
-
-extern const DISC_INTERFACE __io_wiisd;
-extern DISC_INTERFACE __io_usbstorage;
-
-void loadCheatFile(SmartBuf &buffer, u32 &size, const char *gameId)
+void loadCheatFile(SmartBuf &buffer, u32 &size, const char *cheatPath, const char *gameId)
 {
 	FILE *fp = 0;
 	u32 fileSize;
@@ -28,18 +19,8 @@ void loadCheatFile(SmartBuf &buffer, u32 &size, const char *gameId)
 
 	buffer.release();
 	size = 0;
-	if (Fat_SDAvailable())
-	{
-		fp = fopen(sfmt(FILEDIR, gameId).c_str(), "rb");
-		if (fp == 0) fp = fopen(sfmt(FILEDIR_GECKO, gameId).c_str(), "rb");
-	}
+	fp = fopen(fmt("%s/%s.gct", cheatPath, gameId), "rb");
 		
-	if (fp == 0 && Fat_USBAvailable())
-	{
-		fp = fopen(sfmt(FILEDIR_USB, gameId).c_str(), "rb");
-		if (fp == 0) fp = fopen(sfmt(FILEDIR_GECKO_USB, gameId).c_str(), "rb");
-	}
-
 	if (fp == 0)
 		return;
 
@@ -72,15 +53,7 @@ void CMenu::_CheatSettings() {
 	int txtavailable=0;
 	m_cheatSettingsPage = 1; // init page
 	
-	if (Fat_SDAvailable())
-	{
-		txtavailable = m_cheatfile.openTxtfile(sfmt(TXTDIR_FLOW, m_cf.getId().c_str()).c_str()); 
-	}
-		
-	if (txtavailable <= 0 && Fat_USBAvailable())
-	{
-		txtavailable = m_cheatfile.openTxtfile(sfmt(TXTDIR_FLOW_USB, m_cf.getId().c_str()).c_str()); 
-	}
+	txtavailable = m_cheatfile.openTxtfile(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str())); 
 	
 	_showCheatSettings();
 	_textCheatSettings();
@@ -108,12 +81,14 @@ void CMenu::_CheatSettings() {
 		{
 			if (m_cheatSettingsPage > 1)
 				--m_cheatSettingsPage;
+			_hideCheatSettings();
 			_showCheatSettings();
 			m_btnMgr.click(m_cheatBtnPageM);
 		}
 		else if ((padsState & WPAD_BUTTON_PLUS) != 0)
 		{
-			if (m_cheatSettingsPage < (m_cheatfile.getCnt()+4)/5)
+			_hideCheatSettings();
+			if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
 				++m_cheatSettingsPage;
 			_showCheatSettings();
 			m_btnMgr.click(m_cheatBtnPageP);
@@ -125,21 +100,23 @@ void CMenu::_CheatSettings() {
 				break;
 			else if (m_btnMgr.selected() == m_cheatBtnPageM)
 			{
+				_hideCheatSettings();
 				if (m_cheatSettingsPage > 1)
 					--m_cheatSettingsPage;
 				_showCheatSettings();
 			}
 			else if (m_btnMgr.selected() == m_cheatBtnPageP)
 			{
-				if (m_cheatSettingsPage < (m_cheatfile.getCnt()+4)/5)
+				_hideCheatSettings();
+				if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
 					++m_cheatSettingsPage;
 				_showCheatSettings();
 			}
 				
-			for (int i = 0; i < 5; ++i)
+			for (int i = 0; i < CHEATSPERPAGE; ++i)
 				if (m_btnMgr.selected() == m_cheatBtnItem[i]) {
 					// handling code for clicked cheat
-					m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*5 + i] = !m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*5 + i];
+					m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*CHEATSPERPAGE + i] = !m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*CHEATSPERPAGE + i];
 					_showCheatSettings();
 				}
 			
@@ -156,18 +133,13 @@ void CMenu::_CheatSettings() {
 					
 					}
 					
-				if (Fat_SDAvailable() && check)
+				if (check)
 				{
-					operation_ok = m_cheatfile.createGCT(sfmt(FILEDIR, m_cf.getId().c_str()).c_str()); 
-					operation_ok = m_cheatfile.createTXT(sfmt(TXTDIR_FLOW, m_cf.getId().c_str()).c_str()); 
+					operation_ok = m_cheatfile.createGCT(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str())); 
+					operation_ok = m_cheatfile.createTXT(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str())); 
 					
 				}
 					
-				if (!Fat_SDAvailable() <= 0 && Fat_USBAvailable() && check)
-				{
-					operation_ok = m_cheatfile.createGCT(sfmt(FILEDIR_USB, m_cf.getId().c_str()).c_str()); 
-					operation_ok = m_cheatfile.createTXT(sfmt(TXTDIR_FLOW_USB, m_cf.getId().c_str()).c_str()); 
-				}
 				m_cfg.setOptBool(m_cf.getId(), "cheat",1);
 				if (operation_ok)
 					break;
@@ -183,7 +155,6 @@ void CMenu::_CheatSettings() {
 				block cheatfile;
 				FILE *file;
 				char ip[16];
-
 				
 				if (!m_networkInit && _initNetwork(ip) < 0) {
 					m_btnMgr.hide(m_cheatLblTitle);
@@ -193,15 +164,10 @@ void CMenu::_CheatSettings() {
 
 				buffer = smartCoverAlloc(bufferSize);
 				cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, this);
+
 				if (cheatfile.data != NULL && cheatfile.size > 65 && cheatfile.data[0] != '<') {
 					// cheat file was downloaded and presumably no 404
-					if (Fat_SDAvailable())
-						file = fopen(sfmt(TXTDIR_FLOW, m_cf.getId().c_str()).c_str(), "wb");
-					else	
-						if (!Fat_SDAvailable() && Fat_USBAvailable())
-							file = fopen(sfmt(TXTDIR_FLOW_USB, m_cf.getId().c_str()).c_str(), "wb");
-						else
-							break;
+					file = fopen(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()), "wb");
 							
 					if (file != NULL)
 					{
@@ -236,10 +202,14 @@ void CMenu::_hideCheatSettings(bool instant)
 	m_btnMgr.hide(m_cheatBtnPageM, instant);
 	m_btnMgr.hide(m_cheatBtnPageP, instant);
 	
-	for (int i=0;i<5;++i) {
+	for (int i=0;i<CHEATSPERPAGE;++i) {
 		m_btnMgr.hide(m_cheatBtnItem[i], instant);
 		m_btnMgr.hide(m_cheatLblItem[i], instant);
-	}	
+	}
+	
+	for (u32 i = 0; i < ARRAY_SIZE(m_cheatLblUser); ++i)
+		if (m_cheatLblUser[i] != -1u)
+			m_btnMgr.hide(m_cheatLblUser[i]);
 }
 
 // CheatMenu
@@ -252,6 +222,10 @@ void CMenu::_showCheatSettings(void)
 	m_btnMgr.show(m_cheatBtnBack);
 	m_btnMgr.show(m_cheatLblTitle);
 
+	for (u32 i = 0; i < ARRAY_SIZE(m_cheatLblUser); ++i)
+		if (m_cheatLblUser[i] != -1u)
+			m_btnMgr.show(m_cheatLblUser[i]);
+
 	if (m_cheatfile.getCnt() > 0) {
 
 		// cheat found, show apply
@@ -259,22 +233,22 @@ void CMenu::_showCheatSettings(void)
 		m_btnMgr.show(m_cheatLblPage);
 		m_btnMgr.show(m_cheatBtnPageM);
 		m_btnMgr.show(m_cheatBtnPageP);
-		m_btnMgr.setText(m_cheatLblPage, wfmt(L"%i / %i", m_cheatSettingsPage, (m_cheatfile.getCnt()+4)/5)); 
+		m_btnMgr.setText(m_cheatLblPage, wfmt(L"%i / %i", m_cheatSettingsPage, (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)); 
 		
 		// Show cheats if available, else hide
-		for (u32 i=0; i < 5; ++i) {
+		for (u32 i=0; i < CHEATSPERPAGE; ++i) {
 			// cheat in range?
-			if (((m_cheatSettingsPage-1)*5 + i + 1) <= m_cheatfile.getCnt()) 
+			if (((m_cheatSettingsPage-1)*CHEATSPERPAGE + i + 1) <= m_cheatfile.getCnt()) 
 			{
 				//Limit to 70 characters otherwise the Cheatnames overlap
 				char tempcheatname[71];
-				strncpy(tempcheatname, m_cheatfile.getCheatName((m_cheatSettingsPage-1)*5 + i).c_str(),70);
+				strncpy(tempcheatname, m_cheatfile.getCheatName((m_cheatSettingsPage-1)*CHEATSPERPAGE + i).c_str(),70);
 				tempcheatname[70] = '\0';
 				
 				// cheat avaiable, show elements and text
 				m_btnMgr.setText(m_cheatLblItem[i], wstringEx(tempcheatname));
-				//m_btnMgr.setText(m_cheatLblItem[i], m_cheatfile.getCheseleatName((m_cheatSettingsPage-1)*5 + i));
-				m_btnMgr.setText(m_cheatBtnItem[i], _optBoolToString(m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*5 + i]));
+				//m_btnMgr.setText(m_cheatLblItem[i], m_cheatfile.getCheseleatName((m_cheatSettingsPage-1)*CHEATSPERPAGE + i));
+				m_btnMgr.setText(m_cheatBtnItem[i], _optBoolToString(m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*CHEATSPERPAGE + i]));
 				
 				m_btnMgr.show(m_cheatLblItem[i]);
 				m_btnMgr.show(m_cheatBtnItem[i]);
@@ -302,7 +276,8 @@ void CMenu::_showCheatSettings(void)
 
 void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 {
-	m_cheatBg = _texture(theme.texSet, "DOWNLOAD/BG", "texture", theme.bg);
+	_addUserLabels(theme, m_cheatLblUser, ARRAY_SIZE(m_cheatLblUser), "CHEAT");
+	m_cheatBg = _texture(theme.texSet, "CHEAT/BG", "texture", theme.bg);
 	m_cheatLblTitle = _addLabel(theme, "CHEAT/TITLE", theme.lblFont, L"Cheats", 20, 30, 600, 60, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnBack = _addButton(theme, "CHEAT/BACK_BTN", theme.btnFont, L"", 460, 410, 150, 56, theme.btnFontColor);
 	m_cheatBtnApply = _addButton(theme, "CHEAT/APPLY_BTN", theme.btnFont, L"", 240, 410, 150, 56, theme.btnFontColor);
@@ -330,7 +305,7 @@ void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_cheatBtnPageM, "CHEAT/PAGE_MINUS", 0, 200, 1.f, 0.f);
 	_setHideAnim(m_cheatBtnPageP, "CHEAT/PAGE_PLUS", 0, 200, 1.f, 0.f);
 	
-	for (int i=0;i<5;++i) {
+	for (int i=0;i<CHEATSPERPAGE;++i) {
 		_setHideAnim(m_cheatBtnItem[i], sfmt("CHEAT/ITEM_%i_BTN", i).c_str(), 200, 0, 1.f, 0.f);
 		_setHideAnim(m_cheatLblItem[i], sfmt("CHEAT/ITEM_%i_BTN", i).c_str(), -200, 0, 1.f, 0.f);
 	}

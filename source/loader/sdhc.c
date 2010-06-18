@@ -151,6 +151,29 @@ bool SDHC_ClearStatus(void)
 	return true;
 }
 
+bool __io_SDHC_Close(void)
+{
+        // do nothing.
+        return true;
+}
+
+bool __io_SDHC_NOP(void)
+{
+        // do nothing.
+        return true;
+}
+
+const DISC_INTERFACE __io_sdhc_ro = {
+        DEVICE_TYPE_WII_SD,
+        FEATURE_MEDIUM_CANREAD | FEATURE_WII_SD,
+        (FN_MEDIUM_STARTUP)      &SDHC_Init,
+        (FN_MEDIUM_ISINSERTED)   &SDHC_IsInserted,
+        (FN_MEDIUM_READSECTORS)  &SDHC_ReadSectors,
+        (FN_MEDIUM_WRITESECTORS) &__io_SDHC_NOP, // &SDHC_WriteSectors,
+        (FN_MEDIUM_CLEARSTATUS)  &SDHC_ClearStatus,
+        //(FN_MEDIUM_SHUTDOWN)&SDHC_Close
+        (FN_MEDIUM_SHUTDOWN)     &__io_SDHC_Close
+};
 
 const DISC_INTERFACE __io_sdhc = {
 	DEVICE_TYPE_WII_SD,

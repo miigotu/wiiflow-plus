@@ -1,12 +1,13 @@
 
 #include "menu.hpp"
+#include "svnrev.h"
 
 #include <wiiuse/wpad.h>
 
 #define APP_NAME		"WiiFlow"
-#define APP_VERSION		"1.1 R28"
+#define APP_VERSION		"1.1 R"
 #define LOADER_AUTHOR	"Kwiirk & Waninkoko, Hermes"
-#define GUI_AUTHOR		"Hibernatus, Narolez, Wiimm"
+#define GUI_AUTHOR		"Hibernatus, Narolez, Wiimm, r-win"
 #define THANKS			"Lustar, CedWii, Benjay, Domi78, Oops, Celtiore, Jiiwah, FluffyKiwi, Roku93, Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical, WiiPower, Hermes"
 #define THANKS_SITES	"devkitpro.org, wiibrew.org, wiitdb.com"
 #define THANKS_CODE		"CFG Loader, uLoader, USB Loader GX, NeoGamma"
@@ -81,7 +82,7 @@ void CMenu::_initAboutMenu(CMenu::SThemeData &theme)
 
 void CMenu::_textAbout(void)
 {
-	m_btnMgr.setText(m_aboutLblTitle, wfmt(_fmt("appname", L"%s v%s"), APP_NAME, APP_VERSION), true);
+	m_btnMgr.setText(m_aboutLblTitle, wfmt(_fmt("appname", L"%s v%s%s"), APP_NAME, APP_VERSION, SVN_REV), true);
 	m_btnMgr.setText(m_aboutLblOrigAuthor, wfmt(_fmt("about1", L"Loader by %s"), LOADER_AUTHOR), true);
 	m_btnMgr.setText(m_aboutLblAuthor, wfmt(_fmt("about2", L"GUI by %s"), GUI_AUTHOR), true);
 	wstringEx thanksTo(m_cfg.getWString(" GENERAL", "insertnamehere"));

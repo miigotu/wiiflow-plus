@@ -2,6 +2,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <ogcsys.h>
+#include "gecko.h"
 
 /* Constants */
 #define IOCTL_DI_READID		0x70
@@ -15,8 +16,18 @@
 #define IOCTL_DI_SEEK		0xAB
 #define IOCTL_DI_STOPLASER	0xD2
 #define IOCTL_DI_OFFSET		0xD9
+#define IOCTL_DI_DISC_BCA	0xDA
 #define IOCTL_DI_STOPMOTOR	0xE3
 #define IOCTL_DI_SETWBFSMODE	0xF4
+#define IOCTL_DI_DISABLERESET	0xF6
+
+/** Hermes IOS222 **/
+#define DI_SETWBFSMODE	0xfe
+
+#define IOCTL_DI_SETFRAG	0xF9
+#define IOCTL_DI_GETMODE	0xFA
+#define IOCTL_DI_HELLO		0xFB
+#define IOCTL_DI_RIIVOLUTION	0xFC
 
 /* Variables */
 static u32 inbuf[8]  ATTRIBUTE_ALIGN(32);
@@ -291,13 +302,129 @@ s32 WDVD_SetWBFSMode(u32 mode, u8 *discid)
 
 	/* Set USB mode */
 	inbuf[0] = IOCTL_DI_SETWBFSMODE << 24;
-	inbuf[1] = discid == 0 ? 0 : mode;
+	inbuf[1] = mode;
 
 	/* Copy disc ID */
 	if (discid)
 		memcpy(&inbuf[2], discid, 6);
 
 	ret = IOS_Ioctl(di_fd, IOCTL_DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+	if (ret < 0)
+		return ret;
+
+	return (ret == 1) ? 0 : -ret;
+}
+
+s32 WDVD_SetUSBMode(const u8 *id, s32 partition) 
+{
+    s32 ret;
+
+    memset(inbuf, 0, sizeof(inbuf));
+
+    /* Set USB mode */
+    inbuf[0] = IOCTL_DI_SETWBFSMODE << 24;
+    inbuf[1] = (id) ? 1 : 0;
+
+    /* Copy ID */
+    if (id) {
+        memcpy(&inbuf[2], id, 6);
+		inbuf[5] = partition;
+    }
+
+    ret = IOS_Ioctl(di_fd, IOCTL_DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+    if (ret!=1) {
+        // Try old cIOS 222
+        /* Set USB mode */
+        inbuf[0] = DI_SETWBFSMODE << 24;
+        ret = IOS_Ioctl(di_fd, DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+    }
+
+    if (ret < 0)
+        return ret;
+
+    return (ret == 1) ? 0 : -ret;
+}
+
+s32 WDVD_Read_Disc_BCA(void *buf)
+{
+	s32 ret;
+
+	memset(inbuf, 0, sizeof(inbuf));
+
+	/* Disc read */
+	inbuf[0] = IOCTL_DI_DISC_BCA << 24;
+	//inbuf[1] = 64;
+
+	ret = IOS_Ioctl(di_fd, IOCTL_DI_DISC_BCA, inbuf, sizeof(inbuf), buf, 64);
+	if (ret < 0)
+		return ret;
+
+	return (ret == 1) ? 0 : -ret;
+}
+
+// frag
+
+s32 WDVD_SetFragList(int device, void *fraglist, int size)
+{
+	s32 ret;
+
+	memset(inbuf, 0, sizeof(inbuf));
+	memset(outbuf, 0, sizeof(outbuf));
+
+	/* Set FRAG mode */
+	inbuf[0] = IOCTL_DI_SETFRAG << 24;
+	inbuf[1] = device;
+	inbuf[2] = (u32)fraglist;
+	inbuf[3] = size;
+
+	DCFlushRange(fraglist, size);
+	ret = IOS_Ioctl(di_fd, IOCTL_DI_SETFRAG, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+
+	if (ret < 0)
+		return ret;
+
+	return (ret == 1) ? 0 : -ret;
+}
+
+#define IOCTL_DI_HELLO		0xFB
+
+s32 WDVD_hello(u32 *status)
+{
+	s32 ret;
+
+	memset(inbuf, 0, sizeof(inbuf));
+
+	inbuf[0] = IOCTL_DI_HELLO << 24;
+
+	ret = IOS_Ioctl(di_fd, IOCTL_DI_HELLO, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+	if (ret < 0)
+		return ret;
+
+	if (ret == 1) {
+		if (status) memcpy(status, outbuf, sizeof(u32));
+		ghexdump(outbuf, 12);
+		return 0;
+	}
+
+	return -ret;
+}
+
+s32 WDVD_SetRiivolutionFiles(void *riivolutionlist, int size)
+{
+	s32 ret;
+
+	memset(inbuf, 0, sizeof(inbuf));
+
+	/* Set FRAG mode */
+	inbuf[0] = IOCTL_DI_RIIVOLUTION << 24;
+	inbuf[1] = (u32)riivolutionlist;
+	inbuf[2] = size;
+
+	gprintf("Setting riivolutionlist of size %d\n", size);
+	DCFlushRange(riivolutionlist, size);
+	ret = IOS_Ioctl(di_fd, IOCTL_DI_RIIVOLUTION, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+	gprintf("Riivolution list IOS Ioctl returned %d\n", ret);
+
 	if (ret < 0)
 		return ret;
 

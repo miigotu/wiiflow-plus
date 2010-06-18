@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <ogcsys.h>
 
+#include "gecko.h"
+
+#define MAX_BLOCKSIZE           0x10000
 
 u32 swap32(u32 x)
 {

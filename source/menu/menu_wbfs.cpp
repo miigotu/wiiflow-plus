@@ -1,7 +1,6 @@
 
 #include "menu.hpp"
 #include "loader/wbfs.h"
-#include "loader/libwbfs/libwbfs.h"
 
 #include <wiiuse/wpad.h>
 
@@ -77,26 +76,29 @@ int CMenu::_gameInstaller(void *obj)
 {
 	CMenu &m = *(CMenu *)obj;
 	int ret;
-	u32 size;
-	u32 freeBlocks;
+//	u32 size;
 
-	if (WBFS_GetHandle() == NULL)
+	if (GetHddInfo() == NULL)
 	{
 		m.m_thrdWorking = false;
 		return -1;
 	}
-	size = wbfs_estimate_disc(WBFS_GetHandle(), __WBFS_ReadDVD, NULL, ALL_PARTITIONS);
-	freeBlocks = wbfs_count_usedblocks(WBFS_GetHandle());
-	if (size > freeBlocks)
+
+	u64 comp_size = 0, real_size = 0;
+	f32 free, used;
+	WBFS_DiskSpace(&used, &free);
+	WBFS_DVD_Size(&comp_size, &real_size);
+	
+	if ((f32)comp_size + (f32)128*1024 >= free * GB_SIZE)
 	{
 		LWP_MutexLock(m.m_mutex);
-		m._setThrdMsg(wfmt(m._fmt("wbfsop10", L"Not enough space : %i blocks needed, %i available"), size, freeBlocks), 0.f);
+		m._setThrdMsg(wfmt(m._fmt("wbfsop10", L"Not enough space : %lld blocks needed, %i available"), comp_size, free), 0.f);
 		LWP_MutexUnlock(m.m_mutex);
 		ret = -1;
 	}
 	else
 	{
-		ret = wbfs_add_disc(WBFS_GetHandle(), __WBFS_ReadDVD, NULL, CMenu::_addDiscProgress, obj, ALL_PARTITIONS, 0);
+		ret = WBFS_AddGame(CMenu::_addDiscProgress, obj);
 		LWP_MutexLock(m.m_mutex);
 		if (ret == 0)
 			m._setThrdMsg(m._t("wbfsop8", L"Game installed"), 1.f);
@@ -194,6 +196,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 							out = true;
 							break;
 						}
+						cfPos = string((char *) header.id);
 						m_btnMgr.setText(m_wbfsLblDialog, wfmt(_fmt("wbfsop6", L"Installing [%s] %s..."), string((const char *)header.id, sizeof header.id).c_str(), string((const char *)header.title, sizeof header.title).c_str()));
 						done = true;
 						m_thrdWorking = true;
@@ -235,15 +238,13 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 	}
 	WPAD_Rumble(WPAD_CHAN_0, 0);
 	_hideWBFS();
-	if (done && op == CMenu::WO_REMOVE_GAME)
+	if (done && (op == CMenu::WO_REMOVE_GAME || op == CMenu::WO_ADD_GAME))
 	{
 		m_cf.clear();
 		_loadGameList();
 		_initCF();
 		m_cf.findId(cfPos.c_str(), true);
 	}
-	if (done && op == CMenu::WO_ADD_GAME)
-		m_gameList.clear();
 	return done;
 }
 

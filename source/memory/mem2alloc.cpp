@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <string.h>
 
-
 class LockMutex
 {
 	mutex_t &m_mutex;
