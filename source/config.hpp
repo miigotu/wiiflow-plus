@@ -18,6 +18,7 @@ public:
 	Config(void);
 	void clear(void) { m_domains.clear(); }
 	bool load(const char *filename = 0);
+	void unload(void);
 	void save(void);
 	bool loaded(void) const { return m_loaded; }
 	bool has(const std::string &domain, const std::string &key) const;
@@ -40,6 +41,8 @@ public:
 	float getFloat(const std::string &domain, const std::string &key, float defVal = 0.f);
 	Vector3D getVector3D(const std::string &domain, const std::string &key, const Vector3D &defVal = Vector3D());
 	CColor getColor(const std::string &domain, const std::string &key, const CColor &defVal = CColor());
+	// Remove
+	void remove(const std::string &domain, const std::string &key);
 	// 
 	const std::string &firstDomain(void);
 	const std::string &nextDomain(void);

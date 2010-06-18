@@ -49,7 +49,6 @@ distribution.
 #define USB_IOCTL_WBFS_READ_DEBUG	        (WBFS_BASE+0x13)
 #define USB_IOCTL_WBFS_SET_DEVICE	        (WBFS_BASE+0x14)
 #define USB_IOCTL_WBFS_SET_FRAGLIST         (WBFS_BASE+0x15)
-#define USB_IOCTL_RIIVOLUTION_SET_SECTORS	(WBFS_BASE+0x16)
 
 #define UMS_HEAPSIZE			0x8000
 #define USB_MEM2_SIZE           0x10000
@@ -438,16 +437,4 @@ void usb_debug_dump(int arg)
 	//printf("\nehc fd: %d\n", fd);
 	int r = USBStorage_WBFS_ReadDebug(arg, sizeof(buf), buf);
 	printf("\n: %d %.2000s\n", r, buf);
-}
-
-s32 USBStorage_WBFS_SetRiivolutionList(void *p, int size)
-{
-	s32 ret;
-	USBStorage_OpenDev();
-	// Device not opened
-	if (fd < 0) return fd;
-	// ioctl
-    DCFlushRange(p, size);
-	ret = IOS_IoctlvFormat(hid, fd, USB_IOCTL_RIIVOLUTION_SET_SECTORS, "d:", p, size);
-	return ret;
 }

@@ -34,7 +34,6 @@ u32 appentrypoint;
 /* Disc pointers */
 static u32 buffer[0x20] ALIGNED(32);
 static u8  *diskid = (u8  *)0x80000000;
-static char gameid[6 + 1];
 
 GXRModeObj *vmode = NULL;
 u32 vmode_reg = 0;
@@ -272,19 +271,6 @@ s32 Disc_Wait(void)
 	return 0;
 }
 
-s32 Disc_SetWBFS(u32 mode, u8 *id)
-{
-	/* Set WBFS mode */
-	if (id != 0)
-	{
-		memcpy(gameid, id, sizeof gameid - 1);
-		gameid[sizeof gameid - 1] = 0;
-	}
-	else
-		memset(gameid, 0, sizeof gameid);
-	return WDVD_SetWBFSMode(mode, id);
-}
-
 s32 Disc_SetUSB(const u8 *id) {
 	if (is_ios_type(IOS_TYPE_HERMES)) {
 		u32 part = 0;
@@ -296,8 +282,10 @@ s32 Disc_SetUSB(const u8 *id) {
 		
 		int ret;
 		if (id && *id) {
+			gprintf("set_frag_list Hermes\n");
 			ret = set_frag_list((u8 *) id);
 		} else {
+			gprintf("USBStorage_WBFS_SetFragList Hermes\n");
 			ret = USBStorage_WBFS_SetFragList(NULL, 0);
 		}
 		
@@ -306,16 +294,17 @@ s32 Disc_SetUSB(const u8 *id) {
 		}
 		
 		/* Set USB mode */
+		gprintf("WDVD_SetUSBMode Hermes\n");
 		return WDVD_SetUSBMode(id, part);
 	}
-	
+	//int mode = (id && *id) ? WBFS_DEVICE_USB : 0;
 	if (WBFS_DEVICE_USB && wbfs_part_fs) {
 		gprintf("Setting frag list for wanin\n");
 		return set_frag_list((u8 *) id);
 	}
 
 	gprintf("Setting disc usb thing for wanin\n");
-	return WDVD_SetWBFSMode(WBFS_DEVICE_USB, (u8 *) id);
+	return WDVD_SetWBFSMode((id && *id) ? WBFS_DEVICE_USB : 0, (u8 *) id);
 }
 
 s32 Disc_ReadHeader(void *outbuf)
@@ -432,11 +421,11 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	return 0;
 }
 
-s32 Disc_OpenPartition(u32 mode, u8 *id)
+s32 Disc_OpenPartition(u8 *id)
 {
 	u64 offset;
 
-	if (Disc_SetWBFS(mode, id) < 0)
+	if (Disc_SetUSB(id) < 0)
 		return -1;
 	if (Disc_Open() < 0)
 		return -2;

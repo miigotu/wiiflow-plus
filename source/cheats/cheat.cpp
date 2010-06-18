@@ -7,7 +7,7 @@
 #include "menu.hpp"
 #include "http.h"
 
-#define GECKOURL "http://www.geckocodes.org/codes/R/%s.txt"
+#define GECKOURL "http://geckocodes.org/codes/R/%s.txt"
 
 #define CHEATSPERPAGE 4
 
@@ -122,27 +122,32 @@ void CMenu::_CheatSettings() {
 			
 			if (m_btnMgr.selected() == m_cheatBtnApply)
 			{
-				int operation_ok,check = 0;
+				bool selected = false;
 				//checks if at least one cheat is selected
 				for (unsigned int i=0; i < m_cheatfile.getCnt(); ++i) {
 					if (m_cheatfile.sCheatSelected[i] == true) 
-						{
-						check = 1;
+					{
+						selected = true;
 						break;
-						}
-					
 					}
-					
-				if (check)
-				{
-					operation_ok = m_cheatfile.createGCT(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str())); 
-					operation_ok = m_cheatfile.createTXT(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str())); 
-					
 				}
 					
-				m_cfg.setOptBool(m_cf.getId(), "cheat",1);
-				if (operation_ok)
-					break;
+				if (selected)
+				{
+					m_cheatfile.createGCT(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str())); 
+				}
+				else
+				{
+					remove(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str()));
+				}
+				m_cheatfile.createTXT(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));
+					
+				m_cfg.setOptBool(m_cf.getId(), "cheat", selected ? 1 : 0);
+				
+				// Set hooktype to 1 if it doesn't exists
+				m_cfg.setInt(m_cf.getId(), "hooktype", m_cfg.getInt(m_cf.getId(), "hooktype", 1));
+
+				break;
 			}
 
 			if (m_btnMgr.selected() == m_cheatBtnDownload)
@@ -166,7 +171,7 @@ void CMenu::_CheatSettings() {
 				cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, this);
 
 				if (cheatfile.data != NULL && cheatfile.size > 65 && cheatfile.data[0] != '<') {
-					// cheat file was downloaded and presumably no 404
+					// cheat file was downloaded (404's will now return emptybuffer)
 					file = fopen(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()), "wb");
 							
 					if (file != NULL)
@@ -180,7 +185,7 @@ void CMenu::_CheatSettings() {
 				{
 					// cheat code not found, show result
 					m_btnMgr.setText(m_cheatLblItem[0], _t("cheat4", L"Download not found."));
-					m_btnMgr.setText(m_cheatLblItem[1], wfmt(L"http://www.geckocodes.org/codes/R/%s.txt",m_cf.getId().c_str()));
+					m_btnMgr.setText(m_cheatLblItem[1], sfmt(GECKOURL, m_cf.getId().c_str()));
 					m_btnMgr.show(m_cheatLblItem[1]);
 				}
 			}

@@ -21,6 +21,8 @@ void WBFS_Unmount(void);
 bool NTFS_Mount(u32);
 void NTFS_Unmount(void);
 
+u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length);
+
 extern int   fs_sd_mount;
 extern sec_t fs_sd_sec;
 extern int   fs_usb_mount;

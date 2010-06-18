@@ -1,5 +1,6 @@
 
 #include "menu.hpp"
+#include "svnrev.h"
 #include "loader/sys.h"
 #include "loader/wbfs.h"
 #include "http.h"
@@ -13,27 +14,38 @@
 #include <wiiuse/wpad.h>
 
 #include "gecko.h"
+#include <fstream>
 
 #define TAG_GAME_ID		"gameid"
 #define TAG_LOC			"loc"
 #define TAG_REGION		"region"
 #define TITLES_URL		"http://www.wiitdb.com/titles.txt?LANG=%s"
-#define UPDATE_URL		"http://wiiflow.googlecode.com/svn/trunk/updates"
+//Need to use wiiflow.ini to st these still
+#define UPDATE_URL		"http://wiiflow.googlecode.com/svn/trunk/updates/boot.dol"
+#define UPDATE_URL_VERSION	"http://wiiflow.googlecode.com/svn/trunk/updates/rev.txt"
+#define APP_DOL_PATH			"usb:/apps/WiiFlow/boot.dol"
+
 
 using namespace std;
 
-static const char FMT_BPIC_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid6}.png"\
+static const char FMT_BPIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid6}.png"\
-"|http://www.muntrue.nl/covers/ALL/512/340/fullcover/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png";
-static const char FMT_PIC_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid6}.png"\
-"|http://www.muntrue.nl/covers/ALL/160/225/boxart/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png";
+"|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid6}.png";
+static const char FMT_BPIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid4}00.png"\
+"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid4}00.png"\
+"|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid4}00.png"\
+"|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid4}00.png";
+static const char FMT_PIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid6}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid6}.png";
+static const char FMT_PIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}00.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}00.png";
 
 class LockMutex
 {
@@ -280,8 +292,17 @@ int CMenu::_coverDownloader(bool missingOnly)
 		return 0;
 	}
 	savePNG = m_cfg.getBool(" GENERAL", "keep_png", true);
-	fmtURLBox = stringToVector(m_cfg.getString(" GENERAL", "url_full_covers", FMT_BPIC_URL), '|');
-	fmtURLFlat = stringToVector(m_cfg.getString(" GENERAL", "url_flat_covers", FMT_PIC_URL), '|');
+
+	if (m_current_view == COVERFLOW_CHANNEL) 
+	{
+		fmtURLBox = stringToVector(m_cfg.getString(" GENERAL", "url_full_covers_id4", FMT_BPIC4_URL), '|');
+		fmtURLFlat = stringToVector(m_cfg.getString(" GENERAL", "url_flat_covers_id4", FMT_PIC4_URL), '|');
+	}
+	else
+	{
+		fmtURLBox = stringToVector(m_cfg.getString(" GENERAL", "url_full_covers", FMT_BPIC6_URL), '|');
+		fmtURLFlat = stringToVector(m_cfg.getString(" GENERAL", "url_flat_covers", FMT_PIC6_URL), '|');
+	}
 	nbSteps = m_gameList.size();
 	step = 0;
 	if (m_coverDLGameId.empty())
@@ -510,10 +531,10 @@ void CMenu::_download(string gameId)
 			{
 				prevMsg = m_thrdMessage;
 				m_btnMgr.setText(m_downloadLblMessage[msg], m_thrdMessage, false);
-				m_btnMgr.hide(m_downloadLblMessage[msg], -200, 0, 1.f, 0.5f, true);
+				m_btnMgr.hide(m_downloadLblMessage[msg], 0, 0, -1.f, -1.f, true);
 				m_btnMgr.show(m_downloadLblMessage[msg]);
 				msg ^= 1;
-				m_btnMgr.hide(m_downloadLblMessage[msg], +400, 0, 1.f, 1.f);
+				m_btnMgr.hide(m_downloadLblMessage[msg], 0, 0, -1.f, -1.f);
 			}
 		}
 		_mainLoopCommon(wd, false, m_thrdWorking);
@@ -557,15 +578,159 @@ void CMenu::_initDownloadMenu(CMenu::SThemeData &theme)
 
 void CMenu::_textDownload(void)
 {
-	m_btnMgr.setText(m_downloadLblTitle, _t("dl5", L"Download"));
 	m_btnMgr.setText(m_downloadBtnCancel, _t("dl1", L"Cancel"));
 	m_btnMgr.setText(m_downloadBtnAll, _t("dl3", L"All"));
 	m_btnMgr.setText(m_downloadBtnMissing, _t("dl4", L"Missing"));
+	m_btnMgr.setText(m_downloadLblTitle, _t("dl5", L"Download"));
 	m_btnMgr.setText(m_downloadBtnAllTitles, _t("dl6", L"All"));
 	m_btnMgr.setText(m_downloadBtnMissingTitles, _t("dl7", L"Missing"));
 	m_btnMgr.setText(m_downloadLblCovers, _t("dl8", L"Covers"));
 	m_btnMgr.setText(m_downloadLblGameTitles, _t("dl9", L"Game titles"));
 	m_btnMgr.setText(m_downloadLblWiiTDB, _t("dl10", L"Please donate\nto WiiTDB.com"));
+}
+
+int CMenu::_versionDownloaderInit(CMenu *m) //Handler to download version
+{
+	if (!m->m_thrdWorking)
+		return 0;
+	return m->_versionDownloader();
+}
+
+int CMenu::_versionDownloader() // code to download new version
+{
+	// Original title downloader modified
+	block txt;
+	char ip[16];
+	wstringEx ws;
+	SmartBuf buffer;
+	FILE *file;
+	u32 bufferSize = 1 * 0x400000;	// Maximum download size 4 MB
+
+	// check for existing file
+    ifstream filestr;
+//	m_wipDir = m_cfg.getString(" GENERAL", "dir_wip", sfmt("%s:/%s/codes", drive, appdir.c_str()));
+    filestr.open(APP_DOL_PATH);
+
+    if (filestr.fail())
+	{
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg18", L"boot.dol not found at default path"), 1.f);
+		LWP_MutexUnlock(m_mutex);
+		m_thrdWorking = false;
+
+        return 0;
+	}
+    filestr.close();
+
+	buffer = smartCoverAlloc(bufferSize);
+	if (!buffer)
+	{
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(L"Not enough memory", 1.f);
+		LWP_MutexUnlock(m_mutex);
+		m_thrdWorking = false;
+		return 0;
+	}
+	
+	// langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
+	
+	LWP_MutexLock(m_mutex);
+	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
+	LWP_MutexUnlock(m_mutex);
+	
+	if (!m_networkInit && _initNetwork(ip) < 0)
+	{
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg2", L"Network initialization failed"), 1.f);
+		LWP_MutexUnlock(m_mutex);
+	}
+	else
+	{
+		m_networkInit = true;
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg18", L"Downloading Info..."), 0.1f); // TODO: check for 18
+		LWP_MutexUnlock(m_mutex);
+		
+		// Load info file
+		m_thrdStep = 0.1f;
+		m_thrdStepLen = 0.2f - 0.1f;
+		txt = downloadfile(buffer.get(), bufferSize, UPDATE_URL_VERSION,CMenu::_downloadProgress, this);
+		
+		// servermessage (like t#.....#)?
+		if (txt.size > 3 && txt.data[0] == 't' && txt.data[1] == '#') {
+			string servermessage;
+			servermessage = "";
+			for (u32 i = 2; i < 60 && txt.data[i] != '#'; ++i)
+				servermessage += txt.data[i];
+			LWP_MutexLock(m_mutex);
+			_setThrdMsg(servermessage, 1.f); // TODO: Check for 16
+			LWP_MutexUnlock(m_mutex);
+			m_thrdWorking = false;
+			return 0;
+		}			
+		
+		if (txt.data == 0 || txt.size < 4 || txt.data[0] != 'v')
+		{
+			LWP_MutexLock(m_mutex);
+			_setThrdMsg(_t("dlmsg16", L"No version information found"), 1.f); // TODO: Check for 16
+			LWP_MutexUnlock(m_mutex);
+			m_thrdWorking = false;
+			return 0;
+		}
+
+		// version file valid, check for version with SVN_REV
+		int svnrev = atoi(SVN_REV);
+		s32 rev = (txt.data[1]-'0') * 1000 + (txt.data[2]-'0') * 100 + (txt.data[3]-'0') * 10 + (txt.data[4]-'0');
+		if (rev <= svnrev)
+		{
+			// latest version available
+			LWP_MutexLock(m_mutex);
+			_setThrdMsg(_t("dlmsg17", L"You are using the latest release"), 1.f); // TODO: Check for 17
+			LWP_MutexUnlock(m_mutex);
+			m_thrdWorking = false;
+			return 0;
+		}
+
+		// Load actual file
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg11", L"Downloading..."), 0.2f);
+		LWP_MutexUnlock(m_mutex);
+
+		m_thrdStep = 0.2f;
+		m_thrdStepLen = 0.9f - 0.2f;
+		txt = downloadfile(buffer.get(), bufferSize, UPDATE_URL,CMenu::_downloadProgress, this);
+		if (txt.data == 0 || txt.size < 4000)
+		{
+			LWP_MutexLock(m_mutex);
+			_setThrdMsg(_t("dlmsg12", L"Download failed"), 1.f);
+			LWP_MutexUnlock(m_mutex);
+		}
+		else
+		{
+			// download finished, now save file
+			LWP_MutexLock(m_mutex);
+			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
+			LWP_MutexUnlock(m_mutex);			
+
+			file = fopen(APP_DOL_PATH, "wb");
+			if (file != NULL)
+			{
+				fwrite(txt.data, 1, txt.size, file);
+				fclose(file);
+				LWP_MutexLock(m_mutex);
+				_setThrdMsg(_t("dlmsg14", L"Done."), 1.f);
+				LWP_MutexUnlock(m_mutex);
+			}
+			else
+			{
+				LWP_MutexLock(m_mutex);
+				_setThrdMsg(_t("dlmsg15", L"Saving failed"), 1.f);
+				LWP_MutexUnlock(m_mutex);
+			}
+		}
+	}
+	m_thrdWorking = false;
+	return 0;
 }
 
 int CMenu::_titleDownloaderAll(CMenu *m)

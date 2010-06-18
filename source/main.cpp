@@ -24,6 +24,9 @@ extern int mainIOS;
 extern int mainIOSminRev;
 extern int mainIOSRev;
 
+CMenu *mainMenu;
+extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
+
 int old_main(int argc, char **argv)
 {
 	geckoinit = InitGecko();
@@ -36,39 +39,39 @@ int old_main(int argc, char **argv)
 	bool wbfsOK = false;
 	int ret = 0;
 	bool hbc;
-	
-	gprintf("Argc: %d\n", argc);
-	if (argc > 0)
+
+	// Narolez: check if ios argument is passed in argv[0] (by NForwarder) or argv[1] (by wiiload or whatever)
+	char *arg = argc > 1 ? argv[1] : argc == 1 ? argv[0] : NULL;
+	if (arg != NULL && strcasestr(arg, "ios=") != 0)
 	{
-		gprintf("Argv: %s\n", argv[0]);
-	}
-	
-	// Narolez: check if ios argument is passed in argv[0]
-	if (argc > 0 && argv[0] != NULL && strcasestr(argv[0], "ios=") != 0)
-	{
-		if(strcasestr(argv[0], "ios=249") != 0)
+		if(strcasestr(arg, "ios=249") != 0)
 		{
 			mainIOS = 249;
 			mainIOSminRev = IOS_249_MIN_REV;
 		}
-		else if(strcasestr(argv[0], "ios=222-mload") != 0)
+		else if(strcasestr(arg, "ios=250") != 0)
+		{
+			mainIOS = 250;
+			mainIOSminRev = IOS_250_MIN_REV;
+		}
+		else if(strcasestr(arg, "ios=222-mload") != 0)
 		{
 			mainIOS = 222;
 			mainIOSminRev = IOS_222_MIN_REV;
 		}
-		else if(strcasestr(argv[0], "ios=223-mload") != 0)
+		else if(strcasestr(arg, "ios=223-mload") != 0)
 		{
 			mainIOS = 223;
 			mainIOSminRev = IOS_223_MIN_REV;
 		}
-		else if (strcasestr(argv[0], "ios=224-mload") != 0)
+		else if(strcasestr(arg, "ios=224-mload") != 0)
 		{
 			mainIOS = 224;
 			mainIOSminRev = IOS_224_MIN_REV;
 		}
 	}
 	
-//	Fat_Mount(); // Wake up certain drives
+	// Fat_Mount(); // Wake up certain drives
 
 	gprintf("Loading cIOS: %d\n", mainIOS);
 
@@ -103,8 +106,7 @@ int old_main(int argc, char **argv)
 		
 		gprintf("SD Available: %d\n", Fat_SDAvailable());
 		gprintf("USB Available: %d\n", Fat_USBAvailable());
-		
-		
+				
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		if (!wbfsOK)
 		{
@@ -135,6 +137,7 @@ int old_main(int argc, char **argv)
 		Fat_Mount();
 		CMenu menu(vid);
 		menu.init(hbc);
+		mainMenu = &menu;
 		//
 		if (!iosOK)
 			menu.error(sfmt("IOS %i rev%i or later is required", mainIOS, mainIOSminRev));
@@ -157,3 +160,4 @@ int main(int argc, char **argv)
 	Sys_Exit(old_main(argc, argv));
 	return 0;
 }
+

@@ -15,7 +15,8 @@ struct discHdr
 	u8 bufsize;
 
 	/* Padding */
-	u8 unused1[14];
+	u64 chantitle; // Used for channels
+	u8 unused1[6]; // Was 14, but removed 8 for chantitle above
 
 	/* Magic word */
 	u32 magic;
@@ -42,13 +43,12 @@ extern "C" {
 s32  Disc_Init(void);
 s32  Disc_Open(void);
 s32  Disc_Wait(void);
-s32  Disc_SetWBFS(u32, u8 *);
 s32  Disc_SetUSB(const u8 *);
 s32  Disc_ReadHeader(void *);
 s32  Disc_IsWii(void);
 s32  Disc_BootPartition(u64, u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8);
 s32  Disc_WiiBoot(u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8);
-s32 Disc_OpenPartition(u32, u8 *);
+s32 Disc_OpenPartition(u8 *);
 
 #ifdef __cplusplus
 }

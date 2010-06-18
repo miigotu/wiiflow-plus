@@ -1,10 +1,9 @@
 #include <ogcsys.h>
 #include <locale.h>
-
+#include <ogc/isfs.h>
 #include "libfat/fat.h"
 #include "libntfs/ntfs.h"
-
-#include "loader/libwbfs/libwbfs.h"
+#include "libwbfs/libwbfs.h"
 #include "usbstorage.h"
 #include "sdhc.h"
 #include "fs.h"
@@ -258,6 +257,38 @@ void NTFS_Unmount()
 	}
 }
 
+#define ALIGN(x) ((x % 32 != 0) ? (x / 32) * 32 + 32 : x)
+
+u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length)
+{
+	*size = 0;
+	
+	s32 fd = ISFS_Open((const char *) path, ISFS_OPEN_READ);
+	u8 *buf = NULL;
+	static fstats stats ATTRIBUTE_ALIGN(32);
+	
+	if (fd >= 0)
+	{
+		if (ISFS_GetFileStats(fd, &stats) >= 0)
+		{
+			if (length <= 0) length = stats.file_length;
+			buf = (u8 *) memalign(32, ALIGN(length));
+			if (buf != NULL)
+			{
+				*size = stats.file_length;
+				if (ISFS_Read(fd, (void*)buf, length) != length)
+				{
+					*size = 0;
+					free(buf);
+					buf = NULL;
+				}
+			}
+		}
+		ISFS_Close(fd);
+	}
+	return buf;
+}
+
 static void *fat_pool = NULL;
 static size_t fat_size;
 #define FAT_SLOTS (CACHE * 3)
@@ -267,47 +298,47 @@ static int fat_alloc[FAT_SLOTS];
 
 void _FAT_mem_init()
 {
-	if (fat_pool) return;
-	fat_size = FAT_SLOTS * FAT_SLOT_SIZE;
-	fat_pool = LARGE_memalign(32, fat_size);
+        if (fat_pool) return;
+        fat_size = FAT_SLOTS * FAT_SLOT_SIZE;
+        fat_pool = memalign(32, fat_size);
 }
 
 void* _FAT_mem_allocate(size_t size)
 {
-	return malloc(size);
+        return malloc(size);
 }
 
 void* _FAT_mem_align(size_t size)
 {
-	if (size < FAT_SLOT_SIZE_MIN || size > FAT_SLOT_SIZE) goto fallback;
-	if (fat_pool == NULL) goto fallback;
-	int i;
-	for (i=0; i<FAT_SLOTS; i++) {
-		if (fat_alloc[i] == 0) {
-			void *ptr = fat_pool + i * FAT_SLOT_SIZE;
-			fat_alloc[i] = 1;
-			return ptr;
-		}	
-	}
-	fallback:
-	return memalign (32, size);		
+        if (size < FAT_SLOT_SIZE_MIN || size > FAT_SLOT_SIZE) goto fallback;
+        if (fat_pool == NULL) goto fallback;
+        int i;
+        for (i=0; i<FAT_SLOTS; i++) {
+                if (fat_alloc[i] == 0) {
+                        void *ptr = fat_pool + i * FAT_SLOT_SIZE;
+                        fat_alloc[i] = 1;
+                        return ptr;
+                }      
+        }
+        fallback:
+        return memalign (32, size);            
 }
 
 void _FAT_mem_free(void *mem)
 {
-	if (fat_pool == NULL || mem < fat_pool || mem >= fat_pool + fat_size) {
-		free(mem);
-		return;
-	}
-	int i;
-	for (i=0; i<FAT_SLOTS; i++) {
-		if (fat_alloc[i]) {
-			void *ptr = fat_pool + i * FAT_SLOT_SIZE;
-			if (mem == ptr) {
-				fat_alloc[i] = 0;
-				return;
-			}
-		}	
-	}
-	// FATAL
+        if (fat_pool == NULL || mem < fat_pool || mem >= fat_pool + fat_size) {
+                free(mem);
+                return;
+        }
+        int i;
+        for (i=0; i<FAT_SLOTS; i++) {
+                if (fat_alloc[i]) {
+                        void *ptr = fat_pool + i * FAT_SLOT_SIZE;
+                        if (mem == ptr) {
+                                fat_alloc[i] = 0;
+                                return;
+                        }
+                }      
+        }
+        // FATAL
 }

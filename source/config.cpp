@@ -219,6 +219,13 @@ bool Config::load(const char *filename)
 	return m_loaded;
 }
 
+void Config::unload(void)
+{
+	m_loaded = false;
+	m_filename = emptyString;
+	m_domains.clear();
+}
+
 void Config::save(void)
 {
 	if (strncasecmp(m_filename.c_str(), "sd:", 3) == 0)
@@ -262,6 +269,13 @@ void Config::setBool(const string &domain, const string &key, bool val)
 	if (domain.empty() || key.empty())
 		return;
 	m_domains[upperCase(domain)][lowerCase(key)] = val ? "yes" : "no";
+}
+
+void Config::remove(const string &domain, const string &key)
+{
+	if (domain.empty() || key.empty())
+		return;
+	m_domains[upperCase(domain)].erase(lowerCase(key));
 }
 
 void Config::setOptBool(const string &domain, const string &key, int val)

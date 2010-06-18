@@ -53,9 +53,10 @@ CCoverFlow::CCover::CCover(void)
 	targetScale = Vector3D(1.f, 1.f, 1.f);
 }
 
-CCoverFlow::CItem::CItem(const char *itemId, const wchar_t *itemTitle, const char *itemPic, const char *itemBoxPic, int playcount) :
+CCoverFlow::CItem::CItem(const char *itemId, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount) :
 	id(itemId),
 	title(itemTitle),
+	chantitle(chantitle),
 	picPath(itemPic),
 	boxPicPath(itemBoxPic),
 	playcount(playcount)
@@ -77,9 +78,8 @@ bool CCoverFlow::CItem::operator<(const CCoverFlow::CItem &i) const
 			return false;
 		else if (upperCaseWChar(i.title[k]) > upperCaseWChar(title[k]))
 			return true;
-	return false;
+	return title.size() < i.title.size();
 }
-
 
 CCoverFlow::CCoverFlow(void)
 {
@@ -177,6 +177,7 @@ CCoverFlow::CCoverFlow(void)
 	m_waitingToClear = false;
 	m_moved = false;
 	m_selected = false;
+	m_hideCover = false;
 	m_tickCount = 0;
 	m_hqCover = -1;
 	m_blurRadius = 3;
@@ -216,6 +217,7 @@ bool CCoverFlow::init(void)
 	// Load font
 	m_font.fromBuffer(cffont_ttf, cffont_ttf_size, 32, 32);
 	m_fontColor = CColor(0xFFFFFFFF);
+	m_fontSelectedColor = 0xFFFFFFFF;
 	// 
 	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
 		guPerspective(m_projMtx, 45, 16.f / 9.f, .1f, 300.f);
@@ -453,6 +455,11 @@ void CCoverFlow::setColors(bool selected, const CColor &begColor, const CColor &
 	lo.mouseOffColor = offColor;
 }
 
+void CCoverFlow::setSelectedTextColor(const u32 color)
+{
+	m_fontSelectedColor = color;
+}
+
 void CCoverFlow::setMirrorAlpha(float cover, float title)
 {
 	m_mirrorAlpha = cover;
@@ -593,11 +600,11 @@ void CCoverFlow::reserve(u32 capacity)
 	m_items.reserve(capacity);
 }
 
-void CCoverFlow::addItem(const char *id, const wchar_t *title, const char *picPath, const char *boxPicPath, int playcount)
+void CCoverFlow::addItem(const char *id, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount)
 {
 	if (!m_covers.empty())
 		return;
-	m_items.push_back(CCoverFlow::CItem(id, title, picPath, boxPicPath, playcount));
+	m_items.push_back(CCoverFlow::CItem(id, title, chantitle, picPath, boxPicPath, playcount));
 }
 
 // Draws a plane in the Z-Buffer only.
@@ -921,6 +928,16 @@ void CCoverFlow::drawText(bool withRectangle)
 	}
 }
 
+void CCoverFlow::hideCover(void)
+{
+	m_hideCover = true;
+}
+
+void CCoverFlow::showCover(void)
+{
+	m_hideCover = false;
+}
+
 inline int innerToOuter(int i, int range)
 {
 	return loopNum((i & 1) != 0 ? range / 2 - (i + 1) / 2 : range / 2 + i / 2, range);
@@ -1058,6 +1075,8 @@ void CCoverFlow::_drawTitle(int i, bool mirror, bool rectangle)
 	Vector3D rotAxis(0.f, 1.f, 0.f);
 	CColor color(m_fontColor);
 
+	if (m_hideCover)
+		return;
 	if (m_covers[i].txtColor == 0)
 		return;
 	color.a = mirror ? (u8)((float)m_covers[i].txtColor * m_txtMirrorAlpha) : m_covers[i].txtColor;
@@ -1150,6 +1169,8 @@ void CCoverFlow::_drawCover(int i, bool mirror, CCoverFlow::DrawMode dm)
 	Vector3D osc;
 	Vector3D oscP;
 
+	if (m_hideCover)
+		return;
 	if (m_covers[i].color.a == 0 || (dm == CCoverFlow::CFDR_SHADOW && m_covers[i].shadowColor.a == 0))
 		return;
 	if (dm == CCoverFlow::CFDR_STENCIL && (i > 0xFF || _invisibleCover(i / m_rows, i % m_rows)))
@@ -1364,6 +1385,14 @@ string CCoverFlow::getTitle(void) const
 	return m_items[m_covers[m_range / 2].index].title.toUTF8();
 }
 
+u64 CCoverFlow::getChanTitle(void) const
+{
+	if (m_covers.empty() || m_items.empty())
+		return 0;
+	return m_items[loopNum(m_covers[m_range / 2].index + m_jump, m_items.size())].chantitle;
+}
+
+
 bool CCoverFlow::select(void)
 {
 	int j;
@@ -1477,7 +1506,7 @@ void CCoverFlow::_updateTarget(int i, bool instant)
 		cvr.targetAngle = lo.centerAngle;
 		cvr.targetPos = lo.centerPos;
 		cvr.targetScale = lo.centerScale;
-		cvr.txtTargetColor = 0xFF;
+		cvr.txtTargetColor = m_fontSelectedColor; // 0x00; //0xFF;
 		cvr.txtTargetAngle = lo.txtCenterAngle;
 		cvr.txtTargetPos = lo.txtCenterPos;
 		cvr.title.setFrame(lo.txtCenterWidth, lo.txtCenterStyle, false, instant);

@@ -117,7 +117,7 @@ source/loader/
 --------------------------------------------------------------------------------------------------------
 
 
-source/loader/libwbfs/
+source/libs/libwbfs/
 
 |  File           |  Comment   |  Lic |  Original author(s)        |  Project where the original code is
 |-----------------|------------|------|----------------------------|------------------------------------

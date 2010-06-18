@@ -2,6 +2,7 @@
 #include "menu.hpp"
 #include "loader/sys.h"
 #include "loader/wbfs.h"
+#include "loader/alt_ios.h"
 #include "loader/fs.h"
 #include "oggplayer.h"
 
@@ -14,6 +15,7 @@
 #include <mp3player.h>
 
 #include "gecko.h"
+#include "channels.h"
 
 // Sounds
 extern const u8 click_wav[];
@@ -49,6 +51,8 @@ const u8 *titlefont_ttf = butfont_ttf;
 const u32 titlefont_ttf_size = butfont_ttf_size;
 const u8 *lblfont_ttf = cffont_ttf;
 const u32 lblfont_ttf_size = cffont_ttf_size;
+const u8 *thxfont_ttf = cffont_ttf;
+const u32 thxfont_ttf_size = cffont_ttf_size;
 
 using namespace std;
 
@@ -65,6 +69,7 @@ CMenu::CMenu(CVideo &vid) :
 	m_thrdStepLen = 0.f;
 	m_locked = false;
 	m_favorites = false;
+	m_category = 0;
 	m_networkInit = false;
 	m_mutex = 0;
 	m_letter = 0;
@@ -100,13 +105,11 @@ void CMenu::init(bool fromHBC)
 		
 		bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", true);
 		drive = dataOnUSB ? "usb" : "sd";
-//		if (!m_cfg.loaded() && dataOnUSB)
-//			m_cfg.save();
 	}
 	else
 		drive = Fat_USBAvailable() ? "usb" : "sd";
-	// 
 	
+	appdir = APPDATA_DIR;
 	m_dataDir = sfmt("%s:/%s", drive,appdir.c_str());
 	if(!m_cfg.load(sfmt("%s/" CFG_FILENAME, m_dataDir.c_str()).c_str())) 
 	{
@@ -125,7 +128,6 @@ void CMenu::init(bool fromHBC)
 	m_cheatDir = m_cfg.getString(" GENERAL", "dir_cheat", sfmt("%s:/%s/codes", drive, appdir.c_str()));
 	m_txtCheatDir = m_cfg.getString(" GENERAL", "dir_txtcheat", sfmt("%s:/%s/txtcodes", drive, appdir.c_str()));
 	m_videoDir = m_cfg.getString(" GENERAL", "dir_trailers", sfmt("%s:/%s/trailers", drive, appdir.c_str()));
-	m_riivolutionDir = m_cfg.getString(" GENERAL", "dir_riivolution", sfmt("%s:/%s/riivolution", drive, appdir.c_str()));
 	m_fanartDir = m_cfg.getString(" GENERAL", "dir_fanart", sfmt("%s:/%s/fanart", drive, appdir.c_str()));
 
 	m_cf.init();
@@ -143,11 +145,8 @@ void CMenu::init(bool fromHBC)
 		mkdir(m_cheatDir.c_str(), 0777);
 		mkdir(m_txtCheatDir.c_str(), 0777);
 		mkdir(m_videoDir.c_str(), 0777);
-		mkdir(m_riivolutionDir.c_str(), 0777);
 		mkdir(m_fanartDir.c_str(), 0777);
-		
-		mkdir(sfmt("%s/background", m_fanartDir.c_str()).c_str(), 0777);
-	}
+		}
 	// INI files
 	m_loc.load(sfmt("%s/" LANG_FILENAME, m_dataDir.c_str()).c_str());
 	themeName = m_cfg.getString(" GENERAL", "theme", "DEFAULT");
@@ -216,6 +215,11 @@ void CMenu::init(bool fromHBC)
 		m_favorites = m_cfg.getBool(" GENERAL", "favorites", false);
 	if (m_cfg.getBool(" GENERAL", "fbi", false))
 		m_waitMessage.fromPNG(fbi_png);
+	m_category = m_cfg.getInt(" GENERAL", "category", 0);
+	//m_current_view = m_cfg.getInt(" GENERAL", "currentview", COVERFLOW_USB);
+	//if (m_current_view > COVERFLOW_MAX) m_current_view = COVERFLOW_USB;
+	m_current_view = COVERFLOW_USB;
+	m_loaded_ios_base = get_ios_base();
 }
 
 void CMenu::cleanup(void)
@@ -517,9 +521,12 @@ void CMenu::_buildMenus(void)
 	theme.lblFont = _font(theme.fontSet, " GENERAL", "label_font", theme.lblFont);
 	theme.lblFontColor = m_theme.getColor(" GENERAL", "label_font_color", 0xD0BFDFFF);
 	theme.txtFontColor = m_theme.getColor(" GENERAL", "text_font_color", 0xFFFFFFFF);
-	theme.titleFont.fromBuffer(titlefont_ttf, titlefont_ttf_size, 48, 48);
+	theme.titleFont.fromBuffer(titlefont_ttf, titlefont_ttf_size, 36, 36);
 	theme.titleFont = _font(theme.fontSet, " GENERAL", "title_font", theme.titleFont);
 	theme.titleFontColor = m_theme.getColor(" GENERAL", "title_font_color", 0xD0BFDFFF);
+	theme.thxFont.fromBuffer(thxfont_ttf, thxfont_ttf_size, 18, 18);
+	theme.thxFont = _font(theme.fontSet, " GENERAL", "thxfont", theme.thxFont);
+	// Default Sounds
 	theme.clickSound.fromWAV(click_wav, click_wav_size);
 	theme.clickSound = _sound(theme.soundSet, " GENERAL", "click_sound", theme.clickSound);
 	theme.hoverSound.fromWAV(hover_wav, hover_wav_size);
@@ -579,8 +586,9 @@ void CMenu::_buildMenus(void)
 	_initCFThemeMenu(theme);
 	_initGameSettingsMenu(theme);
 	_initCheatSettingsMenu(theme); 
- }
-
+	_initCategorySettingsMenu(theme);
+	_initSystemMenu(theme);
+}
 
 SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, SFont def)
 {
@@ -851,20 +859,34 @@ void CMenu::_initCF(void)
 	string id;
 	bool cmpr;
 	Config titles;
+	u64 chantitle;
 
 	titles.load(sfmt("%s/titles.ini", m_dataDir.c_str()).c_str());	
 	m_cf.clear();
 	m_cf.reserve(m_gameList.size());
 	for (u32 i = 0; i < m_gameList.size(); ++i)
 	{
-		id = string((const char *)m_gameList[i].id, sizeof m_gameList[0].id);
-		if ((!m_favorites || m_cfg.getBool(id, "favorite", false)) && (!m_locked || !m_cfg.getBool(id, "adult_only", false)))
+		id = string((const char *)m_gameList[i].id, m_gameList[i].id[5] == 0 ? strlen((const char *) m_gameList[i].id) : sizeof m_gameList[0].id);
+		chantitle = m_gameList[i].chantitle;
+		if ((!m_favorites || m_cfg.getBool(id, "favorite", false)) && (!m_locked || !m_cfg.getBool(id, "adult_only", false)) && !m_cfg.getBool(id, "hidden", false))
 		{
+			if (m_category != 0)
+			{
+				const char *categories = m_cfg.getString(id, "categories", "").c_str();
+				if (strlen(categories) != 12 || categories[m_category] == '0') { // 12 categories max!
+					continue;
+				}
+			}
 			wstringEx w(titles.getWString("TITLES", id));
 			if (w.empty())
-				w = titles.getWString("TITLES", id.substr(0, 4), string(m_gameList[i].title, sizeof m_gameList[0].title));
+			{
+				if (m_current_view == COVERFLOW_CHANNEL) // Required, since Channel titles are already in wchar_t
+					w = titles.getWString("TITLES", id.substr(0, 4), (wchar_t *) &m_gameList[i].title);
+				else
+					w = titles.getWString("TITLES", id.substr(0, 4), string(m_gameList[i].title, sizeof m_gameList[0].title));
+			}
 			int playcount = m_cfg.getInt(id, "playcount", 0);
-			m_cf.addItem(id.c_str(), w.c_str(), sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount);
+			m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount);
 		}
 	}
 	m_cf.setBoxMode(m_cfg.getBool(" GENERAL", "box_mode", true));
@@ -881,6 +903,7 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 	if (withCF)
 		m_cf.tick();
 	m_btnMgr.tick();
+	m_fa.tick();
 	_updateBg();
 	if (withCF)
 		m_cf.makeEffectTexture(m_vid, m_lqBg);
@@ -914,6 +937,12 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 			m_cf.drawText(adjusting);
 		}
 	}
+	
+	m_vid.setup2DProjection();
+
+	// Call m_fa.draw() here, it should draw over the box and background, but below the buttons
+	m_fa.draw();
+	
 	m_vid.setup2DProjection();
 	m_btnMgr.draw();
 	if (wd->ir.valid)
@@ -1087,6 +1116,8 @@ void CMenu::_updateText(void)
 	_textCode();
 	_textWBFS();
 	_textGameSettings();
+	_textCategorySettings();
+	_textSystem();
 }
 
 const wstringEx CMenu::_fmt(const char *key, const wchar_t *def)
@@ -1097,6 +1128,45 @@ const wstringEx CMenu::_fmt(const char *key, const wchar_t *def)
 	return def;
 }
 
+bool CMenu::_loadChannelList(void)
+{
+	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
+	
+	m_channels.Init(0, langCode);
+	SmartBuf buffer;
+	u32 count = m_channels.Count();
+	u32 len = count * sizeof m_gameList[0];
+	buffer = smartAnyAlloc(len);
+	if (!buffer)
+		return false;
+	memset(buffer.get(), 0, len);
+	
+	m_gameList.clear();
+	m_gameList.reserve(count);
+	discHdr *b = (discHdr *)buffer.get();
+	for (u32 i = 0; i < count; ++i) {
+		Channel *chan = m_channels.GetChannel(i);
+		
+		if (chan->id == NULL) continue; // Skip invalid channels
+		
+		memcpy(&b[i].id, chan->id, 4);
+		memcpy(&b[i].title, chan->name, sizeof(b->title)); // IMET header specifies max name length 42 (wchar, so * 4!), so we copy only the first 64 bytes here...
+		b[i].chantitle = chan->title;
+	
+		m_gameList.push_back(b[i]);
+	}
+	return true;
+}
+
+bool CMenu::_loadList(void)
+{
+	if (m_current_view == COVERFLOW_CHANNEL)
+		return _loadChannelList();
+	else if (m_current_view == COVERFLOW_USB)
+		return _loadGameList();
+	return false;
+}
+
 bool CMenu::_loadGameList(void)
 {
 	s32 ret;
@@ -1104,10 +1174,13 @@ bool CMenu::_loadGameList(void)
 	SmartBuf buffer;
 	u32 count;
 
-	ret = WBFS_OpenNamed((char *) m_cfg.getString(" GENERAL", "partition", "WBFS1").c_str());
+	char part[6];
+	WBFS_GetPartitionName(0, (char *) &part);
+	
+	ret = WBFS_OpenNamed((char *) m_cfg.getString(" GENERAL", "partition", part).c_str());
 	if (ret < 0)
 	{
-		error(wfmt(_fmt("wbfs2", L"WBFS_Open failed : %i"), ret));
+		gprintf("Open partition failed : %i\n", ret);
 		return false;
 	}
 	ret = WBFS_GetCount(&count);

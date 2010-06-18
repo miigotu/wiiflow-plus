@@ -1,1 +1,3 @@
 WiiFlow 1.1 since R23 was compiled using devkitPPC r18 or r19.
+Since R39 was compiled using devkitPPC r21 and libogc 1.8.3.
+

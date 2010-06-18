@@ -172,6 +172,7 @@ int is_ios=0;
 
 		}
 
+	mload_close();
 	return 0;
 }
 
@@ -338,13 +339,16 @@ return ret;
 
 void enable_ES_ioctlv_vector(void)
 {
+	mload_init();
 	patch_datas[0]=*((u32 *) (dip_plugin+16*4));
 	mload_set_ES_ioctlv_vector((void *) patch_datas[0]);
+	mload_close();
 }
 
 void Set_DIP_BCA_Datas(u8 *bca_data)
 {
 	// write in dip_plugin bca data area
+	mload_init();
 	mload_seek(*((u32 *) (dip_plugin+15*4)), SEEK_SET);	// offset 15 (bca_data area)
 	mload_write(bca_data, 64);
 	mload_close();

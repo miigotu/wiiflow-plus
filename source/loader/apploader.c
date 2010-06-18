@@ -10,7 +10,7 @@
 #include "videopatch.h"
 #include "wip.h"
 #include "wbfs.h"
-#include "riivolution.h"
+#include "sys.h"
 
 #include "gecko.h"
 
@@ -113,10 +113,6 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 		}
 	}
 
-	FST_ENTRY *fst = (FST_ENTRY *)*(u32 *)0x80000038;
-	do_riivolution_files(fst);
-	WDVD_Close();
-	
 	/* Alternative dol */
 	if (altdol != 0)
 	{
@@ -325,10 +321,10 @@ static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeOb
 	
 	gprintf("Applying patches...");
 
-	// Patch NoDiscInDrive only for IOS 249 < rev13 or IOS 222/223
+	// Patch NoDiscInDrive only for IOS 249 < rev13 or IOS 222/223/224
 	if (patchDiscCheck && 
-		((IOS_GetVersion() == 249 && IOS_GetRevision() < 13) ||
-	    (IOS_GetVersion() == 222 || IOS_GetVersion() == 223)))
+		((is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() < 13) ||
+	    (is_ios_type(IOS_TYPE_HERMES))))
 		patch_NoDiscinDrive(dst, len);
 	
 	patchVideoModes(dst, len, vidMode, vmode, patchVidModes);

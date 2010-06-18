@@ -63,7 +63,6 @@ s32 WBFS_GetCurrentPartition();
 s32 WBFS_GetPartitionCount();
 s32 WBFS_GetPartitionName(u32, char *);
 bool WBFS_IsReadOnly(void);
-wbfs_t *GetHddInfo(void);
 f32 WBFS_EstimeGameSize(void);
 
 #ifdef __cplusplus

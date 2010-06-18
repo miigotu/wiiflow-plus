@@ -57,8 +57,8 @@ void CMenu::_showConfig5(void)
 	m_btnMgr.show(m_config5LblPartition);
 	m_btnMgr.show(m_config5BtnPartitionP);
 	m_btnMgr.show(m_config5BtnPartitionM);
-	m_btnMgr.show(m_config5LblInstallDirectory);
-	m_btnMgr.show(m_config5BtnInstallDirectory);
+	//m_btnMgr.show(m_config5LblInstallDirectory);
+	//m_btnMgr.show(m_config5BtnInstallDirectory);
 	
 	for (u32 i = 0; i < ARRAY_SIZE(m_config5LblUser); ++i)
 		if (m_config5LblUser[i] != -1u)
@@ -115,12 +115,12 @@ int CMenu::_config5(void)
 			m_btnMgr.click(m_configBtnPageM);
 			break;
 		}
-		if (!m_locked && ((padsState & WPAD_BUTTON_PLUS) != 0 || ((padsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageP)))
+		/*if (!m_locked && ((padsState & WPAD_BUTTON_PLUS) != 0 || ((padsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageP)))
 		{
 			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
 			m_btnMgr.click(m_configBtnPageP);
 			break;
-		}
+		}*/
 		if ((padsState & WPAD_BUTTON_A) != 0)
 		{
 			m_btnMgr.click();
@@ -157,7 +157,7 @@ int CMenu::_config5(void)
 //	if (bCurrentPartition != currentPartition)
 //	{
 		gprintf("Switching partition to %s\n", m_cfg.getString(" GENERAL", "partition").c_str());
-		_loadGameList();
+		_loadList();
 //	}
 	
 	_hideConfig5();

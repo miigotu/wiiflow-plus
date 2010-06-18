@@ -12,6 +12,7 @@
 #include <ctype.h>
 
 #include "splits.h"
+#include "gecko.h"
 
 #define off64_t off_t
 #define FMT_llu "%llu"
@@ -30,7 +31,7 @@ void split_get_fname(split_info_t *s, int idx, char *fname)
 {
 	strcpy(fname, s->fname);
 	if (idx == 0 && s->create_mode) {
-		strcat(fname, ".tmp");
+//		strcat(fname, ".tmp");
 	} else if (idx > 0) {
 		char *c = fname + strlen(fname) - 1;
 		*c = '0' + idx;
@@ -45,14 +46,14 @@ int split_open_file(split_info_t *s, int idx)
 	split_get_fname(s, idx, fname);
 	//char *mode = s->create_mode ? "wb+" : "rb+";
 	int mode = s->create_mode ? (O_CREAT | O_RDWR) : O_RDWR ;
-	//printf("SPLIT OPEN %s %s %d\n", fname, mode, idx); //Wpad_WaitButtons();
+	//gprintf("SPLIT OPEN %s %s %d\n", fname, mode, idx); //Wpad_WaitButtons();
 	//f = fopen(fname, mode);
 	fd = open(fname, mode);
 	if (fd<0) return -1;
 	if (idx > 0 && s->create_mode) {
-		printf("%s Split: %d %s          \n",
-				s->create_mode ? "Create" : "Read",
-				idx, fname);
+//		gprintf("%s Split: %d %s          \n",
+//				s->create_mode ? "Create" : "Read",
+//				idx, fname);
 	}
 	s->fd[idx] = fd;
 	return fd;
@@ -69,7 +70,7 @@ int write_zero(int fd, off_t size)
 		chunk = size;
 		if (chunk > sizeof(buf)) chunk = sizeof(buf);
 		ret = write(fd, buf, chunk);
-		//printf("WZ %d %d / %lld \n", ret, chunk, size);
+//		gprintf("WZ %d %d / %lld \n", ret, chunk, size);
 		size -= chunk;
 		if (ret < 0) return ret;
 	}
@@ -79,11 +80,12 @@ int write_zero(int fd, off_t size)
 int split_fill(split_info_t *s, int idx, u64 size)
 {
 	int fd = split_open_file(s, idx);
+	
 	off64_t fsize = lseek(fd, 0, SEEK_END);
 	if (fsize < size) {
-		//printf("TRUNC %d "FMT_lld"\n", idx, size); Wpad_WaitButtons();
-		//ftruncate(fd, size);
-		write_zero(fd, size - fsize);
+//		gprintf("TRUNC %d "FMT_lld" "FMT_lld"\n", idx, size, fsize); // Wpad_WaitButtons();
+		ftruncate(fd, size);
+//		write_zero(fd, size - fsize);
 		return 1;
 	}
 	return 0;
@@ -176,10 +178,11 @@ int split_write_sector(void *_fp,u32 lba,u32 count,void*buf)
 	int i;
 	u32 chunk;
 	size_t ret;
-	//printf("WRITE %d %d %p \n", lba, count, buf);
+//	gprintf("WRITE %d %d %p \n", lba, count, buf);
 	for (i=0; i<(int)count; i+=chunk) {
 		chunk = count - i;
 		fd = split_get_file(s, lba+i, &chunk, 0);
+//		gprintf("WRITE Got file: %d\n", fd);
 		//if (chunk != count)
 		//	fprintf(stderr, "WRITE CHUNK %d %d/%d\n", lba+i, chunk, count);
 		if (fd<0 || !chunk) {
@@ -188,9 +191,9 @@ int split_write_sector(void *_fp,u32 lba,u32 count,void*buf)
 			return 1;
 		}
 		//if (fwrite(buf+i*512, 512ULL, chunk, f) != chunk) {
-		//printf("write %d %p %d \n", fd, buf+i*512, chunk * 512);
+//		gprintf("write %d %p %d \n", fd, buf+i*512, chunk * 512);
 		ret = write(fd, buf+i*512, chunk * 512);
-		//printf("write ret = %d \n", ret);
+//		gprintf("write ret = %d \n", ret);
 		if (ret != chunk * 512) {
 			split_error("error writing disc");
 			return 1;
@@ -227,18 +230,18 @@ void split_set_size(split_info_t *s, u64 split_size, u64 total_size)
 void split_close(split_info_t *s)
 {
 	int i;
-	char fname[1024];
-	char tmpname[1024];
+//	char fname[1024];
+//	char tmpname[1024];
 	for (i=0; i<s->max_split; i++) {
 		if (s->fd[i] >= 0) {
 			close(s->fd[i]);
 		}
 	}
-	if (s->create_mode) {
-		split_get_fname(s, -1, fname);
-		split_get_fname(s, 0, tmpname);
-		rename(tmpname, fname);
-	}
+//	if (s->create_mode) {
+//		split_get_fname(s, -1, fname);
+//		split_get_fname(s, 0, tmpname);
+//		rename(tmpname, fname);
+//	}
 	memset(s, 0, sizeof(*s));
 }
 

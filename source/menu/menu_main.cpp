@@ -8,6 +8,7 @@
 
 #include "wbfs.h"
 #include "gecko.h"
+#include "sys.h"
 
 using namespace std;
 
@@ -21,6 +22,10 @@ extern const u8 btnnext_png[];
 extern const u8 btnnexts_png[];
 extern const u8 btnprev_png[];
 extern const u8 btnprevs_png[];
+extern const u8 btnchannel_png[];
+extern const u8 btnchannels_png[];
+extern const u8 btnusb_png[];
+extern const u8 btnusbs_png[];
 extern const u8 gradient_png[];
 extern const u8 favoriteson_png[];
 extern const u8 favoritesons_png[];
@@ -39,7 +44,10 @@ void CMenu::_hideMain(bool instant)
 	m_btnMgr.hide(m_mainBtnConfig, instant);
 	m_btnMgr.hide(m_mainBtnInfo, instant);
 	m_btnMgr.hide(m_mainBtnQuit, instant);
+	m_btnMgr.hide(m_mainBtnChannel, instant);
+	m_btnMgr.hide(m_mainBtnUsb, instant);
 	m_btnMgr.hide(m_mainBtnInit, instant);
+	m_btnMgr.hide(m_mainBtnInit2, instant);
 	m_btnMgr.hide(m_mainLblInit, instant);
 	m_btnMgr.hide(m_mainBtnFavoritesOn, instant);
 	m_btnMgr.hide(m_mainBtnFavoritesOff, instant);
@@ -51,16 +59,26 @@ void CMenu::_hideMain(bool instant)
 
 void CMenu::_showMain(void)
 {
-	_setBg(m_mainBg, m_mainBgLQ);
+	_setBg(m_gameBg, m_gameBgLQ);
 	m_btnMgr.show(m_mainBtnConfig);
 	m_btnMgr.show(m_mainBtnInfo);
 	m_btnMgr.show(m_mainBtnQuit);
+
+	if (/*m_channels.CanIdentify() && */m_loaded_ios_base !=57)
+	{
+		if (m_current_view == COVERFLOW_USB)
+			m_btnMgr.show(m_mainBtnChannel);
+		else if (m_current_view == COVERFLOW_CHANNEL)
+			m_btnMgr.show(m_mainBtnUsb);
+	}
+
 	for (u32 i = 1; i < ARRAY_SIZE(m_mainLblUser); ++i)
 		if (m_mainLblUser[i] != -1u)
 			m_btnMgr.show(m_mainLblUser[i]);
 	if (m_gameList.empty())
 	{
 		m_btnMgr.show(m_mainBtnInit);
+		m_btnMgr.show(m_mainBtnInit2);
 		m_btnMgr.show(m_mainLblInit);
 	}
 }
@@ -82,7 +100,7 @@ int CMenu::main(void)
 	WPAD_Rumble(WPAD_CHAN_0, 0);
 	m_padLeftDelay = 0;
 	m_padRightDelay = 0;
-	_loadGameList();
+	_loadList();
 	_showMain();
 	m_curGameId.clear();
 	_initCF();
@@ -168,16 +186,83 @@ int CMenu::main(void)
 			m_cf.left();
 		else if ((btn & WPAD_BUTTON_RIGHT) != 0 || ((angle > 75 && angle < 105) && mag > 0.75))
 			m_cf.right();
+		if ((padsState & WPAD_BUTTON_B) != 0)
+		{
+			if (buttonHeld != m_btnMgr.selected())
+				m_btnMgr.click();
+			if (m_btnMgr.selected() == m_mainBtnFavoritesOn || m_btnMgr.selected() == m_mainBtnFavoritesOff)
+			{
+				if (m_current_view == COVERFLOW_USB) // Only supported in game mode (not for channels, since you don't have options for channels yet)
+				{
+					// Event handler to show categories for selection
+					_hideMain();
+					_CategorySettings();
+					_showMain();
+					m_curGameId = m_cf.getId();
+					_initCF();
+				}
+			}		
+		}
 		if ((padsState & WPAD_BUTTON_A) != 0)
 		{
 			if (buttonHeld != m_btnMgr.selected())
 				m_btnMgr.click();
-			if (m_btnMgr.selected() == m_mainBtnQuit)
+			if (m_btnMgr.selected() == m_mainBtnQuit) {
+				bool hbc = *((u32 *) 0x80001804) == 0x53545542 && *((u32 *) 0x80001808) == 0x48415858;
+				if (!hbc) { //!hbc) { // Add Priiloader exit magic
+					*(vu32*)0x8132FFFB = 0x50756e65;
+					DCFlushRange((void*)0x8132FFFB,4);
+					Sys_ExitToWiiMenu(true);
+				}
 				break;
+			}
+			else if (m_btnMgr.selected() == m_mainBtnChannel || m_btnMgr.selected() == m_mainBtnUsb)
+			{
+				if (m_btnMgr.selected() == m_mainBtnChannel) 
+				{
+					m_current_view = COVERFLOW_CHANNEL;
+					m_category = 0;
+				}
+				else if (m_btnMgr.selected() == m_mainBtnUsb)
+				{
+					m_current_view = COVERFLOW_USB;
+					m_category = m_cfg.getInt(" GENERAL", "category", 0);
+				}
+				_hideMain();
+				//m_cfg.setInt(" GENERAL", "currentview", m_current_view);
+				_loadList();
+				_initCF();
+				_showMain();
+			}
 			else if (m_btnMgr.selected() == m_mainBtnInit)
 			{
+				if (!WBFS_IsReadOnly())
+				{
+					_hideMain();
+					_wbfsOp(CMenu::WO_ADD_GAME);
+					if (prevTheme != m_cfg.getString(" GENERAL", "theme"))
+					{
+					reload = true;
+					break;
+					}
+					_showMain();
+				}
+				else
+				{
+					error(_t("wbfsop11", L"The currently selected filesystem is read-only. You cannot install games or remove them."));
+					if (prevTheme != m_cfg.getString(" GENERAL", "theme"))
+					{
+					reload = true;
+					break;
+					}
+					_showMain();
+				}
+			}
+			else if (m_btnMgr.selected() == m_mainBtnInit2)
+			{
 				_hideMain();
-				_config(2);
+				//_config(2);
+				_config(7);
 				if (prevTheme != m_cfg.getString(" GENERAL", "theme"))
 				{
 					reload = true;
@@ -241,7 +326,7 @@ int CMenu::main(void)
 		if (m_letter > 0)
 			if (--m_letter == 0)
 				m_btnMgr.hide(m_mainLblLetter);
-		// 
+		//
 		if (!m_gameList.empty() && wd->ir.valid && m_cur.x() >= m_mainPrevZone.x && m_cur.y() >= m_mainPrevZone.y
 			&& m_cur.x() < m_mainPrevZone.x + m_mainPrevZone.w && m_cur.y() < m_mainPrevZone.y + m_mainPrevZone.h)
 			m_btnMgr.show(m_mainBtnPrev);
@@ -256,6 +341,7 @@ int CMenu::main(void)
 			&& m_cur.x() < m_mainButtonsZone.x + m_mainButtonsZone.w && m_cur.y() < m_mainButtonsZone.y + m_mainButtonsZone.h)
 		{
 			m_btnMgr.show(m_mainLblUser[0]);
+			m_btnMgr.show(m_mainLblUser[1]);
 			m_btnMgr.show(m_mainBtnConfig);
 			m_btnMgr.show(m_mainBtnInfo);
 			m_btnMgr.show(m_mainBtnQuit);
@@ -265,13 +351,32 @@ int CMenu::main(void)
 		else
 		{
 			m_btnMgr.hide(m_mainLblUser[0]);
+			m_btnMgr.hide(m_mainLblUser[1]);
 			m_btnMgr.hide(m_mainBtnConfig);
 			m_btnMgr.hide(m_mainBtnInfo);
 			m_btnMgr.hide(m_mainBtnQuit);
 			m_btnMgr.hide(m_mainBtnFavoritesOn);
 			m_btnMgr.hide(m_mainBtnFavoritesOff);
 		}
-		// 
+		if (!m_cfg.getBool(" GENERAL", "hidechannelsbutton", false) && !m_gameList.empty() && wd->ir.valid && m_cur.x() >= m_mainButtonsZone2.x && m_cur.y() >= m_mainButtonsZone2.y
+			&& m_cur.x() < m_mainButtonsZone2.x + m_mainButtonsZone2.w && m_cur.y() < m_mainButtonsZone2.y + m_mainButtonsZone2.h)
+		{
+			if (/*m_channels.CanIdentify() && */m_loaded_ios_base != 57)
+			{
+				if (m_current_view == COVERFLOW_USB)
+					m_btnMgr.show(m_mainBtnChannel);
+				else if (m_current_view == COVERFLOW_CHANNEL)
+					m_btnMgr.show(m_mainBtnUsb);
+				m_btnMgr.show(m_mainLblUser[2]);
+			}
+		}
+		else
+		{
+			m_btnMgr.hide(m_mainBtnChannel);
+			m_btnMgr.hide(m_mainBtnUsb);
+			m_btnMgr.hide(m_mainLblUser[2]);
+		}
+		//
 		if (!wd->ir.valid || m_btnMgr.selected() != (u32)-1)
 			m_cf.mouse(m_vid, -1, -1);
 		else
@@ -302,6 +407,10 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	STexture texInfoS;
 	STexture texConfig;
 	STexture texConfigS;
+	STexture texChannel;
+	STexture texChannels;
+	STexture texUsb;
+	STexture texUsbs;
 	STexture texPrev;
 	STexture texPrevS;
 	STexture texNext;
@@ -322,6 +431,10 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	texInfoS.fromPNG(btninfos_png);
 	texConfig.fromPNG(btnconfig_png);
 	texConfigS.fromPNG(btnconfigs_png);
+	texChannel.fromPNG(btnchannel_png);
+	texChannels.fromPNG(btnchannels_png);
+	texUsb.fromPNG(btnusb_png);
+	texUsbs.fromPNG(btnusbs_png);
 	texPrev.fromPNG(btnprev_png);
 	texPrevS.fromPNG(btnprevs_png);
 	texNext.fromPNG(btnnext_png);
@@ -334,9 +447,12 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainBtnInfo = _addPicButton(theme, "MAIN/INFO_BTN", texInfo, texInfoS, 20, 412, 48, 48);
 	m_mainBtnConfig = _addPicButton(theme, "MAIN/CONFIG_BTN", texConfig, texConfigS, 70, 412, 48, 48);
 	m_mainBtnQuit = _addPicButton(theme, "MAIN/QUIT_BTN", texQuit, texQuitS, 570, 412, 48, 48);
+	m_mainBtnChannel = _addPicButton(theme, "MAIN/CHANNEL_BTN", texChannel, texChannels, 520, 412, 48, 48);
+	m_mainBtnUsb = _addPicButton(theme, "MAIN/USB_BTN", texUsb, texUsbs, 520, 412, 48, 48);
 	m_mainBtnNext = _addPicButton(theme, "MAIN/NEXT_BTN", texNext, texNextS, 540, 146, 80, 80);
 	m_mainBtnPrev = _addPicButton(theme, "MAIN/PREV_BTN", texPrev, texPrevS, 20, 146, 80, 80);
 	m_mainBtnInit = _addButton(theme, "MAIN/BIG_SETTINGS_BTN", theme.titleFont, L"", 60, 180, 520, 120, CColor(0xFFFFFFFF));
+	m_mainBtnInit2 = _addButton(theme, "MAIN/BIG_SETTINGS_BTN2", theme.titleFont, L"", 60, 310, 520, 120, CColor(0xFFFFFFFF));
 	m_mainLblInit = _addLabel(theme, "MAIN/MESSAGE", theme.lblFont, L"", 40, 40, 560, 140, CColor(0xFFFFFFFF), FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_mainBtnFavoritesOn = _addPicButton(theme, "MAIN/FAVORITES_ON", texFavOn, texFavOnS, 300, 412, 56, 56);
 	m_mainBtnFavoritesOff = _addPicButton(theme, "MAIN/FAVORITES_OFF", texFavOff, texFavOffS, 300, 412, 56, 56);
@@ -354,15 +470,22 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainButtonsZone.y = m_theme.getInt("MAIN/ZONES", "buttons_y", 350);
 	m_mainButtonsZone.w = m_theme.getInt("MAIN/ZONES", "buttons_w", 704);
 	m_mainButtonsZone.h = m_theme.getInt("MAIN/ZONES", "buttons_h", 162);
+	m_mainButtonsZone2.x = m_theme.getInt("MAIN/ZONES", "buttons2_x", -32);
+	m_mainButtonsZone2.y = m_theme.getInt("MAIN/ZONES", "buttons2_y", 350);
+	m_mainButtonsZone2.w = m_theme.getInt("MAIN/ZONES", "buttons2_w", 704);
+	m_mainButtonsZone2.h = m_theme.getInt("MAIN/ZONES", "buttons2_h", 162);
 	//
 	_setHideAnim(m_mainBtnNext, "MAIN/NEXT_BTN", 0, 0, 0.f, 0.f);
 	_setHideAnim(m_mainBtnPrev, "MAIN/PREV_BTN", 0, 0, 0.f, 0.f);
 	_setHideAnim(m_mainBtnConfig, "MAIN/CONFIG_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnInfo, "MAIN/INFO_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnQuit, "MAIN/QUIT_BTN", 0, 40, 0.f, 0.f);
+	_setHideAnim(m_mainBtnChannel, "MAIN/CHANNEL_BTN", 0, 40, 0.f, 0.f);
+	_setHideAnim(m_mainBtnUsb, "MAIN/USB_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnFavoritesOn, "MAIN/FAVORITES_ON", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnFavoritesOff, "MAIN/FAVORITES_OFF", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnInit, "MAIN/BIG_SETTINGS_BTN", 0, 0, -2.f, 0.f);
+	_setHideAnim(m_mainBtnInit2, "MAIN/BIG_SETTINGS_BTN2", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_mainLblInit, "MAIN/MESSAGE", 0, 0, 0.f, 0.f);
 	_setHideAnim(m_mainLblLetter, "MAIN/LETTER", 0, 0, 0.f, 0.f);
 	_hideMain(true);
@@ -371,6 +494,8 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 
 void CMenu::_textMain(void)
 {
-	m_btnMgr.setText(m_mainBtnInit, _t("main1", L"Settings"));
-	m_btnMgr.setText(m_mainLblInit, _t("main2", L"Welcome to WiiFlow. I have not found any game. Click on Settings to install games."), true);
+	m_btnMgr.setText(m_mainBtnInit, _t("main1", L"Install Game"));
+	m_btnMgr.setText(m_mainBtnInit2, _t("main3", L"Select Partition"));
+	m_btnMgr.setText(m_mainLblInit, _t("main2", L"Welcome to WiiFlow. I have not found any games. Click Install to install games, or Select partition to select your partition type."), true);
 }
+

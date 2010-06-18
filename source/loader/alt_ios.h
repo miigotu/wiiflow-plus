@@ -12,6 +12,7 @@ extern "C" {
 #define IOS_224_MIN_REV 5
 
 bool loadIOS(int n, bool init);
+u32 get_ios_base();
 
 #ifdef __cplusplus
 }

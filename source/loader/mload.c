@@ -415,7 +415,7 @@ int ret;
 
 	if(mload_init()<0) return -1;
 	
-	ret= IOS_IoctlvFormat(hid, mload_fd, MLOAD_SET_LOG_MODE, "ii:", addr, dat);
+	ret= IOS_IoctlvFormat(hid, mload_fd, MLOAD_SETW, "ii:", addr, dat);
 	
 return ret;
 }

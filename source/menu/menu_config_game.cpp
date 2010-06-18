@@ -1,7 +1,7 @@
 
-#include "menu.hpp"
+
 #include "loader/wbfs.h"
-#include "loader/libwbfs/wiidisc.h"
+#include "libwbfs/wiidisc.h"
 #include "menu.hpp"
 #include "loader/fs.h"
 
@@ -15,6 +15,8 @@ static inline int loopNum(int i, int s)
 {
 	return i < 0 ? (s - (-i % s)) % s : i % s;
 }
+
+u8 m_gameSettingCategories[12];
 
 void CMenu::_hideGameSettings(bool instant)
 {
@@ -57,6 +59,22 @@ void CMenu::_hideGameSettings(bool instant)
 	m_btnMgr.hide(m_gameSettingsLblPatchVidModesVal, instant);
 	m_btnMgr.hide(m_gameSettingsBtnPatchVidModesM, instant);
 	m_btnMgr.hide(m_gameSettingsBtnPatchVidModesP, instant);
+	m_btnMgr.hide(m_gameSettingsLblHooktype, instant);
+	m_btnMgr.hide(m_gameSettingsLblHooktypeVal, instant);
+	m_btnMgr.hide(m_gameSettingsBtnHooktypeM, instant);
+	m_btnMgr.hide(m_gameSettingsBtnHooktypeP, instant);
+	m_btnMgr.hide(m_gameSettingsBtnCategoryMain, instant);
+	m_btnMgr.hide(m_gameSettingsLblCategoryMain, instant);
+	m_btnMgr.hide(m_gameSettingsLblDvdPatch, instant);
+	m_btnMgr.hide(m_gameSettingsBtnDvdPatch, instant);
+	m_btnMgr.hide(m_gameSettingsBtnReturnTo, instant);
+	m_btnMgr.hide(m_gameSettingsLblReturnTo, instant);
+
+
+	for (int i = 0; i < 12; ++i) {
+		m_btnMgr.hide(m_gameSettingsBtnCategory[i], instant); 
+		m_btnMgr.hide(m_gameSettingsLblCategory[i], instant); 
+	}
 	for (u32 i = 0; i < ARRAY_SIZE(m_gameSettingsLblUser); ++i)
 		if (m_gameSettingsLblUser[i] != -1u)
 			m_btnMgr.hide(m_gameSettingsLblUser[i], instant);
@@ -175,13 +193,93 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.hide(m_gameSettingsBtnVideoP);
 		m_btnMgr.hide(m_gameSettingsBtnVideoM);
 	}
+	if (m_gameSettingsPage == 4)
+	{
+		m_btnMgr.show(m_gameSettingsBtnCategoryMain);
+		m_btnMgr.show(m_gameSettingsLblCategoryMain);
+		m_btnMgr.show(m_gameSettingsLblHooktype);
+		m_btnMgr.show(m_gameSettingsLblHooktypeVal);
+		m_btnMgr.show(m_gameSettingsBtnHooktypeM);
+		m_btnMgr.show(m_gameSettingsBtnHooktypeP);
+		m_btnMgr.show(m_gameSettingsLblDvdPatch);
+		m_btnMgr.show(m_gameSettingsBtnDvdPatch);
+		m_btnMgr.show(m_gameSettingsBtnReturnTo);
+		m_btnMgr.show(m_gameSettingsLblReturnTo);
+
+	}
+	else
+	{
+		m_btnMgr.hide(m_gameSettingsBtnCategoryMain);
+		m_btnMgr.hide(m_gameSettingsLblCategoryMain);
+		m_btnMgr.hide(m_gameSettingsLblHooktype);
+		m_btnMgr.hide(m_gameSettingsLblHooktypeVal);
+		m_btnMgr.hide(m_gameSettingsBtnHooktypeM);
+		m_btnMgr.hide(m_gameSettingsBtnHooktypeP);
+		m_btnMgr.hide(m_gameSettingsLblDvdPatch);
+		m_btnMgr.hide(m_gameSettingsBtnDvdPatch);
+		m_btnMgr.hide(m_gameSettingsBtnReturnTo);
+		m_btnMgr.hide(m_gameSettingsLblReturnTo);
+	}
+
+
+
+	//Categories Pages
+	if (m_gameSettingsPage == 51)
+	{
+		for (u32 i = 1;i < 5;++i) {
+			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
+			m_btnMgr.show(m_gameSettingsLblCategory[i]);
+		}		
+	}
+	else
+	{
+		for (int i = 1;i < 5;++i) {
+			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
+			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
+		}		
+	}
+	if (m_gameSettingsPage == 52)
+	{
+		for (u32 i = 5;i < 9;++i) {
+			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
+			m_btnMgr.show(m_gameSettingsLblCategory[i]);
+		}		
+	}
+	else
+	{
+		for (int i = 5;i < 9;++i) {
+			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
+			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
+		}		
+	}
+	if (m_gameSettingsPage == 53)
+	{
+		for (u32 i = 9;i < 12;++i) {
+			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
+			m_btnMgr.show(m_gameSettingsLblCategory[i]);
+		}		
+	}
+	else
+	{
+		for (int i = 9;i < 12;++i) {
+			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
+			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
+		}	
+	}
 	
 	for (u32 i = 0; i < ARRAY_SIZE(m_gameSettingsLblUser); ++i)
 		if (m_gameSettingsLblUser[i] != -1u)
 			m_btnMgr.show(m_gameSettingsLblUser[i]);
 
 	string id(m_cf.getId());
-	m_btnMgr.setText(m_gameSettingsLblPage, wfmt(L"%i / %i", m_gameSettingsPage, 3));
+	int page = m_gameSettingsPage;
+	int maxpage = 4;
+	if (m_gameSettingsPage > 4)
+		page = m_gameSettingsPage-50;
+	if (m_gameSettingsPage > 4)
+		maxpage = 3;
+
+	m_btnMgr.setText(m_gameSettingsLblPage, wfmt(L"%i / %i", page, maxpage));
 	m_btnMgr.setText(m_gameSettingsBtnOcarina, _optBoolToString(m_cfg.getOptBool(id, "cheat")));
 	m_btnMgr.setText(m_gameSettingsBtnVipatch, _optBoolToString(m_cfg.getOptBool(id, "vipatch", 0)));
 	m_btnMgr.setText(m_gameSettingsBtnCountryPatch, _optBoolToString(m_cfg.getOptBool(id, "country_patch", 0)));
@@ -199,6 +297,24 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i", CMenu::_ios[i])));
 	i = min((u32)m_cfg.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblPatchVidModesVal, _t(CMenu::_vidModePatch[i].id, CMenu::_vidModePatch[i].text));
+
+	i = min((u32)m_cfg.getInt(id, "hooktype", 1), ARRAY_SIZE(CMenu::_hooktype) - 1u);
+	m_btnMgr.setText(m_gameSettingsLblHooktypeVal, _t(CMenu::_hooktype[i].id, CMenu::_hooktype[i].text));
+
+	m_btnMgr.setText(m_gameSettingsBtnCategoryMain, _fmt("cfgg16",  wfmt(L"Select",i).c_str() )); 
+	
+	char *categories = (char *) m_cfg.getString(id, "categories", "").c_str();
+	memset(&m_gameSettingCategories, '0', sizeof(m_gameSettingCategories));
+	if (strlen(categories) == sizeof(m_gameSettingCategories))
+	{
+		memcpy(&m_gameSettingCategories, categories, sizeof(m_gameSettingCategories));
+	}
+	
+	for (int i=0; i<12; ++i) {
+		m_btnMgr.setText(m_gameSettingsBtnCategory[i], _optBoolToString(m_gameSettingCategories[i] == '1'));
+	}
+	m_btnMgr.setText(m_gameSettingsBtnDvdPatch,  m_cfg.getBool(id, "disable_dvd_patch", false) ? _t("on", L"On") : _t("def", L"Default"));
+	m_btnMgr.setText(m_gameSettingsBtnReturnTo,  m_cfg.getBool(id, "returnto", true) ? _t("def", L"Default") : _t("off", L"Off"));		
 }
 
 void CMenu::_gameSettings(void)
@@ -229,14 +345,14 @@ void CMenu::_gameSettings(void)
 			m_btnMgr.down();
 		if ((padsState & WPAD_BUTTON_MINUS) != 0)
 		{
-			if (m_gameSettingsPage > 1)
+			if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 5) || m_gameSettingsPage > 51)
 				--m_gameSettingsPage;
 			_showGameSettings();
 			m_btnMgr.click(m_gameSettingsBtnPageM);
 		}
 		else if ((padsState & WPAD_BUTTON_PLUS) != 0)
 		{
-			if (m_gameSettingsPage < 3)
+			if (m_gameSettingsPage < 4 || (m_gameSettingsPage > 4 && m_gameSettingsPage < 53))
 				++m_gameSettingsPage;
 			_showGameSettings();
 			m_btnMgr.click(m_gameSettingsBtnPageP);
@@ -248,13 +364,13 @@ void CMenu::_gameSettings(void)
 				break;
 			else if (m_btnMgr.selected() == m_gameSettingsBtnPageM)
 			{
-				if (m_gameSettingsPage > 1)
+				if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 5) || m_gameSettingsPage > 51)
 					--m_gameSettingsPage;
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnPageP && !m_locked)
 			{
-				if (m_gameSettingsPage < 3)
+				if (m_gameSettingsPage < 4 || (m_gameSettingsPage > 4 && m_gameSettingsPage < 53))
 					++m_gameSettingsPage;
 				_showGameSettings();
 			}
@@ -361,6 +477,44 @@ void CMenu::_gameSettings(void)
 				_CheatSettings();
 				_showGameSettings();
 			}
+			else if (m_btnMgr.selected() == m_gameSettingsBtnHooktypeP)
+			{
+				m_cfg.setInt(id, "hooktype", (int)loopNum((u32)m_cfg.getInt(id, "hooktype", 1) + 1, ARRAY_SIZE(CMenu::_hooktype)));
+				_showGameSettings();
+			}
+			else if (m_btnMgr.selected() == m_gameSettingsBtnHooktypeM)
+			{
+				m_cfg.setInt(id, "hooktype", (int)loopNum((u32)m_cfg.getInt(id, "hooktype", 1) - 1, ARRAY_SIZE(CMenu::_hooktype)));
+				_showGameSettings();
+			}
+			else if (m_btnMgr.selected() == m_gameSettingsBtnDvdPatch)
+			{
+				m_cfg.setBool(id, "disable_dvd_patch", !m_cfg.getBool(id, "disable_dvd_patch", false));
+				_showGameSettings();
+			}
+			else if (m_btnMgr.selected() == m_gameSettingsBtnReturnTo)
+			{
+				_hideGameSettings();
+				m_cfg.setBool(id, "returnto", !m_cfg.getBool(id, "returnto", false));
+				_showGameSettings();
+			}
+			else if (m_btnMgr.selected() == m_gameSettingsBtnCategoryMain)
+			{
+				_hideGameSettings();
+				m_gameSettingsPage = 51;
+				_showGameSettings();
+			}
+			for (int i = 0; i < 12; ++i)
+				if (m_btnMgr.selected() == m_gameSettingsBtnCategory[i])
+				{
+					m_gameSettingCategories[i] = m_gameSettingCategories[i] == '1' ? '0' : '1';
+					char categories[13];
+					memset(&categories, 0, sizeof(categories));
+					memcpy(&categories, &m_gameSettingCategories, sizeof(m_gameSettingCategories));
+					m_cfg.setString(id, "categories", categories);
+					_showGameSettings();
+					break;
+				}
 		}
 		_mainLoopCommon(wd, false);
 	}
@@ -409,6 +563,49 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	m_gameSettingsLblVideo = _addLabel(theme, "GAME_SETTINGS/VIDEO_BTN", theme.btnFont, L"", 386, 310, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnVideoM = _addPicButton(theme, "GAME_SETTINGS/VIDEO_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 310, 56, 56);
 	m_gameSettingsBtnVideoP = _addPicButton(theme, "GAME_SETTINGS/VIDEO_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 310, 56, 56);
+	//Page 4
+	m_gameSettingsLblCategoryMain = _addLabel(theme, "GAME_SETTINGS/CAT_MAIN", theme.lblFont, L"", 40, 130, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategoryMain = _addButton(theme, "GAME_SETTINGS/CAT_MAIN_BTN", theme.btnFont, L"", 330, 130, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblHooktype = _addLabel(theme, "GAME_SETTINGS/HOOKTYPE", theme.lblFont, L"", 40, 190, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsLblHooktypeVal = _addLabel(theme, "GAME_SETTINGS/HOOKTYPE_BTN", theme.btnFont, L"", 386, 190, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_gameSettingsBtnHooktypeM = _addPicButton(theme, "GAME_SETTINGS/HOOKTYPE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 190, 56, 56);
+	m_gameSettingsBtnHooktypeP = _addPicButton(theme, "GAME_SETTINGS/HOOKTYPE_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 190, 56, 56);
+	m_gameSettingsLblDvdPatch = _addLabel(theme, "GAME_SETTINGS/DVD_PATCH", theme.lblFont, L"", 40, 250, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnDvdPatch = _addButton(theme, "GAME_SETTINGS/DVD_PATCH_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblReturnTo = _addLabel(theme, "GAME_SETTINGS/RETURN_TO", theme.lblFont, L"", 40, 310, 270, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnReturnTo = _addButton(theme, "GAME_SETTINGS/RETURN_TO_BTN", theme.btnFont, L"", 330, 310, 270, 56, theme.btnFontColor);
+
+	//Categories Page 1 
+	//m_gameSettingsLblCategory[0] = _addLabel(theme, "GAME_SETTINGS/CAT_ALL", theme.lblFont, L"All", 40, 130, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	//m_gameSettingsBtnCategory[0] = _addButton(theme, "GAME_SETTINGS/CAT_ALL_BTN", theme.btnFont, L"", 330, 130, 270, 56, theme.btnFontColor);
+
+	m_gameSettingsLblCategory[1] = _addLabel(theme, "GAME_SETTINGS/CAT_1", theme.lblFont, L"", 40, 130, 190, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[1] = _addButton(theme, "GAME_SETTINGS/CAT_1_BTN", theme.btnFont, L"", 330, 130, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCategory[2] = _addLabel(theme, "GAME_SETTINGS/CAT_2", theme.lblFont, L"", 40, 190, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[2] = _addButton(theme, "GAME_SETTINGS/CAT_2_BTN", theme.btnFont, L"", 330, 190, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCategory[3] = _addLabel(theme, "GAME_SETTINGS/CAT_3", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[3] = _addButton(theme, "GAME_SETTINGS/CAT_3_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCategory[4] = _addLabel(theme, "GAME_SETTINGS/CAT_4", theme.lblFont, L"", 40, 310, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[4] = _addButton(theme, "GAME_SETTINGS/CAT_4_BTN", theme.btnFont, L"", 330, 310, 270, 56, theme.btnFontColor);
+	
+	//Categories Page 2
+	m_gameSettingsLblCategory[5] = _addLabel(theme, "GAME_SETTINGS/CAT_5", theme.lblFont, L"", 40, 130, 190, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[5] = _addButton(theme, "GAME_SETTINGS/CAT_5_BTN", theme.btnFont, L"", 330, 130, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCategory[6] = _addLabel(theme, "GAME_SETTINGS/CAT_6", theme.lblFont, L"", 40, 190, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[6] = _addButton(theme, "GAME_SETTINGS/CAT_6_BTN", theme.btnFont, L"", 330, 190, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCategory[7] = _addLabel(theme, "GAME_SETTINGS/CAT_7", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[7] = _addButton(theme, "GAME_SETTINGS/CAT_7_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCategory[8] = _addLabel(theme, "GAME_SETTINGS/CAT_8", theme.lblFont, L"", 40, 310, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[8] = _addButton(theme, "GAME_SETTINGS/CAT_8_BTN", theme.btnFont, L"", 330, 310, 270, 56, theme.btnFontColor);
+
+	//Categories Page 3 
+	m_gameSettingsLblCategory[9] = _addLabel(theme, "GAME_SETTINGS/CAT_9", theme.lblFont, L"", 40, 130, 190, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[9] = _addButton(theme, "GAME_SETTINGS/CAT_9_BTN", theme.btnFont, L"", 330, 130, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCategory[10] = _addLabel(theme, "GAME_SETTINGS/CAT_10", theme.lblFont, L"", 40, 190, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[10] = _addButton(theme, "GAME_SETTINGS/CAT_10_BTN", theme.btnFont, L"", 330, 190, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCategory[11] = _addLabel(theme, "GAME_SETTINGS/CAT_11", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[11] = _addButton(theme, "GAME_SETTINGS/CAT_11_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
+
 	// 
 	m_gameSettingsLblPage = _addLabel(theme, "GAME_SETTINGS/PAGE_BTN", theme.btnFont, L"", 76, 410, 80, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnPageM = _addPicButton(theme, "GAME_SETTINGS/PAGE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 20, 410, 56, 56);
@@ -454,6 +651,25 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_gameSettingsLblPatchVidModesVal, "GAME_SETTINGS/PATCH_VIDEO_MODE_BTN", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnPatchVidModesM, "GAME_SETTINGS/PATCH_VIDEO_MODE_MINUS", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnPatchVidModesP, "GAME_SETTINGS/PATCH_VIDEO_MODE_PLUS", 200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblHooktype, "GAME_SETTINGS/HOOKTYPE", -200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblHooktypeVal, "GAME_SETTINGS/HOOKTYPE_BTN", 200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnHooktypeM, "GAME_SETTINGS/HOOKTYPE_MINUS", 200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnHooktypeP, "GAME_SETTINGS/HOOKTYPE_PLUS", 200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblDvdPatch, "GAME_SETTINGS/DVD_PATCH", -200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnDvdPatch, "GAME_SETTINGS/DVD_PATCH_BTN", 200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblReturnTo, "GAME_SETTINGS/RETURN_TO", -200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnReturnTo, "GAME_SETTINGS/RETURN_TO_BTN", 200, 0, 1.f, 0.f);
+
+	//Categories
+	_setHideAnim(m_gameSettingsBtnCategoryMain, "GAME_SETTINGS/CAT_MAIN_BTN", 200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblCategoryMain, "GAME_SETTINGS/CAT_MAIN", -200, 0, 1.f, 0.f);
+	//_setHideAnim(m_gameSettingsBtnCategory[0], "GAME_SETTINGS/CAT_ALL_BTN", 200, 0, 1.f, 0.f);
+	//_setHideAnim(m_gameSettingsLblCategory[0], "GAME_SETTINGS/CAT_ALL", -200, 0, 1.f, 0.f);
+	for (int i = 1; i < 12; ++i) {
+		_setHideAnim(m_gameSettingsBtnCategory[i], sfmt("GAME_SETTINGS/CAT_%i_BTN", i).c_str(), 200, 0, 1.f, 0.f);
+		_setHideAnim(m_gameSettingsLblCategory[i], sfmt("GAME_SETTINGS/CAT_%i", i).c_str(), -200, 0, 1.f, 0.f);
+	}
+
 	_hideGameSettings(true);
 	_textGameSettings();
 }
@@ -465,8 +681,6 @@ void CMenu::_textGameSettings(void)
 	m_btnMgr.setText(m_gameSettingsLblGameLanguage, _t("cfgg3", L"Language"));
 	m_btnMgr.setText(m_gameSettingsLblCountryPatch, _t("cfgg4", L"Patch country strings"));
 	m_btnMgr.setText(m_gameSettingsLblOcarina, _t("cfgg5", L"Ocarina"));
-	m_btnMgr.setText(m_gameSettingsLblCheat, _t("cfgg15", L"Cheat Codes"));
-	m_btnMgr.setText(m_gameSettingsBtnCheat, _t("cfgg16", L"Select"));
 	m_btnMgr.setText(m_gameSettingsLblErr2Fix, _t("cfgg6", L"Error 002 fix"));
 	m_btnMgr.setText(m_gameSettingsLblVipatch, _t("cfgg7", L"Vipatch"));
 	m_btnMgr.setText(m_gameSettingsBtnBack, _t("cfgg8", L"Back"));
@@ -476,6 +690,16 @@ void CMenu::_textGameSettings(void)
 	m_btnMgr.setText(m_gameSettingsLblCover, _t("cfgg12", L"Download cover"));
 	m_btnMgr.setText(m_gameSettingsBtnCover, _t("cfgg13", L"Download"));
 	m_btnMgr.setText(m_gameSettingsLblPatchVidModes, _t("cfgg14", L"Patch video modes"));
+	m_btnMgr.setText(m_gameSettingsLblCheat, _t("cfgg15", L"Cheat Codes"));
+	m_btnMgr.setText(m_gameSettingsBtnCheat, _t("cfgg16", L"Select"));
+	m_btnMgr.setText(m_gameSettingsLblCategoryMain, _t("cfgg17", L"Categories"));
+	m_btnMgr.setText(m_gameSettingsBtnCategoryMain, _t("cfgg16", L"Select"));
+	m_btnMgr.setText(m_gameSettingsLblHooktype, _t("cfgg18", L"Hook Type"));
+	m_btnMgr.setText(m_gameSettingsLblDvdPatch, _t("cfgg19", L"Disable DVD Patch"));
+	m_btnMgr.setText(m_gameSettingsLblReturnTo, _t("cfgg20", L"Disable Return To"));
+	for (int i = 1; i < 12; ++i)
+		m_btnMgr.setText(m_gameSettingsLblCategory[i], m_cfg.getWString(" GENERAL", fmt("cat%d",i), m_loc.getWString(m_curLanguage, fmt("cat%d", i), wfmt(L"Category %i",i).c_str())));
+
 }
 
 static void addDolToList(void *o, const char *fileName)
@@ -486,7 +710,6 @@ static void addDolToList(void *o, const char *fileName)
 
 void CMenu::_listDOL(vector<string> &v, const string &gameId)
 {
-	Disc_SetWBFS(0, NULL);
 	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str());
 	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
 	wd_list_dols(wdisc, ALL_PARTITIONS, addDolToList, (void *)&v);

@@ -272,6 +272,7 @@ int set_frag_list(u8 *id)
 	int ret;
 	DCFlushRange(frag_list, size);
 	if (is_ios_type(IOS_TYPE_HERMES)) {
+		gprintf("Calling USBStorage_WBFS_SetFragList\n");
 		ret = USBStorage_WBFS_SetFragList(frag_list, size);
 	} else {
 		gprintf("Calling WDVD_SetFragList\n");
@@ -289,5 +290,6 @@ int set_frag_list(u8 *id)
 	} else { 
 		ret = WDVD_UnencryptedRead(discid, 8, 0);
 	}
+	gprintf("Reading ID after setting fraglist: %s (expected: %s)\n", discid, id);
 	return (memcmp(id, discid, 6) != 0) ? -1 : 0;
 }

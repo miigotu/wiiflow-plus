@@ -25,8 +25,6 @@
 
 #include "gecko.h"
 
-#define FMT_EHCMODULE_PATH	"sd:/wiiflow/ehcmodule%i.elf"
-
 extern int __Arena2Lo;
 
 int mainIOSRev = 0;
@@ -63,11 +61,14 @@ void load_dip_249()
 	int ret;
 	if (is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 18)
 	{
+		gprintf("Starting mload\n");
 		if(mload_init()<0) {
 			return;
 		}
-		mload_set_gecko_debug();
-		ret = mload_module((void *) dip_plugin_249, dip_plugin_249_size);
+//		mload_set_gecko_debug();
+		gprintf("Loading 249 dip...");
+		ret = mload_module((void *) dip_plugin_249, size_dip_plugin_249);
+		gprintf("%d\n", ret);
 		mload_close();
 	}
 }
@@ -100,13 +101,7 @@ bool loadIOS(int n, bool init)
 {
 	bool iosOK;
 	
-	sec_t ntfs_sec, wbfs_sec;
-	bool mnt_ntfs, mnt_wbfs;
-	
-	ntfs_sec = fs_ntfs_sec;
-	wbfs_sec = fs_wbfs_sec;
-	mnt_ntfs = g_ntfsOK;
-	mnt_wbfs = g_wbfsOK;
+	char partition[6];
 
 	if (init)
 	{
@@ -114,14 +109,16 @@ bool loadIOS(int n, bool init)
 		WPAD_Disconnect(0);
 		WPAD_Shutdown();
 		Fat_Unmount();
-		if (mnt_ntfs) {
-			NTFS_Unmount();
-		}
-		if (mnt_wbfs) {
-			WBFS_Unmount();
-		}
+
+		int curIndex = WBFS_GetCurrentPartition();
+		WBFS_GetPartitionName(curIndex, (char *) &partition);
+		WBFS_Close();
+		
 		WDVD_Close();
 		USBStorage_Deinit();
+		
+		mload_close();
+		
 		usleep(500000);
 	}
 	void *backup = COVER_allocMem1(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
@@ -130,7 +127,13 @@ bool loadIOS(int n, bool init)
 		memcpy(backup, &__Arena2Lo, 0x200000);
 		DCFlushRange(backup, 0x200000);
 	}
-	iosOK = IOS_ReloadIOS(n) >= 0;
+	
+	usleep(100000);
+	gprintf("Reloading into ios %d...", n);
+	u32 v = IOS_ReloadIOS(n);
+	iosOK = v >= 0;
+	gprintf("ret: %d, current IOS: %d\n", v, IOS_GetVersion());
+	usleep(300000);
 	if (!is_ios_type(IOS_TYPE_WANIN)) sleep(1); // Narolez: sleep after IOS reload lets power down/up the harddisk when cIOS 249 is used!
 	if (backup != 0)
 	{
@@ -144,6 +147,7 @@ bool loadIOS(int n, bool init)
 			load_ehc_module_ex();
 		else if (is_ios_type(IOS_TYPE_WANIN))
 		{
+			gprintf("Loading dip\n");
 			load_dip_249();
 //			try_hello();
 		}
@@ -151,15 +155,16 @@ bool loadIOS(int n, bool init)
 	if (init)
 	{
 		Fat_Mount();
-		if (mnt_ntfs) {
-			NTFS_Mount(ntfs_sec);
-		}
-		if (mnt_wbfs) {
-			WBFS_Mount(wbfs_sec);
-		}
+		WBFS_OpenNamed((char *) &partition);
+
 		Disc_Init();
 		WPAD_Init();
 		WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
 	}
 	return iosOK;
+}
+
+u32 get_ios_base()
+{
+	return is_ios_type(IOS_TYPE_WANIN) ? wanin_mload_get_IOS_base() : mload_get_IOS_base();
 }

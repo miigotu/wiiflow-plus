@@ -24,6 +24,7 @@
 
 #include <malloc.h>
 
+
 static inline void* ntfs_alloc (size_t size) {
     return malloc(size);
 }

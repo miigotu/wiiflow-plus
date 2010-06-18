@@ -78,7 +78,7 @@ int CMenu::_gameInstaller(void *obj)
 	int ret;
 //	u32 size;
 
-	if (GetHddInfo() == NULL)
+	if (!WBFS_Mounted())
 	{
 		m.m_thrdWorking = false;
 		return -1;
@@ -97,7 +97,11 @@ int CMenu::_gameInstaller(void *obj)
 		ret = -1;
 	}
 	else
-	{
+	{	
+		LWP_MutexLock(m.m_mutex);
+		m._setThrdMsg(L"", 0);
+		LWP_MutexUnlock(m.m_mutex);
+		
 		ret = WBFS_AddGame(CMenu::_addDiscProgress, obj);
 		LWP_MutexLock(m.m_mutex);
 		if (ret == 0)
@@ -124,8 +128,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 	string cfPos = m_cf.getNextId();
 
 	WPAD_Rumble(WPAD_CHAN_0, 0);
-	if (WBFS_Open() < 0)
-		return false;
+
 	_showWBFS(op);
 	switch (op)
 	{
@@ -170,7 +173,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 						m_btnMgr.hide(m_wbfsBtnBack);
 						m_btnMgr.show(m_wbfsLblMessage);
 						m_btnMgr.setText(m_wbfsLblMessage, L"");
-						Disc_SetWBFS(0, NULL);
+						Disc_SetUSB(NULL);
 						if (Disc_Wait() < 0)
 						{
 							error(_t("wbfsoperr1", L"Disc_Wait failed"));
@@ -241,7 +244,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 	if (done && (op == CMenu::WO_REMOVE_GAME || op == CMenu::WO_ADD_GAME))
 	{
 		m_cf.clear();
-		_loadGameList();
+		_loadList();
 		_initCF();
 		m_cf.findId(cfPos.c_str(), true);
 	}

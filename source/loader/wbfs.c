@@ -36,6 +36,7 @@ int wbfs_part_fs  = PART_FS_WBFS;
 u32 wbfs_part_idx = 0;
 u32 wbfs_part_lba = 0;
 u32 partlistIndex = 0;
+u8 wbfs_mounted = 0;
 
 /* WBFS HDD */
 wbfs_t *hdd = NULL;
@@ -285,13 +286,14 @@ bool WBFS_Close()
 	wbfs_part_idx = 0;
 	wbfs_part_lba = 0;
 	strcpy(wbfs_fs_drive, "");
+	wbfs_mounted = 0;
 
 	return 0;
 }
 
 bool WBFS_Mounted()
 {
-	return (hdd != NULL);
+	return wbfs_mounted != 0;
 }
 
 bool WBFS_Selected()
@@ -314,6 +316,7 @@ s32 WBFS_Open(void)
 	if (!hdd)
 		return -1;
 	wbfs_part_idx = 1;
+	wbfs_mounted = 1;
 
 	return 0;
 }
@@ -348,6 +351,8 @@ s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *
 	if (wbfs_part_fs == PART_FS_FAT) fs = "FAT";
 	if (wbfs_part_fs == PART_FS_NTFS) fs = "NTFS";
 	sprintf(partition, "%s%d", fs, wbfs_part_idx);
+	
+	wbfs_mounted = 1;
 	return 0;
 }
 
@@ -410,6 +415,8 @@ s32 WBFS_OpenNamed(char *partition)
 	if (WBFS_OpenPart(part_fs, part_idx, part_lba, plist.pentry[i].size, partition)) {
 		goto err;
 	}
+	
+	wbfs_mounted = 1;
 	// success
 	return 0;
 
@@ -429,6 +436,8 @@ s32 WBFS_OpenLBA(u32 lba, u32 size)
 	/* Close current hard disk */
 	if (hdd) wbfs_close(hdd);
 	hdd = part;
+	
+	wbfs_mounted = 1;
 
 	return 0;
 }
@@ -732,10 +741,6 @@ bool WBFS_IsReadOnly(void) {
 		return WBFS_FAT_IsReadOnly();
 	}
 	return false;
-}
-
-wbfs_t *GetHddInfo(void) {
-    return hdd;
 }
 
 f32 WBFS_EstimeGameSize(void) {

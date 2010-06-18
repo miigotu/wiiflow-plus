@@ -176,7 +176,7 @@ int CMenu::_configAdv(void)
 				}
 				else
 				{
-					error(_t("wbfsop10", L"This filesystem is read-only. You cannot install games or remove them."));
+					error(_t("wbfsop11", L"The currently selected filesystem is read-only. You cannot install games or remove them."));
 				}
 			}
 			else if (m_btnMgr.selected() == m_configAdvBtnCurThemeP)
@@ -216,7 +216,7 @@ int CMenu::_configAdv(void)
 	}
 	_hideConfigAdv();
 	if (m_gameList.empty())
-		_loadGameList();
+		_loadList();
 	return nextPage;
 }
 

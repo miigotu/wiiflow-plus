@@ -2,16 +2,26 @@
 #ifndef __MENU_HPP
 #define __MENU_HPP
 
+#define APP_VERSION		"2.0"
+
 #include "cursor.hpp"
 #include "gui.hpp"
 #include "coverflow.hpp"
+#include "fanart.hpp"
 #include "loader/disc.h"
+#include "channels.h"
 
 #include <wiiuse/wpad.h>
 #include <vector>
 #include <map>
 
 #include "gct.h"
+
+enum {
+	COVERFLOW_USB,
+	COVERFLOW_CHANNEL,
+	COVERFLOW_MAX
+};
 
 class CMenu
 {
@@ -34,10 +44,12 @@ private:
 	CCursor m_cur;
 	CButtonsMgr m_btnMgr;
 	CCoverFlow m_cf;
+	CFanart m_fa;
 	std::vector<discHdr> m_gameList;
 	Config m_cfg;
 	Config m_loc;
 	Config m_theme;
+	Channels m_channels;
 	SmartBuf m_music;
 	int m_aa;
 	bool m_noHBC;
@@ -46,6 +58,7 @@ private:
 	bool m_favorites;
 	int m_letter;
 	std::string m_curGameId;
+	std::string m_curChanId;
 	STexture m_waitMessage;
 	u32 m_numCFVersions;
 	bool m_alphaSearch;
@@ -62,7 +75,6 @@ private:
 	std::string m_cheatDir;
 	std::string m_txtCheatDir;
 	std::string m_videoDir;
-	std::string m_riivolutionDir;
 	std::string m_fanartDir;
 	// 
 	STexture m_prevBg;
@@ -70,7 +82,7 @@ private:
 	STexture m_curBg;
 	STexture m_lqBg;
 	u8 m_bgCrossFade;
-	// 
+	//
 	STexture m_errorBg;
 	STexture m_mainBg;
 	STexture m_configBg;
@@ -84,6 +96,7 @@ private:
 	STexture m_gameBg;
 	STexture m_codeBg;
 	STexture m_aboutBg;
+	STexture m_systemBg;
 	STexture m_wbfsBg;
 	STexture m_gameSettingsBg;
 	STexture m_gameBgLQ;
@@ -100,7 +113,10 @@ private:
 	u32 m_mainBtnNext;
 	u32 m_mainBtnPrev;
 	u32 m_mainBtnQuit;
+	u32 m_mainBtnChannel;
+	u32 m_mainBtnUsb;
 	u32 m_mainBtnInit;
+	u32 m_mainBtnInit2;
 	u32 m_mainLblInit;
 	u32 m_mainLblUser[4];
 	u32 m_configLblPage;
@@ -161,6 +177,10 @@ private:
 	u32 m_config3BtnTVYM;
 	u32 m_config3BtnTVYP;
 	u32 m_config3LblUser[4];
+	u32 m_config4LblReturnTo;
+	u32 m_config4LblReturnToVal;
+	u32 m_config4BtnReturnToM;
+	u32 m_config4BtnReturnToP;
 	u32 m_config4LblHome;
 	u32 m_config4BtnHome;
 	u32 m_config4LblSaveFavMode;
@@ -219,12 +239,14 @@ private:
 	u32 m_codeBtnBack;
 	u32 m_codeBtnErase;
 	u32 m_codeLblUser[4];
+	//About menu
 	u32 m_aboutLblTitle;
 	u32 m_aboutLblOrigAuthor;
 	u32 m_aboutLblAuthor;
 	u32 m_aboutLblInfo;
 	u32 m_aboutLblUser[4];
 	u32 m_aboutLblIOS;
+	u32 m_aboutBtnSystem;
 	u32 m_wbfsLblTitle;
 	u32 m_wbfsPBar;
 	u32 m_wbfsBtnBack;
@@ -284,9 +306,31 @@ private:
 	u32 m_gameSettingsBtnPatchVidModesM;
 	u32 m_gameSettingsBtnPatchVidModesP;
 	u32 m_gameSettingsLblUser[3 * 2];
-	
+	u32 m_gameSettingsLblHooktype;
+	u32 m_gameSettingsLblHooktypeVal;
+	u32 m_gameSettingsBtnHooktypeM;
+	u32 m_gameSettingsBtnHooktypeP;
+	u32 m_gameSettingsBtnDvdPatch;
+	u32 m_gameSettingsLblDvdPatch;
+	u32 m_gameSettingsBtnReturnTo;
+	u32 m_gameSettingsLblReturnTo;
 	u32 m_gameSettingsLblCheat;
 	u32 m_gameSettingsBtnCheat;
+
+	//System Menu
+	u32 m_systemBtnBack;
+	u32 m_systemLblTitle;
+	u32 m_systemLblVersionTxt;
+	u32 m_systemLblVersion;
+	u32 m_systemLblVersionRev;
+	u32 m_systemLblFreeTxt;
+	u32 m_systemLblFree;
+	u32 m_systemLblIOSTxt;
+	u32 m_systemLblIOS;
+	u32 m_systemLblIOSbase;
+	u32 m_systemLblUser[4];
+	u32 m_systemBtnDownload;
+	
 	//Cheat menu
 	u32 m_cheatBtnBack;
 	u32 m_cheatBtnApply;
@@ -299,12 +343,30 @@ private:
 	u32 m_cheatBtnItem[6];
 	u32 m_cheatSettingsPage;
 	u32 m_cheatLblUser[5];
-	STexture m_cheatBg;
+
 	GCTCheats m_cheatfile;
+	// Category menu
+	u32 m_categoryBtn[12];
+	u32 m_categoryBtnBack;
+	STexture m_cheatBg;
+	int m_category;
+	// Game Settings menu::Categories
+	u32 m_gameCategoryPage;
+	u32 m_gameSettingsLblCategoryMain;
+	u32 m_gameSettingsBtnCategoryMain;
+	u32 m_gameSettingsLblCategory[12];
+	u32 m_gameSettingsBtnCategory[12];
+
+	// Download menu
+	u32 m_downloadBtnVersion;
+	static int _versionDownloaderInit(CMenu *m);
+	int _versionDownloader();
+
 	 
 	SZone m_mainPrevZone;
 	SZone m_mainNextZone;
 	SZone m_mainButtonsZone;
+	SZone m_mainButtonsZone2;
 	 
 	u32 m_padLeftDelay;
 	u32 m_padRightDelay;
@@ -324,6 +386,7 @@ private:
 	SSoundEffect m_gameSound;
 	SSoundEffect m_gameSoundTmp;
 	std::string m_gameSoundId;
+	u64 m_gameSoundTitle;
 	lwp_t m_gameSoundThread;
 	mutex_t m_gameSndMutex;
 	u8 m_bnrSndVol;
@@ -333,6 +396,9 @@ private:
 	vector<string> music_files;
 	vector<string>::iterator current_music;
 	bool m_video_playing;
+	
+	u32 m_current_view;
+	u32 m_loaded_ios_base;
 private:
 	enum WBFS_OP { WO_ADD_GAME, WO_REMOVE_GAME, WO_FORMAT };
 	typedef std::pair<std::string, u32> FontDesc;
@@ -347,6 +413,7 @@ private:
 		SFont btnFont;
 		SFont lblFont;
 		SFont titleFont;
+		SFont thxFont;
 		CColor btnFontColor;
 		CColor lblFontColor;
 		CColor txtFontColor;
@@ -384,7 +451,9 @@ private:
 	};
 	u32 _btnRepeat(u32 btn);
 	// 
+	bool _loadList(void);
 	bool _loadGameList(void);
+	bool _loadChannelList(void);
 	void _initCF(void);
 	// 
 	void _initMainMenu(SThemeData &theme);
@@ -411,6 +480,19 @@ private:
 	void _initCheatSettingsMenu(SThemeData &theme);
 	void _textCheatSettings(void);
 	
+	//Category Menu
+	void _CategorySettings();
+	void _hideCategorySettings(bool instant = false);
+	void _showCategorySettings(void);
+	void _initCategorySettingsMenu(SThemeData &theme);
+	void _textCategorySettings(void);
+	// System Menu
+	void _system(void);
+	void _hideSystem(bool instant = false);
+	void _showSystem(void);
+	void _textSystem(void);
+	void _initSystemMenu(SThemeData &theme);
+
 	void _textMain(void);
 	void _textError(void);
 	void _textYesNo(void);
@@ -481,7 +563,9 @@ private:
 	void _gameSettings(void);
 	void _mainLoopCommon(const WPADData *wd, bool withCF = false, bool blockReboot = false, bool adjusting = false);
 	// 
+	void _launch(const u64 chanTitle, const std::string &id);
 	void _launchGame(const std::string &id);
+	void _launchChannel(const u64 chanTitle, const string &id);
 	bool _networkFix(void);
 	void _setAA(int aa);
 	void _loadCFCfg(void);
@@ -530,14 +614,16 @@ private:
 	void _stopSounds(void);
 	// 
 	void _playGameSound(void);
-	void _loadGameSound(const std::string &id);
+	void _loadGameSound(const u64 chantitle, const std::string &id);
 	void _waitForGameSoundExtract(void);
+	
 	static int _loadGameSoundThrd(CMenu *m);
 	// 
 	struct SOption { const char id[10]; const wchar_t text[16]; };
 	static const SOption _languages[11];
 	static const SOption _videoModes[7];
 	static const SOption _vidModePatch[4];
+	static const SOption _hooktype[8];
 	static const int _ios[6];
 	static const SCFParamDesc _cfParams[];
 	static const int _nbCfgPages;

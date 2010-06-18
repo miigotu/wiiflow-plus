@@ -153,7 +153,6 @@ struct block downloadfile(u8 *buffer, u32 bufferSize, const char *url, bool (*f)
 	if(ipaddress == 0)
 		return emptyblock;
 
-
 	s32 connection = server_connect(ipaddress, 80);
 	
 	if(connection < 0)
@@ -187,6 +186,32 @@ struct block downloadfile(u8 *buffer, u32 bufferSize, const char *url, bool (*f)
 			filesize = response.size - i - 1;
 			break;
 		}
+	}
+	
+	if (response.size == 0 || response.data == NULL)
+		return emptyblock;
+	
+	// Check for the headers
+	char httpCode[3];
+	memcpy(httpCode, &response.data[9], 3);
+	int retCode = atoi(httpCode);
+
+	switch(retCode) {
+		case 301:
+		case 302:
+		case 307: // Moved
+/*
+			{
+			char redirectedTo[255];
+			if (findHeader((char *) response.data, (filestart - response.data), "Location", redirectedTo, 255) == 0) {
+				return downloadfile(buffer, bufferSize, (char *) redirectedTo, f, ud);
+			}
+			return emptyblock;
+			break;
+		}
+*/		
+		case 404: // Error, file not found!
+			return emptyblock;
 	}
 	
 	if(filestart == NULL)

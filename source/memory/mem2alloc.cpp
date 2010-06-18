@@ -153,6 +153,11 @@ void *CMEM2Alloc::reallocate(void *p, unsigned int s)
 	s = (s - 1) / sizeof (SBlock) + 1;
 	{
 		LockMutex lock(m_mutex);
+		// Check for out of memory (dimok)
+		if (i + s + 1 >= m_endAddress)
+		{
+			return 0;
+		}
 		// Last block
 		if (i->next == 0 && i + s + 1 < m_endAddress)
 		{
@@ -160,7 +165,7 @@ void *CMEM2Alloc::reallocate(void *p, unsigned int s)
 			return p;
 		}
 		// Size <= current size + next block
-		if (i->s < s && i->next->f && i->s + i->next->s + 1 >= s)
+		if (i->next != 0 && i->s < s && i->next->f && i->s + i->next->s + 1 >= s)
 		{
 			// Merge
 			i->s += i->next->s + 1;

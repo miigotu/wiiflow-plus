@@ -10,7 +10,7 @@
 #include "usbstorage.h"
 #include "utils.h"
 #include "wbfs.h"
-#include "libwbfs.h"
+#include "libwbfs/libwbfs.h"
 
 /* 'partition table' structure */
 typedef struct {

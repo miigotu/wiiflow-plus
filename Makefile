@@ -22,33 +22,34 @@ SOURCES		:=	source \
 				source/data \
 				source/gui \
 				source/loader \
-                source/loader/libwbfs \
-				source/loader/wbfs \
+				source/channel \
 				source/memory \
 				source/menu \
 				source/music \
 				source/network \
 				source/libs/libfat \
-				source/libs/libntfs
+				source/libs/libntfs \
+				source/libs/libwbfs
 DATA		:=	data  
 INCLUDES	:=	source \
 				source/cheats \
 				source/gui \
 				source/loader \
-                source/loader/libwbfs \
-				source/loader/wbfs \
+				source/channel \
 				source/memory \
 				source/menu \
 				source/music \
 				source/network \
-				source/libs
-
+				source/libs \
+				source/libs/libfat \
+				source/libs/libntfs \
+				source/libs/libwbfs
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	 = -g -O2 -Wall $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DMAIN_IOS=249
-CXXFLAGS = -g -O2 -Wall -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H
+CFLAGS	 = -g -O2 -Wall -Wno-char-subscripts $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DMAIN_IOS=249
+CXXFLAGS = -g -O2 -Wall -Wno-char-subscripts -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H
 
 LDFLAGS	 = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000,-wrap,malloc,-wrap,free,-wrap,memalign,-wrap,calloc,-wrap,realloc,-wrap,malloc_usable_size -T../rvl.ld
 
@@ -127,8 +128,10 @@ $(BUILD):
 ios222:
 	@bash ./buildtype.sh 222
 	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@cp $(OUTPUT).dol wii/apps/wiiflow/ios222/boot.dol
+	@cp $(OUTPUT).elf wii/apps/wiiflow/ios222/boot.elf
+	
 #---------------------------------------------------------------------------------
 ios223:
 	@bash ./buildtype.sh 223
@@ -146,7 +149,9 @@ ios249:
 	@bash ./buildtype.sh 249
 	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-
+	@cp $(OUTPUT).dol wii/apps/wiiflow/ios249/boot.dol
+	@cp $(OUTPUT).elf wii/apps/wiiflow/ios249/boot.elf
+	
 #---------------------------------------------------------------------------------
 ios250:
 	@bash ./buildtype.sh 250
@@ -154,6 +159,27 @@ ios250:
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
+beta249:
+	@bash ./buildtype.sh 249
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@[ -d beta ] || mkdir -p beta
+	@cp $(OUTPUT).dol beta/249-beta-$(notdir $(CURDIR)).dol
+	@cp $(OUTPUT).elf beta/249-beta-$(notdir $(CURDIR)).elf
+	@cp $(BUILD)/*.map beta/
+
+#---------------------------------------------------------------------------------
+beta222:
+	@bash ./buildtype.sh 222
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@[ -d beta ] || mkdir -p beta
+	@cp $(OUTPUT).dol beta/222-beta-$(notdir $(CURDIR)).dol
+	@cp $(OUTPUT).elf beta/222-beta-$(notdir $(CURDIR)).elf
+	@cp $(BUILD)/*.map beta/
+
+#---------------------------------------------------------------------------------
+	
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
@@ -180,7 +206,7 @@ $(OUTPUT).elf: $(OFILES)
 %.png.o	:	%.png
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
-	$(bin2o)
+	@bin2s -a 32 $< | $(AS) -o $(@)
 
 -include $(DEPENDS)
 
@@ -190,7 +216,7 @@ $(OUTPUT).elf: $(OFILES)
 %.ttf.o	:	%.ttf
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
-	$(bin2o)
+	@bin2s -a 32 $< | $(AS) -o $(@)
 
 -include $(DEPENDS)
 
@@ -200,7 +226,7 @@ $(OUTPUT).elf: $(OFILES)
 %.wav.o	:	%.wav
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
-	$(bin2o)
+	@bin2s -a 32 $< | $(AS) -o $(@)
 
 -include $(DEPENDS)
 
@@ -210,7 +236,7 @@ $(OUTPUT).elf: $(OFILES)
 %.bin.o	:	%.bin
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
-	$(bin2o)
+	@bin2s -a 32 $< | $(AS) -o $(@)
 
 -include $(DEPENDS)
 

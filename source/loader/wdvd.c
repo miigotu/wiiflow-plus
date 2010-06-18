@@ -27,7 +27,6 @@
 #define IOCTL_DI_SETFRAG	0xF9
 #define IOCTL_DI_GETMODE	0xFA
 #define IOCTL_DI_HELLO		0xFB
-#define IOCTL_DI_RIIVOLUTION	0xFC
 
 /* Variables */
 static u32 inbuf[8]  ATTRIBUTE_ALIGN(32);
@@ -407,26 +406,4 @@ s32 WDVD_hello(u32 *status)
 	}
 
 	return -ret;
-}
-
-s32 WDVD_SetRiivolutionFiles(void *riivolutionlist, int size)
-{
-	s32 ret;
-
-	memset(inbuf, 0, sizeof(inbuf));
-
-	/* Set FRAG mode */
-	inbuf[0] = IOCTL_DI_RIIVOLUTION << 24;
-	inbuf[1] = (u32)riivolutionlist;
-	inbuf[2] = size;
-
-	gprintf("Setting riivolutionlist of size %d\n", size);
-	DCFlushRange(riivolutionlist, size);
-	ret = IOS_Ioctl(di_fd, IOCTL_DI_RIIVOLUTION, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
-	gprintf("Riivolution list IOS Ioctl returned %d\n", ret);
-
-	if (ret < 0)
-		return ret;
-
-	return (ret == 1) ? 0 : -ret;
 }

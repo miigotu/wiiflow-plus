@@ -25,7 +25,7 @@ public:
 	// Cover list management
 	void clear(void);
 	void reserve(u32 capacity);
-	void addItem(const char *id, const wchar_t *title, const char *picPath, const char *boxPicPath, int playcount);
+	void addItem(const char *id, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount);
 	bool empty(void) const { return m_items.empty(); }
 	// 
 	bool start(const char *id = 0);
@@ -52,6 +52,8 @@ public:
 	void drawText(bool withRectangle = false);
 	void draw(void);
 	void drawEffect(void);
+	void hideCover(void);
+	void showCover(void);
 	void mouse(CVideo &vid, int x, int y);
 	bool mouseOver(CVideo &vid, int x, int y);
 	// Accessors for settings
@@ -77,6 +79,7 @@ public:
 	void setTitleWidth(bool selected, float side, float center);
 	void setTitleStyle(bool selected, u16 side, u16 center);
 	void setColors(bool selected, const CColor &begColor, const CColor &endColor, const CColor &offColor);
+	void setSelectedTextColor(const u32 color);
 	void setShadowColors(bool selected, const CColor &centerColor, const CColor &begColor, const CColor &endColor, const CColor &offColor);
 	void setShadowPos(float scale, float x, float y);
 	void setMirrorAlpha(float cover, float title);
@@ -99,6 +102,7 @@ public:
 	std::string getId(void) const;
 	std::string getNextId(void) const;
 	std::string getTitle(void) const;
+	u64 getChanTitle(void) const;
 private:
 	enum DrawMode { CFDR_NORMAL, CFDR_STENCIL, CFDR_SHADOW };
 	struct SLayout
@@ -156,6 +160,7 @@ private:
 	{
 		std::string id;
 		wstringEx title;
+		u64 chantitle;
 		std::string picPath;
 		std::string boxPicPath;
 		std::string discPicPath;
@@ -164,7 +169,7 @@ private:
 		volatile bool boxTexture;
 		volatile enum TexState state;
 		// 
-		CItem(const char *itemId, const wchar_t *itemTitle, const char *itemPic, const char *itemBoxPic, int playcount);
+		CItem(const char *itemId, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount);
 		bool operator<(const CItem &i) const;
 	};
 	struct CCover
@@ -223,6 +228,7 @@ private:
 	u32 m_numBufCovers;
 	SFont m_font;
 	CColor m_fontColor;
+	u32 m_fontSelectedColor;
 	bool m_box;
 	u32 m_range;
 	u32 m_rows;
@@ -230,6 +236,7 @@ private:
 	SLayout m_loNormal;
 	SLayout m_loSelected;
 	int m_mouse;
+	bool m_hideCover;
 	bool m_compressTextures;
 	bool m_compressCache;
 	std::string m_cachePath;
