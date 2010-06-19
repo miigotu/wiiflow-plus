@@ -33,19 +33,13 @@ static const char FMT_BPIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullH
 "|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid6}.png";
 static const char FMT_BPIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid4}00.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid4}00.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid4}00.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid4}00.png";
 static const char FMT_PIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid6}.png";
 static const char FMT_PIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}00.png"\
 "|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}00.png";
 
 class LockMutex
 {
