@@ -649,6 +649,7 @@ s32 WBFS_FAT_RemoveGame(u8 *discid)
 	dirclose(dir_iter);
 	// remove game subdir
 	//rmdir(path);
+	unlink(path);
 	return 0;
 }
 
