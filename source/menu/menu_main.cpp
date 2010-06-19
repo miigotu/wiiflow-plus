@@ -96,7 +96,7 @@ int CMenu::main(void)
 	float angle = 0;
 	float mag = 0;
 	static u32 disc_check = 0, olddisc_check = 0;
-
+	int done = 0;
 	WPAD_Rumble(WPAD_CHAN_0, 0);
 	m_padLeftDelay = 0;
 	m_padRightDelay = 0;
@@ -202,6 +202,16 @@ int CMenu::main(void)
 					_initCF();
 				}
 			}		
+		}
+		if (done==0 && m_current_view == COVERFLOW_USB && m_cfg.getBool(" GENERAL", "category_on_start", false)) // Only supported in game mode (not for channels, since you don't have options for channels yet)
+		{
+			done = 1; //set done so it doesnt keep doing it
+			// show categories menu
+			_hideMain();
+			_CategorySettings();
+			_showMain();
+			m_curGameId = m_cf.getId();
+			_initCF();
 		}
 		if ((padsState & WPAD_BUTTON_A) != 0)
 		{
