@@ -146,6 +146,7 @@ void CMenu::init(bool fromHBC)
 		mkdir(m_txtCheatDir.c_str(), 0777);
 		mkdir(m_videoDir.c_str(), 0777);
 		mkdir(m_fanartDir.c_str(), 0777);
+		mkdir(m_musicDir.c_str(), 0777);
 		}
 	// INI files
 	m_loc.load(sfmt("%s/" LANG_FILENAME, m_dataDir.c_str()).c_str());
