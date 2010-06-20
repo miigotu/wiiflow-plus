@@ -330,7 +330,7 @@ wstringEx Config::getWString(const string &domain, const string &key, const wstr
 	string &data = m_domains[upperCase(domain)][lowerCase(key)];
 	if (data.empty())
 	{
-//		data = defVal.toUTF8();
+		data = defVal.toUTF8();
 		return defVal;
 	}
 	wstringEx ws;
@@ -345,7 +345,7 @@ string Config::getString(const string &domain, const string &key, const string &
 	string &data = m_domains[upperCase(domain)][lowerCase(key)];
 	if (data.empty())
 	{
-//		data = defVal;
+		data = defVal;
 		return defVal;
 	}
 	return data;
@@ -358,7 +358,7 @@ bool Config::getBool(const string &domain, const string &key, bool defVal)
 	string &data = m_domains[upperCase(domain)][lowerCase(key)];
 	if (data.empty())
 	{
-//		data = defVal ? "yes" : "no";
+		data = defVal ? "yes" : "no";
 		return defVal;
 	}
 	string s(lowerCase(trim(data)));
@@ -389,7 +389,6 @@ int Config::getOptBool(const string &domain, const string &key, int defVal)
 	string &data = m_domains[upperCase(domain)][lowerCase(key)];
 	if (data.empty())
 	{
-/*
 		switch (defVal)
 		{
 			case 0:
@@ -401,7 +400,6 @@ int Config::getOptBool(const string &domain, const string &key, int defVal)
 			default:
 				data = "default";
 		}
-*/		
 		return defVal;
 	}
 	if (lowerCase(trim(data)) == "yes")
@@ -418,7 +416,7 @@ int Config::getInt(const string &domain, const string &key, int defVal)
 	string &data = m_domains[upperCase(domain)][lowerCase(key)];
 	if (data.empty())
 	{
-//		data = sfmt("%i", defVal);
+		data = sfmt("%i", defVal);
 		return defVal;
 	}
 	return strtol(data.c_str(), 0, 10);
@@ -431,7 +429,7 @@ float Config::getFloat(const string &domain, const string &key, float defVal)
 	string &data = m_domains[upperCase(domain)][lowerCase(key)];
 	if (data.empty())
 	{
-//		data = sfmt("%.*g", g_floatPrecision, defVal);
+		data = sfmt("%.*g", g_floatPrecision, defVal);
 		return defVal;
 	}
 	return strtod(data.c_str(), 0);
@@ -449,7 +447,7 @@ Vector3D Config::getVector3D(const std::string &domain, const std::string &key, 
 		j = data.find_first_of(',', i + 1);
 	if (j == string::npos)
 	{
-//		data = sfmt("%.*g, %.*g, %.*g", g_floatPrecision, defVal.x, g_floatPrecision, defVal.y, g_floatPrecision, defVal.z);
+		data = sfmt("%.*g, %.*g, %.*g", g_floatPrecision, defVal.x, g_floatPrecision, defVal.y, g_floatPrecision, defVal.z);
 		return defVal;
 	}
 	return Vector3D(strtod(data.substr(0, i).c_str(), 0), strtod(data.substr(i + 1, j - i - 1).c_str(), 0), strtod(data.substr(j + 1).c_str(), 0));
@@ -480,6 +478,6 @@ CColor Config::getColor(const std::string &domain, const std::string &key, const
 			return c;
 		}
 	}
-//	data = sfmt("#%.2X%.2X%.2X%.2X", defVal.r, defVal.g, defVal.b, defVal.a);
+	data = sfmt("#%.2X%.2X%.2X%.2X", defVal.r, defVal.g, defVal.b, defVal.a);
 	return defVal;
 }
