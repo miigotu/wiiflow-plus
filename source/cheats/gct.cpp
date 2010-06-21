@@ -9,256 +9,140 @@ Some minor changes: IsCodeEx new
  * nIxx
  */
 
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
-#include <string.h>
 #include "gct.h"
 
-#define ERRORRANGE "Error: CheatNr out of range"
-
-GCTCheats::GCTCheats(void) {
+GCTCheats::GCTCheats(void) 
+{
     iCntCheats = 0;
-	for (int i=0;i<MAXCHEATS;++i) 
-		sCheatSelected[i] = false;
-}
-
-GCTCheats::~GCTCheats(void) {
-
     string sGameID ="";
     string sGameTitle = "";
-    /*string sCheatName[MAXCHEATS];
-    string sCheats[MAXCHEATS];
-    string sCheatComment[MAXCHEATS];*/
+	/*sCheatName.erase(sCheatName.begin(),sCheatName.end());
+    sCheats.erase(sCheats.begin(),sCheats.end());
+    sCheatComment.erase(sCheatComment.begin(),sCheatComment.end());
+	bCheatSelected.erase(bCheatSelected.begin(),bCheatSelected.end());*/
 }
 
-unsigned int GCTCheats::getCnt() {
-    return iCntCheats;
+GCTCheats::~GCTCheats(void) 
+{
 }
 
-string GCTCheats::getGameName(void) {
-    return sGameTitle;
-}
-
-string GCTCheats::getGameID(void) {
-    return sGameID;
-}
-
-string GCTCheats::getCheat(unsigned int nr) {
-    if (nr <= (iCntCheats-1)) {
-        return sCheats[nr];
-    } else {
-        return ERRORRANGE;
-    }
-}
-
-string GCTCheats::getCheatName(unsigned int nr) {
-    if (nr <= (iCntCheats-1)) {
-        return sCheatName[nr];
-    } else {
-        return ERRORRANGE;
-    }
-}
-
-string GCTCheats::getCheatComment(unsigned int nr) {
-    if (nr <= (iCntCheats-1)) {
-        return sCheatComment[nr];
-    } else {
-        return ERRORRANGE;
-    }
-}
-
-int GCTCheats::createGCT(unsigned int nr,const char * filename) {
-
-	if (nr == 0)
-		return 0;
-
-    ofstream filestr;
-    filestr.open(filename);
-
-    if (filestr.fail())
-        return 0;
-
-    //Header and Footer
-    char header[] = { 0x00, 0xd0, 0xc0, 0xde, 0x00, 0xd0, 0xc0, 0xde};
-    char footer[] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-    string buf = getCheat(nr);
-    filestr.write(header,sizeof(header));
-
-    int x = 0;
-    long int li;
-    int len = buf.size();
-
-    while (x < len) {
-        string temp = buf.substr(x,2);
-        li = strtol(temp.c_str(),NULL,16);
-        temp = li;
-        filestr.write(temp.c_str(),1);
-        x +=2;
-    }
-    filestr.write(footer,sizeof(footer));
-
-    filestr.close();
-    return 1;
-}
-
-int GCTCheats::createGCT(const char * chtbuffer,const char * filename) {
-
-    ofstream filestr;
-    filestr.open(filename);
-
-    if (filestr.fail())
-        return 0;
-
-    //Header and Footer
-    char header[] = { 0x00, 0xd0, 0xc0, 0xde, 0x00, 0xd0, 0xc0, 0xde};
-    char footer[] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-    string buf = chtbuffer;
-    filestr.write(header,sizeof(header));
-
-    int x = 0;
-    long int li;
-    int len = buf.size();
-
-    while (x < len) {
-        string temp = buf.substr(x,2);
-        li = strtol(temp.c_str(),NULL,16);
-        temp = li;
-        filestr.write(temp.c_str(),1);
-        x +=2;
-    }
-
-    filestr.write(footer,sizeof(footer));
-    filestr.close();
-
-    return 1;
-}
-
-int GCTCheats::createGCT(int nr[],int cnt,const char * filename) {
-
-	if (cnt == 0)
-		return 0;
-
-    ofstream filestr;
-    filestr.open(filename);
-
-    if (filestr.fail())
-        return 0;
-
-    //Header and Footer
-    char header[] = { 0x00, 0xd0, 0xc0, 0xde, 0x00, 0xd0, 0xc0, 0xde};
-    char footer[] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-    filestr.write(header,sizeof(header));
-
-    int c = 0;
-    while (c != cnt) {
-        int actnr = nr[c];
-        string buf = getCheat(actnr);
-        long int li;
-        int len = buf.size();
-        int x = 0;
-
-        while (x < len) {
-            string temp = buf.substr(x,2);
-            li = strtol(temp.c_str(),NULL,16);
-            temp = li;
-            filestr.write(temp.c_str(),1);
-            x +=2;
-        }
-        c++;
-    }
-
-    filestr.write(footer,sizeof(footer));
-    filestr.close();
-    return 1;
-}
-
-//creates gct from internal array
-int GCTCheats::createGCT(const char * filename) {
-
-    ofstream filestr;
-    filestr.open(filename);
-
-    if (filestr.fail())
-        return 0;
-
-    //Header and Footer
-    char header[] = { 0x00, 0xd0, 0xc0, 0xde, 0x00, 0xd0, 0xc0, 0xde};
-    char footer[] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-    filestr.write(header,sizeof(header));
-
-    for (unsigned int i=0; i < iCntCheats; ++i)
-		if (sCheatSelected[i] == true) {
-			// cheat is selected, export it
-			string buf = getCheat(i);
-			long int li;
-			int len = buf.size();
-			int x = 0;
-
-			while (x < len) {
-				string temp = buf.substr(x,2);
-				li = strtol(temp.c_str(),NULL,16);
-				temp = li;
-				filestr.write(temp.c_str(),1);
-				x +=2;
-			}
-        }
-	
-	filestr.write(footer,sizeof(footer));
-    filestr.close();
-    return 1;
-}
-
-//creates txt from internal array
-int GCTCheats::createTXT(const char * filename) {
-
-	fstream file;
-
-	// save gct file
-	file.open(filename,ios::out);
-
-	file << sGameID << endl;
-	file << sGameTitle << endl << endl;
-
-	for (unsigned int i=0; i < iCntCheats; ++i)
-		if  (sCheatSelected[i]) {
-			file << sCheatName[i] << endl;
-			for (unsigned int j=0; j+8 < sCheats[i].size(); j+=16)
-				file << sCheats[i].substr(j,8) << " " << sCheats[i].substr(j+8,8) << endl;
-
-			file << "#selected#" << sCheatComment[i] << endl;
-			file << endl;
-		}
-			
-	for (unsigned int i=0; i < iCntCheats; ++i)
-		if  (!sCheatSelected[i]) {
-			file << sCheatName[i] << endl;
-			for (unsigned int j=0; j+8 < sCheats[i].size(); j+=16)
-				file << sCheats[i].substr(j,8) << " " << sCheats[i].substr(j+8,8) << endl;
-
-			if (sCheatComment[i].size() > 1)
-				file << sCheatComment[i] << endl;
-			file << endl;
-		}
-
-	file.close();
-    return 1;
-}
-
-
-int GCTCheats::openTxtfile(const char * filename) {
-    ifstream filestr;
-    int i = 0;
-	iCntCheats = 0;
+int GCTCheats::OpenTXTFile(const char * filename) 
+{
     string str;
+    iCntCheats = 0;
+	
+	sCheatName.erase(sCheatName.begin(),sCheatName.end());
+    sCheats.erase(sCheats.begin(),sCheats.end());
+    sCheatComment.erase(sCheatComment.begin(),sCheatComment.end());
+	bCheatSelected.erase(bCheatSelected.begin(),bCheatSelected.end());
+	
+	ifstream filestr;
     filestr.open(filename);
+	
+    int codestatus;
+    bool codedynamic = false; // cheat contains X-Codes?
+
+    if (filestr.fail())
+        return 0;
+
+    filestr.seekg(0,ios_base::end);
+    int size = filestr.tellg();
+
+	if (size <= 0) return -1;
+
+	filestr.seekg(0,ios_base::beg);
+
+    getline(filestr,sGameID);
+    if (sGameID[sGameID.length() - 1] == '\r')
+                sGameID.erase(sGameID.length() - 1);
+
+    getline(filestr,sGameTitle);
+    if (sGameTitle[sGameTitle.length() - 1] == '\r')
+                sGameTitle.erase(sGameTitle.length() - 1);
+
+    string temp;
+	getline(filestr,temp);  // skip first line if file uses CRLF
+    if (!sGameTitle[sGameTitle.length() - 1] == '\r')
+           filestr.seekg(0,ios_base::beg);
+
+	bool checkComment;
+    while (!filestr.eof()) {
+		checkComment = false;
+        getline(filestr,temp); 
+		sCheatName.push_back(temp);
+
+        string cheatdata;
+        bool emptyline = false;
+
+        do {
+            getline(filestr,str);
+            /*if (str[str.length() - 1] == '\r')
+                    str.erase(str.length() - 1);*/
+
+            if (str == "" || str[0] == '\r' || str[0] == '\n') {
+                emptyline = true;
+                break;
+            }
+
+            codestatus = IsCodeEx(str);
+            if (codestatus == 1)
+                // line contains X code, so whole cheat is dynamic
+                codedynamic = true;
+
+            if (codestatus == 2) 
+			{
+                  // remove any garbage (comment) after code
+	              while (str.size() > 17) {
+                      str.erase(str.length() - 1);
+                  }
+                cheatdata.append(str);
+                size_t found=cheatdata.find(' ');
+                cheatdata.replace(found,1,"");
+            } 
+			else 
+			{
+                sCheatComment.push_back(str);
+				checkComment = true;
+            }
+            if (filestr.eof()) break;
+
+        } while (!emptyline);
+
+	sCheats.push_back(cheatdata);
+		
+	if (!checkComment)
+		sCheatComment.push_back("");
+
+	if (sCheatComment[iCntCheats].compare(0,10,"#selected#") == 0) 
+	{
+		bCheatSelected.push_back(true);
+		sCheatComment[iCntCheats].erase(0,10);
+	}
+	else 
+		bCheatSelected.push_back(false);
+
+	iCntCheats++;
+	}
+
+    filestr.close();
+    return 1;
+}
+/*
+int GCTCheats::openTxtfile(const char * filename) 
+{
+    int i = 0;
+    string str;
 	int codestatus;
 	bool codedynamic = false; // cheat contains X-Codes?
-
+	iCntCheats = 0;
+	
+	sCheatName.erase(sCheatName.begin(),sCheatName.end());
+    sCheats.erase(sCheats.begin(),sCheats.end());
+    sCheatComment.erase(sCheatComment.begin(),sCheatComment.end());
+	bCheatSelected.erase(bCheatSelected.begin(),bCheatSelected.end());
+	
+	ifstream filestr;
+    filestr.open(filename);
     if (filestr.fail())
         return 0;
 
@@ -274,18 +158,24 @@ int GCTCheats::openTxtfile(const char * filename) {
     getline(filestr,sGameTitle);
 	if (sGameTitle[sGameTitle.length() - 1] == '\r')
 		sGameTitle.erase(sGameTitle.length() - 1);
-				
-    getline(filestr,sCheatName[i]);  // skip first line if file uses CRLF
+			
+	string temp;
+    getline(filestr,temp);  // skip first line if file uses CRLF
 	if (!sGameTitle[sGameTitle.length() - 1] == '\r')
 	   filestr.seekg(0,ios_base::beg);
 
-    while (!filestr.eof()) {
-        getline(filestr,sCheatName[i]); // '\n' delimiter by default
+	bool checkComment;
+    
+	while (!filestr.eof()) 
+	{
+        getline(filestr,temp); // '\n' delimiter by default
+		sCheatName.push_back(temp);
 		if (sCheatName[i][sCheatName[i].length() - 1] == '\r')
 			sCheatName[i].erase(sCheatName[i].length() - 1);
-
+		
         string cheatdata;
         bool emptyline = false;
+		checkComment = false;
 
         do {
 			getline(filestr,str);
@@ -311,18 +201,23 @@ int GCTCheats::openTxtfile(const char * filename) {
                 size_t found=cheatdata.find(' ');
                 cheatdata.replace(found,1,"");
 			} else {
-                sCheatComment[i] = str;
+				sCheatComment.push_back(str);
+				checkComment = true;
             }
 			if (filestr.eof()) break;
 		   
         } while (!emptyline);
 
-		if (!codedynamic && cheatdata.size() > 0) {
-			sCheats[i] = cheatdata;
-			sCheatSelected[i] = false;
+		if (!codedynamic && cheatdata.size() > 0) 
+		{
+			sCheats.push_back(cheatdata);
+			if (!checkComment)
+				sCheatComment.push_back("");
+
+			bCheatSelected.push_back(false);
 			// if comment starts with dynamic, it is selected
 			if (sCheatComment[i].compare(0,10,"#selected#") == 0) {
-			sCheatSelected[i] = true;
+			bCheatSelected[i] = true;
 			sCheatComment[i].erase(0,10);
 			}
 			i++;
@@ -331,11 +226,237 @@ int GCTCheats::openTxtfile(const char * filename) {
 			sCheatComment[i] = "";
 			
 		codedynamic = false;
-		if (i == MAXCHEATS) break;
     }
     iCntCheats = i;
     filestr.close();
+
     return 1;
+}
+*/
+int GCTCheats::UpdateTXT(const char * filename) 
+{
+	fstream file;
+	file.open(filename,ios::out);
+
+	file << sGameID << endl;
+	file << sGameTitle << endl << endl;
+
+	for (unsigned int i=0; i < iCntCheats; ++i)
+		if  (bCheatSelected[i]) {
+			file << sCheatName[i] << endl;
+			for (unsigned int j=0; j+8 < sCheats[i].size(); j+=16)
+				file << sCheats[i].substr(j,8) << " " << sCheats[i].substr(j+8,8) << endl;
+
+			file << "#selected#" << sCheatComment[i] << endl;
+			file << endl;
+		}
+			
+	for (unsigned int i=0; i < iCntCheats; ++i)
+		if  (!bCheatSelected[i]) {
+			file << sCheatName[i] << endl;
+			for (unsigned int j=0; j+8 < sCheats[i].size(); j+=16)
+				file << sCheats[i].substr(j,8) << " " << sCheats[i].substr(j+8,8) << endl;
+
+			if (sCheatComment[i].size() > 1)
+				file << sCheatComment[i] << endl;
+				
+			file << endl;
+		}
+
+	file.close();
+
+    return 1;
+}
+
+/*int GCTCheats::OpenXMLFile(const char * filename,const char *gameid) 
+{
+	FILE *fp;
+    mxml_node_t *treenode, *GameNode, *cheatTopNode, *node;
+	
+	sCheatName.erase(sCheatName.begin(),sCheatName.end());
+    sCheats.erase(sCheats.begin(),sCheats.end());
+    sCheatComment.erase(sCheatComment.begin(),sCheatComment.end());
+	bCheatSelected.erase(bCheatSelected.begin(),bCheatSelected.end());
+
+    fp = fopen(filename, "r");
+	if(!fp)
+		return 0;
+
+    treenode = mxmlLoadFile(NULL, fp, MXML_OPAQUE_CALLBACK);
+
+	GameNode = mxmlFindElement(treenode, treenode, "game", "id", gameid, MXML_DESCEND);
+	if(GameNode == NULL) {
+		printf("Entry not found !");
+		return 0;
+	}
+
+	
+	sGameID = (char*)mxmlElementGetAttr(GameNode, "id");
+	//node = mxmlFindElement(GameNode, GameNode, "name", NULL ,NULL, MXML_DESCEND);
+	//sGameTitle = node->child->value.opaque;
+	sGameTitle = (char*)mxmlElementGetAttr(GameNode, "name");
+
+	for (cheatTopNode = mxmlFindElement(GameNode, GameNode, "cheat", NULL, NULL, MXML_DESCEND);
+         cheatTopNode != NULL;
+         cheatTopNode = mxmlFindElement(cheatTopNode, GameNode, "cheat", NULL, NULL, MXML_DESCEND))
+        {
+			char *check = (char*)mxmlElementGetAttr(cheatTopNode, "active");
+			if (check != NULL)
+			{
+				if(strcmp(check,"true") == 0)
+					this->bCheatSelected.push_back(true);
+				else
+					this->bCheatSelected.push_back(false);
+			}
+			else this->bCheatSelected.push_back(false);
+
+			node = mxmlFindElement(cheatTopNode, cheatTopNode, "name",
+                           NULL ,NULL,
+                           MXML_DESCEND);
+
+			sCheatName.push_back(node->child->value.opaque);
+
+			node = mxmlFindElement(cheatTopNode, cheatTopNode, "comment",
+                           NULL ,NULL,
+                           MXML_DESCEND);
+
+			if(node)
+				sCheatComment.push_back(node->child->value.opaque);
+			else
+				sCheatComment.push_back("");
+
+			node = mxmlFindElement(cheatTopNode, cheatTopNode, "codes",
+                           NULL ,NULL,
+                           MXML_DESCEND);
+
+			std::string tempvalue = node->child->value.opaque;
+			std::string::iterator end_pos = std::remove_if(tempvalue.begin(), tempvalue.end(), ::isspace); 
+			tempvalue.erase(end_pos, tempvalue.end()); 
+			sCheats.push_back(tempvalue);
+			iCntCheats++;
+        }
+
+	mxmlDelete(treenode);
+	fclose(fp);
+  	
+	return 1;
+}
+
+int GCTCheats::UpdateXMLFile(const char * filename,const char *gameid)
+{
+	FILE *fp;
+    mxml_node_t *treenode, *GameNode,*cheatTopNode;
+	
+    fp = fopen(filename, "r");
+	if(fp == NULL)
+		return 0;
+
+    treenode = mxmlLoadFile(NULL, fp, MXML_OPAQUE_CALLBACK);
+
+	GameNode = mxmlFindElement(treenode, treenode, "game", "id", gameid, MXML_DESCEND);
+	if(GameNode == NULL) {
+		printf("Entry not found !");
+		return 0;
+	}
+
+	int counter = 0;
+	for (cheatTopNode = mxmlFindElement(GameNode, GameNode, "cheat", NULL, NULL, MXML_DESCEND);
+         cheatTopNode != NULL;
+         cheatTopNode = mxmlFindElement(cheatTopNode, GameNode, "cheat", NULL, NULL, MXML_DESCEND))
+        {
+			if(bCheatSelected[counter] == true)
+				mxmlElementSetAttr(cheatTopNode,"active","true");
+			else if(bCheatSelected[counter] == false)
+				mxmlElementSetAttr(cheatTopNode,"active","false");
+				
+		counter++;
+		}
+		
+	fclose(fp);	
+	
+	fp = fopen(filename, "w");
+	if(fp == NULL)
+		return 0;
+
+	mxmlSaveFile(treenode, fp, MXML_NO_CALLBACK);
+	mxmlDelete(treenode);
+	
+	return 1;
+}*/
+
+int GCTCheats::CreateGCT(const char * filename) 
+{
+    ofstream filestr;
+    filestr.open(filename);
+
+    if (filestr.fail())
+        return 0;
+
+    //Header and Footer
+    char header[] = { 0x00, 0xd0, 0xc0, 0xde, 0x00, 0xd0, 0xc0, 0xde};
+    char footer[] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    filestr.write(header,sizeof(header));
+
+    for (unsigned int i=0; i < iCntCheats; ++i)
+		if (bCheatSelected[i] == true) {
+			// cheat is selected, export it
+			string buf = GetCheat(i);
+			int len = buf.size();
+			int x = 0;
+
+			while (x < len) {
+				string tmpvalue = buf.substr(x,2);
+				long int li = strtol(tmpvalue.c_str(),NULL,16);
+				tmpvalue = li;
+				filestr.write(tmpvalue.c_str(),1);
+				x +=2;
+			}
+        }
+	
+	filestr.write(footer,sizeof(footer));
+    filestr.close();
+
+    return 1;
+}
+
+unsigned int GCTCheats::GetCount() {
+    return iCntCheats;
+}
+
+string GCTCheats::GetGamename(void) {
+    return sGameTitle;
+}
+
+string GCTCheats::GetGameID(void) {
+    return sGameID;
+}
+
+string GCTCheats::GetCheat(unsigned int nr) 
+{
+    if (nr <= (iCntCheats-1)) {
+        return sCheats[nr];
+    } else {
+        return "";
+    }
+}
+
+string GCTCheats::GetCheatname(unsigned int nr) 
+{
+    if (nr <= (iCntCheats-1)) {
+        return sCheatName[nr];
+    } else {
+        return "";
+    }
+}
+
+string GCTCheats::GetCheatcomment(unsigned int nr) 
+{
+    if (nr <= (iCntCheats-1)) {
+        return sCheatComment[nr];
+    } else {
+        return "";
+    }
 }
 
 bool GCTCheats::IsCode(const std::string& str) {

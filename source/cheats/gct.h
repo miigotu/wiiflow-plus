@@ -7,79 +7,80 @@
 #ifndef _GCT_H
 #define _GCT_H
 
-#include <sstream>
-
-#define MAXCHEATS 100
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <stdlib.h>
+#include <cstdio>
+#include <string.h>
+#include <algorithm>
+#include <cctype>
+//#include <mxml.h>
 
 using namespace std;
 
 //!Handles Ocarina TXT Cheatfiles
-class GCTCheats {
+class GCTCheats 
+{
 private:
     string sGameID;
     string sGameTitle;
-    string sCheatName[MAXCHEATS];
-    string sCheats[MAXCHEATS];
-    string sCheatComment[MAXCHEATS];
+    vector<string> sCheatName;
+    vector<string> sCheats;
+    vector<string> sCheatComment;
     unsigned int iCntCheats;
-
+	
 public:
-	//!Array which shows which cheat is selected 
-	bool sCheatSelected[MAXCHEATS];
+	//!Array Shows which cheat is selected 
+	vector<bool> bCheatSelected;
     //!Constructor
     GCTCheats(void);
     //!Destructor
     ~GCTCheats(void);
-    //!Open txt file with cheats
-    //!\param filename name of TXT file
+    //!Open TXT Cheatfile
+    //!\param TXT filename
     //!\return error code
-    int openTxtfile(const char * filename);
-    //!Creates GCT file for one cheat
-    //!\param nr selected Cheat Numbers
-    //!\param filename name of GCT file
+    int OpenTXTFile(const char * filename);
+	//!Update TXT file
+    //!\param TXT filename
     //!\return error code
-    int createGCT(unsigned int nr,const char * filename);
-    //!Creates GCT file from a buffer
-    //!\param chtbuffer buffer that holds the cheat data
-    //!\param filename name of GCT file
+    int UpdateTXT(const char * filename);
+	//!Open XML Cheat file 
+    //!\param XML filename
+	//!\param GameID
     //!\return error code
-    int createGCT(const char * chtbuffer,const char * filename);
-    //!Creates GCT file
-    //!\param nr[] array of selected Cheat Numbers
-    //!\param cnt size of array
-    //!\param filename name of GCT file
+	//int OpenXMLFile(const char * filename,const char *gameid);
+	//!Update XML Cheat file
+    //!\param XML filename
+	//!\param GameID
     //!\return error code
-    int createGCT(int nr[],int cnt,const char * filename);
+	//int UpdateXMLFile(const char * filename,const char *gameid);
     //!Creates GCT file
     //!\param filename name of GCT file
     //!\return error code
-    int createGCT(const char * filename);
+    int CreateGCT(const char * filename);
 	//!Creates directly gct in memory
     //!\param filename name of TXT file
     //!\return GCT buffer
     string createGCTbuff(int nr[],int cnt);
-    //!Creates TXT file
-    //!\param filename name of GCT file
-    //!\return error code
-    int createTXT(const char * filename);
     //!Gets Count cheats
     //!\return Count cheats
-    unsigned int getCnt();
+    unsigned int GetCount(void);
     //!Gets Game Name
     //!\return Game Name
-    string getGameName(void);
+    string GetGamename(void);
     //!Gets GameID
     //!\return GameID
-    string getGameID(void);
+    string GetGameID(void);
     //!Gets cheat data
     //!\return cheat data
-    string getCheat(unsigned int nr);
+    string GetCheat(unsigned int nr);
     //!Gets Cheat Name
     //!\return Cheat Name
-    string getCheatName(unsigned int nr);
+    string GetCheatname(unsigned int nr);
     //!Gets Cheat Comment
     //!\return Cheat Comment
-    string getCheatComment(unsigned int nr);
+    string GetCheatcomment(unsigned int nr);
 	//!Check if string is a code
     //!\return true/false
 	bool IsCode(const std::string& s);
