@@ -259,6 +259,7 @@ s32 Disc_Wait(void)
 {
 	u32 cover = 0;
 	s32 ret;
+	int icounter = 0;
 
 	/* Wait for disc */
 	while (!(cover & 0x2)) {
@@ -266,6 +267,13 @@ s32 Disc_Wait(void)
 		ret = WDVD_GetCoverStatus(&cover);
 		if (ret < 0)
 			return ret;
+			
+		// 10 tries to make sure it doesn´t "freeze" in Install dialog
+		// if no Game Disc is insert
+		icounter++;
+		sleep(1);
+		if(icounter > 10)
+			return -1;
 	}
 
 	return 0;
