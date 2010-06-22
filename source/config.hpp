@@ -28,6 +28,7 @@ public:
 	void setBool(const std::string &domain, const std::string &key, bool val);
 	void setOptBool(const std::string &domain, const std::string &key, int val);
 	void setInt(const std::string &domain, const std::string &key, int val);
+	void setUInt(const std::string &domain, const std::string &key, unsigned int val);
 	void setFloat(const std::string &domain, const std::string &key, float val);
 	void setVector3D(const std::string &domain, const std::string &key, const Vector3D &val);
 	void setColor(const std::string &domain, const std::string &key, const CColor &val);
@@ -38,6 +39,7 @@ public:
 	int getOptBool(const std::string &domain, const std::string &key, int defVal = 2);
 	bool testOptBool(const std::string &domain, const std::string &key, bool defVal);
 	int getInt(const std::string &domain, const std::string &key, int defVal = 0);
+	unsigned int getUInt(const std::string &domain, const std::string &key, unsigned int defVal = 0);
 	float getFloat(const std::string &domain, const std::string &key, float defVal = 0.f);
 	Vector3D getVector3D(const std::string &domain, const std::string &key, const Vector3D &defVal = Vector3D());
 	CColor getColor(const std::string &domain, const std::string &key, const CColor &defVal = CColor());

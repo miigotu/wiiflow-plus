@@ -10,6 +10,7 @@
 #include <wiiuse/wpad.h>
 #include <ogc/machine/processor.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "loader/wbfs.h"
 #include "loader/usbstorage.h"
@@ -373,6 +374,7 @@ void CMenu::_launchChannel(const u64 chantitle, const string &id)
 {
 	m_cfg.setString(" GENERAL", "current_game", id);
 	m_cfg.setInt(id, "playcount", m_cfg.getInt(id, "playcount", 0) + 1);
+	m_cfg.setUInt(id, "lastplayed", time(NULL));
 	
 	m_cfg.save();
 	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing

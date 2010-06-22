@@ -302,6 +302,13 @@ void Config::setInt(const string &domain, const string &key, int val)
 	m_domains[upperCase(domain)][lowerCase(key)] = sfmt("%i", val);
 }
 
+void Config::setUInt(const std::string &domain, const std::string &key, unsigned int val)
+{
+	if (domain.empty() || key.empty())
+		return;
+	m_domains[upperCase(domain)][lowerCase(key)] = sfmt("%u", val);
+}
+
 void Config::setFloat(const string &domain, const string &key, float val)
 {
 	if (domain.empty() || key.empty())
@@ -420,6 +427,19 @@ int Config::getInt(const string &domain, const string &key, int defVal)
 		return defVal;
 	}
 	return strtol(data.c_str(), 0, 10);
+}
+
+unsigned int Config::getUInt(const string &domain, const string &key, unsigned int defVal)
+{
+	if (domain.empty() || key.empty())
+		return defVal;
+	string &data = m_domains[upperCase(domain)][lowerCase(key)];
+	if (data.empty())
+	{
+		data = sfmt("%u", defVal);
+		return defVal;
+	}
+	return strtoul(data.c_str(), 0, 10);
 }
 
 float Config::getFloat(const string &domain, const string &key, float defVal)

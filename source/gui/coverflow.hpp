@@ -15,6 +15,14 @@
 #include "config.hpp"
 #include "sound.hpp"
 
+enum Sorting
+{
+	SORT_ALPHA,
+	SORT_PLAYCOUNT,
+	SORT_LASTPLAYED,
+	SORT_GAMEID
+};
+
 class CCoverFlow
 {
 public:
@@ -25,7 +33,7 @@ public:
 	// Cover list management
 	void clear(void);
 	void reserve(u32 capacity);
-	void addItem(const char *id, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount);
+	void addItem(const char *id, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount = 0, unsigned int lastPlayed = 0);
 	bool empty(void) const { return m_items.empty(); }
 	// 
 	bool start(const char *id = 0);
@@ -89,6 +97,7 @@ public:
 	void setRowAngles(bool selected, const Vector3D &top, const Vector3D &bottom);
 	void setCoverFlipping(const Vector3D &pos, const Vector3D &angle, const Vector3D &scale);
 	void setBlur(u32 blurResolution, u32 blurRadius, float blurFactor);
+	void setSorting(Sorting sorting);
 	// 
 	void setSounds(const SSoundEffect &sound, const SSoundEffect &hoverSound, const SSoundEffect &selectSound, const SSoundEffect &cancelSound);
 	void setSoundVolume(u8 vol);
@@ -165,11 +174,12 @@ private:
 		std::string boxPicPath;
 		std::string discPicPath;
 		int playcount;
+		unsigned int lastPlayed;
 		STexture texture;
 		volatile bool boxTexture;
 		volatile enum TexState state;
 		// 
-		CItem(const char *itemId, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount);
+		CItem(const char *itemId, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed);
 		bool operator<(const CItem &i) const;
 	};
 	struct CCover
@@ -263,6 +273,7 @@ private:
 	float m_lodBias;
 	u8 m_aniso;
 	bool m_edgeLOD;
+	Sorting m_sorting;
 private:
 	void _draw(DrawMode dm = CFDR_NORMAL, bool mirror = false, bool blend = true);
 	u32 _currentPos(void) const;
@@ -299,6 +310,8 @@ private:
 	void _transposeCover(std::vector<CCover> &dst, u32 rows, u32 columns, int pos);
 	void _playSound(void);
 	static bool _sortByPlayCount(CItem item1, CItem item2);
+	static bool _sortByLastPlayed(CItem item1, CItem item2);
+	static bool _sortByGameID(CItem item1, CItem item2);
 private:
 	static int _picLoader(CCoverFlow *cf);
 	static float _step(float cur, float tgt, float spd);

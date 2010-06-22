@@ -53,13 +53,14 @@ CCoverFlow::CCover::CCover(void)
 	targetScale = Vector3D(1.f, 1.f, 1.f);
 }
 
-CCoverFlow::CItem::CItem(const char *itemId, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount) :
+CCoverFlow::CItem::CItem(const char *itemId, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed) :
 	id(itemId),
 	title(itemTitle),
 	chantitle(chantitle),
 	picPath(itemPic),
 	boxPicPath(itemBoxPic),
-	playcount(playcount)
+	playcount(playcount),
+	lastPlayed(lastPlayed)
 {
 	state = CCoverFlow::STATE_Loading;
 	boxTexture = false;
@@ -208,6 +209,7 @@ CCoverFlow::CCoverFlow(void)
 	m_mouse = -1;
 	m_snd2 = false;
 	m_soundVolume = 0xFF;
+	m_sorting = SORT_ALPHA;
 	// 
 	LWP_MutexInit(&m_mutex, 0);
 }
@@ -532,6 +534,12 @@ void CCoverFlow::setBlur(u32 blurResolution, u32 blurRadius, float blurFactor)
 	m_blurFactor = min(max(1.f, blurFactor), 2.f);
 }
 
+void CCoverFlow::setSorting(Sorting sorting)
+{
+	m_sorting = sorting;
+	start();
+}
+
 void CCoverFlow::setSounds(const SSoundEffect &sound, const SSoundEffect &hoverSound, const SSoundEffect &selectSound, const SSoundEffect &cancelSound)
 {
 	m_sound1 = sound;
@@ -600,11 +608,11 @@ void CCoverFlow::reserve(u32 capacity)
 	m_items.reserve(capacity);
 }
 
-void CCoverFlow::addItem(const char *id, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount)
+void CCoverFlow::addItem(const char *id, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount, unsigned int lastPlayed)
 {
 	if (!m_covers.empty())
 		return;
-	m_items.push_back(CCoverFlow::CItem(id, title, chantitle, picPath, boxPicPath, playcount));
+	m_items.push_back(CCoverFlow::CItem(id, title, chantitle, picPath, boxPicPath, playcount, lastPlayed));
 }
 
 // Draws a plane in the Z-Buffer only.
@@ -1624,7 +1632,23 @@ void CCoverFlow::_instantTarget(int i)
 
 bool CCoverFlow::_sortByPlayCount(CItem item1, CItem item2)
 {
-	return item1.playcount > item2.playcount;
+	return (item1.playcount == item2.playcount) ? !(item1 < item2) : item1.playcount > item2.playcount;
+}
+
+bool CCoverFlow::_sortByLastPlayed(CItem item1, CItem item2)
+{
+	return (item1.lastPlayed == item2.lastPlayed) ? _sortByPlayCount(item1, item2) : item1.lastPlayed > item2.lastPlayed;
+}
+
+bool CCoverFlow::_sortByGameID(CItem item1, CItem item2)
+{
+	u32 s = min(item1.id.size(), item2.id.size());
+	for (u32 k = 0; k < s; ++k)
+		if (upperCaseWChar(item2.id[k]) < upperCaseWChar(item1.id[k]))
+			return false;
+		else if (upperCaseWChar(item1.id[k]) > upperCaseWChar(item2.id[k]))
+			return true;
+	return item1.id.size() < item2.id.size();
 }
 
 bool CCoverFlow::start(const char *id)
@@ -1657,8 +1681,13 @@ bool CCoverFlow::start(const char *id)
 				return false;
 	}
 	// Sort items
-	sort(m_items.begin(), m_items.end());
-//	sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByPlayCount);
+	if (m_sorting == SORT_ALPHA)
+		sort(m_items.begin(), m_items.end());
+	else if (m_sorting == SORT_PLAYCOUNT)
+		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByPlayCount);
+	else if (m_sorting == SORT_LASTPLAYED)
+		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByLastPlayed);
+		
 	m_covers.clear();
 	m_covers.resize(m_range);
 	m_jump = 0;

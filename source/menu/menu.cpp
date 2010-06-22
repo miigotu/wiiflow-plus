@@ -887,7 +887,8 @@ void CMenu::_initCF(void)
 					w = titles.getWString("TITLES", id.substr(0, 4), string(m_gameList[i].title, sizeof m_gameList[0].title));
 			}
 			int playcount = m_cfg.getInt(id, "playcount", 0);
-			m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount);
+			unsigned int lastPlayed = m_cfg.getUInt(id, "lastplayed", 0);
+			m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
 		}
 	}
 	m_cf.setBoxMode(m_cfg.getBool(" GENERAL", "box_mode", true));
