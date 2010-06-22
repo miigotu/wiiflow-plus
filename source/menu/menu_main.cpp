@@ -141,14 +141,14 @@ int CMenu::main(void)
 			buttonHeld = (u32)-1;
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16)
 			padsState |= WPAD_BUTTON_A;
-		if ((padsState & WPAD_BUTTON_1) != 0)
+		if ((padsState & WPAD_BUTTON_1) != 0 && (wd->btns_h & WPAD_BUTTON_B) == 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		else if ((padsState & WPAD_BUTTON_2) != 0)
+		else if ((padsState & WPAD_BUTTON_2) != 0 && (wd->btns_h & WPAD_BUTTON_B) == 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
@@ -186,6 +186,21 @@ int CMenu::main(void)
 			m_cf.left();
 		else if ((btn & WPAD_BUTTON_RIGHT) != 0 || ((angle > 75 && angle < 105) && mag > 0.75))
 			m_cf.right();
+		if ((padsState & WPAD_BUTTON_1) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
+			{
+				_hideMain();
+				s32 amountOfPartitions = WBFS_GetPartitionCount();
+				s32 currentPartition = WBFS_GetCurrentPartition();
+				char buf[5];
+				currentPartition = loopNum(currentPartition + 1, amountOfPartitions);
+				gprintf("Next item: %d\n", currentPartition);
+				WBFS_GetPartitionName(currentPartition, (char *) &buf);
+				gprintf("Which is: %s\n", buf);
+				m_cfg.setString(" GENERAL", "partition", buf);
+				_loadList();
+				_showMain();
+				_initCF();
+			}	
 		if ((padsState & WPAD_BUTTON_B) != 0)
 		{
 			if (buttonHeld != m_btnMgr.selected())

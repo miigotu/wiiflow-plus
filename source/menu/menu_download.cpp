@@ -29,22 +29,16 @@
 using namespace std;
 
 static const char FMT_BPIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/other/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/other/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid6}.png";
 static const char FMT_BPIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/other/{gameid4}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid4}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/other/{gameid4}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid4}.png";
 static const char FMT_PIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/other/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid6}.png";
 static const char FMT_PIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/other/{gameid4}.png"\
 "|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png";
 
 class LockMutex
@@ -59,38 +53,82 @@ static string countryCode(const string &gameId)
 {
 	switch (gameId[3])
 	{
-	   case 'E':
-		   return "US";
-	   case 'J':
-		   return "JA";
-	   case 'W':
-		   return "ZH";
-	   case 'K':
-		   return "KO";
+		case 'E':
+			return "US";
+		case 'J':
+			return "JA";
+		case 'W':
+			return "ZH";
+		case 'K':
+			return "KO";
+		case 'R':
+			return "RU";
+		case 'P':
+		case 'D':
+		case 'F':
+		case 'I':
+		case 'S':
+		case 'H':
+		case 'X':
+		case 'Y':
+		case 'Z':
+			switch (CONF_GetArea())
+			{
+				case CONF_AREA_BRA:
+					return "PT";
+				case CONF_AREA_AUS:
+					return "AU";
+			}
+			switch (CONF_GetLanguage())
+			{
+				case CONF_LANG_ENGLISH:
+					return "EN";
+				case CONF_LANG_GERMAN:
+					return "DE";
+				case CONF_LANG_FRENCH:
+					return "FR";
+				case CONF_LANG_SPANISH:
+					return "ES";
+				case CONF_LANG_ITALIAN:
+					return "IT";
+				case CONF_LANG_DUTCH:
+					return "NL";
+			}
+		case 'A':
+			switch (CONF_GetArea())
+			{
+				case CONF_AREA_USA:
+					return "US";
+				case CONF_AREA_JPN:
+					return "JA";
+				case CONF_AREA_CHN:
+				case CONF_AREA_HKG:
+				case CONF_AREA_TWN:
+					return "ZH";
+				case CONF_AREA_KOR:
+					return "KO";
+				case CONF_AREA_BRA:
+					return "PT";
+				case CONF_AREA_AUS:
+					return "AU";
+			}
+			switch (CONF_GetLanguage())
+			{
+				case CONF_LANG_ENGLISH:
+					return "EN";
+				case CONF_LANG_GERMAN:
+					return "DE";
+				case CONF_LANG_FRENCH:
+					return "FR";
+				case CONF_LANG_SPANISH:
+					return "ES";
+				case CONF_LANG_ITALIAN:
+					return "IT";
+				case CONF_LANG_DUTCH:
+					return "NL";
+			}
 	}
-	switch (CONF_GetArea())
-	{
-		case CONF_AREA_BRA:
-			return "PT";
-		case CONF_AREA_AUS:
-			return "AU";
-	}
-	switch (CONF_GetLanguage())
-	{
-		case CONF_LANG_ENGLISH:
-			return "EN";
-		case CONF_LANG_GERMAN:
-			return "DE";
-		case CONF_LANG_FRENCH:
-			return "FR";
-		case CONF_LANG_SPANISH:
-			return "ES";
-		case CONF_LANG_ITALIAN:
-			return "IT";
-		case CONF_LANG_DUTCH:
-			return "NL";
-	}
-	return "EN";
+	return "other";
 }
 
 static string makeURL(const string &format, const string &gameId, const string &country)
