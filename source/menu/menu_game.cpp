@@ -437,6 +437,7 @@ void CMenu::_launchGame(const string &id)
 		altdol.clear();
 	m_cfg.setString(" GENERAL", "current_game", id);
 	m_cfg.setInt(id, "playcount", m_cfg.getInt(id, "playcount", 0) + 1);
+	m_cfg.setUInt(id, "lastplayed", time(NULL));
 	
 	m_cfg.save();
 	setLanguage(language);
