@@ -204,7 +204,7 @@ int CMenu::main(void)
 			m_cfg.setInt(" GENERAL", "sort", sort);
 			wstringEx curSort ;
 			if (sort == SORT_ALPHA)
-				curSort = m_loc.getWString(m_curLanguage, "aphabetically", L"Alphabetically");
+				curSort = m_loc.getWString(m_curLanguage, "alphabetically", L"Alphabetically");
 			else if (sort == SORT_PLAYCOUNT)
 				curSort = m_loc.getWString(m_curLanguage, "byplaycount", L"By Play Count");
 			else if (sort == SORT_LASTPLAYED)
