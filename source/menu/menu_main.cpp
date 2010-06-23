@@ -52,6 +52,7 @@ void CMenu::_hideMain(bool instant)
 	m_btnMgr.hide(m_mainBtnFavoritesOn, instant);
 	m_btnMgr.hide(m_mainBtnFavoritesOff, instant);
 	m_btnMgr.hide(m_mainLblLetter, instant);
+	m_btnMgr.hide(m_mainLblNotice, instant);
 	for (u32 i = 0; i < ARRAY_SIZE(m_mainLblUser); ++i)
 		if (m_mainLblUser[i] != -1u)
 			m_btnMgr.hide(m_mainLblUser[i], instant);
@@ -99,7 +100,9 @@ int CMenu::main(void)
 	int done = 0;
 	WPAD_Rumble(WPAD_CHAN_0, 0);
 	m_padLeftDelay = 0;
+	m_padDownDelay = 0;
 	m_padRightDelay = 0;
+	m_padUpDelay = 0;
 	_loadList();
 	_showMain();
 	m_curGameId.clear();
@@ -142,9 +145,9 @@ int CMenu::main(void)
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16)
 			padsState |= WPAD_BUTTON_A;
 		//Normal coverflow movement
-		if ((padsState & WPAD_BUTTON_UP) != 0)
+		if ((btn & WPAD_BUTTON_UP) != 0)
 			m_cf.up();
-		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
+		else if ((btn & WPAD_BUTTON_DOWN) != 0)
 			m_cf.down();
 		else if ((btn & WPAD_BUTTON_LEFT) != 0 || ((angle > 255 && angle < 285) && mag > 0.75))
 			m_cf.left();
@@ -171,7 +174,7 @@ int CMenu::main(void)
 		{
 			curLetter.resize(1);
 			curLetter[0] = m_cf.nextLetter();
-			m_letter = 60;
+			m_showtimer = 60;
 			m_btnMgr.setText(m_mainLblLetter, curLetter);
 			m_btnMgr.show(m_mainLblLetter);
 
@@ -181,7 +184,7 @@ int CMenu::main(void)
 		{
 			curLetter.resize(1);
 			curLetter[0] = m_cf.prevLetter();
-			m_letter = 60;
+			m_showtimer = 60;
 			m_btnMgr.setText(m_mainLblLetter, curLetter);
 			m_btnMgr.show(m_mainLblLetter);
 		}
@@ -193,12 +196,24 @@ int CMenu::main(void)
 		//Sorting Selection
 		if ((padsState & WPAD_BUTTON_DOWN) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
 		{
-			u32 sort;
+			u32 sort = 0;
 			sort = m_cfg.getInt(" GENERAL", "sort", 0);
-			sort++;
+			++sort;
 			if (sort >= 4) sort = 0;
 			m_cf.setSorting((Sorting)sort);
 			m_cfg.setInt(" GENERAL", "sort", sort);
+			wstringEx curSort ;
+			if (sort == SORT_ALPHA)
+				curSort = m_loc.getWString(m_curLanguage, "aphabetically", L"Alphabetically");
+			else if (sort == SORT_PLAYCOUNT)
+				curSort = m_loc.getWString(m_curLanguage, "byplaycount", L"By Play Count");
+			else if (sort == SORT_LASTPLAYED)
+				curSort = m_loc.getWString(m_curLanguage, "bylastplayed", L"By Last Played");
+			else if (sort == SORT_GAMEID)
+				curSort = m_loc.getWString(m_curLanguage, "bygameid", L"By Game I.D.");
+			m_showtimer=60; 
+			m_btnMgr.setText(m_mainLblNotice, curSort);
+			m_btnMgr.show(m_mainLblNotice);
 		}
 		//Partition Selection
 		if ((padsState & WPAD_BUTTON_UP) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
@@ -212,6 +227,9 @@ int CMenu::main(void)
 			WBFS_GetPartitionName(currentPartition, (char *) &buf);
 			gprintf("Which is: %s\n", buf);
 			m_cfg.setString(" GENERAL", "partition", buf);
+			m_showtimer=60; 
+			m_btnMgr.setText(m_mainLblNotice, (string)buf);
+			m_btnMgr.show(m_mainLblNotice);
 			_loadList();
 			_showMain();
 			_initCF();
@@ -365,9 +383,11 @@ int CMenu::main(void)
 				}
 			}
 		}
-		if (m_letter > 0)
-			if (--m_letter == 0)
+		if (m_showtimer > 0)
+			if (--m_showtimer == 0){
 				m_btnMgr.hide(m_mainLblLetter);
+				m_btnMgr.hide(m_mainLblNotice);
+			}
 		//zones, showing and hiding buttons
 		if (!m_gameList.empty() && wd->ir.valid && m_cur.x() >= m_mainPrevZone.x && m_cur.y() >= m_mainPrevZone.y
 			&& m_cur.x() < m_mainPrevZone.x + m_mainPrevZone.w && m_cur.y() < m_mainPrevZone.y + m_mainPrevZone.h)
@@ -499,6 +519,7 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainBtnFavoritesOn = _addPicButton(theme, "MAIN/FAVORITES_ON", texFavOn, texFavOnS, 300, 412, 56, 56);
 	m_mainBtnFavoritesOff = _addPicButton(theme, "MAIN/FAVORITES_OFF", texFavOff, texFavOffS, 300, 412, 56, 56);
 	m_mainLblLetter = _addLabel(theme, "MAIN/LETTER", theme.titleFont, L"", 540, 40, 80, 80, CColor(0xFFFFFFFF), FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, emptyTex);
+	m_mainLblNotice = _addLabel(theme, "MAIN/NOTICE", theme.titleFont, L"", 340, 40, 280, 80, CColor(0xFFFFFFFF), FTGX_JUSTIFY_RIGHT | FTGX_ALIGN_MIDDLE, emptyTex);
 	// 
 	m_mainPrevZone.x = m_theme.getInt("MAIN/ZONES", "prev_x", -32);
 	m_mainPrevZone.y = m_theme.getInt("MAIN/ZONES", "prev_y", -32);
@@ -530,6 +551,7 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_mainBtnInit2, "MAIN/BIG_SETTINGS_BTN2", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_mainLblInit, "MAIN/MESSAGE", 0, 0, 0.f, 0.f);
 	_setHideAnim(m_mainLblLetter, "MAIN/LETTER", 0, 0, 0.f, 0.f);
+	_setHideAnim(m_mainLblNotice, "MAIN/NOTICE", 0, 0, 0.f, 0.f);
 	_hideMain(true);
 	_textMain();
 }

@@ -72,7 +72,7 @@ CMenu::CMenu(CVideo &vid) :
 	m_category = 0;
 	m_networkInit = false;
 	m_mutex = 0;
-	m_letter = 0;
+	m_showtimer = 0;
 	m_noHBC = false;
 	m_gameSoundThread = 0;
 	m_gameSndMutex = 0;
@@ -80,7 +80,9 @@ CMenu::CMenu(CVideo &vid) :
 	m_bgCrossFade = 0;
 	m_bnrSndVol = 0;
 	m_padLeftDelay = 0;
+	m_padDownDelay = 0;
 	m_padRightDelay = 0;
+	m_padUpDelay = 0;
 	m_gameSettingsPage = 0;
 }
 
@@ -844,6 +846,14 @@ u32 CMenu::_btnRepeat(u32 btn)
 	}
 	else
 		m_padLeftDelay = 0;
+	if ((btn & WPAD_BUTTON_DOWN) != 0)
+	{
+		if (m_padDownDelay == 0 || m_padDownDelay > g_repeatDelay)
+			b |= WPAD_BUTTON_DOWN;
+		++m_padDownDelay;
+	}
+	else
+		m_padDownDelay = 0;
 	if ((btn & WPAD_BUTTON_RIGHT) != 0)
 	{
 		if (m_padRightDelay == 0 || m_padRightDelay > g_repeatDelay)
@@ -852,6 +862,14 @@ u32 CMenu::_btnRepeat(u32 btn)
 	}
 	else
 		m_padRightDelay = 0;
+	if ((btn & WPAD_BUTTON_UP) != 0)
+	{
+		if (m_padUpDelay == 0 || m_padUpDelay > g_repeatDelay)
+			b |= WPAD_BUTTON_UP;
+		++m_padUpDelay;
+	}
+	else
+		m_padUpDelay = 0;
 	return b;
 }
 

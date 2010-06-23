@@ -56,7 +56,7 @@ private:
 	std::string m_curLanguage;
 	bool m_locked;
 	bool m_favorites;
-	int m_letter;
+	int m_showtimer;
 	std::string m_curGameId;
 	std::string m_curChanId;
 	STexture m_waitMessage;
@@ -110,6 +110,7 @@ private:
 	u32 m_mainBtnFavoritesOn;
 	u32 m_mainBtnFavoritesOff;
 	u32 m_mainLblLetter;
+	u32 m_mainLblNotice;
 	u32 m_mainBtnNext;
 	u32 m_mainBtnPrev;
 	u32 m_mainBtnQuit;
@@ -369,7 +370,9 @@ private:
 	SZone m_mainButtonsZone2;
 	 
 	u32 m_padLeftDelay;
+	u32 m_padDownDelay;
 	u32 m_padRightDelay;
+	u32 m_padUpDelay;
 	 
 	u32 m_gameSettingsPage;
 	 
