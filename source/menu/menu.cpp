@@ -898,6 +898,7 @@ void CMenu::_initCF(void)
 	if (m_cf.start())
 		if (m_curGameId.empty() || !m_cf.findId(m_curGameId.c_str(), true))
 			m_cf.findId(m_cfg.getString(" GENERAL", "current_game").c_str(), true);
+	m_cf.setSorting((Sorting)m_cfg.getInt(" GENERAL", "sort", 0));
 }
 
 void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, bool adjusting)

@@ -62,7 +62,8 @@ LIBS	:=  -ltremor -lfreetype -lwiiuse -lbte -lasnd -lpng -lz -logc -lm -lmad -lj
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(CURDIR)
+LIBDIRS	:=	$(CURDIR) \
+			$(PORTLIBS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

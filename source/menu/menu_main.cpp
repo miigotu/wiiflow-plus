@@ -128,7 +128,7 @@ int CMenu::main(void)
 			_wbfsOp(CMenu::WO_ADD_GAME);
 			_showMain();
 		}
-		
+		//Check for exit or reload request
 		if ((padsState & WPAD_BUTTON_HOME) != 0)
 		{
 			reload = (wd->btns_h & WPAD_BUTTON_B) != 0;
@@ -141,6 +141,16 @@ int CMenu::main(void)
 			buttonHeld = (u32)-1;
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16)
 			padsState |= WPAD_BUTTON_A;
+		//Normal coverflow movement
+		if ((padsState & WPAD_BUTTON_UP) != 0)
+			m_cf.up();
+		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
+			m_cf.down();
+		else if ((btn & WPAD_BUTTON_LEFT) != 0 || ((angle > 255 && angle < 285) && mag > 0.75))
+			m_cf.left();
+		else if ((btn & WPAD_BUTTON_RIGHT) != 0 || ((angle > 75 && angle < 105) && mag > 0.75))
+			m_cf.right();
+		//CF Layout select
 		if ((padsState & WPAD_BUTTON_1) != 0 && (wd->btns_h & WPAD_BUTTON_B) == 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1), m_numCFVersions);
@@ -155,7 +165,8 @@ int CMenu::main(void)
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		if (((padsState & (WPAD_BUTTON_DOWN | WPAD_BUTTON_RIGHT)) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
+		//Search by Alphabet
+		if (((padsState & WPAD_BUTTON_RIGHT) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
 			|| ((padsState & WPAD_BUTTON_PLUS) != 0 && m_alphaSearch == ((wd->btns_h & WPAD_BUTTON_B) == 0)))
 		{
 			curLetter.resize(1);
@@ -165,7 +176,7 @@ int CMenu::main(void)
 			m_btnMgr.show(m_mainLblLetter);
 
 		}
-		else if (((padsState & (WPAD_BUTTON_UP | WPAD_BUTTON_LEFT)) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
+		else if (((padsState & WPAD_BUTTON_LEFT) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
 			|| ((padsState & WPAD_BUTTON_MINUS) != 0 && m_alphaSearch == ((wd->btns_h & WPAD_BUTTON_B) == 0)))
 		{
 			curLetter.resize(1);
@@ -174,33 +185,38 @@ int CMenu::main(void)
 			m_btnMgr.setText(m_mainLblLetter, curLetter);
 			m_btnMgr.show(m_mainLblLetter);
 		}
-		else if ((padsState & WPAD_BUTTON_UP) != 0)
-			m_cf.up();
-		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
-			m_cf.down();
+		//Search by pages
 		else if ((padsState & WPAD_BUTTON_MINUS) != 0)
 			m_cf.pageUp();
 		else if ((padsState & WPAD_BUTTON_PLUS) != 0)
 			m_cf.pageDown();
-		else if ((btn & WPAD_BUTTON_LEFT) != 0 || ((angle > 255 && angle < 285) && mag > 0.75))
-			m_cf.left();
-		else if ((btn & WPAD_BUTTON_RIGHT) != 0 || ((angle > 75 && angle < 105) && mag > 0.75))
-			m_cf.right();
-		if ((padsState & WPAD_BUTTON_1) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
-			{
-				_hideMain();
-				s32 amountOfPartitions = WBFS_GetPartitionCount();
-				s32 currentPartition = WBFS_GetCurrentPartition();
-				char buf[5];
-				currentPartition = loopNum(currentPartition + 1, amountOfPartitions);
-				gprintf("Next item: %d\n", currentPartition);
-				WBFS_GetPartitionName(currentPartition, (char *) &buf);
-				gprintf("Which is: %s\n", buf);
-				m_cfg.setString(" GENERAL", "partition", buf);
-				_loadList();
-				_showMain();
-				_initCF();
-			}	
+		//Sorting Selection
+		if ((padsState & WPAD_BUTTON_DOWN) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
+		{
+			u32 sort;
+			sort = m_cfg.getInt(" GENERAL", "sort", 0);
+			sort++;
+			if (sort >= 4) sort = 0;
+			m_cf.setSorting((Sorting)sort);
+			m_cfg.setInt(" GENERAL", "sort", sort);
+		}
+		//Partition Selection
+		if ((padsState & WPAD_BUTTON_UP) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
+		{
+			_hideMain();
+			s32 amountOfPartitions = WBFS_GetPartitionCount();
+			s32 currentPartition = WBFS_GetCurrentPartition();
+			char buf[5];
+			currentPartition = loopNum(currentPartition + 1, amountOfPartitions);
+			gprintf("Next item: %d\n", currentPartition);
+			WBFS_GetPartitionName(currentPartition, (char *) &buf);
+			gprintf("Which is: %s\n", buf);
+			m_cfg.setString(" GENERAL", "partition", buf);
+			_loadList();
+			_showMain();
+			_initCF();
+		}
+		//Events to Show Categories
 		if ((padsState & WPAD_BUTTON_B) != 0)
 		{
 			if (buttonHeld != m_btnMgr.selected())
@@ -228,6 +244,7 @@ int CMenu::main(void)
 			m_curGameId = m_cf.getId();
 			_initCF();
 		}
+		//Handling input when other gui buttons are selected
 		if ((padsState & WPAD_BUTTON_A) != 0)
 		{
 			if (buttonHeld != m_btnMgr.selected())
@@ -351,7 +368,7 @@ int CMenu::main(void)
 		if (m_letter > 0)
 			if (--m_letter == 0)
 				m_btnMgr.hide(m_mainLblLetter);
-		//
+		//zones, showing and hiding buttons
 		if (!m_gameList.empty() && wd->ir.valid && m_cur.x() >= m_mainPrevZone.x && m_cur.y() >= m_mainPrevZone.y
 			&& m_cur.x() < m_mainPrevZone.x + m_mainPrevZone.w && m_cur.y() < m_mainPrevZone.y + m_mainPrevZone.h)
 			m_btnMgr.show(m_mainBtnPrev);

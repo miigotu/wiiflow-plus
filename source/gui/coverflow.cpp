@@ -1687,6 +1687,8 @@ bool CCoverFlow::start(const char *id)
 		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByPlayCount);
 	else if (m_sorting == SORT_LASTPLAYED)
 		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByLastPlayed);
+	else if (m_sorting == SORT_GAMEID)
+		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByGameID);
 		
 	m_covers.clear();
 	m_covers.resize(m_range);
