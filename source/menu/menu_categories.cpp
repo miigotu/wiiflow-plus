@@ -61,7 +61,7 @@ void CMenu::_hideCategorySettings(bool instant)
 void CMenu::_showCategorySettings(void)
 {
 	m_btnMgr.show(m_categoryBtnBack);
-	for (int i = 0; i < 12; ++i)
+	for (int i = 0; i < m_max_categories+1; ++i)
 		m_btnMgr.show(m_categoryBtn[i]);
 }
 

@@ -349,8 +349,9 @@ private:
 	// Category menu
 	u32 m_categoryBtn[12];
 	u32 m_categoryBtnBack;
-	STexture m_cheatBg;
+	int m_max_categories;
 	int m_category;
+	STexture m_cheatBg;
 	// Game Settings menu::Categories
 	u32 m_gameCategoryPage;
 	u32 m_gameSettingsLblCategoryMain;

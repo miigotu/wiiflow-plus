@@ -226,7 +226,7 @@ void CMenu::_showGameSettings(void)
 	//Categories Pages
 	if (m_gameSettingsPage == 51)
 	{
-		for (u32 i = 1;i < 5;++i) {
+		for (u32 i = 1;i < (u32)min(m_max_categories+1, 5);++i) {
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
 		}		
@@ -240,7 +240,7 @@ void CMenu::_showGameSettings(void)
 	}
 	if (m_gameSettingsPage == 52)
 	{
-		for (u32 i = 5;i < 9;++i) {
+		for (u32 i = 5;i < (u32)min(m_max_categories+1, 9);++i) {
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
 		}		
@@ -254,7 +254,7 @@ void CMenu::_showGameSettings(void)
 	}
 	if (m_gameSettingsPage == 53)
 	{
-		for (u32 i = 9;i < 12;++i) {
+		for (u32 i = 9;i < (u32)min(m_max_categories+1, 12);++i) {
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
 		}		
@@ -352,7 +352,8 @@ void CMenu::_gameSettings(void)
 		}
 		else if ((padsState & WPAD_BUTTON_PLUS) != 0)
 		{
-			if (m_gameSettingsPage < 4 || (m_gameSettingsPage > 4 && m_gameSettingsPage < 53))
+			if (m_gameSettingsPage < 4 || (m_gameSettingsPage > 4 && m_gameSettingsPage < 53 && m_max_categories > 8)
+				|| (m_gameSettingsPage > 4 && m_gameSettingsPage < 52 && m_max_categories > 4))
 				++m_gameSettingsPage;
 			_showGameSettings();
 			m_btnMgr.click(m_gameSettingsBtnPageP);
@@ -370,7 +371,8 @@ void CMenu::_gameSettings(void)
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnPageP && !m_locked)
 			{
-				if (m_gameSettingsPage < 4 || (m_gameSettingsPage > 4 && m_gameSettingsPage < 53))
+				if (m_gameSettingsPage < 4 || (m_gameSettingsPage > 4 && m_gameSettingsPage < 53 && m_max_categories > 8)
+				|| (m_gameSettingsPage > 4 && m_gameSettingsPage < 52 && m_max_categories > 4))
 					++m_gameSettingsPage;
 				_showGameSettings();
 			}

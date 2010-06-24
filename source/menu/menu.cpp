@@ -218,7 +218,8 @@ void CMenu::init(bool fromHBC)
 		m_favorites = m_cfg.getBool(" GENERAL", "favorites", false);
 	if (m_cfg.getBool(" GENERAL", "fbi", false))
 		m_waitMessage.fromPNG(fbi_png);
-	m_category = m_cfg.getInt(" GENERAL", "category", 0);
+	m_category = m_cfg.getInt(" GENERAL", "category", 0);//currently selected category
+	m_max_categories = m_cfg.getInt(" GENERAL", "numcategories", 12);//configured amount of categories to use
 	//m_current_view = m_cfg.getInt(" GENERAL", "currentview", COVERFLOW_USB);
 	//if (m_current_view > COVERFLOW_MAX) m_current_view = COVERFLOW_USB;
 	m_current_view = COVERFLOW_USB;
@@ -936,6 +937,7 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 			m_vid.prepareAAPass(i);
 			m_vid.setup2DProjection(false, true);
 			_drawBg();
+			m_fa.draw();
 			m_cf.draw();
 			m_vid.setup2DProjection(false, true);
 			m_cf.drawEffect();
@@ -950,6 +952,7 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 		m_vid.prepare();
 		m_vid.setup2DProjection();
 		_drawBg();
+		m_fa.draw();
 		if (withCF)
 		{
 			m_cf.draw();
@@ -959,12 +962,12 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 		}
 	}
 	
-	m_vid.setup2DProjection();
+	//m_vid.setup2DProjection();
 
 	// Call m_fa.draw() here, it should draw over the box and background, but below the buttons
-	m_fa.draw();
+	//m_fa.draw();
 	
-	m_vid.setup2DProjection();
+	//m_vid.setup2DProjection();
 	m_btnMgr.draw();
 	if (wd->ir.valid)
 		m_cur.draw(wd->ir.x, wd->ir.y, wd->ir.angle);
