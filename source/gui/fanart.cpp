@@ -80,7 +80,20 @@ u32 CFanart::getTextColor(void)
 
 bool CFanart::hideCover(void)
 {
-	return m_cfg.getBool("general", "hidecover", false);
+	bool retval = m_cfg.getBool("general", "hidecover", false);
+	if (!retval && m_cfg.getBool("general", "show_cover_after_animation", false)) // Show the cover after the animation is finished
+	{
+		retval = true;
+		for (u32 i = 0; i < m_elms.size(); ++i)
+		{
+			if (!m_elms[i].IsAnimationComplete())
+			{
+				retval = false;
+				break;
+			}
+		}
+	}
+	return retval;
 }
 
 void CFanart::tick()
@@ -89,7 +102,7 @@ void CFanart::tick()
 		m_elms[i].tick();
 }
 
-void CFanart::draw()
+void CFanart::draw(bool front)
 {
 	GX_SetNumChans(1);
 	GX_ClearVtxDesc();
@@ -109,7 +122,8 @@ void CFanart::draw()
 	GX_SetZMode(GX_DISABLE, GX_LEQUAL, GX_TRUE);
 	
 	for (u32 i = 0; i < m_elms.size(); ++i)
-		m_elms[i].draw();
+		if ((front && m_elms[i].ShowOnTop()) || !front)
+			m_elms[i].draw();
 }
 
 CFanartElement::CFanartElement(Config &cfg, const char *dir, int artwork)
@@ -120,6 +134,8 @@ CFanartElement::CFanartElement(Config &cfg, const char *dir, int artwork)
 		return;
 
 	const char *section = fmt("artwork%d", artwork);
+	
+	m_show_on_top = cfg.getBool(section, "show_on_top", true);
 	
 	m_x = cfg.getInt(section, "x", 0);
 	m_y = cfg.getInt(section, "y", 0);
@@ -157,6 +173,16 @@ bool CFanartElement::IsValid()
 	return m_isValid;
 }
 
+bool CFanartElement::IsAnimationComplete()
+{
+	return m_event_duration == 0;
+}
+
+bool CFanartElement::ShowOnTop()
+{
+	return m_show_on_top;
+}
+
 void CFanartElement::tick()
 {
 	if (m_delay > 0)
@@ -177,6 +203,11 @@ void CFanartElement::tick()
 		m_event_scaleY += m_step_scaleY;
 	if ((m_step_angle < 0 && m_event_angle > m_angle) || (m_step_angle > 0 && m_event_angle < m_angle))
 		m_event_angle = (int) (m_event_angle + m_step_angle);
+	
+	if (m_event_duration > 0)
+	{
+		m_event_duration--;
+	}
 }
 
 void CFanartElement::draw()

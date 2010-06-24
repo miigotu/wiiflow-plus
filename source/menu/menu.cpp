@@ -927,6 +927,12 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 	m_btnMgr.tick();
 	m_fa.tick();
 	_updateBg();
+	
+	if (m_fa.hideCover())
+		m_cf.hideCover();
+	else
+		m_cf.showCover();
+
 	if (withCF)
 		m_cf.makeEffectTexture(m_vid, m_lqBg);
 	if (withCF && m_aa > 0)
@@ -937,7 +943,7 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 			m_vid.prepareAAPass(i);
 			m_vid.setup2DProjection(false, true);
 			_drawBg();
-			m_fa.draw();
+			m_fa.draw(false);
 			m_cf.draw();
 			m_vid.setup2DProjection(false, true);
 			m_cf.drawEffect();
@@ -952,7 +958,7 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 		m_vid.prepare();
 		m_vid.setup2DProjection();
 		_drawBg();
-		m_fa.draw();
+		m_fa.draw(false);
 		if (withCF)
 		{
 			m_cf.draw();
@@ -965,7 +971,7 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 	//m_vid.setup2DProjection();
 
 	// Call m_fa.draw() here, it should draw over the box and background, but below the buttons
-	//m_fa.draw();
+	m_fa.draw();
 	
 	//m_vid.setup2DProjection();
 	m_btnMgr.draw();

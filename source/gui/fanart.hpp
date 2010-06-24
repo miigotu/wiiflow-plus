@@ -21,6 +21,8 @@ public:
 	void tick();
 	
 	bool IsValid();
+	bool IsAnimationComplete();
+	bool ShowOnTop();
 private:
 	STexture m_art;
 	int m_artwork;
@@ -48,6 +50,8 @@ private:
 	float m_step_scaleY;
 	float m_step_angle;
 	
+	bool m_show_on_top;
+	
 	bool m_isValid;
 };
 
@@ -63,7 +67,7 @@ public:
 	void getBackground(STexture &hq, STexture &lq);
 	u32 getTextColor(void);
 	bool hideCover(void);
-	void draw();
+	void draw(bool front = true);
 	void tick();
 
 private:
