@@ -6,10 +6,9 @@
 #include "sys.h"
 #include "alt_ios.h"
 
-#define APP_NAME		"WiiFlow"
 #define LOADER_AUTHOR	"Kwiirk & Waninkoko, Hermes"
 #define GUI_AUTHOR		"Hibernatus, Narolez, r-win, Miigotu"
-#define THANKS			"Lustar, CedWii, Benjay, Domi78, Oops, Celtiore, Jiiwah, FluffyKiwi, Roku93, Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical, WiiPower, Hermes"
+#define THANKS			"Lustar, CedWii, Benjay, Domi78, Oops, Celtiore, Jiiwah, FluffyKiwi, Roku93, Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical, WiiPower, Hermes, Spidy1000"
 #define THANKS_SITES	"devkitpro.org, wiibrew.org, wiitdb.com, ohloh.net"
 #define THANKS_CODE		"CFG Loader, uLoader, USB Loader GX, NeoGamma"
 
@@ -20,6 +19,7 @@ void CMenu::_about(void)
 {
 	s32 padsState;
 	u32 btn;
+	lwp_t thread = 0;
 	WPADData *wd;
 
 	WPAD_Rumble(WPAD_CHAN_0, 0);
@@ -32,12 +32,17 @@ void CMenu::_about(void)
 		btn = _btnRepeat(wd->btns_h);
 		if (wd->ir.valid)
 			m_btnMgr.mouse(wd->ir.x - m_cur.width() / 2, wd->ir.y - m_cur.height() / 2);
-		if ((padsState & WPAD_BUTTON_A) != 0)
+		if ((padsState & WPAD_BUTTON_A) != 0 && !(m_thrdWorking && m_thrdStop))
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_aboutBtnSystem) {
 				// show system menu
 				_hideAbout(false);
+				m_btnMgr.show(m_downloadPBar);
+				m_btnMgr.setProgress(m_downloadPBar, 0.f);
+				m_thrdStop = false;
+				m_thrdWorking = true;
+				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_versionTxtDownloaderInit, (void *)this, 0, 8192, 40);
 				_system();
 				_showAbout();
 			}
@@ -102,7 +107,7 @@ void CMenu::_initAboutMenu(CMenu::SThemeData &theme)
 void CMenu::_textAbout(void)
 {
 	m_btnMgr.setText(m_aboutBtnSystem, _t("sys1", L"System"));
-	m_btnMgr.setText(m_aboutLblTitle, wfmt(_fmt("appname", L"%s v%s%s"), APP_NAME, APP_VERSION, SVN_REV), true);
+	m_btnMgr.setText(m_aboutLblTitle, wfmt(_fmt("appname", L"%s v%s r%s"), APP_NAME, APP_VERSION, SVN_REV), true);
 	m_btnMgr.setText(m_aboutLblOrigAuthor, wfmt(_fmt("about1", L"Loader by %s"), LOADER_AUTHOR), true);
 	m_btnMgr.setText(m_aboutLblAuthor, wfmt(_fmt("about2", L"GUI by %s"), GUI_AUTHOR), true);
 	wstringEx thanksTo(m_cfg.getWString(" GENERAL", "insertnamehere"));

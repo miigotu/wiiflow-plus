@@ -2,6 +2,7 @@
 #ifndef __MENU_HPP
 #define __MENU_HPP
 
+#define APP_NAME		"WiiFlow"
 #define APP_VERSION		"2.0"
 
 #include "cursor.hpp"
@@ -76,6 +77,9 @@ private:
 	std::string m_txtCheatDir;
 	std::string m_videoDir;
 	std::string m_fanartDir;
+	const char* m_update_url;
+	std::string m_dol;
+	std::string m_ver;
 	// 
 	STexture m_prevBg;
 	STexture m_nextBg;
@@ -362,7 +366,9 @@ private:
 	// Download menu
 	u32 m_downloadBtnVersion;
 	static int _versionDownloaderInit(CMenu *m);
+	static int _versionTxtDownloaderInit(CMenu *m);
 	int _versionDownloader();
+	int _versionTxtDownloader();
 
 	 
 	SZone m_mainPrevZone;

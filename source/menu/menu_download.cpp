@@ -20,10 +20,8 @@
 #define TAG_LOC			"loc"
 #define TAG_REGION		"region"
 #define TITLES_URL		"http://www.wiitdb.com/titles.txt?LANG=%s"
-//Need to use wiiflow.ini to st these still
-#define UPDATE_URL		"http://wiiflow.googlecode.com/svn/trunk/updates/boot.dol"
-#define UPDATE_URL_VERSION	"http://wiiflow.googlecode.com/svn/trunk/updates/rev.txt"
-#define APP_DOL_PATH			"usb:/apps/WiiFlow/boot.dol"
+//Need to use wiiflow.ini to set these still
+#define UPDATE_URL_VERSION	"http://wiiflow.googlecode.com/files/ver.txt"
 
 
 using namespace std;
@@ -627,14 +625,117 @@ void CMenu::_textDownload(void)
 	m_btnMgr.setText(m_downloadLblWiiTDB, _t("dl10", L"Please donate\nto WiiTDB.com"));
 }
 
-int CMenu::_versionDownloaderInit(CMenu *m) //Handler to download version
+int CMenu::_versionTxtDownloaderInit(CMenu *m) //Handler to download versions txt file
+{
+	if (!m->m_thrdWorking)
+		return 0;
+	return m->_versionTxtDownloader();
+}
+
+int CMenu::_versionTxtDownloader() // code to download new version txt file
+{
+	block txt;
+	char ip[16];
+	wstringEx ws;
+	SmartBuf buffer;
+	FILE *file;
+	u32 bufferSize = 1 * 0x080000;	// Maximum download size 512kb
+	buffer = smartCoverAlloc(bufferSize);
+	if (!buffer)
+	{
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(L"Not enough memory", 1.f);
+		LWP_MutexUnlock(m_mutex);
+		m_thrdWorking = false;
+		return 0;
+	}
+	
+	// langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
+	
+	LWP_MutexLock(m_mutex);
+	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
+	LWP_MutexUnlock(m_mutex);
+	
+	if (!m_networkInit && _initNetwork(ip) < 0)
+	{
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg2", L"Network initialization failed"), 1.f);
+		LWP_MutexUnlock(m_mutex);
+	}
+	else
+	{
+		m_networkInit = true;
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg18", L"Downloading Info..."), 0.1f); // TODO: check for 18
+		LWP_MutexUnlock(m_mutex);
+		
+		// Load actual file
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg11", L"Downloading..."), 0.2f);
+		LWP_MutexUnlock(m_mutex);
+
+		m_thrdStep = 0.2f;
+		m_thrdStepLen = 0.9f - 0.2f;
+		txt = downloadfile(buffer.get(), bufferSize, UPDATE_URL_VERSION,CMenu::_downloadProgress, this);
+		if (txt.data == 0 || txt.size < 4 || txt.data[0] != 'v')
+		{
+			LWP_MutexLock(m_mutex);
+			_setThrdMsg(_t("dlmsg16", L"No version information found"), 1.f); // TODO: Check for 16
+			LWP_MutexUnlock(m_mutex);
+		}
+		else
+		{
+			// txt download finished, now save file
+			LWP_MutexLock(m_mutex);
+			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
+			LWP_MutexUnlock(m_mutex);			
+			
+			file = fopen(m_ver.c_str(), "wb");
+			if (file != NULL)
+			{
+				fwrite(txt.data, 1, txt.size, file);
+				fclose(file);
+				
+				// version file valid, check for version with SVN_REV
+				int svnrev = atoi(SVN_REV);
+				gprintf("Installed Version: %d\n", svnrev);
+				int rev = (txt.data[1]-'0') * 1000 + (txt.data[2]-'0') * 100 + (txt.data[3]-'0') * 10 + (txt.data[4]-'0');
+				gprintf("Latest available Version: %d\n", rev);
+				if (svnrev < rev)
+				{
+					// new version available
+					LWP_MutexLock(m_mutex);
+					_setThrdMsg(_t("dlmsg17", L"New update available!"), 1.f); // TODO: Check for 17
+					LWP_MutexUnlock(m_mutex);
+				}
+				else
+				{
+					// new version available
+					LWP_MutexLock(m_mutex);
+					_setThrdMsg(_t("dlmsg17", L"No new updates found."), 1.f); // TODO: Check for 17
+					LWP_MutexUnlock(m_mutex);
+				}
+			}
+			else
+			{
+				LWP_MutexLock(m_mutex);
+				_setThrdMsg(_t("dlmsg15", L"Saving failed"), 1.f);
+				LWP_MutexUnlock(m_mutex);
+			}
+		}
+	}
+	m_thrdWorking = false;
+	return 0;
+}
+
+int CMenu::_versionDownloaderInit(CMenu *m) //Handler to download new dol
 {
 	if (!m->m_thrdWorking)
 		return 0;
 	return m->_versionDownloader();
 }
 
-int CMenu::_versionDownloader() // code to download new version
+int CMenu::_versionDownloader() // code to download new dol
 {
 	// Original title downloader modified
 	block txt;
@@ -646,8 +747,7 @@ int CMenu::_versionDownloader() // code to download new version
 
 	// check for existing file
     ifstream filestr;
-//	m_wipDir = m_cfg.getString(" GENERAL", "dir_wip", sfmt("%s:/%s/codes", drive, appdir.c_str()));
-    filestr.open(APP_DOL_PATH);
+    filestr.open(m_dol.c_str());
 
     if (filestr.fail())
 	{
@@ -684,51 +784,6 @@ int CMenu::_versionDownloader() // code to download new version
 	}
 	else
 	{
-		m_networkInit = true;
-		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg18", L"Downloading Info..."), 0.1f); // TODO: check for 18
-		LWP_MutexUnlock(m_mutex);
-		
-		// Load info file
-		m_thrdStep = 0.1f;
-		m_thrdStepLen = 0.2f - 0.1f;
-		txt = downloadfile(buffer.get(), bufferSize, UPDATE_URL_VERSION,CMenu::_downloadProgress, this);
-		
-		// servermessage (like t#.....#)?
-		if (txt.size > 3 && txt.data[0] == 't' && txt.data[1] == '#') {
-			string servermessage;
-			servermessage = "";
-			for (u32 i = 2; i < 60 && txt.data[i] != '#'; ++i)
-				servermessage += txt.data[i];
-			LWP_MutexLock(m_mutex);
-			_setThrdMsg(servermessage, 1.f); // TODO: Check for 16
-			LWP_MutexUnlock(m_mutex);
-			m_thrdWorking = false;
-			return 0;
-		}			
-		
-		if (txt.data == 0 || txt.size < 4 || txt.data[0] != 'v')
-		{
-			LWP_MutexLock(m_mutex);
-			_setThrdMsg(_t("dlmsg16", L"No version information found"), 1.f); // TODO: Check for 16
-			LWP_MutexUnlock(m_mutex);
-			m_thrdWorking = false;
-			return 0;
-		}
-
-		// version file valid, check for version with SVN_REV
-		int svnrev = atoi(SVN_REV);
-		s32 rev = (txt.data[1]-'0') * 1000 + (txt.data[2]-'0') * 100 + (txt.data[3]-'0') * 10 + (txt.data[4]-'0');
-		if (rev <= svnrev)
-		{
-			// latest version available
-			LWP_MutexLock(m_mutex);
-			_setThrdMsg(_t("dlmsg17", L"You are using the latest release"), 1.f); // TODO: Check for 17
-			LWP_MutexUnlock(m_mutex);
-			m_thrdWorking = false;
-			return 0;
-		}
-
 		// Load actual file
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg11", L"Downloading..."), 0.2f);
@@ -736,7 +791,8 @@ int CMenu::_versionDownloader() // code to download new version
 
 		m_thrdStep = 0.2f;
 		m_thrdStepLen = 0.9f - 0.2f;
-		txt = downloadfile(buffer.get(), bufferSize, UPDATE_URL,CMenu::_downloadProgress, this);
+		gprintf("Update URL: %s\n", m_update_url);
+		txt = downloadfile(buffer.get(), bufferSize, m_update_url, CMenu::_downloadProgress, this);
 		if (txt.data == 0 || txt.size < 4000)
 		{
 			LWP_MutexLock(m_mutex);
@@ -749,8 +805,8 @@ int CMenu::_versionDownloader() // code to download new version
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
 			LWP_MutexUnlock(m_mutex);			
-
-			file = fopen(APP_DOL_PATH, "wb");
+			
+			file = fopen(m_dol.c_str(), "wb");
 			if (file != NULL)
 			{
 				fwrite(txt.data, 1, txt.size, file);

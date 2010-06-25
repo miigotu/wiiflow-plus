@@ -1,18 +1,3 @@
-/*
-Comment:
---------
-New class
-
-Class shows system menu and initiates downloading of a new .dol
-
-comment: This code is not very elegant as it uses directly items of menu_download
-Todo in later releases: clean up this code and separate download and system code
-
-Revision:
----------
-Update
-*/
-
 #include "svnrev.h"
 #include "menu.hpp"
 #include "fs.h"
@@ -72,13 +57,13 @@ void CMenu::_system()
 				m_btnMgr.setProgress(m_downloadPBar, 0.f);
 				m_btnMgr.hide(m_systemLblVersionTxt);
 				m_btnMgr.hide(m_systemLblVersion);
-				m_btnMgr.hide(m_systemLblVersionRev);
 				m_btnMgr.hide(m_systemLblIOSTxt);
 				m_btnMgr.hide(m_systemLblIOS);
-				m_btnMgr.hide(m_systemLblIOSbase);
+				//m_btnMgr.hide(m_systemLblIOSbase);
 				m_btnMgr.hide(m_systemBtnDownload);
 				m_thrdStop = false;
 				m_thrdWorking = true;
+				m_update_url = "http://wiiflow.googlecode.com/svn/trunk/updates/boot.dol";
 				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_versionDownloaderInit, (void *)this, 0, 8192, 40);
 			}
 			else if (m_btnMgr.selected() == m_systemBtnBack)
@@ -127,10 +112,9 @@ void CMenu::_hideSystem(bool instant)
 	m_btnMgr.hide(m_systemLblTitle, instant);
 	m_btnMgr.hide(m_systemLblVersionTxt, instant);
 	m_btnMgr.hide(m_systemLblVersion, instant);
-	m_btnMgr.hide(m_systemLblVersionRev, instant);
 	m_btnMgr.hide(m_systemLblIOSTxt, instant);
 	m_btnMgr.hide(m_systemLblIOS, instant);
-	m_btnMgr.hide(m_systemLblIOSbase, instant);
+	//m_btnMgr.hide(m_systemLblIOSbase, instant);
 	m_btnMgr.hide(m_systemBtnBack, instant);
 	m_btnMgr.hide(m_systemBtnDownload, instant);
 	m_btnMgr.hide(m_downloadPBar, instant);
@@ -147,10 +131,9 @@ void CMenu::_showSystem(void)
 	m_btnMgr.show(m_systemLblTitle);
 	m_btnMgr.show(m_systemLblVersionTxt);
 	m_btnMgr.show(m_systemLblVersion);
-	m_btnMgr.show(m_systemLblVersionRev);
 	m_btnMgr.show(m_systemLblIOSTxt);
 	m_btnMgr.show(m_systemLblIOS);
-	m_btnMgr.show(m_systemLblIOSbase);
+	//m_btnMgr.show(m_systemLblIOSbase);
 	m_btnMgr.show(m_systemBtnBack);
 	//m_btnMgr.show(m_systemBtnDownload);
 	for (u32 i = 0; i < ARRAY_SIZE(m_systemLblUser); ++i)
@@ -166,12 +149,11 @@ void CMenu::_initSystemMenu(CMenu::SThemeData &theme)
 	_addUserLabels(theme, m_systemLblUser, ARRAY_SIZE(m_systemLblUser), "SYSTEM");		
 	m_systemBg = _texture(theme.texSet, "SYSTEM/BG", "texture", theme.bg);
 	m_systemLblTitle = _addLabel(theme, "SYSTEM/TITLE", theme.titleFont, L"", 20, 30, 600, 60, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
-	m_systemLblVersionTxt = _addLabel(theme, "SYSTEM/VERSION_TXT", theme.lblFont, L"", 40, 110, 220, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_systemLblVersion = _addLabel(theme, "SYSTEM/VERSION", theme.lblFont, L"", 260, 110, 200, 56, theme.titleFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_systemLblVersionRev = _addLabel(theme, "SYSTEM/VERSION_REV", theme.lblFont, L"", 310, 110, 200, 56, theme.titleFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_systemLblIOSTxt = _addLabel(theme, "SYSTEM/IOS_TXT", theme.lblFont, L"", 40, 146, 220, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_systemLblIOS = _addLabel(theme, "SYSTEM/IOS", theme.lblFont, L"", 260, 146, 200, 56, theme.titleFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_systemLblIOSbase = _addLabel(theme, "SYSTEM/IOSBASE", theme.lblFont, L"", 260, 184, 200, 56, theme.titleFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_systemLblVersionTxt = _addLabel(theme, "SYSTEM/VERSION_TXT", theme.lblFont, L"", 40, 80, 220, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_systemLblVersion = _addLabel(theme, "SYSTEM/VERSION", theme.lblFont, L"", 260, 80, 200, 56, theme.titleFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_systemLblIOSTxt = _addLabel(theme, "SYSTEM/IOS_TXT", theme.lblFont, L"", 40, 116, 220, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_systemLblIOS = _addLabel(theme, "SYSTEM/IOS", theme.lblFont, L"", 260, 116, 200, 56, theme.titleFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	//m_systemLblIOSbase = _addLabel(theme, "SYSTEM/IOSBASE", theme.lblFont, L"", 260, 154, 200, 56, theme.titleFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_systemBtnDownload = _addButton(theme, "SYSTEM/DOWNLOAD_BTN", theme.btnFont, L"", 20, 410, 200, 56, theme.btnFontColor);
 	m_systemBtnBack = _addButton(theme, "SYSTEM/BACK_BTN", theme.btnFont, L"", 420, 410, 200, 56, theme.btnFontColor); 
 	// 
@@ -180,10 +162,9 @@ void CMenu::_initSystemMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_systemBtnBack, "SYSTEM/BACK_BTN", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_systemLblVersionTxt, "SYSTEM/VERSION_TXT", -100, 0, 0.f, 0.f);
 	_setHideAnim(m_systemLblVersion, "SYSTEM/VERSION", 200, 0, 0.f, 0.f);
-	_setHideAnim(m_systemLblVersionRev, "SYSTEM/VERSION_REV", 200, 0, 0.f, 0.f);
 	_setHideAnim(m_systemLblIOSTxt, "SYSTEM/IOS_TXT", -100, 0, 0.f, 0.f);
 	_setHideAnim(m_systemLblIOS, "SYSTEM/IOS", 200, 0, 0.f, 0.f);
-	_setHideAnim(m_systemLblIOSbase, "SYSTEM/IOSBASE", 200, 0, 0.f, 0.f);
+	//_setHideAnim(m_systemLblIOSbase, "SYSTEM/IOSBASE", 200, 0, 0.f, 0.f);
 	// 
 	_hideSystem(true);
 	_textSystem();
@@ -191,15 +172,12 @@ void CMenu::_initSystemMenu(CMenu::SThemeData &theme)
 
 void CMenu::_textSystem(void)
 {
-	int ReV = atoi(SVN_REV);
 	m_btnMgr.setText(m_systemLblTitle, _t("sys1", L"System"));
-	// version info
-	m_btnMgr.setText(m_systemLblVersionTxt, _t("sys2", L"Version:"));
-	m_btnMgr.setText(m_systemLblVersion, wfmt(L"%s",APP_VERSION).c_str() );
-	m_btnMgr.setText(m_systemLblVersionRev, wfmt(L"%i",ReV).c_str() );
-	m_btnMgr.setText(m_systemLblIOSTxt, _t("sys6", L"IOS:"));
-	m_btnMgr.setText(m_systemLblIOS, wfmt(_fmt("ios", L"%i v%i"), mainIOS, mainIOSRev).c_str(), true);
-	m_btnMgr.setText(m_systemLblIOSbase, wfmt(_fmt("base", L"Base %i"), m_loaded_ios_base).c_str(), true);
+	m_btnMgr.setText(m_systemLblVersionTxt, _t("sys2", L"WiiFlow Version:"));
+	m_btnMgr.setText(m_systemLblVersion, wfmt(L"%s r%s", APP_VERSION, SVN_REV).c_str());
+	m_btnMgr.setText(m_systemLblIOSTxt, _t("sys6", L"IOS Version:"));
+	m_btnMgr.setText(m_systemLblIOS, wfmt(L"%i v%i b%i", mainIOS, mainIOSRev, m_loaded_ios_base).c_str());
+	//m_btnMgr.setText(m_systemLblIOSbase, wfmt(_fmt("base", L"Base %i"), m_loaded_ios_base).c_str(), true);
 	m_btnMgr.setText(m_systemBtnBack, _t("sys3", L"Cancel"));
 	m_btnMgr.setText(m_systemBtnDownload, _t("sys4", L"Upgrade"));
 }

@@ -36,9 +36,20 @@ bool CFanart::load(const char *path, const char *id)
 	const char *dir = fmt("%s/%s", path, id);
 	STexture fanBg, fanBgLq;
 	
-	if (STexture::TE_OK == fanBg.fromPNGFile(sfmt("%s/background.png", dir).c_str(), GX_TF_RGBA8, ALLOC_MEM2))
+	STexture::TexErr texErr = fanBg.fromPNGFile(sfmt("%s/background.png", dir).c_str(), GX_TF_RGBA8, ALLOC_MEM2);
+	if (texErr == STexture::TE_ERROR)
+	{
+		dir = fmt("%s/%.3s", path, id);
+		texErr = fanBg.fromPNGFile(sfmt("%s/background.png", dir).c_str(), GX_TF_RGBA8, ALLOC_MEM2);
+	}
+
+	if (texErr == STexture::TE_OK)
 	{
 		m_cfg.load(sfmt("%s/%s.ini", dir, id).c_str());
+		if (!m_cfg.loaded())
+		{
+			m_cfg.load(sfmt("%s/%.3s.ini", dir, id).c_str());
+		}
 		fanBgLq.fromPNGFile(sfmt("%s/background_lq.png", dir).c_str(), GX_TF_RGBA8, ALLOC_MEM2);
 		
 		for (int i = 1; i <= 6; i++)
