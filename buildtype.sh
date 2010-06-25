@@ -2,7 +2,7 @@
 
 FILENAME=source/loader/alt_ios_gen.h
 GENERATE=0
-VERSION=222
+VERSION=249
 
 if [ ! -z "$1" ];
 then

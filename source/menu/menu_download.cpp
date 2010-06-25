@@ -737,7 +737,6 @@ int CMenu::_versionDownloaderInit(CMenu *m) //Handler to download new dol
 
 int CMenu::_versionDownloader() // code to download new dol
 {
-	// Original title downloader modified
 	block txt;
 	char ip[16];
 	wstringEx ws;
@@ -745,8 +744,9 @@ int CMenu::_versionDownloader() // code to download new dol
 	FILE *file;
 	u32 bufferSize = 1 * 0x400000;	// Maximum download size 4 MB
 
-	// check for existing file
-    ifstream filestr;
+	// check for existing dol
+    ofstream filestr;
+	gprintf("DOL Path: %s\n", m_dol.c_str());
     filestr.open(m_dol.c_str());
 
     if (filestr.fail())
@@ -805,7 +805,12 @@ int CMenu::_versionDownloader() // code to download new dol
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
 			LWP_MutexUnlock(m_mutex);			
-			
+			//Backup boot.dol and write new file.
+			char dol_backup[26];
+			strcpy(dol_backup, m_dol.c_str());
+			strcat(dol_backup, ".backup");
+			remove(dol_backup);
+			rename(m_dol.c_str(), dol_backup);
 			file = fopen(m_dol.c_str(), "wb");
 			if (file != NULL)
 			{
@@ -817,6 +822,7 @@ int CMenu::_versionDownloader() // code to download new dol
 			}
 			else
 			{
+				rename(dol_backup, m_dol.c_str());
 				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg15", L"Saving failed"), 1.f);
 				LWP_MutexUnlock(m_mutex);

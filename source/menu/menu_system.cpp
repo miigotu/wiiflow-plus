@@ -52,7 +52,7 @@ void CMenu::_system()
 			m_btnMgr.click();
 			if ((m_btnMgr.selected() == m_systemBtnDownload) && !m_thrdWorking)
 			{
-				// Download new version
+				// Download selected version
 				m_btnMgr.show(m_downloadPBar);
 				m_btnMgr.setProgress(m_downloadPBar, 0.f);
 				m_btnMgr.hide(m_systemLblVersionTxt);
@@ -99,6 +99,14 @@ void CMenu::_system()
 				m_btnMgr.hide(m_downloadLblMessage[msg], +400, 0, 1.f, 1.f);
 			}
 		}
+		//
+		if (m_showtimer > 0 && !m_thrdWorking)
+			if (--m_showtimer == 0 || m_showtimer == 0)
+			{
+				m_btnMgr.hide(m_downloadPBar);
+				m_btnMgr.hide(m_downloadLblMessage[0], 0, 0, -2.f, 0.f);
+				m_btnMgr.hide(m_downloadLblMessage[1], 0, 0, -2.f, 0.f);
+			}
 		_mainLoopCommon(wd, false, m_thrdWorking);
 		if (m_thrdStop && !m_thrdWorking)
 			break;
@@ -176,7 +184,7 @@ void CMenu::_textSystem(void)
 	m_btnMgr.setText(m_systemLblVersionTxt, _t("sys2", L"WiiFlow Version:"));
 	m_btnMgr.setText(m_systemLblVersion, wfmt(L"%s r%s", APP_VERSION, SVN_REV).c_str());
 	m_btnMgr.setText(m_systemLblIOSTxt, _t("sys6", L"IOS Version:"));
-	m_btnMgr.setText(m_systemLblIOS, wfmt(L"%i v%i b%i", mainIOS, mainIOSRev, m_loaded_ios_base).c_str());
+	m_btnMgr.setText(m_systemLblIOS, wfmt(L"%i v%i (%i)", mainIOS, mainIOSRev, m_loaded_ios_base).c_str());
 	//m_btnMgr.setText(m_systemLblIOSbase, wfmt(_fmt("base", L"Base %i"), m_loaded_ios_base).c_str(), true);
 	m_btnMgr.setText(m_systemBtnBack, _t("sys3", L"Cancel"));
 	m_btnMgr.setText(m_systemBtnDownload, _t("sys4", L"Upgrade"));
