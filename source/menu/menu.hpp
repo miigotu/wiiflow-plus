@@ -109,6 +109,7 @@ private:
 	u32 m_errorLblMessage;
 	u32 m_errorLblIcon;
 	u32 m_errorLblUser[4];
+//Main Coverflow
 	u32 m_mainBtnConfig;
 	u32 m_mainBtnInfo;
 	u32 m_mainBtnFavoritesOn;
@@ -124,6 +125,7 @@ private:
 	u32 m_mainBtnInit2;
 	u32 m_mainLblInit;
 	u32 m_mainLblUser[4];
+//Main Config menus
 	u32 m_configLblPage;
 	u32 m_configBtnPageM;
 	u32 m_configBtnPageP;
@@ -217,6 +219,7 @@ private:
 	u32 m_configSndBtnCFVolP;
 	u32 m_configSndBtnCFVolM;
 	u32 m_configSndLblUser[4];
+//Download menu
 	u32 m_downloadLblTitle;
 	u32 m_downloadPBar;
 	u32 m_downloadBtnCancel;
@@ -229,6 +232,12 @@ private:
 	u32 m_downloadLblGameTitles;
 	u32 m_downloadLblWiiTDB;
 	u32 m_downloadLblUser[4];
+	u32 m_downloadBtnVersion;
+	static int _versionDownloaderInit(CMenu *m);
+	static int _versionTxtDownloaderInit(CMenu *m);
+	int _versionDownloader();
+	int _versionTxtDownloader();
+//Game menu
 	u32 m_gameLblInfo;
 	u32 m_gameBtnFavoriteOn;
 	u32 m_gameBtnFavoriteOff;
@@ -244,7 +253,7 @@ private:
 	u32 m_codeBtnBack;
 	u32 m_codeBtnErase;
 	u32 m_codeLblUser[4];
-	//About menu
+//About menu
 	u32 m_aboutLblTitle;
 	u32 m_aboutLblOrigAuthor;
 	u32 m_aboutLblAuthor;
@@ -252,6 +261,7 @@ private:
 	u32 m_aboutLblUser[4];
 	u32 m_aboutLblIOS;
 	u32 m_aboutBtnSystem;
+//menu_wbfs
 	u32 m_wbfsLblTitle;
 	u32 m_wbfsPBar;
 	u32 m_wbfsBtnBack;
@@ -259,6 +269,7 @@ private:
 	u32 m_wbfsLblDialog;
 	u32 m_wbfsLblMessage;
 	u32 m_wbfsLblUser[4];
+//Theme Adjust menus
 	u32 m_cfThemeBtnAlt;
 	u32 m_cfThemeBtnSelect;
 	u32 m_cfThemeBtnWide;
@@ -273,6 +284,7 @@ private:
 	u32 m_cfThemeBtnValM[4 * 4];
 	u32 m_cfThemeBtnValP[4 * 4];
 	u32 m_cfThemeLblValTxt[4];
+//Game Settings menus
 	u32 m_gameSettingsLblPage;
 	u32 m_gameSettingsBtnPageM;
 	u32 m_gameSettingsBtnPageP;
@@ -321,8 +333,13 @@ private:
 	u32 m_gameSettingsLblReturnTo;
 	u32 m_gameSettingsLblCheat;
 	u32 m_gameSettingsBtnCheat;
-
-	//System Menu
+	u32 m_gameSettingsLblCategoryMain;
+	u32 m_gameSettingsBtnCategoryMain;
+	u32 m_gameSettingsLblCategory[12];
+	u32 m_gameSettingsBtnCategory[12];
+	u32 m_gameCategoryPage;
+	u32 m_gameSettingsPage;
+// System Menu
 	u32 m_systemBtnBack;
 	u32 m_systemLblTitle;
 	u32 m_systemLblVersionTxt;
@@ -335,8 +352,13 @@ private:
 	u32 m_systemLblIOSbase;
 	u32 m_systemLblUser[4];
 	u32 m_systemBtnDownload;
-	
-	//Cheat menu
+	u32 m_systemLblIosSelectVal;	
+	u32 m_systemBtnIosSelectM;	
+	u32 m_systemBtnIosSelectP;	
+	u32 m_systemLblVerSelectVal;	
+	u32 m_systemBtnVerSelectM;	
+	u32 m_systemBtnVerSelectP;	
+//Cheat menu
 	u32 m_cheatBtnBack;
 	u32 m_cheatBtnApply;
 	u32 m_cheatBtnDownload;
@@ -348,29 +370,14 @@ private:
 	u32 m_cheatBtnItem[6];
 	u32 m_cheatSettingsPage;
 	u32 m_cheatLblUser[5];
-
+	STexture m_cheatBg;
 	GCTCheats m_cheatfile;
-	// Category menu
+// Category menu
 	u32 m_categoryBtn[12];
 	u32 m_categoryBtnBack;
 	int m_max_categories;
 	int m_category;
-	STexture m_cheatBg;
-	// Game Settings menu::Categories
-	u32 m_gameCategoryPage;
-	u32 m_gameSettingsLblCategoryMain;
-	u32 m_gameSettingsBtnCategoryMain;
-	u32 m_gameSettingsLblCategory[12];
-	u32 m_gameSettingsBtnCategory[12];
-
-	// Download menu
-	u32 m_downloadBtnVersion;
-	static int _versionDownloaderInit(CMenu *m);
-	static int _versionTxtDownloaderInit(CMenu *m);
-	int _versionDownloader();
-	int _versionTxtDownloader();
-
-	 
+// Zones
 	SZone m_mainPrevZone;
 	SZone m_mainNextZone;
 	SZone m_mainButtonsZone;
@@ -380,9 +387,7 @@ private:
 	u32 m_padDownDelay;
 	u32 m_padRightDelay;
 	u32 m_padUpDelay;
-	 
-	u32 m_gameSettingsPage;
-	 
+
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;
 	volatile bool m_thrdWorking;
@@ -483,26 +488,13 @@ private:
 	void _initWBFSMenu(SThemeData &theme);
 	void _initCFThemeMenu(SThemeData &theme);
 	void _initGameSettingsMenu(SThemeData &theme);
-	//Cheat Menu
-	void _CheatSettings();
-	void _hideCheatSettings(bool instant = false);
-	void _showCheatSettings(void);
 	void _initCheatSettingsMenu(SThemeData &theme);
-	void _textCheatSettings(void);
-	
-	//Category Menu
-	void _CategorySettings();
-	void _hideCategorySettings(bool instant = false);
-	void _showCategorySettings(void);
 	void _initCategorySettingsMenu(SThemeData &theme);
-	void _textCategorySettings(void);
-	// System Menu
-	void _system(void);
-	void _hideSystem(bool instant = false);
-	void _showSystem(void);
-	void _textSystem(void);
 	void _initSystemMenu(SThemeData &theme);
-
+	//
+	void _textCategorySettings(void);
+	void _textCheatSettings(void);
+	void _textSystem(void);
 	void _textMain(void);
 	void _textError(void);
 	void _textYesNo(void);
@@ -519,6 +511,8 @@ private:
 	void _textAbout(void);
 	void _textWBFS(void);
 	void _textGameSettings(void);
+	//
+	void _hideCheatSettings(bool instant = false);
 	void _hideError(bool instant = false);
 	void _hideMain(bool instant = false);
 	void _hideConfig(bool instant = false);
@@ -535,6 +529,9 @@ private:
 	void _hideWBFS(bool instant = false);
 	void _hideCFTheme(bool instant = false);
 	void _hideGameSettings(bool instant = false);
+	void _hideCategorySettings(bool instant = false);
+	void _hideSystem(bool instant = false);
+	//
 	void _showError(void);
 	void _showMain(void);
 	void _showConfig(void);
@@ -548,6 +545,9 @@ private:
 	void _showDownload(void);
 	void _showCode(void);
 	void _showAbout(void);
+	void _showCategorySettings(void);
+	void _showCheatSettings(void);
+	void _showSystem(void);
 	void _showWBFS(WBFS_OP op);
 	void _showCFTheme(u32 curParam, int version, bool wide);
 	void _showGameSettings(void);
@@ -570,7 +570,11 @@ private:
 	void _about(void);
 	bool _wbfsOp(WBFS_OP op);
 	void _cfTheme(void);
+	void _system(void);
 	void _gameSettings(void);
+	void _CheatSettings();
+	void _CategorySettings();
+	//
 	void _mainLoopCommon(const WPADData *wd, bool withCF = false, bool blockReboot = false, bool adjusting = false);
 	// 
 	void _launch(const u64 chanTitle, const std::string &id);
@@ -626,7 +630,7 @@ private:
 	void _playGameSound(void);
 	void _loadGameSound(const u64 chantitle, const std::string &id);
 	void _waitForGameSoundExtract(void);
-	
+	//
 	static int _loadGameSoundThrd(CMenu *m);
 	// 
 	struct SOption { const char id[10]; const wchar_t text[16]; };

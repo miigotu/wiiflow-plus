@@ -21,8 +21,8 @@
 #define TAG_REGION		"region"
 #define TITLES_URL		"http://www.wiitdb.com/titles.txt?LANG=%s"
 //Need to use wiiflow.ini to set these still
-#define UPDATE_URL_VERSION	"http://wiiflow.googlecode.com/files/ver.txt"
-
+//#define UPDATE_URL_VERSION	"http://wiiflow.googlecode.com/files/ver.txt"
+#define UPDATE_URL_VERSION	"http://wiiflowbetas.no-ip.org/ver.txt"
 
 using namespace std;
 
@@ -705,14 +705,14 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 				{
 					// new version available
 					LWP_MutexLock(m_mutex);
-					_setThrdMsg(_t("dlmsg17", L"New update available!"), 1.f); // TODO: Check for 17
+					_setThrdMsg(_t("dlmsg19", L"New update available!"), 1.f);
 					LWP_MutexUnlock(m_mutex);
 				}
 				else
 				{
-					// new version available
+					// no new version available
 					LWP_MutexLock(m_mutex);
-					_setThrdMsg(_t("dlmsg17", L"No new updates found."), 1.f); // TODO: Check for 17
+					_setThrdMsg(_t("dlmsg17", L"No new updates found."), 1.f);
 					LWP_MutexUnlock(m_mutex);
 				}
 			}
@@ -743,7 +743,7 @@ int CMenu::_versionDownloader() // code to download new dol
 	SmartBuf buffer;
 	FILE *file;
 	u32 bufferSize = 1 * 0x400000;	// Maximum download size 4 MB
-
+	
 	// check for existing dol
     ofstream filestr;
 	gprintf("DOL Path: %s\n", m_dol.c_str());
