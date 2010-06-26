@@ -66,6 +66,12 @@ void CMenu::_system()
 				m_btnMgr.hide(m_systemLblIOSTxt);
 				m_btnMgr.hide(m_systemLblIOS);
 				m_btnMgr.hide(m_systemBtnDownload);
+				m_btnMgr.hide(m_systemLblVerSelectVal);
+				m_btnMgr.hide(m_systemBtnVerSelectM);
+				m_btnMgr.hide(m_systemBtnVerSelectP);
+				m_btnMgr.hide(m_systemLblIosSelectVal);
+				m_btnMgr.hide(m_systemBtnIosSelectM);
+				m_btnMgr.hide(m_systemBtnIosSelectP);
 				m_thrdStop = false;
 				m_thrdWorking = true;
 				m_update_url = "http://wiiflow.googlecode.com/svn/trunk/updates/boot.dol";
