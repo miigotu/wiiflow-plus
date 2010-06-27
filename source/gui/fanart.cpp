@@ -230,11 +230,8 @@ void CFanartElement::draw()
 
 	float w;
 	float h;
-	u8 alpha = m_alpha;
-	float scaleX = 1.f;
-	float scaleY = 1.f;
 	
-	if (alpha == 0 || scaleX == 0.f || scaleY == 0.f) // Nothing to draw here
+	if (m_event_alpha == 0 || m_event_scaleX == 0.f || m_event_scaleY == 0.f) // Nothing to draw here
 		return;
 
 	guMtxIdentity(idViewMtx);
@@ -256,22 +253,22 @@ void CFanartElement::draw()
 	
 	// Draw top left
 	GX_Position3f32(-w, -h, 0.f);
-	GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+	GX_Color4u8(0xFF, 0xFF, 0xFF, m_event_alpha);
 	GX_TexCoord2f32(0.f, 0.f);
 	
 	// Draw top right
 	GX_Position3f32(w, -h, 0.f);
-	GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+	GX_Color4u8(0xFF, 0xFF, 0xFF, m_event_alpha);
 	GX_TexCoord2f32(1.f, 0.f);
 	
 	// Draw bottom right
 	GX_Position3f32(w, h, 0.f);
-	GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+	GX_Color4u8(0xFF, 0xFF, 0xFF, m_event_alpha);
 	GX_TexCoord2f32(1.f, 1.f);
 	
 	// Draw bottom left
 	GX_Position3f32(-w, h, 0.f);
-	GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+	GX_Color4u8(0xFF, 0xFF, 0xFF, m_event_alpha);
 	GX_TexCoord2f32(0.f, 1.f);
 	GX_End();
 }

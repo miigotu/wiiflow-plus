@@ -12,6 +12,7 @@
 #include "pngu.h"
 #include "boxmesh.hpp"
 #include "wstringEx.hpp"
+#include "gecko.h"
 
 using namespace std;
 
@@ -74,11 +75,21 @@ static inline wchar_t upperCaseWChar(wchar_t c)
 bool CCoverFlow::CItem::operator<(const CCoverFlow::CItem &i) const
 {
 	u32 s = min(title.size(), i.title.size());
+	gprintf("Sorting '%s' and '%s'...", title.c_str(), i.title.c_str());
 	for (u32 k = 0; k < s; ++k)
+	{
 		if (upperCaseWChar(i.title[k]) < upperCaseWChar(title[k]))
+		{
+			gprintf("returning false\n");
 			return false;
+		}
 		else if (upperCaseWChar(i.title[k]) > upperCaseWChar(title[k]))
+		{
+			gprintf("returning true\n");
 			return true;
+		}
+	}
+	gprintf("returning diff in size\n");
 	return title.size() < i.title.size();
 }
 
