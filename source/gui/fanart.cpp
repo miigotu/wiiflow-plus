@@ -94,14 +94,10 @@ bool CFanart::hideCover(void)
 	bool retval = m_cfg.getBool("general", "hidecover", false);
 	if (!retval && m_cfg.getBool("general", "show_cover_after_animation", false)) // Show the cover after the animation is finished
 	{
-		retval = true;
 		for (u32 i = 0; i < m_elms.size(); ++i)
 		{
-			if (!m_elms[i].IsAnimationComplete())
-			{
-				retval = false;
-				break;
-			}
+			retval = !m_elms[i].IsAnimationComplete();
+			break;
 		}
 	}
 	return retval;
