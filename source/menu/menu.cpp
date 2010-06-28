@@ -91,17 +91,16 @@ void CMenu::init(bool fromHBC)
 	string themeName;
 	const char *drive = "sd";
 	const char *defaultLanguage;
-	string appdir = APPDATA_DIR2;
+	string appdir = APPDATA_DIR;
 
 	m_noHBC = !fromHBC;
 	m_waitMessage.fromPNG(wait_png);
 	// Data path
 	if (Fat_SDAvailable() && Fat_USBAvailable())
 	{		
-		//if (!m_cfg.load(sfmt("sd:/" APPDATA_DIR "/" CFG_FILENAME).c_str()))
 		if (!m_cfg.load(sfmt("sd:/%s/%s", appdir.c_str(),CFG_FILENAME).c_str()))
 		{
-				appdir = APPDATA_DIR;
+				appdir = APPDATA_DIR2;
 				m_cfg.load(sfmt("sd:/%s/%s", appdir.c_str(),CFG_FILENAME).c_str());
 		}
 		
@@ -111,11 +110,11 @@ void CMenu::init(bool fromHBC)
 	else
 		drive = Fat_USBAvailable() ? "usb" : "sd";
 	
-	appdir = APPDATA_DIR2;
+	appdir = APPDATA_DIR;
 	m_dataDir = sfmt("%s:/%s", drive,appdir.c_str());
 	if(!m_cfg.load(sfmt("%s/" CFG_FILENAME, m_dataDir.c_str()).c_str())) 
 	{
-			appdir = APPDATA_DIR;
+			appdir = APPDATA_DIR2;
 			m_dataDir = sfmt("%s:/%s", drive,appdir.c_str());
 			m_cfg.load(sfmt("%s/" CFG_FILENAME, m_dataDir.c_str()).c_str());
 	}
