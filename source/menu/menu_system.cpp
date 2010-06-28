@@ -13,8 +13,8 @@
 extern int mainIOS;
 extern int mainIOSRev;
 
-int ios_num = 0;
-int i;
+int ios_num = 0,version_num= 0,i;
+const int CMenu::_version[9] = {0, atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV)};
 
 class LockMutex
 {
@@ -29,7 +29,8 @@ void CMenu::_system()
 	s32 padsState;
 	WPADData *wd;
 	u32 btn;
-	int msg = 0;
+	int msg = 0,newIOS = mainIOS,newVer = atoi(SVN_REV);
+	gprintf("\nVersion to DL: %i\n", newVer);
 	lwp_t thread = 0;
 	wstringEx prevMsg;
 
@@ -80,7 +81,7 @@ void CMenu::_system()
 				m_btnMgr.setProgress(m_downloadPBar, 0.f);
 				m_thrdStop = false;
 				m_thrdWorking = true;
-				m_update_url = "http://wiiflow.googlecode.com/svn/trunk/updates/boot.dol";
+				m_update_url = fmt("http://wiiflow.googlecode.com/svn/trunk/updates/r%i/%i_boot.dol", newVer, newIOS);
 				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_versionDownloaderInit, (void *)this, 0, 8192, 40);
 			}
 			else if (m_btnMgr.selected() == m_systemBtnBack)
@@ -97,7 +98,10 @@ void CMenu::_system()
 				else
 					ios_num = 5;
 				i = min((u32)ios_num, ARRAY_SIZE(CMenu::_ios) -1u);
-				m_btnMgr.setText(m_systemLblIosSelectVal, wstringEx(sfmt("%i", CMenu::_ios[i])));
+				{
+					m_btnMgr.setText(m_systemLblIosSelectVal, wstringEx(sfmt("%i", CMenu::_ios[i])));
+					newIOS = CMenu::_ios[i];
+				}
 			}
 			else if (m_btnMgr.selected() == m_systemBtnIosSelectP)
 			{
@@ -106,13 +110,34 @@ void CMenu::_system()
 				else
 					ios_num = 1;
 				i = min((u32)ios_num, ARRAY_SIZE(CMenu::_ios) -1u);
-				m_btnMgr.setText(m_systemLblIosSelectVal, wstringEx(sfmt("%i", CMenu::_ios[i])));
+				{
+					m_btnMgr.setText(m_systemLblIosSelectVal, wstringEx(sfmt("%i", CMenu::_ios[i])));
+					newIOS = CMenu::_ios[i];
+				}
 			}
 			else if (m_btnMgr.selected() == m_systemBtnVerSelectM)
 			{
+				if (version_num > 1)
+					--version_num;
+				else
+					version_num = 8;
+				i = min((u32)version_num, ARRAY_SIZE(CMenu::_version) -1u);
+				{
+					m_btnMgr.setText(m_systemLblVerSelectVal, wstringEx(sfmt("%i", CMenu::_version[i])));
+					newVer = CMenu::_version[i];
+				}
 			}
 			else if (m_btnMgr.selected() == m_systemBtnVerSelectP)
 			{
+				if (version_num < 8)
+					++version_num;
+				else
+					version_num = 1;
+				i = min((u32)version_num, ARRAY_SIZE(CMenu::_version) -1u);
+				{
+					m_btnMgr.setText(m_systemLblVerSelectVal, wstringEx(sfmt("%i", CMenu::_version[i])));
+					newVer = CMenu::_version[i];
+				}
 			}
 		}
 		if (Sys_Exiting())
@@ -243,7 +268,11 @@ void CMenu::_textSystem(void)
 	m_btnMgr.setText(m_systemLblIOS, wfmt(L"%i v%i (%i)", mainIOS, mainIOSRev, m_loaded_ios_base).c_str());
 	m_btnMgr.setText(m_systemBtnBack, _t("sys3", L"Cancel"));
 	m_btnMgr.setText(m_systemBtnDownload, _t("sys4", L"Upgrade"));
-	m_btnMgr.setText(m_systemLblVerSelectVal, wfmt(L"v%s", SVN_REV).c_str());//Temp show installed rev
+	i = min((u32)version_num, ARRAY_SIZE(CMenu::_version) -1u);
+	if (i == 0)
+		m_btnMgr.setText(m_systemLblVerSelectVal, wfmt(L"%i", atoi(SVN_REV)).c_str());
+	else
+		m_btnMgr.setText(m_systemLblVerSelectVal, wstringEx(sfmt("%i", CMenu::_version[i])));
 	i = min((u32)ios_num, ARRAY_SIZE(CMenu::_ios) -1u);
 	if (i == 0)
 		m_btnMgr.setText(m_systemLblIosSelectVal, wfmt(L"%i", mainIOS).c_str());
