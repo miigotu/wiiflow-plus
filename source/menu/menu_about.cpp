@@ -19,7 +19,6 @@ void CMenu::_about(void)
 {
 	s32 padsState;
 	u32 btn;
-	lwp_t thread = 0;
 	WPADData *wd;
 
 	WPAD_Rumble(WPAD_CHAN_0, 0);
@@ -38,16 +37,9 @@ void CMenu::_about(void)
 			if (m_btnMgr.selected() == m_aboutBtnSystem) {
 				// show system menu
 				_hideAbout(false);
-				m_showtimer = 240;
-				m_btnMgr.show(m_downloadPBar);
-				m_btnMgr.setProgress(m_downloadPBar, 0.f);
-				m_thrdStop = false;
-				m_thrdWorking = true;
-				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_versionTxtDownloaderInit, (void *)this, 0, 8192, 40);
 				_system();
 				remove(m_ver.c_str());
 				_showAbout();
-				
 			}
 		}
 		_mainLoopCommon(wd);

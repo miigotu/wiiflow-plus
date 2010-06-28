@@ -21,8 +21,7 @@
 #define TAG_REGION		"region"
 #define TITLES_URL		"http://www.wiitdb.com/titles.txt?LANG=%s"
 //Need to use wiiflow.ini to set these still
-//#define UPDATE_URL_VERSION	"http://wiiflow.googlecode.com/files/ver.txt"
-#define UPDATE_URL_VERSION	"http://wiiflowbetas.no-ip.org/ver.txt"
+#define UPDATE_URL_VERSION	"http://wiiflow.googlecode.com/svn/trunk/versions.txt"
 
 using namespace std;
 

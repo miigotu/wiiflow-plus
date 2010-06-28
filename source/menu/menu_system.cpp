@@ -29,22 +29,38 @@ void CMenu::_system()
 	s32 padsState;
 	WPADData *wd;
 	u32 btn;
-	lwp_t thread = 0;
 	int msg = 0;
+	lwp_t thread = 0;
 	wstringEx prevMsg;
 
 	WPAD_Rumble(WPAD_CHAN_0, 0);
-	_showSystem();
 	m_btnMgr.setText(m_systemBtnBack, _t("dl1", L"Cancel"));
 	m_thrdStop = false;
 	m_thrdMessageAdded = false;
-
+	m_showtimer = -1;
 	while (true)
 	{
 		WPAD_ScanPads();
 		padsState = WPAD_ButtonsDown(0);
 		wd = WPAD_Data(0);
 		btn = _btnRepeat(wd->btns_h);
+		if (m_showtimer == -1)
+		{
+			m_showtimer = 150;
+			m_btnMgr.show(m_downloadPBar);
+			m_btnMgr.setProgress(m_downloadPBar, 0.f);
+			m_thrdStop = false;
+			m_thrdWorking = true;
+			LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_versionTxtDownloaderInit, (void *)this, 0, 8192, 40);
+		}
+		if (m_showtimer > 0 && !m_thrdWorking)
+			if (--m_showtimer == 0)
+			{
+				m_btnMgr.hide(m_downloadPBar);
+				m_btnMgr.hide(m_downloadLblMessage[0], 0, 0, -2.f, 0.f);
+				m_btnMgr.hide(m_downloadLblMessage[1], 0, 0, -2.f, 0.f);
+				_showSystem();
+			}
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0 && !m_thrdWorking)
 			break;
 		if (wd->ir.valid)
@@ -59,19 +75,9 @@ void CMenu::_system()
 			if ((m_btnMgr.selected() == m_systemBtnDownload) && !m_thrdWorking)
 			{
 				// Download selected version
+				_hideSystem();
 				m_btnMgr.show(m_downloadPBar);
 				m_btnMgr.setProgress(m_downloadPBar, 0.f);
-				m_btnMgr.hide(m_systemLblVersionTxt);
-				m_btnMgr.hide(m_systemLblVersion);
-				m_btnMgr.hide(m_systemLblIOSTxt);
-				m_btnMgr.hide(m_systemLblIOS);
-				m_btnMgr.hide(m_systemBtnDownload);
-				m_btnMgr.hide(m_systemLblVerSelectVal);
-				m_btnMgr.hide(m_systemBtnVerSelectM);
-				m_btnMgr.hide(m_systemBtnVerSelectP);
-				m_btnMgr.hide(m_systemLblIosSelectVal);
-				m_btnMgr.hide(m_systemBtnIosSelectM);
-				m_btnMgr.hide(m_systemBtnIosSelectP);
 				m_thrdStop = false;
 				m_thrdWorking = true;
 				m_update_url = "http://wiiflow.googlecode.com/svn/trunk/updates/boot.dol";
@@ -134,24 +140,10 @@ void CMenu::_system()
 				m_btnMgr.hide(m_downloadLblMessage[msg], +400, 0, 1.f, 1.f);
 			}
 		}
-		//
-		if (m_showtimer > 0 && !m_thrdWorking)
-			if (--m_showtimer == 0 || m_showtimer == 0)
-			{
-				m_btnMgr.hide(m_downloadPBar);
-				m_btnMgr.hide(m_downloadLblMessage[0], 0, 0, -2.f, 0.f);
-				m_btnMgr.hide(m_downloadLblMessage[1], 0, 0, -2.f, 0.f);
-				m_btnMgr.show(m_systemLblVerSelectVal);
-				m_btnMgr.show(m_systemBtnVerSelectM);
-				m_btnMgr.show(m_systemBtnVerSelectP);
-				m_btnMgr.show(m_systemLblIosSelectVal);
-				m_btnMgr.show(m_systemBtnIosSelectM);
-				m_btnMgr.show(m_systemBtnIosSelectP);
-				m_btnMgr.show(m_systemBtnDownload);
-			}
 		_mainLoopCommon(wd, false, m_thrdWorking);
 		if (m_thrdStop && !m_thrdWorking)
 			break;
+
 	}
 	WPAD_Rumble(WPAD_CHAN_0, 0);
 	_hideSystem();
@@ -169,15 +161,15 @@ void CMenu::_hideSystem(bool instant)
 	m_btnMgr.hide(m_downloadPBar, instant);
 	m_btnMgr.hide(m_downloadLblMessage[0], 0, 0, -2.f, 0.f, instant);
 	m_btnMgr.hide(m_downloadLblMessage[1], 0, 0, -2.f, 0.f, instant);
-	for (u32 i = 0; i < ARRAY_SIZE(m_systemLblUser); ++i)
-		if (m_systemLblUser[i] != -1u)
-			m_btnMgr.hide(m_systemLblUser[i], instant);
 	m_btnMgr.hide(m_systemLblVerSelectVal);
 	m_btnMgr.hide(m_systemBtnVerSelectM);
 	m_btnMgr.hide(m_systemBtnVerSelectP);
 	m_btnMgr.hide(m_systemLblIosSelectVal);
 	m_btnMgr.hide(m_systemBtnIosSelectM);
 	m_btnMgr.hide(m_systemBtnIosSelectP);
+	for (u32 i = 0; i < ARRAY_SIZE(m_systemLblUser); ++i)
+		if (m_systemLblUser[i] != -1u)
+			m_btnMgr.hide(m_systemLblUser[i], instant);
 }
 
 void CMenu::_showSystem(void)
@@ -189,7 +181,13 @@ void CMenu::_showSystem(void)
 	m_btnMgr.show(m_systemLblIOSTxt);
 	m_btnMgr.show(m_systemLblIOS);
 	m_btnMgr.show(m_systemBtnBack);
-
+	m_btnMgr.show(m_systemLblVerSelectVal);
+	m_btnMgr.show(m_systemBtnVerSelectM);
+	m_btnMgr.show(m_systemBtnVerSelectP);
+	m_btnMgr.show(m_systemLblIosSelectVal);
+	m_btnMgr.show(m_systemBtnIosSelectM);
+	m_btnMgr.show(m_systemBtnIosSelectP);
+	m_btnMgr.show(m_systemBtnDownload);
 	for (u32 i = 0; i < ARRAY_SIZE(m_systemLblUser); ++i)
 		if (m_systemLblUser[i] != -1u)
 			m_btnMgr.show(m_systemLblUser[i]);
@@ -252,4 +250,3 @@ void CMenu::_textSystem(void)
 	else
 		m_btnMgr.setText(m_systemLblIosSelectVal, wstringEx(sfmt("%i", CMenu::_ios[i])));
 }
-
