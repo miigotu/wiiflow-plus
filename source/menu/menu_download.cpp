@@ -805,7 +805,7 @@ int CMenu::_versionDownloader() // code to download new dol
 			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
 			LWP_MutexUnlock(m_mutex);			
 			//Backup boot.dol and write new file.
-			char dol_backup[26];
+			char dol_backup[33];
 			strcpy(dol_backup, m_dol.c_str());
 			strcat(dol_backup, ".backup");
 			remove(dol_backup);
