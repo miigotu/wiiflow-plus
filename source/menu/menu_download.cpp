@@ -744,7 +744,7 @@ int CMenu::_versionDownloader() // code to download new dol
 	u32 bufferSize = 1 * 0x400000;	// Maximum download size 4 MB
 	
 	// check for existing dol
-    ofstream filestr;
+    ifstream filestr;
 	gprintf("DOL Path: %s\n", m_dol.c_str());
     filestr.open(m_dol.c_str());
 
