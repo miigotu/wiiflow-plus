@@ -96,8 +96,11 @@ bool CFanart::hideCover(void)
 	{
 		for (u32 i = 0; i < m_elms.size(); ++i)
 		{
-			retval = !m_elms[i].IsAnimationComplete();
-			break;
+			if (!m_elms[i].IsAnimationComplete())
+			{
+				retval = true;
+				break;
+			}
 		}
 	}
 	return retval;
