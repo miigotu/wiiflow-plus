@@ -50,6 +50,7 @@ private:
 	Config m_cfg;
 	Config m_loc;
 	Config m_theme;
+	Config m_version;
 	Channels m_channels;
 	SmartBuf m_music;
 	int m_aa;
@@ -639,7 +640,7 @@ private:
 	static const SOption _vidModePatch[4];
 	static const SOption _hooktype[8];
 	static const int _ios[6];
-	static const int _version[9];
+	static int _version[9];
 	static const SCFParamDesc _cfParams[];
 	static const int _nbCfgPages;
 };

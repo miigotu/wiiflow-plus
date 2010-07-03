@@ -7,14 +7,11 @@
 #include "loader/wbfs.h"
 #include "gecko.h"
 
-#define TAG_IOS	"ios"
-#define TAG_REV	"rev"
-
 extern int mainIOS;
 extern int mainIOSRev;
 
-int ios_num = 0,version_num= 0,i;
-const int CMenu::_version[9] = {0, atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV)};
+int ios_num = 0,version_num= 0, num_versions = 0, i;
+int CMenu::_version[9] = {0, atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV)};
 
 class LockMutex
 {
@@ -30,7 +27,6 @@ void CMenu::_system()
 	WPADData *wd;
 	u32 btn;
 	int msg = 0,newIOS = mainIOS,newVer = atoi(SVN_REV);
-	gprintf("\nVersion to DL: %i\n", newVer);
 	lwp_t thread = 0;
 	wstringEx prevMsg;
 
@@ -60,6 +56,14 @@ void CMenu::_system()
 				m_btnMgr.hide(m_downloadPBar);
 				m_btnMgr.hide(m_downloadLblMessage[0], 0, 0, -2.f, 0.f);
 				m_btnMgr.hide(m_downloadLblMessage[1], 0, 0, -2.f, 0.f);
+				CMenu::_version[1] = m_version.getInt("GENERAL", "latestversion", atoi(SVN_REV));
+				num_versions = m_version.getInt("GENERAL", "num_versions", 1);
+				for (i = 2; i < num_versions; i++)
+				{
+					CMenu::_version[i] = m_version.getInt(fmt("VERSION%i", i-1u), "version", atoi(SVN_REV));
+					//add the changelog info here
+				}
+				if (num_versions !=1) version_num++;
 				_showSystem();
 			}
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0 && !m_thrdWorking)
@@ -81,6 +85,7 @@ void CMenu::_system()
 				m_btnMgr.setProgress(m_downloadPBar, 0.f);
 				m_thrdStop = false;
 				m_thrdWorking = true;
+				gprintf("\nVersion to DL: %i\n", newVer);
 				m_update_url = fmt("http://wiiflow.googlecode.com/svn/trunk/updates/r%i/%i_boot.dol", newVer, newIOS);
 				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_versionDownloaderInit, (void *)this, 0, 8192, 40);
 			}
@@ -120,7 +125,7 @@ void CMenu::_system()
 				if (version_num > 1)
 					--version_num;
 				else
-					version_num = 8;
+					version_num = num_versions;
 				i = min((u32)version_num, ARRAY_SIZE(CMenu::_version) -1u);
 				{
 					m_btnMgr.setText(m_systemLblVerSelectVal, wstringEx(sfmt("%i", CMenu::_version[i])));
@@ -129,7 +134,7 @@ void CMenu::_system()
 			}
 			else if (m_btnMgr.selected() == m_systemBtnVerSelectP)
 			{
-				if (version_num < 8)
+				if (version_num < num_versions)
 					++version_num;
 				else
 					version_num = 1;

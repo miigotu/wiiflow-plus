@@ -675,8 +675,9 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 
 		m_thrdStep = 0.2f;
 		m_thrdStepLen = 0.9f - 0.2f;
-		txt = downloadfile(buffer.get(), bufferSize, UPDATE_URL_VERSION,CMenu::_downloadProgress, this);
-		if (txt.data == 0 || txt.size < 4 || txt.data[0] != 'v')
+		gprintf("TXT update URL: %s\n\n", m_cfg.getString(" GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str());
+		txt = downloadfile(buffer.get(), bufferSize, m_cfg.getString(" GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str(),CMenu::_downloadProgress, this);
+		if (txt.data == 0 || txt.size < 19)
 		{
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg16", L"No version information found"), 1.f); // TODO: Check for 16
@@ -698,7 +699,8 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 				// version file valid, check for version with SVN_REV
 				int svnrev = atoi(SVN_REV);
 				gprintf("Installed Version: %d\n", svnrev);
-				int rev = (txt.data[1]-'0') * 1000 + (txt.data[2]-'0') * 100 + (txt.data[3]-'0') * 10 + (txt.data[4]-'0');
+				m_version.load(m_ver.c_str());
+				int rev = m_version.getInt("GENERAL", "latestversion", 0);
 				gprintf("Latest available Version: %d\n", rev);
 				if (svnrev < rev)
 				{
