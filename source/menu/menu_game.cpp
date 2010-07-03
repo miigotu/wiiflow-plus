@@ -182,9 +182,9 @@ void CMenu::_game(bool launch)
 			break;
 		if (wd->ir.valid)
 			m_btnMgr.mouse(wd->ir.x - m_cur.width() / 2, wd->ir.y - m_cur.height() / 2);
-		else if ((padsState & WPAD_BUTTON_UP) != 0)
+		else if ((btn & WPAD_BUTTON_UP) != 0)
 			m_btnMgr.up();
-		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
+		else if ((btn & WPAD_BUTTON_DOWN) != 0)
 			m_btnMgr.down();
 		if ((padsState & WPAD_BUTTON_UP) != 0)
 		{
@@ -283,15 +283,15 @@ void CMenu::_game(bool launch)
 			else if (m_cf.mouseOver(m_vid, m_cur.x(), m_cur.y()))
 				m_cf.flip();
 		}
-		if ((padsState & (WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT | WPAD_BUTTON_MINUS | WPAD_BUTTON_PLUS)) != 0)
+		if ((padsState & (WPAD_BUTTON_MINUS | WPAD_BUTTON_PLUS)) != 0 || (btn & (WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT)))
 		{
 			if ((padsState & WPAD_BUTTON_MINUS) != 0)
 				m_cf.up();
-			else if ((padsState & WPAD_BUTTON_LEFT) != 0)
+			else if ((btn & WPAD_BUTTON_LEFT) != 0)
 				m_cf.left();
 			else if ((padsState & WPAD_BUTTON_PLUS) != 0)
 				m_cf.down();
-			else // ((padsState & WPAD_BUTTON_RIGHT) != 0)
+			else if ((btn & WPAD_BUTTON_RIGHT) != 0)
 				m_cf.right();
 			_showGame();
 			_playGameSound();

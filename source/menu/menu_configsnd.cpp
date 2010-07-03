@@ -108,13 +108,13 @@ int CMenu::_configSnd(void)
 		}
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16 && (repeatButton % 2 == 0))
 			padsState |= WPAD_BUTTON_A;
-		if ((padsState & WPAD_BUTTON_MINUS) != 0 || ((padsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageM))
+		if ((btn & WPAD_BUTTON_LEFT) != 0 || (padsState & WPAD_BUTTON_MINUS) != 0 || ((padsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageM))
 		{
 			nextPage = max(1, m_locked ? 1 : g_curPage - 1);
 			m_btnMgr.click(m_configBtnPageM);
 			break;
 		}
-		if (!m_locked && ((padsState & WPAD_BUTTON_PLUS) != 0 || ((padsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageP)))
+		if (!m_locked && ((btn & WPAD_BUTTON_RIGHT) != 0 || (padsState & WPAD_BUTTON_PLUS) != 0 || ((padsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageP)))
 		{
 			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
 			m_btnMgr.click(m_configBtnPageP);

@@ -343,14 +343,14 @@ void CMenu::_gameSettings(void)
 			m_btnMgr.up();
 		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
 			m_btnMgr.down();
-		if ((padsState & WPAD_BUTTON_MINUS) != 0)
+		if ((padsState & WPAD_BUTTON_MINUS) != 0 || (btn & WPAD_BUTTON_LEFT) != 0)
 		{
 			if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 5) || m_gameSettingsPage > 51)
 				--m_gameSettingsPage;
 			_showGameSettings();
 			m_btnMgr.click(m_gameSettingsBtnPageM);
 		}
-		else if ((padsState & WPAD_BUTTON_PLUS) != 0)
+		else if ((padsState & WPAD_BUTTON_PLUS) != 0 || (btn & WPAD_BUTTON_RIGHT) != 0)
 		{
 			if (m_gameSettingsPage < 4 || (m_gameSettingsPage > 4 && m_gameSettingsPage < 53 && m_max_categories > 8)
 				|| (m_gameSettingsPage > 4 && m_gameSettingsPage < 52 && m_max_categories > 4))
