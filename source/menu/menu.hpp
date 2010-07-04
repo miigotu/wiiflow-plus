@@ -353,6 +353,7 @@ private:
 	u32 m_systemLblIOSbase;
 	u32 m_systemLblUser[4];
 	u32 m_systemBtnDownload;
+	u32 m_systemLblInfo;
 	u32 m_systemLblIosSelectVal;	
 	u32 m_systemBtnIosSelectM;	
 	u32 m_systemBtnIosSelectP;	

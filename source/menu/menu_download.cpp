@@ -321,7 +321,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
-		_setThrdMsg(L"Not enough memory", 1.f);
+		_setThrdMsg(L"Not enough memory!", 1.f);
 		LWP_MutexUnlock(m_mutex);
 		m_thrdWorking = false;
 		return 0;
@@ -368,7 +368,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 		if (!m_networkInit && _initNetwork(ip) < 0)
 		{
 			LWP_MutexLock(m_mutex);
-			_setThrdMsg(_t("dlmsg2", L"Network initialization failed"), 1.f);
+			_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
 			LWP_MutexUnlock(m_mutex);
 			m_thrdWorking = false;
 			return 0;
@@ -658,7 +658,7 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 	if (!m_networkInit && _initNetwork(ip) < 0)
 	{
 		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg2", L"Network initialization failed"), 1.f);
+		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
 		LWP_MutexUnlock(m_mutex);
 	}
 	else
@@ -680,7 +680,7 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 		if (txt.data == 0 || txt.size < 19)
 		{
 			LWP_MutexLock(m_mutex);
-			_setThrdMsg(_t("dlmsg16", L"No version information found"), 1.f); // TODO: Check for 16
+			_setThrdMsg(_t("dlmsg16", L"No version information found."), 1.f); // TODO: Check for 16
 			LWP_MutexUnlock(m_mutex);
 		}
 		else
@@ -720,7 +720,7 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 			else
 			{
 				LWP_MutexLock(m_mutex);
-				_setThrdMsg(_t("dlmsg15", L"Saving failed"), 1.f);
+				_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
 				LWP_MutexUnlock(m_mutex);
 			}
 		}
@@ -753,7 +753,7 @@ int CMenu::_versionDownloader() // code to download new dol
     if (filestr.fail())
 	{
 		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg18", L"boot.dol not found at default path"), 1.f);
+		_setThrdMsg(_t("dlmsg18", L"boot.dol not found at default path!"), 1.f);
 		LWP_MutexUnlock(m_mutex);
 		m_thrdWorking = false;
 
@@ -765,7 +765,7 @@ int CMenu::_versionDownloader() // code to download new dol
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
-		_setThrdMsg(L"Not enough memory", 1.f);
+		_setThrdMsg(L"Not enough memory!", 1.f);
 		LWP_MutexUnlock(m_mutex);
 		m_thrdWorking = false;
 		return 0;
@@ -780,7 +780,7 @@ int CMenu::_versionDownloader() // code to download new dol
 	if (!m_networkInit && _initNetwork(ip) < 0)
 	{
 		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg2", L"Network initialization failed"), 1.f);
+		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
 		LWP_MutexUnlock(m_mutex);
 	}
 	else
@@ -797,7 +797,7 @@ int CMenu::_versionDownloader() // code to download new dol
 		if (txt.data == 0 || txt.size < 4000)
 		{
 			LWP_MutexLock(m_mutex);
-			_setThrdMsg(_t("dlmsg12", L"Download failed"), 1.f);
+			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
 			LWP_MutexUnlock(m_mutex);
 		}
 		else
@@ -825,7 +825,7 @@ int CMenu::_versionDownloader() // code to download new dol
 			{
 				rename(dol_backup, m_dol.c_str());
 				LWP_MutexLock(m_mutex);
-				_setThrdMsg(_t("dlmsg15", L"Saving failed"), 1.f);
+				_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
 				LWP_MutexUnlock(m_mutex);
 			}
 		}
@@ -878,7 +878,7 @@ int CMenu::_titleDownloader(bool missingOnly)
 	if (!m_networkInit && _initNetwork(ip) < 0)
 	{
 		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg2", L"Network initialization failed"), 1.f);
+		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
 		LWP_MutexUnlock(m_mutex);
 	}
 	else
@@ -893,7 +893,7 @@ int CMenu::_titleDownloader(bool missingOnly)
 		if (txt.data == 0 || txt.size < 42)
 		{
 			LWP_MutexLock(m_mutex);
-			_setThrdMsg(_t("dlmsg12", L"Download failed"), 1.f);
+			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
 			LWP_MutexUnlock(m_mutex);
 		}
 		else
@@ -930,7 +930,7 @@ int CMenu::_titleDownloader(bool missingOnly)
 			if (!ok)
 			{
 				LWP_MutexLock(m_mutex);
-				_setThrdMsg(_t("dlmsg16", L"Couldn't read file"), 1.f);
+				_setThrdMsg(_t("dlmsg16", L"Couldn't read file!"), 1.f);
 				LWP_MutexUnlock(m_mutex);
 			}
 		}

@@ -130,6 +130,13 @@ void CMenu::_system()
 				{
 					m_btnMgr.setText(m_systemLblVerSelectVal, wstringEx(sfmt("%i", CMenu::_version[i])));
 					newVer = CMenu::_version[i];
+					if (i > 1 && i != num_versions)
+						m_btnMgr.setText(m_systemLblInfo, m_version.getWString(sfmt("VERSION%i", i - 1u), "changes"));
+					else 
+						if (i == num_versions)
+							m_btnMgr.setText(m_systemLblInfo, _t("sys7", L"Installed Version."));	
+						else
+							m_btnMgr.setText(m_systemLblInfo, m_version.getWString("GENERAL", "changes"));	
 				}
 			}
 			else if (m_btnMgr.selected() == m_systemBtnVerSelectP)
@@ -142,6 +149,13 @@ void CMenu::_system()
 				{
 					m_btnMgr.setText(m_systemLblVerSelectVal, wstringEx(sfmt("%i", CMenu::_version[i])));
 					newVer = CMenu::_version[i];
+					if (i > 1 && i != num_versions)
+						m_btnMgr.setText(m_systemLblInfo, m_version.getWString(sfmt("VERSION%i", i - 1u), "changes"));
+					else 
+						if (i == num_versions)
+							m_btnMgr.setText(m_systemLblInfo, _t("sys7", L"Installed Version."));	
+						else
+							m_btnMgr.setText(m_systemLblInfo, m_version.getWString("GENERAL", "changes"));	
 				}
 			}
 		}
@@ -191,6 +205,7 @@ void CMenu::_hideSystem(bool instant)
 	m_btnMgr.hide(m_downloadPBar, instant);
 	m_btnMgr.hide(m_downloadLblMessage[0], 0, 0, -2.f, 0.f, instant);
 	m_btnMgr.hide(m_downloadLblMessage[1], 0, 0, -2.f, 0.f, instant);
+	m_btnMgr.hide(m_systemLblInfo);
 	m_btnMgr.hide(m_systemLblVerSelectVal);
 	m_btnMgr.hide(m_systemBtnVerSelectM);
 	m_btnMgr.hide(m_systemBtnVerSelectP);
@@ -211,6 +226,7 @@ void CMenu::_showSystem(void)
 	m_btnMgr.show(m_systemLblIOSTxt);
 	m_btnMgr.show(m_systemLblIOS);
 	m_btnMgr.show(m_systemBtnBack);
+	m_btnMgr.show(m_systemLblInfo);
 	m_btnMgr.show(m_systemLblVerSelectVal);
 	m_btnMgr.show(m_systemBtnVerSelectM);
 	m_btnMgr.show(m_systemBtnVerSelectP);
@@ -238,6 +254,7 @@ void CMenu::_initSystemMenu(CMenu::SThemeData &theme)
 	m_systemBtnDownload = _addButton(theme, "SYSTEM/DOWNLOAD_BTN", theme.btnFont, L"", 20, 410, 200, 56, theme.btnFontColor);
 	m_systemBtnBack = _addButton(theme, "SYSTEM/BACK_BTN", theme.btnFont, L"", 420, 410, 200, 56, theme.btnFontColor); 
 
+	m_systemLblInfo = _addLabel(theme, "SYSTEM/INFO", theme.lblFont, L"", 40, 210, 560, 180, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_systemLblVerSelectVal = _addLabel(theme, "SYSTEM/VER_SELECT_BTN", theme.btnFont, L"", 494, 80, 50, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_systemBtnVerSelectM = _addPicButton(theme, "SYSTEM/VER_SELECT_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 438, 80, 56, 56);
 	m_systemBtnVerSelectP = _addPicButton(theme, "SYSTEM/VER_SELECT_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 80, 56, 56);
@@ -253,6 +270,7 @@ void CMenu::_initSystemMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_systemLblIOSTxt, "SYSTEM/IOS_TXT", -100, 0, 0.f, 0.f);
 	_setHideAnim(m_systemLblIOS, "SYSTEM/IOS", 200, 0, 0.f, 0.f);
 
+	_setHideAnim(m_systemLblInfo, "SYSTEM/INFO", 0, -180, 1.f, -1.f);
 	_setHideAnim(m_systemLblVerSelectVal, "SYSTEM/VER_SELECT_BTN", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_systemBtnVerSelectM, "SYSTEM/VER_SELECT_MINUS", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_systemBtnVerSelectP, "SYSTEM/VER_SELECT_PLUS", 0, 0, 1.f, -1.f);
@@ -275,9 +293,20 @@ void CMenu::_textSystem(void)
 	m_btnMgr.setText(m_systemBtnDownload, _t("sys4", L"Upgrade"));
 	i = min((u32)version_num, ARRAY_SIZE(CMenu::_version) -1u);
 	if (i == 0)
+	{
 		m_btnMgr.setText(m_systemLblVerSelectVal, wfmt(L"%i", atoi(SVN_REV)).c_str());
+	}
 	else
+	{
 		m_btnMgr.setText(m_systemLblVerSelectVal, wstringEx(sfmt("%i", CMenu::_version[i])));
+		if (i > 1 && i != num_versions)
+			m_btnMgr.setText(m_systemLblInfo, m_version.getWString(sfmt("VERSION%i", i - 1u), "changes"));
+		else 
+			if (i == num_versions)
+				m_btnMgr.setText(m_systemLblInfo, _t("sys7", L"Installed Version."));	
+			else
+				m_btnMgr.setText(m_systemLblInfo, m_version.getWString("GENERAL", "changes"));		
+	}
 	i = min((u32)ios_num, ARRAY_SIZE(CMenu::_ios) -1u);
 	if (i == 0)
 		m_btnMgr.setText(m_systemLblIosSelectVal, wfmt(L"%i", mainIOS).c_str());
