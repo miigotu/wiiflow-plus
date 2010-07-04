@@ -2,14 +2,19 @@
 # TODO: Add changelog informations for each version
 [GENERAL]
 # First displayed version on selection button
-latestversion=79
+latestversion=82
+changes=Completed the Uploader! Miigotu
 # Number of versions available (number+latest+installed version)
 num_versions=5
-[VERSION1]
-version=15
-[VERSION2]
-version=25
+# Available versions descending, max 7 (+ latest + installed)
 [VERSION3]
+# changes=  release notes
+changes=lorem ipsum test content for 35
 version=35
-
+[VERSION2]
+changes=lorem ipsum test content for 25
+version=25
+[VERSION1]
+changes=lorem ipsum test content for 15
+version=15
 
