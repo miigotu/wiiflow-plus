@@ -12,7 +12,7 @@
 #include "pngu.h"
 #include "boxmesh.hpp"
 #include "wstringEx.hpp"
-#include "gecko.h"
+//#include "gecko.h"
 
 using namespace std;
 
@@ -75,21 +75,21 @@ static inline wchar_t upperCaseWChar(wchar_t c)
 bool CCoverFlow::CItem::operator<(const CCoverFlow::CItem &i) const
 {
 	u32 s = min(title.size(), i.title.size());
-	gprintf("Sorting '%s' and '%s'...", title.c_str(), i.title.c_str());
+	//gprintf("Sorting '%s' and '%s'...", title.c_str(), i.title.c_str());
 	for (u32 k = 0; k < s; ++k)
 	{
 		if (upperCaseWChar(i.title[k]) < upperCaseWChar(title[k]))
 		{
-			gprintf("returning false\n");
+			//gprintf("returning false\n");
 			return false;
 		}
 		else if (upperCaseWChar(i.title[k]) > upperCaseWChar(title[k]))
 		{
-			gprintf("returning true\n");
+			//gprintf("returning true\n");
 			return true;
 		}
 	}
-	gprintf("returning diff in size\n");
+	//gprintf("returning diff in size\n");
 	return title.size() < i.title.size();
 }
 
@@ -545,10 +545,10 @@ void CCoverFlow::setBlur(u32 blurResolution, u32 blurRadius, float blurFactor)
 	m_blurFactor = min(max(1.f, blurFactor), 2.f);
 }
 
-void CCoverFlow::setSorting(Sorting sorting)
+bool CCoverFlow::setSorting(Sorting sorting)
 {
 	m_sorting = sorting;
-	start();
+	return start();
 }
 
 void CCoverFlow::setSounds(const SSoundEffect &sound, const SSoundEffect &hoverSound, const SSoundEffect &selectSound, const SSoundEffect &cancelSound)
@@ -1666,6 +1666,15 @@ bool CCoverFlow::start(const char *id)
 {
 	if (m_items.empty())
 		return true;
+	// Sort items
+	if (m_sorting == SORT_ALPHA)
+		sort(m_items.begin(), m_items.end());
+	else if (m_sorting == SORT_PLAYCOUNT)
+		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByPlayCount);
+	else if (m_sorting == SORT_LASTPLAYED)
+		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByLastPlayed);
+	else if (m_sorting == SORT_GAMEID)
+		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByGameID);
 	// Load resident textures
 	if (STexture::TE_OK != m_dvdSkin.fromPNG(dvdskin_png))
 		return false;
@@ -1691,15 +1700,6 @@ bool CCoverFlow::start(const char *id)
 			if (STexture::TE_OK != m_noCoverTexture.fromPNG(flatnopic_png, GX_TF_CMPR, ALLOC_COVER, 32, 512))
 				return false;
 	}
-	// Sort items
-	if (m_sorting == SORT_ALPHA)
-		sort(m_items.begin(), m_items.end());
-	else if (m_sorting == SORT_PLAYCOUNT)
-		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByPlayCount);
-	else if (m_sorting == SORT_LASTPLAYED)
-		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByLastPlayed);
-	else if (m_sorting == SORT_GAMEID)
-		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByGameID);
 		
 	m_covers.clear();
 	m_covers.resize(m_range);

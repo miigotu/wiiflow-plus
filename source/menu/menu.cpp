@@ -916,10 +916,9 @@ void CMenu::_initCF(void)
 	cmpr = m_cfg.getBool(" GENERAL", "allow_texture_compression", true);
 	m_cf.setCompression(cmpr);
 	m_cf.setBufferSize(m_cfg.getInt(" GENERAL", "cover_buffer", 120));
-	if (m_cf.start())
+	if (m_cf.setSorting((Sorting)m_cfg.getInt(" GENERAL", "sort", 0)))
 		if (m_curGameId.empty() || !m_cf.findId(m_curGameId.c_str(), true))
 			m_cf.findId(m_cfg.getString(" GENERAL", "current_game").c_str(), true);
-	m_cf.setSorting((Sorting)m_cfg.getInt(" GENERAL", "sort", 0));
 }
 
 void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, bool adjusting)

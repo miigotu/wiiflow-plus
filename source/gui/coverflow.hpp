@@ -97,7 +97,7 @@ public:
 	void setRowAngles(bool selected, const Vector3D &top, const Vector3D &bottom);
 	void setCoverFlipping(const Vector3D &pos, const Vector3D &angle, const Vector3D &scale);
 	void setBlur(u32 blurResolution, u32 blurRadius, float blurFactor);
-	void setSorting(Sorting sorting);
+	bool setSorting(Sorting sorting);
 	// 
 	void setSounds(const SSoundEffect &sound, const SSoundEffect &hoverSound, const SSoundEffect &selectSound, const SSoundEffect &cancelSound);
 	void setSoundVolume(u8 vol);
