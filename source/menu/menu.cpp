@@ -119,7 +119,7 @@ void CMenu::init(bool fromHBC)
 			m_cfg.load(sfmt("%s/" CFG_FILENAME, m_dataDir.c_str()).c_str());
 	}
 	m_dol = sfmt("%s:/%s/boot.dol", drive, APPDATA_DIR2);
-	m_ver = sfmt("%s:/%s/versions.txt", drive, APPDATA_DIR2);
+	m_ver = sfmt("%s:/%s/versions", drive, APPDATA_DIR2);
 	
 	//
 	m_picDir = m_cfg.getString(" GENERAL", "dir_flat_covers", sfmt("%s:/%s/covers", drive, appdir.c_str()));
@@ -207,7 +207,7 @@ void CMenu::init(bool fromHBC)
 	m_locked = m_cfg.getString(" GENERAL", "parent_code", "").size() >= 4;
 	m_btnMgr.setRumble(m_cfg.getBool(" GENERAL", "rumble", true));
 	m_vid.set2DViewport(m_cfg.getInt(" GENERAL", "tv_width", 640), m_cfg.getInt(" GENERAL", "tv_height", 480),
-		m_cfg.getInt(" GENERAL", "tv_x", 0), m_cfg.getInt(" GENERAL", "tv_y", 0));
+	m_cfg.getInt(" GENERAL", "tv_x", 0), m_cfg.getInt(" GENERAL", "tv_y", 0));
 	Sys_ExitToWiiMenu(m_noHBC || m_cfg.getBool(" GENERAL", "exit_to_wii_menu", false));
 	LWP_MutexInit(&m_mutex, 0);
 	LWP_MutexInit(&m_gameSndMutex, 0);

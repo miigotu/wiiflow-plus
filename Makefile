@@ -165,8 +165,18 @@ beta249:
 	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 	@[ -d beta ] || mkdir -p beta
-	@cp $(OUTPUT).dol beta/249-beta-$(notdir $(CURDIR)).dol
-	@cp $(OUTPUT).elf beta/249-beta-$(notdir $(CURDIR)).elf
+	@cp $(OUTPUT).dol beta/249-boot.dol
+	@cp $(OUTPUT).elf beta/249-boot.elf
+	@cp $(BUILD)/*.map beta/
+
+#---------------------------------------------------------------------------------
+beta250:
+	@bash ./buildtype.sh 250
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@[ -d beta ] || mkdir -p beta
+	@cp $(OUTPUT).dol beta/250-boot.dol
+	@cp $(OUTPUT).elf beta/250-boot.elf
 	@cp $(BUILD)/*.map beta/
 
 #---------------------------------------------------------------------------------
@@ -175,12 +185,31 @@ beta222:
 	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 	@[ -d beta ] || mkdir -p beta
-	@cp $(OUTPUT).dol beta/222-beta-$(notdir $(CURDIR)).dol
-	@cp $(OUTPUT).elf beta/222-beta-$(notdir $(CURDIR)).elf
+	@cp $(OUTPUT).dol beta/222-boot.dol
+	@cp $(OUTPUT).elf beta/222-boot.elf
 	@cp $(BUILD)/*.map beta/
 
 #---------------------------------------------------------------------------------
-	
+beta223:
+	@bash ./buildtype.sh 223
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@[ -d beta ] || mkdir -p beta
+	@cp $(OUTPUT).dol beta/223-boot.dol
+	@cp $(OUTPUT).elf beta/223-boot.elf
+	@cp $(BUILD)/*.map beta/
+
+#---------------------------------------------------------------------------------
+beta224:
+	@bash ./buildtype.sh 224
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@[ -d beta ] || mkdir -p beta
+	@cp $(OUTPUT).dol beta/224-boot.dol
+	@cp $(OUTPUT).elf beta/224-boot.elf
+	@cp $(BUILD)/*.map beta/
+
+#---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol

@@ -269,11 +269,8 @@ int CMenu::main(void)
 				m_btnMgr.click();
 			if (m_btnMgr.selected() == m_mainBtnQuit) {
 				bool hbc = *((u32 *) 0x80001804) == 0x53545542 && *((u32 *) 0x80001808) == 0x48415858;
-				if (!hbc) { //!hbc) { // Add Priiloader exit magic
-					*(vu32*)0x8132FFFB = 0x50756e65;
-					DCFlushRange((void*)0x8132FFFB,4);
+				if (!hbc)
 					Sys_ExitToWiiMenu(true);
-				}
 				break;
 			}
 			else if (m_btnMgr.selected() == m_mainBtnChannel || m_btnMgr.selected() == m_mainBtnUsb)

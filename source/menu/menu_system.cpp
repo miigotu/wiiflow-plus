@@ -86,7 +86,7 @@ void CMenu::_system()
 				m_thrdStop = false;
 				m_thrdWorking = true;
 				gprintf("\nVersion to DL: %i\n", newVer);
-				m_update_url = fmt("http://wiiflow.googlecode.com/svn/trunk/updates/r%i/%i_boot.dol", newVer, newIOS);
+				m_update_url = fmt("%s/r%i/%i_boot.dol", m_version.getString("GENERAL", "update_url", "http://update.wiiflow.org").c_str(), newVer, newIOS);
 				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_versionDownloaderInit, (void *)this, 0, 8192, 40);
 			}
 			else if (m_btnMgr.selected() == m_systemBtnBack)

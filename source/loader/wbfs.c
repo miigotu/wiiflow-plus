@@ -728,6 +728,7 @@ s32 WBFS_GetPartitionName(u32 index, char *buf) {
 			case FS_TYPE_WBFS: snprintf(buf, 6, "WBFS%d", plist.pinfo[index].wbfs_i); break;
 			case FS_TYPE_NTFS: snprintf(buf, 6, "NTFS%d", plist.pinfo[index].ntfs_i); break;
 			case FS_TYPE_FAT32: snprintf(buf, 6, "FAT%d", plist.pinfo[index].fat_i); break;
+			case FS_TYPE_FAT16: snprintf(buf, 6, "FAT%d", plist.pinfo[index].fat_i); break;
 			default: return -1;
 		}
 	} else {

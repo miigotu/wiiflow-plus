@@ -21,7 +21,7 @@
 #define TAG_REGION		"region"
 #define TITLES_URL		"http://www.wiitdb.com/titles.txt?LANG=%s"
 //Need to use wiiflow.ini to set these still
-#define UPDATE_URL_VERSION	"http://wiiflow.googlecode.com/svn/trunk/versions.txt"
+#define UPDATE_URL_VERSION	"http://update.wiiflow.org/txt/versions.txt"
 
 using namespace std;
 
@@ -664,11 +664,8 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 	else
 	{
 		m_networkInit = true;
-		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg18", L"Downloading Info..."), 0.1f); // TODO: check for 18
-		LWP_MutexUnlock(m_mutex);
-		
-		// Load actual file
+
+		// DLoad txt file
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg11", L"Downloading..."), 0.2f);
 		LWP_MutexUnlock(m_mutex);
@@ -680,7 +677,7 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 		if (txt.data == 0 || txt.size < 19)
 		{
 			LWP_MutexLock(m_mutex);
-			_setThrdMsg(_t("dlmsg16", L"No version information found."), 1.f); // TODO: Check for 16
+			_setThrdMsg(_t("dlmsg20", L"No version information found."), 1.f); // TODO: Check for 16
 			LWP_MutexUnlock(m_mutex);
 		}
 		else

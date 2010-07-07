@@ -30,6 +30,15 @@ void Sys_Test(void)
 void Sys_ExitToWiiMenu(bool b)
 {
 	return_to_menu = b;
+	//magic word to force wii menu in priiloader.
+	if (b)
+	{
+		DCFlushRange((void*)0x8132fffb,4);
+		*(vu32*)0x8132fffb = 0x50756e65;
+	}
+	else
+		DCFlushRange((void*)0x8132fffb,4);
+	
 }
 
 void Sys_Exit(int ret)
