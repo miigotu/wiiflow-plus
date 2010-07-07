@@ -3,7 +3,7 @@
 #define __MENU_HPP
 
 #define APP_NAME		"WiiFlow"
-#define APP_VERSION		"2.0"
+#define APP_VERSION		"2.1"
 
 #include "cursor.hpp"
 #include "gui.hpp"

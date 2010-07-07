@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-	<app version="1.1">
+	<app version="2.1">
 		<name> WiiFlow</name>
 		<coder>Hibernatus</coder>
-		<version>1.1</version>
-		<release_date>04.10.2009</release_date>
+		<version>2.1</version>
+		<release_date>06.07.2010</release_date>
 		<short_description>USB Loader (IOS222)</short_description>
 		<long_description>WiiFlow is a GUI for USB Loader that can be installed on HDD or SD. If you have a FAT partition on your HDD, WiiFlow will always use it instead of your SD card. See the readme to learn how to give priority to an SD card.
 
