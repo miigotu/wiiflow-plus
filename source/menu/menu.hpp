@@ -332,6 +332,10 @@ private:
 	u32 m_gameSettingsLblDvdPatch;
 	u32 m_gameSettingsBtnReturnTo;
 	u32 m_gameSettingsLblReturnTo;
+	u32 m_gameSettingsLblDebugger;
+	u32 m_gameSettingsLblDebuggerV;
+	u32 m_gameSettingsBtnDebuggerP;
+	u32 m_gameSettingsBtnDebuggerM;
 	u32 m_gameSettingsLblCheat;
 	u32 m_gameSettingsBtnCheat;
 	u32 m_gameSettingsLblCategoryMain;

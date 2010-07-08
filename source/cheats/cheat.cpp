@@ -92,7 +92,15 @@ void CMenu::_CheatSettings() {
 				++m_cheatSettingsPage;
 			_showCheatSettings();
 			m_btnMgr.click(m_cheatBtnPageP);
-		}		
+		}
+		else if ((wd->btns_h & WPAD_BUTTON_2) && (wd->btns_h & WPAD_BUTTON_1)!=0)
+		{
+			remove(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str()));
+			remove(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));
+			m_cfg.remove(m_cf.getId(), "cheat");
+			m_cfg.remove(m_cf.getId(), "hooktype");
+			break;
+		}
 		if ((padsState & WPAD_BUTTON_A) != 0)
 		{
 			m_btnMgr.click();
@@ -147,7 +155,6 @@ void CMenu::_CheatSettings() {
 				m_cheatfile.createTXT(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));
 				break;
 			}
-
 			if (m_btnMgr.selected() == m_cheatBtnDownload)
 			{
 				// Download cheat code

@@ -1,15 +1,8 @@
 [GENERAL]
 update_url=http://update.wiiflow.org
-latestversion=85
-changes=Wiiflow 2.1 release (r83)\nCompleted the Updater.\nFix various bugs since v2.0\nAdd sorting functions by B+DOWN\nAdd Partition selection by B+UP\n
-num_versions=2
-[METAXML]
-metaxml1=<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<app version="
-metaxml2=">\n<name>WiiFlow</name>\n<version>
-metaxml3=</version>\n<release_date>
-metaxml4=</release_date>\n<coder>r-win, Miigotu, Hulk, ...</coder>\n
-metaxml5=<short_description>USB Backup Loader</short_description>\n
-metaxml6=<long_description>Play Wii Backups from USB harddrive\n
-metaxml7=Based on WiiFlow 1.1 by Hibernatus\n
-metaxml8=Waninkoko cIOS 249/250 and Hermes cIOS 222/223/224 supported\n
-metaxml9=USE AT YOUR OWN RISK!\n</long_description>\n</app>
+latestversion=88
+changes=Ability to delete cheat txt files by holding 1+2 in cheat menu\nAdd page 5 to game settings\nAdd option to set Debugger type in game settings\nNew lang string "gecko"\nRemoved some game settings from ini if they are default\nChange System Button to say Update
+num_versions=3
+[VERSION1]
+version=86
+changes=Wiiflow 2.1 release (r86)\nCompleted the Updater.\nFix various bugs since v2.0\nAdd sorting functions by B+DOWN\nAdd Partition selection by B+UP\n

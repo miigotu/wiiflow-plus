@@ -101,7 +101,7 @@ void CMenu::_initAboutMenu(CMenu::SThemeData &theme)
 
 void CMenu::_textAbout(void)
 {
-	m_btnMgr.setText(m_aboutBtnSystem, _t("sys1", L"System"));
+	m_btnMgr.setText(m_aboutBtnSystem, _t("sys4", L"Update"));
 	m_btnMgr.setText(m_aboutLblTitle, wfmt(_fmt("appname", L"%s v%s r%s"), APP_NAME, APP_VERSION, SVN_REV), true);
 	m_btnMgr.setText(m_aboutLblOrigAuthor, wfmt(_fmt("about1", L"Loader by %s"), LOADER_AUTHOR), true);
 	m_btnMgr.setText(m_aboutLblAuthor, wfmt(_fmt("about2", L"GUI by %s"), GUI_AUTHOR), true);

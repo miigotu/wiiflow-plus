@@ -43,7 +43,7 @@ void CMenu::_system()
 		btn = _btnRepeat(wd->btns_h);
 		if (m_showtimer == -1)
 		{
-			m_showtimer = 150;
+			m_showtimer = 120;
 			m_btnMgr.show(m_downloadPBar);
 			m_btnMgr.setProgress(m_downloadPBar, 0.f);
 			m_thrdStop = false;
