@@ -1,8 +1,11 @@
 [GENERAL]
 update_url=http://update.wiiflow.org
-latestversion=88
-changes=Ability to delete cheat txt files by holding 1+2 in cheat menu\nAdd page 5 to game settings\nAdd option to set Debugger type in game settings\nNew lang string "gecko"\nRemoved some game settings from ini if they are default\nChange System Button to say Update
-num_versions=3
+num_versions=4
+latestversion=89
+changes=**BETA**/*nFixed downloader bug sometimes DL wrong version.\n*Wiiflow now exits after successful update\nto boot new version.
 [VERSION1]
+version=88
+changes=**BETA**\nAbility to delete cheat txt files by holding 1+2 in cheat menu\nAdd option to set Debugger type in game settings\nNew lang string "gecko"\nRemoved some game settings from ini if they are default\nChange System Button to say Update
+[VERSION2]
 version=86
 changes=Wiiflow 2.1 release (r86)\nCompleted the Updater.\nFix various bugs since v2.0\nAdd sorting functions by B+DOWN\nAdd Partition selection by B+UP\n

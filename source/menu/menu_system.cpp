@@ -64,6 +64,8 @@ void CMenu::_system()
 					//add the changelog info here
 				}
 				if (num_versions !=1) version_num++;
+				i = min((u32)version_num, ARRAY_SIZE(CMenu::_version) -1u);
+				newVer = CMenu::_version[i];
 				_showSystem();
 			}
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0 && !m_thrdWorking)
@@ -87,6 +89,7 @@ void CMenu::_system()
 				m_thrdWorking = true;
 				gprintf("\nVersion to DL: %i\n", newVer);
 				m_update_url = fmt("%s/r%i/%i_boot.dol", m_version.getString("GENERAL", "update_url", "http://update.wiiflow.org").c_str(), newVer, newIOS);
+				m_showtimer = 120;
 				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_versionDownloaderInit, (void *)this, 0, 8192, 40);
 			}
 			else if (m_btnMgr.selected() == m_systemBtnBack)

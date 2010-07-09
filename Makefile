@@ -130,8 +130,6 @@ ios222:
 	@bash ./buildtype.sh 222
 	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@cp $(OUTPUT).dol wii/apps/wiiflow/ios222/boot.dol
-	@cp $(OUTPUT).elf wii/apps/wiiflow/ios222/boot.elf
 	
 #---------------------------------------------------------------------------------
 ios223:
@@ -150,8 +148,6 @@ ios249:
 	@bash ./buildtype.sh 249
 	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@cp $(OUTPUT).dol wii/apps/wiiflow/ios249/boot.dol
-	@cp $(OUTPUT).elf wii/apps/wiiflow/ios249/boot.elf
 	
 #---------------------------------------------------------------------------------
 ios250:
@@ -160,54 +156,12 @@ ios250:
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
-beta249:
-	@bash ./buildtype.sh 249
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@[ -d beta ] || mkdir -p beta
-	@cp $(OUTPUT).dol beta/249-boot.dol
-	@cp $(OUTPUT).elf beta/249-boot.elf
-	@cp $(BUILD)/*.map beta/
-
+# Make sure to update versions.txt and commit all changes before running make release, or folders may be wrong.
+release:
+	@bash ./release.sh $(OUTPUT)
 #---------------------------------------------------------------------------------
-beta250:
-	@bash ./buildtype.sh 250
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@[ -d beta ] || mkdir -p beta
-	@cp $(OUTPUT).dol beta/250-boot.dol
-	@cp $(OUTPUT).elf beta/250-boot.elf
-	@cp $(BUILD)/*.map beta/
-
-#---------------------------------------------------------------------------------
-beta222:
-	@bash ./buildtype.sh 222
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@[ -d beta ] || mkdir -p beta
-	@cp $(OUTPUT).dol beta/222-boot.dol
-	@cp $(OUTPUT).elf beta/222-boot.elf
-	@cp $(BUILD)/*.map beta/
-
-#---------------------------------------------------------------------------------
-beta223:
-	@bash ./buildtype.sh 223
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@[ -d beta ] || mkdir -p beta
-	@cp $(OUTPUT).dol beta/223-boot.dol
-	@cp $(OUTPUT).elf beta/223-boot.elf
-	@cp $(BUILD)/*.map beta/
-
-#---------------------------------------------------------------------------------
-beta224:
-	@bash ./buildtype.sh 224
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@[ -d beta ] || mkdir -p beta
-	@cp $(OUTPUT).dol beta/224-boot.dol
-	@cp $(OUTPUT).elf beta/224-boot.elf
-	@cp $(BUILD)/*.map beta/
+beta:
+	@bash ./beta.sh $(OUTPUT)
 
 #---------------------------------------------------------------------------------
 clean:

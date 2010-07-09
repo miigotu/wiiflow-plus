@@ -637,7 +637,7 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 	char ip[16];
 	wstringEx ws;
 	SmartBuf buffer;
-	FILE *file;
+	FILE *file = NULL;
 	u32 bufferSize = 1 * 0x080000;	// Maximum download size 512kb
 	buffer = smartCoverAlloc(bufferSize);
 	if (!buffer)
@@ -688,6 +688,7 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 			LWP_MutexUnlock(m_mutex);			
 			
 			file = fopen(m_ver.c_str(), "wb");
+			sleep(1);
 			if (file != NULL)
 			{
 				fwrite(txt.data, 1, txt.size, file);
@@ -720,6 +721,7 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 				_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
 				LWP_MutexUnlock(m_mutex);
 			}
+			file = NULL;
 		}
 	}
 	m_thrdWorking = false;
@@ -739,7 +741,7 @@ int CMenu::_versionDownloader() // code to download new dol
 	char ip[16];
 	wstringEx ws;
 	SmartBuf buffer;
-	FILE *file;
+	FILE *file = NULL;
 	u32 bufferSize = 1 * 0x400000;	// Maximum download size 4 MB
 	
 	// check for existing dol
@@ -799,24 +801,28 @@ int CMenu::_versionDownloader() // code to download new dol
 		}
 		else
 		{
-			// download finished, now save file
+			// download finished, backup boot.dol and write new file.
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
 			LWP_MutexUnlock(m_mutex);			
-			//Backup boot.dol and write new file.
+			
 			char dol_backup[33];
 			strcpy(dol_backup, m_dol.c_str());
 			strcat(dol_backup, ".backup");
 			remove(dol_backup);
 			rename(m_dol.c_str(), dol_backup);
 			file = fopen(m_dol.c_str(), "wb");
+			sleep(1);
 			if (file != NULL)
 			{
 				fwrite(txt.data, 1, txt.size, file);
 				fclose(file);
 				LWP_MutexLock(m_mutex);
-				_setThrdMsg(_t("dlmsg14", L"Done."), 1.f);
+				_setThrdMsg(_t("dlmsg20", L"WiiFlow will now exit to allow the update to take effect."), 1.f);
 				LWP_MutexUnlock(m_mutex);
+				file = NULL;
+				sleep(3);
+				exit(0);
 			}
 			else
 			{
@@ -824,6 +830,7 @@ int CMenu::_versionDownloader() // code to download new dol
 				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
 				LWP_MutexUnlock(m_mutex);
+				file = NULL;
 			}
 		}
 	}
