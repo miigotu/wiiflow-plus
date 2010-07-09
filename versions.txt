@@ -1,7 +1,7 @@
 [GENERAL]
 update_url=http://update.wiiflow.org
 num_versions=4
-latestversion=89
+latestversion=90
 changes=**BETA**/*nFixed downloader bug sometimes DL wrong version.\n*Wiiflow now exits after successful update\nto boot new version.
 [VERSION1]
 version=88
