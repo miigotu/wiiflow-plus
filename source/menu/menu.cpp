@@ -90,36 +90,58 @@ void CMenu::init(bool fromHBC)
 {
 	string themeName;
 	const char *drive = "sd";
+	const char *wfdrv;
 	const char *defaultLanguage;
 	string appdir = APPDATA_DIR;
-
+	string appdir2 = APPDATA_DIR2;
+	
 	m_noHBC = !fromHBC;
 	m_waitMessage.fromPNG(wait_png);
 	// Data path
 	if (Fat_SDAvailable() && Fat_USBAvailable())
-	{		
-		if (!m_cfg.load(sfmt("sd:/%s/%s", appdir.c_str(),CFG_FILENAME).c_str()))
+	{
+		ifstream filestr;
+		filestr.open(sfmt("sd:/%s/boot.dol", appdir2.c_str()).c_str());
+		if (!filestr.fail())
 		{
-				appdir = APPDATA_DIR2;
-				m_cfg.load(sfmt("sd:/%s/%s", appdir.c_str(),CFG_FILENAME).c_str());
+			filestr.close();
+			wfdrv = "sd";
+			if (!m_cfg.load(sfmt("sd:/%s/" CFG_FILENAME, appdir2.c_str()).c_str()))
+				m_cfg.save();
+			bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", false);
+			drive = dataOnUSB ? "usb" : "sd";
 		}
-		
-		bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", true);
-		drive = dataOnUSB ? "usb" : "sd";
+		else
+		{
+			filestr.close();
+			filestr.open(sfmt("usb:/%s/boot.dol", appdir2.c_str()).c_str());
+			if (!filestr.fail())
+			{
+				filestr.close();
+				wfdrv = "sd";
+				if (!m_cfg.load(sfmt("usb:/%s/" CFG_FILENAME, appdir2.c_str()).c_str()))
+					m_cfg.save();
+				bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", true);
+				drive = dataOnUSB ? "usb" : "sd";
+			}
+			else
+			{
+				filestr.close(); //This should not be possible unless wiiload w/o wiiflow intalled
+				if (!m_cfg.load(sfmt("sd:/%s/" CFG_FILENAME, appdir2.c_str()).c_str()))	//use sd in case usb is wbfs and nothing was detected.
+					m_cfg.save();
+			}
+		}
 	}
 	else
-		drive = Fat_USBAvailable() ? "usb" : "sd";
-	
-	appdir = APPDATA_DIR;
-	m_dataDir = sfmt("%s:/%s", drive,appdir.c_str());
-	if(!m_cfg.load(sfmt("%s/" CFG_FILENAME, m_dataDir.c_str()).c_str())) 
 	{
-			appdir = APPDATA_DIR2;
-			m_dataDir = sfmt("%s:/%s", drive,appdir.c_str());
-			m_cfg.load(sfmt("%s/" CFG_FILENAME, m_dataDir.c_str()).c_str());
+		drive = Fat_USBAvailable() ? "usb" : "sd";
+		wfdrv = drive;
+		if (!m_cfg.load(sfmt("%s:/%s/" CFG_FILENAME, drive, appdir2.c_str()).c_str()))
+			m_cfg.save();
 	}
-	m_dol = sfmt("%s:/%s/boot.dol", drive, APPDATA_DIR2);
-	m_ver = sfmt("%s:/%s/versions", drive, APPDATA_DIR2);
+ 	m_dataDir = sfmt("%s:/%s", wfdrv, appdir2.c_str());
+	m_dol = sfmt("%s:/%s/boot.dol", wfdrv, appdir2.c_str());
+	m_ver = sfmt("%s:/%s/versions", wfdrv, appdir2.c_str());
 	
 	//
 	m_picDir = m_cfg.getString(" GENERAL", "dir_flat_covers", sfmt("%s:/%s/covers", drive, appdir.c_str()));
@@ -133,7 +155,6 @@ void CMenu::init(bool fromHBC)
 	m_txtCheatDir = m_cfg.getString(" GENERAL", "dir_txtcheat", sfmt("%s:/%s/txtcodes", drive, appdir.c_str()));
 	m_videoDir = m_cfg.getString(" GENERAL", "dir_trailers", sfmt("%s:/%s/trailers", drive, appdir.c_str()));
 	m_fanartDir = m_cfg.getString(" GENERAL", "dir_fanart", sfmt("%s:/%s/fanart", drive, appdir.c_str()));
-
 	m_cf.init();
 	// 
 	struct stat dummy;
@@ -151,12 +172,12 @@ void CMenu::init(bool fromHBC)
 		mkdir(m_videoDir.c_str(), 0777);
 		mkdir(m_fanartDir.c_str(), 0777);
 		mkdir(m_musicDir.c_str(), 0777);
-		}
+	}
 	// INI files
 	m_loc.load(sfmt("%s/" LANG_FILENAME, m_dataDir.c_str()).c_str());
 	themeName = m_cfg.getString(" GENERAL", "theme", "DEFAULT");
 	m_themeDataDir = sfmt("%s/%s", m_themeDir.c_str(), themeName.c_str());
-	m_theme.load(sfmt("%s/%s.INI", m_themeDir.c_str(), themeName.c_str()).c_str());
+	m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), themeName.c_str()).c_str());
 	// 
 	defaultLanguage = "ENGLISH";
 	switch (CONF_GetLanguage())
