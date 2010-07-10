@@ -90,7 +90,7 @@ void CMenu::init(bool fromHBC)
 {
 	string themeName;
 	const char *drive = "sd";
-	const char *wfdrv;
+	const char *wfdrv = "sd";
 	const char *defaultLanguage;
 	string appdir = APPDATA_DIR;
 	string appdir2 = APPDATA_DIR2;
@@ -118,7 +118,7 @@ void CMenu::init(bool fromHBC)
 			if (!filestr.fail())
 			{
 				filestr.close();
-				wfdrv = "sd";
+				wfdrv = "usb";
 				if (!m_cfg.load(sfmt("usb:/%s/" CFG_FILENAME, appdir2.c_str()).c_str()))
 					m_cfg.save();
 				bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", true);
@@ -134,15 +134,13 @@ void CMenu::init(bool fromHBC)
 	}
 	else
 	{
-		drive = Fat_USBAvailable() ? "usb" : "sd";
-		wfdrv = drive;
+		wfdrv = drive = Fat_USBAvailable() ? "usb" : "sd";
 		if (!m_cfg.load(sfmt("%s:/%s/" CFG_FILENAME, drive, appdir2.c_str()).c_str()))
 			m_cfg.save();
 	}
  	m_dataDir = sfmt("%s:/%s", wfdrv, appdir2.c_str());
 	m_dol = sfmt("%s:/%s/boot.dol", wfdrv, appdir2.c_str());
 	m_ver = sfmt("%s:/%s/versions", wfdrv, appdir2.c_str());
-	
 	//
 	m_picDir = m_cfg.getString(" GENERAL", "dir_flat_covers", sfmt("%s:/%s/covers", drive, appdir.c_str()));
 	m_boxPicDir = m_cfg.getString(" GENERAL", "dir_box_covers", sfmt("%s:/%s/boxcovers", drive, appdir.c_str()));
