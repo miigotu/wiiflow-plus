@@ -313,7 +313,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 	bool success;
 	vector<string> fmtURLFlat;
 	vector<string> fmtURLBox;
-	u32 bufferSize = 0x400000;	// Maximum download size 4 MB
+	u32 bufferSize = 0x280000;	// Maximum download size 2 MB
 	SmartBuf buffer;
 
 	// Use the cover space as a temporary buffer
@@ -466,6 +466,9 @@ int CMenu::_coverDownloader(bool missingOnly)
 	else
 		_setThrdMsg(wfmt(_fmt("dlmsg9", L"%i/%i files downloaded. %i are front covers only."), count + countFlat, n, countFlat), 1.f);
 	LWP_MutexUnlock(m_mutex);
+	file = NULL;
+	png.data = NULL;
+	buffer.release();
 	m_thrdWorking = false;
 	return 0;
 }
@@ -553,6 +556,7 @@ void CMenu::_download(string gameId)
 			m_thrdStop = true;
 			m_thrdMessageAdded = true;
 			m_thrdMessage = _t("dlmsg6", L"Canceling...");
+			m_thrdWorking = false;
 		}
 		// 
 		if (m_thrdMessageAdded)
@@ -638,8 +642,8 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 	wstringEx ws;
 	SmartBuf buffer;
 	FILE *file = NULL;
-	u32 bufferSize = 1 * 0x080000;	// Maximum download size 512kb
-	buffer = smartCoverAlloc(bufferSize);
+	u32 bufferSize = 1 * 0x001000;	// Maximum download size 4kb
+	buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
@@ -693,7 +697,6 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 			{
 				fwrite(txt.data, 1, txt.size, file);
 				fclose(file);
-				
 				// version file valid, check for version with SVN_REV
 				int svnrev = atoi(SVN_REV);
 				gprintf("Installed Version: %d\n", svnrev);
@@ -724,6 +727,9 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 			file = NULL;
 		}
 	}
+	file = NULL;
+	txt.data = NULL;
+	buffer.release();
 	m_thrdWorking = false;
 	return 0;
 }
@@ -760,7 +766,7 @@ int CMenu::_versionDownloader() // code to download new dol
 	}
     filestr.close();
 
-	buffer = smartCoverAlloc(bufferSize);
+	buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
@@ -830,10 +836,12 @@ int CMenu::_versionDownloader() // code to download new dol
 				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
 				LWP_MutexUnlock(m_mutex);
-				file = NULL;
 			}
 		}
 	}
+	file = NULL;
+	txt.data = NULL;
+	buffer.release();
 	m_thrdWorking = false;
 	return 0;
 }
@@ -864,9 +872,9 @@ int CMenu::_titleDownloader(bool missingOnly)
 	const char *p;
 	const char *txtEnd;
 	u32 len;
-	u32 bufferSize = 1 * 0x100000;	// Maximum download size 1 MB
+	u32 bufferSize = 1 * 0x080000;	// Maximum download size 512kb
 
-	buffer = smartCoverAlloc(bufferSize);
+	buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
@@ -949,6 +957,8 @@ int CMenu::_titleDownloader(bool missingOnly)
 		_setThrdMsg(_t("dlmsg14", L"Done."), 1.f);
 		LWP_MutexUnlock(m_mutex);
 	}
+	txt.data = NULL;
+	buffer.release();
 	m_thrdWorking = false;
 	return 0;
 }

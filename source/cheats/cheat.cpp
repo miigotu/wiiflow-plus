@@ -160,7 +160,7 @@ void CMenu::_CheatSettings() {
 				// Download cheat code
 				m_btnMgr.hide(m_cheatLblTitle);
 				
-				u32 bufferSize = 0x100000;	// Maximum download size 1 MB
+				u32 bufferSize = 0x080000;	// Maximum download size 512kb
 				SmartBuf buffer;
 				block cheatfile;
 				FILE *file;
@@ -193,6 +193,9 @@ void CMenu::_CheatSettings() {
 					m_btnMgr.setText(m_cheatLblItem[1], sfmt(GECKOURL, m_cf.getId().c_str()));
 					m_btnMgr.show(m_cheatLblItem[1]);
 				}
+				buffer.release();
+				cheatfile.data = NULL;
+				file = NULL;
 			}
 		}
 		_mainLoopCommon(wd);
@@ -308,6 +311,7 @@ void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 	m_cheatLblItem[4] = _addLabel(theme, "CHEAT/ITEM_4", theme.lblFont, L"", 40, 340, 460, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnItem[4] = _addButton(theme, "CHEAT/ITEM_4_BTN", theme.btnFont, L"", 500, 340, 120, 56, theme.btnFontColor);
 
+	_setHideAnim(m_systemLblTitle, "CHEAT/TITLE", 0, 100, 0.f, 0.f);
 	_setHideAnim(m_cheatBtnApply, "CHEAT/APPLY_BTN", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_cheatBtnBack, "CHEAT/BACK_BTN", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_cheatBtnDownload, "CHEAT/DOWNLOAD_BTN", 0, 0, -2.f, 0.f);

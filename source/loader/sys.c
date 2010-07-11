@@ -4,6 +4,7 @@
 
 #include "sys.h"
 #include "gecko.h"
+#include "loader/playlog.h"
 
 /* Constants */
 #define CERTS_LEN	0x280
@@ -44,9 +45,15 @@ void Sys_ExitToWiiMenu(bool b)
 void Sys_Exit(int ret)
 {
 	if (return_to_menu)
+	{
+		Playlog_Delete();
 		Sys_LoadMenu();
+	}
 	else
+	{
+		Playlog_Delete();
 		exit(ret);
+	}
 }
 
 void __Sys_ResetCallback(void)

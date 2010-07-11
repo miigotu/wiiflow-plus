@@ -6,6 +6,7 @@
 #include "loader/wdvd.h"
 #include "loader/mload_modules.h"
 #include "loader/alt_ios.h"
+#include "loader/playlog.h"
 #include "cheat.hpp"
 #include <wiiuse/wpad.h>
 #include <ogc/machine/processor.h>
@@ -38,7 +39,6 @@ extern const u8 favoritesoff_png[];
 extern const u8 favoritesoffs_png[];
 extern const u8 delete_png[];
 extern const u8 deletes_png[];
-
 extern int mainIOS;
 
 const CMenu::SOption CMenu::_languages[11] = {
@@ -170,6 +170,7 @@ void CMenu::_game(bool launch)
 	while (true)
 	{
 		string id(m_cf.getId());
+		string title(m_cf.getTitle());
 		u64 chantitle = m_cf.getChanTitle();
 		if (!first)
 			WPAD_ScanPads();
@@ -273,6 +274,14 @@ void CMenu::_game(bool launch)
 				_hideGame();
 				m_cf.clear();
 				m_vid.waitMessage(m_waitMessage);
+				gprintf("id = %s\n", id.c_str());
+				//char * buffer = (char *)malloc(84);
+				//memcpy(buffer, &chantitle, 84);
+				//char * buffer = (char *)malloc(84);
+				//memcpy(buffer, &title, 84);
+				gprintf("title = %s\n", title.c_str());
+				if (Playlog_Update(title.c_str(), id.c_str())<0)
+					Playlog_Delete();
 				_launch(chantitle, id);
 				launch = false;
 				WPAD_SetVRes(0, m_vid.width() + m_cur.width(), m_vid.height() + m_cur.height());	// b/c IOS reload

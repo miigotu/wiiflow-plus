@@ -1,7 +1,7 @@
 [GENERAL]
 update_url=http://update.wiiflow.org
 num_versions=5
-latestversion=91
+latestversion=92
 changes=Force wiiflow.ini,language.ini and titles.ini to be in apps/wiiflow\nand all other folders in drive:/wiiflow.\n*Will use the drive containing boot.dol as default data drive\nrather than auto usb. More info on forum.
 [VERSION1]
 version=90

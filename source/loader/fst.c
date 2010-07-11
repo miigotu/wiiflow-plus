@@ -595,6 +595,7 @@ void load_handler()
 	{
 		if (debuggerselect == 0x01)
 		{
+			gprintf("Debbugger selected is gecko");
 			/*switch(gecko_channel)
 			{
 				case 0: // Slot A
@@ -638,6 +639,7 @@ void load_handler()
 		}
 		else
 		{
+			gprintf("Debbugger selected is not gecko");
 			memset((void*)0x80001800,0,codehandleronly_size);
 			memcpy((void*)0x80001800,codehandleronly,codehandleronly_size);
 			memcpy((void*)0x80001906, &codelist, 2);
