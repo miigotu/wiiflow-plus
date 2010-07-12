@@ -170,7 +170,7 @@ void CMenu::_game(bool launch)
 	while (true)
 	{
 		string id(m_cf.getId());
-		string title(m_cf.getTitle());
+		//string title(m_cf.getTitle());
 		u64 chantitle = m_cf.getChanTitle();
 		if (!first)
 			WPAD_ScanPads();
@@ -274,14 +274,16 @@ void CMenu::_game(bool launch)
 				_hideGame();
 				m_cf.clear();
 				m_vid.waitMessage(m_waitMessage);
-				gprintf("id = %s\n", id.c_str());
-				//char * buffer = (char *)malloc(84);
-				//memcpy(buffer, &chantitle, 84);
-				//char * buffer = (char *)malloc(84);
-				//memcpy(buffer, &title, 84);
-				gprintf("title = %s\n", title.c_str());
-				if (Playlog_Update(title.c_str(), id.c_str())<0)
+				/*
+				char _title[84];
+				char _id[6];
+				strcpy(_title, title.c_str());
+				strcpy(_id, id.c_str());
+				gprintf("title = %s", _title);
+				gprintf("id = %s", _id);
+				if (Playlog_Update(_title, _id)<0)
 					Playlog_Delete();
+				*/
 				_launch(chantitle, id);
 				launch = false;
 				WPAD_SetVRes(0, m_vid.width() + m_cur.width(), m_vid.height() + m_cur.height());	// b/c IOS reload
@@ -418,17 +420,20 @@ void CMenu::_launchGame(const string &id)
 	hooktype = (u32) m_cfg.getInt(id, "hooktype", 1); // hooktype is defined in patchcode.h
 	debuggerselect = m_cfg.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
 	
-	int rtrnID = 0;
-	if (rtrn != NULL && strlen(rtrn) == 4)
-	{
-		rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
-	}
 
 	if (id == "RPWE41" || id == "RPWZ41" || id == "SPXP41") // Prince of Persia, Rival Swords
 	{
 		//cheat = false;
 		//hooktype = 0;
 		debuggerselect = false;
+		patchDiscCheck = false;
+		rtrn = NULL;
+	}
+
+	int rtrnID = 0;
+	if (rtrn != NULL && strlen(rtrn) == 4)
+	{
+		rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
 	}
 
 	SmartBuf cheatFile;

@@ -6,8 +6,8 @@ extern "C" {
 #endif /* __cplusplus */
 
 /* Prototypes */
-int Playlog_Update(const char*, const char*);
-
+u64 getWiiTime(void);
+int Playlog_Update(const char ID[6], const char title[84]);
 int Playlog_Delete(void);
 
 #ifdef __cplusplus
