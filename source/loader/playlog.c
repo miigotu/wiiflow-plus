@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ogcsys.h>
+#include "gecko.h"
 
 #define PLAYRECPATH "/title/00000001/00000002/data/play_rec.dat"
 #define SECONDS_TO_2000 946684800LL
@@ -25,7 +26,7 @@ typedef struct
 		u32 data[31];
 		struct
 		{
-			char name[84];	//u16 name[42];
+			u16 name[42];
 			u64 ticks_boot;
 			u64 ticks_last;
 			char title_id[6];
@@ -44,7 +45,8 @@ u64 getWiiTime(void)
 	return TICKS_PER_SECOND * (uTime - SECONDS_TO_2000);
 }
 
-int Playlog_Update(const char ID[6],const char title[84]){
+int Playlog_Update(const char ID[6],const char title[42])
+{
 	s32 ret,playrec_fd;
 	u32 sum = 0;
 	u8 i;
@@ -72,16 +74,19 @@ int Playlog_Update(const char ID[6],const char title[84]){
 	playrec_buf.ticks_last = stime;
 
 	//Update channel name and ID
-	memcpy(playrec_buf.name, title, 84);
-	memcpy(playrec_buf.title_id, ID, 6);
+	for(i=0;i<42;i++)
+		playrec_buf.name[i]=title[i];
+	for(i=0;i<6;i++)
+		playrec_buf.title_id[i]=ID[i];
 	
 	memset(playrec_buf.unknown, 0, 18);
+
 	//Calculate and update checksum
 	for(i=0; i<31; i++)
 		sum += playrec_buf.data[i];
 	playrec_buf.checksum=sum;
 
-
+	//Write play_rec.dat
 	ret = IOS_Write(playrec_fd, &playrec_buf, sizeof(playrec_buf));
 	if(ret!=sizeof(playrec_buf))
 		goto error_2;
@@ -98,7 +103,8 @@ error_2:
 	return -1;
 }
 
-int Playlog_Delete(void){
+int Playlog_Delete(void) //Make Wiiflow not show in playlog
+{
 	s32 ret,playrec_fd;
 
     ISFS_Deinitialize();

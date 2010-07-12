@@ -170,7 +170,7 @@ void CMenu::_game(bool launch)
 	while (true)
 	{
 		string id(m_cf.getId());
-		//string title(m_cf.getTitle());
+		string title(m_cf.getTitle());
 		u64 chantitle = m_cf.getChanTitle();
 		if (!first)
 			WPAD_ScanPads();
@@ -274,16 +274,10 @@ void CMenu::_game(bool launch)
 				_hideGame();
 				m_cf.clear();
 				m_vid.waitMessage(m_waitMessage);
-				/*
-				char _title[84];
-				char _id[6];
-				strcpy(_title, title.c_str());
-				strcpy(_id, id.c_str());
-				gprintf("title = %s", _title);
-				gprintf("id = %s", _id);
-				if (Playlog_Update(_title, _id)<0)
+
+				if (Playlog_Update(id.c_str(), title.c_str())<0)
 					Playlog_Delete();
-				*/
+
 				_launch(chantitle, id);
 				launch = false;
 				WPAD_SetVRes(0, m_vid.width() + m_cur.width(), m_vid.height() + m_cur.height());	// b/c IOS reload
