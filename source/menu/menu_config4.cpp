@@ -3,7 +3,6 @@
 #include "loader/sys.h"
 #include "channels.h"
 
-#include <wiiuse/wpad.h>
 
 using namespace std;
 
@@ -96,18 +95,12 @@ void CMenu::_showConfig4(void)
 
 int CMenu::_config4(void)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	int nextPage = 0;
 
 	_showConfig4();
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
 		if (wd->ir.valid)

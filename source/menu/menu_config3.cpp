@@ -1,7 +1,6 @@
 
 #include "menu.hpp"
 
-#include <wiiuse/wpad.h>
 
 using namespace std;
 
@@ -74,20 +73,13 @@ void CMenu::_showConfig3(void)
 
 int CMenu::_config3(void)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	int nextPage = 0;
-	int repeatButton = 0;
-	u32 buttonHeld = (u32)-1;
+	SetupInput();
 
 	_showConfig3();
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
 		if (wd->ir.valid)

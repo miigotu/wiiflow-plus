@@ -2,7 +2,6 @@
 #include "menu.hpp"
 #include "sys.h"
 
-#include <wiiuse/wpad.h>
 
 using namespace std;
 
@@ -65,42 +64,42 @@ void CMenu::_config(int page)
 {
 	int nextPage = page;
 
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	m_curGameId = m_cf.getId();
 	m_cf.clear();
 	while (nextPage > 0 && nextPage <= CMenu::_nbCfgPages)
 		switch (nextPage)
 		{
 			case 1:
-				WPAD_Rumble(WPAD_CHAN_0, 0);
+				SetupInput();
 				nextPage = _config1();
 				break;
 			case 2:
-				WPAD_Rumble(WPAD_CHAN_0, 0);
+				SetupInput();
 				nextPage = _configAdv();
 				break;
 			case 3:
-				WPAD_Rumble(WPAD_CHAN_0, 0);
+				SetupInput();
 				nextPage = _config4();
 				break;
 			case 4:
-				WPAD_Rumble(WPAD_CHAN_0, 0);
+				SetupInput();
 				nextPage = _configSnd();
 				break;
 			case 5:
-				WPAD_Rumble(WPAD_CHAN_0, 0);
+				SetupInput();
 				nextPage = _config2();
 				break;
 			case 6:
-				WPAD_Rumble(WPAD_CHAN_0, 0);
+				SetupInput();
 				nextPage = _config3();
 				break;
 			case 7:
-				WPAD_Rumble(WPAD_CHAN_0, 0);
+				SetupInput();
 				nextPage = _config5();
 				break;
 		}
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	m_cfg.save();
 	m_cf.setBoxMode(m_cfg.getBool(" GENERAL", "box_mode"));
 	_initCF();
@@ -108,18 +107,12 @@ void CMenu::_config(int page)
 
 int CMenu::_config1(void)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	int nextPage = 0;
 
 	_showConfig();
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
 		if (wd->ir.valid)

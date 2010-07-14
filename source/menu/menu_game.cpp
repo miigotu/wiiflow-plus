@@ -8,7 +8,6 @@
 #include "loader/alt_ios.h"
 #include "loader/playlog.h"
 #include "cheat.hpp"
-#include <wiiuse/wpad.h>
 #include <ogc/machine/processor.h>
 #include <unistd.h>
 #include <time.h>
@@ -153,41 +152,27 @@ static void setLanguage(int l)
 
 void CMenu::_game(bool launch)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	bool b;
-	bool first = true;
-
-	WPAD_Rumble(WPAD_CHAN_0, 0);
 	if (!launch)
 	{
-		WPAD_ScanPads();
+		SetupInput();
 		_playGameSound();
 		_showGame();
 	}
-
 	while (true)
 	{
 		string id(m_cf.getId());
 		string title(m_cf.getTitle());
 		u64 chantitle = m_cf.getChanTitle();
-		if (!first)
-			WPAD_ScanPads();
-		else
-			first = false;
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
+		{
+			_stopSounds();
 			break;
+		}
 		if (wd->ir.valid)
 			m_btnMgr.mouse(wd->ir.x - m_cur.width() / 2, wd->ir.y - m_cur.height() / 2);
-		else if ((btn & WPAD_BUTTON_UP) != 0)
-			m_btnMgr.up();
-		else if ((btn & WPAD_BUTTON_DOWN) != 0)
-			m_btnMgr.down();
-		if ((padsState & WPAD_BUTTON_UP) != 0)
+		if ((padsState & WPAD_BUTTON_MINUS) != 0)
 		{
 			string videoPath = sfmt("%s/%.3s.thp", m_videoDir.c_str(), id.c_str());
 		
@@ -211,8 +196,7 @@ void CMenu::_game(bool launch)
 				{
 					_setBg(videoBg, videoBg);
 					m_bgCrossFade = 10;
-					WPAD_ScanPads();
-					padsState = WPAD_ButtonsDown(0);
+					ScanInput();
 					_mainLoopCommon(wd, false); // Redraw the background every frame
 				}
 //				_setBg(m_gameBg, m_gameBgLQ);
@@ -261,7 +245,10 @@ void CMenu::_game(bool launch)
 			else if (m_btnMgr.selected() == m_gameBtnAdultOn || m_btnMgr.selected() == m_gameBtnAdultOff)
 				m_cfg.setBool(id, "adult_only", !m_cfg.getBool(id, "adult_only", false));
 			else if (m_btnMgr.selected() == m_gameBtnBack)
+			{
+				_stopSounds();
 				break;
+			}
 			else if (m_btnMgr.selected() == m_gameBtnSettings)
 			{
 				_hideGame();
@@ -288,50 +275,73 @@ void CMenu::_game(bool launch)
 			else if (m_cf.mouseOver(m_vid, m_cur.x(), m_cur.y()))
 				m_cf.flip();
 		}
-		if ((padsState & (WPAD_BUTTON_MINUS | WPAD_BUTTON_PLUS)) != 0 || (btn & (WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT)))
+		//Normal coverflow movement
+		if ((btn & WPAD_BUTTON_UP) != 0 //Wiimote
+			|| (((angle >= 315 && angle <= 360) || (angle >= 0 && angle < 45)) && mag > 0.75)) //Nunchuck
 		{
-			if ((padsState & WPAD_BUTTON_MINUS) != 0)
-				m_cf.up();
-			else if ((btn & WPAD_BUTTON_LEFT) != 0)
-				m_cf.left();
-			else if ((padsState & WPAD_BUTTON_PLUS) != 0)
-				m_cf.down();
-			else if ((btn & WPAD_BUTTON_RIGHT) != 0)
-				m_cf.right();
+			_stopSounds();
+			m_cf.up();
+			_showGame();
+			_playGameSound();
+		}
+		else if ((btn & WPAD_BUTTON_RIGHT) != 0 //Wiimote
+			|| ((angle >= 45 && angle < 135) && mag > 0.75)) //Nunchuck
+		{
+			_stopSounds();
+			m_cf.right();
+			_showGame();
+			_playGameSound();
+		}
+		else if ((btn & WPAD_BUTTON_DOWN) != 0 //Wiimote
+			|| ((angle >= 135 && angle < 225) && mag > 0.75)) //Nunchuck
+		{
+			_stopSounds();
+			m_cf.down();
+			_showGame();
+			_playGameSound();
+		}
+		else if ((btn & WPAD_BUTTON_LEFT) != 0  //Wiimote
+			|| ((angle >= 225 && angle < 315) && mag > 0.75)) //Nunchuck
+		{
+			_stopSounds();
+			m_cf.left();
 			_showGame();
 			_playGameSound();
 		}
 		// 
-		if (wd->ir.valid && m_current_view == COVERFLOW_USB)
+		if (wd->ir.valid)
 		{
-			b = m_cfg.getBool(id, "favorite", false);
-			m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
-			m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
-			m_btnMgr.show(m_gameLblUser[1]);
-			m_btnMgr.show(m_gameLblUser[2]);
-
-			if (!m_locked)
+			if (m_current_view == COVERFLOW_USB)
 			{
-				b = m_cfg.getBool(id, "adult_only", false);
-				m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
-				m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
-				m_btnMgr.show(m_gameBtnDelete);
-				m_btnMgr.show(m_gameBtnSettings);
+				b = m_cfg.getBool(id, "favorite", false);
+				m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
+				m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
+				m_btnMgr.show(m_gameLblUser[1]);
+				m_btnMgr.show(m_gameLblUser[2]);
+	
+				if (!m_locked)
+				{
+					b = m_cfg.getBool(id, "adult_only", false);
+					m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
+					m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
+					m_btnMgr.show(m_gameBtnDelete);
+					m_btnMgr.show(m_gameBtnSettings);
+				}
 			}
-		}
-		else if (wd->ir.valid && m_current_view == COVERFLOW_CHANNEL)
-		{
-			b = m_cfg.getBool(id, "favorite", false);
-			m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
-			m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
-			m_btnMgr.show(m_gameLblUser[1]);
-			m_btnMgr.show(m_gameLblUser[2]);
-
-			if (!m_locked)
+			else if (m_current_view == COVERFLOW_CHANNEL)
 			{
-				b = m_cfg.getBool(id, "adult_only", false);
-				m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
-				m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
+				b = m_cfg.getBool(id, "favorite", false);
+				m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
+				m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
+				m_btnMgr.show(m_gameLblUser[1]);
+				m_btnMgr.show(m_gameLblUser[2]);
+	
+				if (!m_locked)
+				{
+					b = m_cfg.getBool(id, "adult_only", false);
+					m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
+					m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
+				}
 			}
 		}
 		else
@@ -347,7 +357,7 @@ void CMenu::_game(bool launch)
 		}
 		_mainLoopCommon(wd, true);
 	}
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	_waitForGameSoundExtract();
 	_hideGame();
 }

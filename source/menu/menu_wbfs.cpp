@@ -2,7 +2,6 @@
 #include "menu.hpp"
 #include "loader/wbfs.h"
 
-#include <wiiuse/wpad.h>
 
 using namespace std;
 
@@ -117,9 +116,6 @@ int CMenu::_gameInstaller(void *obj)
 
 bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	lwp_t thread = 0;
 	static discHdr header ATTRIBUTE_ALIGN(32);
 	bool done = false;
@@ -127,7 +123,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 	struct AutoLight { AutoLight(void) { } ~AutoLight(void) { slotLight(false); } } aw;
 	string cfPos = m_cf.getNextId();
 
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 
 	_showWBFS(op);
 	switch (op)
@@ -145,10 +141,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 	m_thrdMessageAdded = false;
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0 && !m_thrdWorking)
 			break;
 		if (wd->ir.valid)
@@ -239,7 +232,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 		}
 		_mainLoopCommon(wd, false, m_thrdWorking);
 	}
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	_hideWBFS();
 	if (done && (op == CMenu::WO_REMOVE_GAME || op == CMenu::WO_ADD_GAME))
 	{

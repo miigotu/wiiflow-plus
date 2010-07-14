@@ -5,7 +5,6 @@
 #include "menu.hpp"
 #include "loader/fs.h"
 
-#include <wiiuse/wpad.h>
 
 #define ARRAY_SIZE(a)	(sizeof a / sizeof a[0])
 
@@ -335,9 +334,6 @@ void CMenu::_showGameSettings(void)
 
 void CMenu::_gameSettings(void)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	bool dolsListed = false;
 	vector<string> dols;
 	string id(m_cf.getId());
@@ -347,10 +343,7 @@ void CMenu::_gameSettings(void)
 	_showGameSettings();
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
 		if (wd->ir.valid)

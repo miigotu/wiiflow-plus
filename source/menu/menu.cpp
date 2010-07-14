@@ -6,7 +6,6 @@
 #include "loader/fs.h"
 #include "oggplayer.h"
 
-#include <wiiuse/wpad.h>
 #include <fstream>
 #include <map>
 #include <sys/stat.h>
@@ -55,8 +54,6 @@ const u8 *thxfont_ttf = cffont_ttf;
 const u32 thxfont_ttf_size = cffont_ttf_size;
 
 using namespace std;
-
-static const u32 g_repeatDelay = 15;
 
 CMenu::CMenu(CVideo &vid) :
 	m_vid(vid)
@@ -222,7 +219,7 @@ void CMenu::init(bool fromHBC)
 	m_btnMgr.init();
 	_buildMenus();
 	_loadCFCfg();
-	WPAD_SetVRes(0, m_vid.width() + m_cur.width(), m_vid.height() + m_cur.height());
+	WPAD_SetVRes(WPAD_CHAN_ALL, m_vid.width() + m_cur.width(), m_vid.height() + m_cur.height());
 	m_locked = m_cfg.getString(" GENERAL", "parent_code", "").size() >= 4;
 	m_btnMgr.setRumble(m_cfg.getBool(" GENERAL", "rumble", true));
 	m_vid.set2DViewport(m_cfg.getInt(" GENERAL", "tv_width", 640), m_cfg.getInt(" GENERAL", "tv_height", 480),
@@ -856,45 +853,6 @@ void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 size, const c
 	}
 }
 
-u32 CMenu::_btnRepeat(u32 btn)
-{
-	u32 b = 0;
-
-	if ((btn & WPAD_BUTTON_LEFT) != 0)
-	{
-		if (m_padLeftDelay == 0 || m_padLeftDelay > g_repeatDelay)
-			b |= WPAD_BUTTON_LEFT;
-		++m_padLeftDelay;
-	}
-	else
-		m_padLeftDelay = 0;
-	if ((btn & WPAD_BUTTON_DOWN) != 0)
-	{
-		if (m_padDownDelay == 0 || m_padDownDelay > g_repeatDelay)
-			b |= WPAD_BUTTON_DOWN;
-		++m_padDownDelay;
-	}
-	else
-		m_padDownDelay = 0;
-	if ((btn & WPAD_BUTTON_RIGHT) != 0)
-	{
-		if (m_padRightDelay == 0 || m_padRightDelay > g_repeatDelay)
-			b |= WPAD_BUTTON_RIGHT;
-		++m_padRightDelay;
-	}
-	else
-		m_padRightDelay = 0;
-	if ((btn & WPAD_BUTTON_UP) != 0)
-	{
-		if (m_padUpDelay == 0 || m_padUpDelay > g_repeatDelay)
-			b |= WPAD_BUTTON_UP;
-		++m_padUpDelay;
-	}
-	else
-		m_padUpDelay = 0;
-	return b;
-}
-
 void CMenu::_initCF(void)
 {
 	string id;
@@ -1404,4 +1362,7 @@ void CMenu::_stopSounds(void)
 	_stopMusic();
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();
+	m_gameSound.stop();
+	m_gameSound.data.release();
+	m_gameSoundTmp.data.release();
 }

@@ -2,7 +2,6 @@
 #include "menu.hpp"
 #include "svnrev.h"
 
-#include <wiiuse/wpad.h>
 #include "sys.h"
 #include "alt_ios.h"
 
@@ -17,18 +16,11 @@ extern int mainIOSRev;
 
 void CMenu::_about(void)
 {
-	s32 padsState;
-	u32 btn;
-	WPADData *wd;
-
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	_showAbout();
 	do
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if (wd->ir.valid)
 			m_btnMgr.mouse(wd->ir.x - m_cur.width() / 2, wd->ir.y - m_cur.height() / 2);
 		if ((padsState & WPAD_BUTTON_A) != 0 && !(m_thrdWorking && m_thrdStop))
@@ -44,7 +36,7 @@ void CMenu::_about(void)
 		}
 		_mainLoopCommon(wd);
 	} while ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) == 0);
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	_hideAbout(false);
 }
 

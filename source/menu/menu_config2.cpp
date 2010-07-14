@@ -1,7 +1,6 @@
 
 #include "menu.hpp"
 
-#include <wiiuse/wpad.h>
 
 #define ARRAY_SIZE(a)	(sizeof a / sizeof a[0])
 
@@ -76,18 +75,12 @@ void CMenu::_showConfig2(void)
 
 int CMenu::_config2(void)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	int nextPage = 0;
 
 	_showConfig2();
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
 		if (wd->ir.valid)

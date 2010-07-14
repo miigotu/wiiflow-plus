@@ -2,7 +2,6 @@
 #include "menu.hpp"
 #include "loader/wdvd.h"
 
-#include <wiiuse/wpad.h>
 #include <unistd.h>
 #include <fstream>
 
@@ -86,23 +85,12 @@ void CMenu::_showMain(void)
 
 int CMenu::main(void)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	wstringEx curLetter;
-	int repeatButton = 0;
-	u32 buttonHeld = (u32)-1;
 	string prevTheme = m_cfg.getString(" GENERAL", "theme", "default");
 	bool reload = false;
-	float angle = 0;
-	float mag = 0;
 	static u32 disc_check = 0, olddisc_check = 0;
 	int done = 0;
-	WPAD_Rumble(WPAD_CHAN_0, 0);
-	m_padLeftDelay = 0;
-	m_padDownDelay = 0;
-	m_padRightDelay = 0;
-	m_padUpDelay = 0;
+	SetupInput();
 	_loadList();
 	_showMain();
 	m_curGameId.clear();
@@ -117,14 +105,8 @@ int CMenu::main(void)
 		olddisc_check = disc_check;
 		WDVD_GetCoverStatus(&disc_check);
 				
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
-		//Get Nunchuk values
-		angle = wd->exp.nunchuk.js.ang;
-		mag = wd->exp.nunchuk.js.mag;
-		
+		ScanInput();
+	
 		//check if Disc was inserted
 		if ((disc_check & 0x2) && (disc_check!=olddisc_check) && !m_locked && !WBFS_IsReadOnly()) {
 			_hideMain();
@@ -145,14 +127,18 @@ int CMenu::main(void)
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16)
 			padsState |= WPAD_BUTTON_A;
 		//Normal coverflow movement
-		if ((btn & WPAD_BUTTON_UP) != 0)
+		if ((btn & WPAD_BUTTON_UP) != 0 //Wiimote
+			|| (((angle >= 315 && angle <= 360) || (angle >= 0 && angle < 45)) && mag > 0.75)) //Nunchuck
 			m_cf.up();
-		else if ((btn & WPAD_BUTTON_DOWN) != 0)
-			m_cf.down();
-		else if ((btn & WPAD_BUTTON_LEFT) != 0 || ((angle > 255 && angle < 285) && mag > 0.75))
-			m_cf.left();
-		else if ((btn & WPAD_BUTTON_RIGHT) != 0 || ((angle > 75 && angle < 105) && mag > 0.75))
+		else if ((btn & WPAD_BUTTON_RIGHT) != 0 //Wiimote
+			|| ((angle >= 45 && angle < 135) && mag > 0.75)) //Nunchuck
 			m_cf.right();
+		else if ((btn & WPAD_BUTTON_DOWN) != 0 //Wiimote
+			|| ((angle >= 135 && angle < 225) && mag > 0.75)) //Nunchuck
+			m_cf.down();
+		else if ((btn & WPAD_BUTTON_LEFT) != 0  //Wiimote
+			|| ((angle >= 225 && angle < 315) && mag > 0.75)) //Nunchuck
+			m_cf.left();
 		//CF Layout select
 		if ((padsState & WPAD_BUTTON_1) != 0 && (wd->btns_h & WPAD_BUTTON_B) == 0)
 		{
@@ -193,46 +179,50 @@ int CMenu::main(void)
 			m_cf.pageUp();
 		else if ((padsState & WPAD_BUTTON_PLUS) != 0)
 			m_cf.pageDown();
-		//Sorting Selection
-		if ((padsState & WPAD_BUTTON_DOWN) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
+
+		if ((wd->btns_h & WPAD_BUTTON_B) != 0)
 		{
-			u32 sort = 0;
-			sort = m_cfg.getInt(" GENERAL", "sort", 0);
-			++sort;
-			if (sort >= 4) sort = 0;
-			m_cf.setSorting((Sorting)sort);
-			m_cfg.setInt(" GENERAL", "sort", sort);
-			wstringEx curSort ;
-			if (sort == SORT_ALPHA)
-				curSort = m_loc.getWString(m_curLanguage, "alphabetically", L"Alphabetically");
-			else if (sort == SORT_PLAYCOUNT)
-				curSort = m_loc.getWString(m_curLanguage, "byplaycount", L"By Play Count");
-			else if (sort == SORT_LASTPLAYED)
-				curSort = m_loc.getWString(m_curLanguage, "bylastplayed", L"By Last Played");
-			else if (sort == SORT_GAMEID)
-				curSort = m_loc.getWString(m_curLanguage, "bygameid", L"By Game I.D.");
-			m_showtimer=60; 
-			m_btnMgr.setText(m_mainLblNotice, curSort);
-			m_btnMgr.show(m_mainLblNotice);
-		}
-		//Partition Selection
-		if ((padsState & WPAD_BUTTON_UP) != 0 && (wd->btns_h & WPAD_BUTTON_B) != 0)
-		{
-			_hideMain();
-			s32 amountOfPartitions = WBFS_GetPartitionCount();
-			s32 currentPartition = WBFS_GetCurrentPartition();
-			char buf[5];
-			currentPartition = loopNum(currentPartition + 1, amountOfPartitions);
-			gprintf("Next item: %d\n", currentPartition);
-			WBFS_GetPartitionName(currentPartition, (char *) &buf);
-			gprintf("Which is: %s\n", buf);
-			m_cfg.setString(" GENERAL", "partition", buf);
-			m_showtimer=60; 
-			m_btnMgr.setText(m_mainLblNotice, (string)buf);
-			m_btnMgr.show(m_mainLblNotice);
-			_loadList();
-			_showMain();
-			_initCF();
+			//Sorting Selection
+			if ((padsState & WPAD_BUTTON_DOWN) != 0 )
+			{
+				u32 sort = 0;
+				sort = m_cfg.getInt(" GENERAL", "sort", 0);
+				++sort;
+				if (sort >= 4) sort = 0;
+				m_cf.setSorting((Sorting)sort);
+				m_cfg.setInt(" GENERAL", "sort", sort);
+				wstringEx curSort ;
+				if (sort == SORT_ALPHA)
+					curSort = m_loc.getWString(m_curLanguage, "alphabetically", L"Alphabetically");
+				else if (sort == SORT_PLAYCOUNT)
+					curSort = m_loc.getWString(m_curLanguage, "byplaycount", L"By Play Count");
+				else if (sort == SORT_LASTPLAYED)
+					curSort = m_loc.getWString(m_curLanguage, "bylastplayed", L"By Last Played");
+				else if (sort == SORT_GAMEID)
+					curSort = m_loc.getWString(m_curLanguage, "bygameid", L"By Game I.D.");
+				m_showtimer=60; 
+				m_btnMgr.setText(m_mainLblNotice, curSort);
+				m_btnMgr.show(m_mainLblNotice);
+			}
+			//Partition Selection
+			if ((padsState & WPAD_BUTTON_UP) != 0)
+			{
+				_hideMain();
+				s32 amountOfPartitions = WBFS_GetPartitionCount();
+				s32 currentPartition = WBFS_GetCurrentPartition();
+				char buf[5];
+				currentPartition = loopNum(currentPartition + 1, amountOfPartitions);
+				gprintf("Next item: %d\n", currentPartition);
+				WBFS_GetPartitionName(currentPartition, (char *) &buf);
+				gprintf("Which is: %s\n", buf);
+				m_cfg.setString(" GENERAL", "partition", buf);
+				m_showtimer=60; 
+				m_btnMgr.setText(m_mainLblNotice, (string)buf);
+				m_btnMgr.show(m_mainLblNotice);
+				_loadList();
+				_showMain();
+				_initCF();
+			}
 		}
 		//Events to Show Categories
 		if ((padsState & WPAD_BUTTON_B) != 0)
@@ -250,7 +240,13 @@ int CMenu::main(void)
 					m_curGameId = m_cf.getId();
 					_initCF();
 				}
-			}		
+			}
+			/*
+			if (m_btnMgr.selected() == m_mainBtnChannel || m_btnMgr.selected() == m_mainBtnUsb)
+			{
+				//switch to nand emu here.
+			}
+			*/
 		}
 		if (done==0 && m_current_view == COVERFLOW_USB && m_cfg.getBool(" GENERAL", "category_on_start", false)) // Only supported in game mode (not for channels, since you don't have options for channels yet)
 		{
@@ -442,7 +438,7 @@ int CMenu::main(void)
 			m_cf.mouse(m_vid, m_cur.x(), m_cur.y());
 		_mainLoopCommon(wd, true);
 	}
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	// 
 	GX_InvVtxCache();
 	GX_InvalidateTexAll();

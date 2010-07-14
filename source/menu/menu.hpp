@@ -5,16 +5,15 @@
 #define APP_NAME		"WiiFlow"
 #define APP_VERSION		"2.1"
 
+#include <wiiuse/wpad.h>
+#include <vector>
+#include <map>
 #include "cursor.hpp"
 #include "gui.hpp"
 #include "coverflow.hpp"
 #include "fanart.hpp"
 #include "loader/disc.h"
 #include "channels.h"
-
-#include <wiiuse/wpad.h>
-#include <vector>
-#include <map>
 
 #include "gct.h"
 
@@ -388,11 +387,24 @@ private:
 	SZone m_mainNextZone;
 	SZone m_mainButtonsZone;
 	SZone m_mainButtonsZone2;
-	 
+
+	s32 padsState;
+	WPADData *wd;
+	u32 btn;	
 	u32 m_padLeftDelay;
 	u32 m_padDownDelay;
 	u32 m_padRightDelay;
 	u32 m_padUpDelay;
+	u32 buttonHeld;
+	int repeatButton;
+	float angle;
+	float mag;
+	u32 _btnRepeat();
+	u32 PadState();
+	u32 PadHeld();
+	//WPADData* PadData();
+	void SetupInput();
+	void ScanInput();
 
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;
@@ -470,7 +482,6 @@ private:
 		float step[4];
 		float minMaxVal[4][2];
 	};
-	u32 _btnRepeat(u32 btn);
 	// 
 	bool _loadList(void);
 	bool _loadGameList(void);

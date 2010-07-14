@@ -3,7 +3,6 @@
 #include "wbfs.h"
 
 #include <dirent.h>
-#include <wiiuse/wpad.h>
 #include <sys/types.h> 
 #include <sys/param.h> 
 #include <sys/stat.h> 
@@ -118,9 +117,6 @@ static void listThemes(const char * path, vector<string> &themes)
 
 int CMenu::_configAdv(void)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	int nextPage = 0;
 	vector<string> themes;
 	int curTheme;
@@ -137,10 +133,7 @@ int CMenu::_configAdv(void)
 	_showConfigAdv();
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
 		if (wd->ir.valid)

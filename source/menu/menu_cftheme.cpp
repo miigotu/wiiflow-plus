@@ -1,7 +1,6 @@
 
 #include "menu.hpp"
 
-#include <wiiuse/wpad.h>
 
 using namespace std;
 
@@ -311,13 +310,9 @@ void CMenu::_showCFTheme(u32 curParam, int version, bool wide)
 
 void CMenu::_cfTheme(void)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	u32 curParam = 0;
 	int cfVersion = 1;
-	int repeatButton = 0;
-	u32 buttonHeld = (u32)-1;
+	SetupInput();
 	int btnDelay;
 	bool sel = false;
 	bool wide = m_vid.wide();
@@ -325,17 +320,14 @@ void CMenu::_cfTheme(void)
 	bool copySelected = false;
 	bool copyWide = wide;
 
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	_initCF();
 	_showCFTheme(curParam, cfVersion, wide);
 	_loadCFLayout(cfVersion, true, wide != m_vid.wide());
 	m_cf.applySettings();
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		btnDelay = (wd->btns_h & WPAD_BUTTON_B) != 0 ? 1 : 4;
 		if ((padsState & WPAD_BUTTON_HOME) != 0)
 		{

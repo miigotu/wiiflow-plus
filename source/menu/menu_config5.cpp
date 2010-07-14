@@ -2,7 +2,6 @@
 #include "menu.hpp"
 #include "wbfs.h"
 
-#include <wiiuse/wpad.h>
 
 #include "gecko.h"
 
@@ -75,13 +74,9 @@ void CMenu::_showConfig5(void)
 
 int CMenu::_config5(void)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	int nextPage = 0;
-	int repeatButton = 0;
-	u32 buttonHeld = (u32)-1;
-
+	SetupInput();
+	
 	s32 amountOfPartitions = WBFS_GetPartitionCount();
 	s32 currentPartition = WBFS_GetCurrentPartition();
 //	s32 bCurrentPartition = currentPartition;
@@ -92,10 +87,7 @@ int CMenu::_config5(void)
 	_showConfig5();
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
 		if (wd->ir.valid)

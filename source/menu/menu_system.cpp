@@ -2,7 +2,6 @@
 #include "menu.hpp"
 #include "fs.h"
 #include "libs/libfat/file_allocation_table.h"
-#include <wiiuse/wpad.h>
 #include "loader/sys.h"
 #include "loader/wbfs.h"
 #include "gecko.h"
@@ -23,24 +22,18 @@ public:
 
 void CMenu::_system()
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	int msg = 0,newIOS = mainIOS,newVer = atoi(SVN_REV);
 	lwp_t thread = 0;
 	wstringEx prevMsg;
 
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	m_btnMgr.setText(m_systemBtnBack, _t("dl1", L"Cancel"));
 	m_thrdStop = false;
 	m_thrdMessageAdded = false;
 	m_showtimer = -1;
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if (m_showtimer == -1)
 		{
 			m_showtimer = 120;
@@ -192,7 +185,7 @@ void CMenu::_system()
 			break;
 
 	}
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	_hideSystem();
 }
 

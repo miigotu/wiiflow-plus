@@ -107,6 +107,12 @@ bool loadIOS(int n, bool init)
 	{
 		WPAD_Flush(0);
 		WPAD_Disconnect(0);
+		WPAD_Flush(1);
+		WPAD_Disconnect(1);
+		WPAD_Flush(2);
+		WPAD_Disconnect(2);
+		WPAD_Flush(3);
+		WPAD_Disconnect(3);
 		WPAD_Shutdown();
 		Fat_Unmount();
 
@@ -159,7 +165,7 @@ bool loadIOS(int n, bool init)
 
 		Disc_Init();
 		WPAD_Init();
-		WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
+		WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
 	}
 	return iosOK;
 }

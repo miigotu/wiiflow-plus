@@ -1,16 +1,13 @@
 
 #include "menu.hpp"
 
-#include <wiiuse/wpad.h>
 
 extern const u8 error_png[];
 
 void CMenu::error(const wstringEx &msg)
 {
-	s32 padsState;
-	WPADData *wd;
 
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	_hideAbout();
 	_hideCode();
 	_hideConfig();
@@ -25,12 +22,10 @@ void CMenu::error(const wstringEx &msg)
 	_showError();
 	do
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
+		ScanInput();
 		_mainLoopCommon(wd);
 	} while ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_A | WPAD_BUTTON_B)) == 0);
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	_hideError(false);
 }
 

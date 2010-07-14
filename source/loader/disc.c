@@ -349,8 +349,14 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 		return ret;
 
 	/* Disconnect Wiimote */
-    WPAD_Flush(0);
-    WPAD_Disconnect(0);
+		WPAD_Flush(0);
+		WPAD_Disconnect(0);
+		WPAD_Flush(1);
+		WPAD_Disconnect(1);
+		WPAD_Flush(2);
+		WPAD_Disconnect(2);
+		WPAD_Flush(3);
+		WPAD_Disconnect(3);
     WPAD_Shutdown();
 	
 	/* Setup low memory */;

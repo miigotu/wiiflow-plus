@@ -1,5 +1,4 @@
 
-#include <wiiuse/wpad.h>
 #include "video.hpp"
 #include "menu/menu.hpp"
 #include "loader/disc.h"
@@ -130,7 +129,7 @@ int old_main(int argc, char **argv)
 	texWait.data.release();
 	texWaitHDD.data.release();
 	WPAD_Init();
-	WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
+	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
 	MEM2_takeBigOnes(true);
 	do
 	{

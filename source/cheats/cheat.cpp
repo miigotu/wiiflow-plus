@@ -44,10 +44,7 @@ void loadCheatFile(SmartBuf &buffer, u32 &size, const char *cheatPath, const cha
 }
 
 void CMenu::_CheatSettings() {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 
 	// try to load cheat file
 	int txtavailable=0;
@@ -65,10 +62,7 @@ void CMenu::_CheatSettings() {
 	
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
 		if (wd->ir.valid)

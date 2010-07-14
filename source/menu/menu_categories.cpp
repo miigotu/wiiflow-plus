@@ -1,14 +1,11 @@
 #include "menu.hpp"
 
-#include <wiiuse/wpad.h>
 #include <string.h>
 #include <gccore.h>
 
-void CMenu::_CategorySettings() {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+void CMenu::_CategorySettings()
+{
+	SetupInput();
 	bool exitloop = false;
 
 	_showCategorySettings();
@@ -16,10 +13,7 @@ void CMenu::_CategorySettings() {
 	while (true)
 	{
 		exitloop=false;
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
 		if (wd->ir.valid)

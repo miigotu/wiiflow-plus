@@ -1,6 +1,5 @@
 
 #include "gui.hpp"
-
 #include <wiiuse/wpad.h>
 #include <algorithm>
 
@@ -153,7 +152,7 @@ void CButtonsMgr::mouse(int x, int y)
 					if (m_rumbleEnabled)
 					{
 						m_rumble = 4;
-						WPAD_Rumble(WPAD_CHAN_0, 1);
+						WPAD_Rumble(WPAD_CHAN_ALL, 1);
 					}
 				}
 				break;
@@ -220,7 +219,8 @@ void CButtonsMgr::down(void)
 
 void CButtonsMgr::click(u32 id)
 {
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	WPAD_Rumble(WPAD_CHAN_ALL, 0);
+
 	if (id == (u32)-1)
 		id = m_selected;
 	if (id < m_elts.size() && m_elts[id]->t == CButtonsMgr::GUIELT_BUTTON)
@@ -270,7 +270,8 @@ void CButtonsMgr::tick(void)
 	for (u32 i = 0; i < m_elts.size(); ++i)
 		m_elts[i]->tick();
 	if (m_rumble > 0 && --m_rumble == 0)
-		WPAD_Rumble(WPAD_CHAN_0, 0);
+	WPAD_Rumble(WPAD_CHAN_ALL, 0);
+
 }
 
 u32 CButtonsMgr::addLabel(SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, const STexture &bg)

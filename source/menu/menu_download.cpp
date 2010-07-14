@@ -11,7 +11,6 @@
 #include "loader/usbstorage.h"
 
 #include <network.h>
-#include <wiiuse/wpad.h>
 
 #include "gecko.h"
 #include <fstream>
@@ -475,14 +474,11 @@ int CMenu::_coverDownloader(bool missingOnly)
 
 void CMenu::_download(string gameId)
 {
-	s32 padsState;
-	WPADData *wd;
-	u32 btn;
 	lwp_t thread = 0;
 	int msg = 0;
 	wstringEx prevMsg;
 
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	_showDownload();
 	m_btnMgr.setText(m_downloadBtnCancel, _t("dl1", L"Cancel"));
 	m_thrdStop = false;
@@ -490,10 +486,7 @@ void CMenu::_download(string gameId)
 	m_coverDLGameId = gameId;
 	while (true)
 	{
-		WPAD_ScanPads();
-		padsState = WPAD_ButtonsDown(0);
-		wd = WPAD_Data(0);
-		btn = _btnRepeat(wd->btns_h);
+		ScanInput();
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0 && !m_thrdWorking)
 			break;
 		if (wd->ir.valid)
@@ -580,7 +573,7 @@ void CMenu::_download(string gameId)
 		if (m_thrdStop && !m_thrdWorking)
 			break;
 	}
-	WPAD_Rumble(WPAD_CHAN_0, 0);
+	SetupInput();
 	_hideDownload();
 }
 
@@ -724,7 +717,7 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 				_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
 				LWP_MutexUnlock(m_mutex);
 			}
-			file = NULL;
+
 		}
 	}
 	file = NULL;
