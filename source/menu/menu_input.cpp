@@ -14,7 +14,7 @@ public:
 	~LockMutex(void) { LWP_MutexUnlock(m_mutex); }
 };
 
-u32 CMenu::PadState()
+u32 CMenu::WPadState()
 {
 	int ret;
 	for (int i=0;i<4;i++)
@@ -26,7 +26,7 @@ u32 CMenu::PadState()
 	return false;
 }
 
-u32 CMenu::PadHeld()
+u32 CMenu::WPadHeld()
 {
 	int ret;
 	for (int i=0;i<4;i++)
@@ -39,7 +39,7 @@ u32 CMenu::PadHeld()
 }
 
 /*
-WPADData* CMenu::PadData()
+WPADData* CMenu::WPadData()
 {
 	for (int i=0;i<4;i++)
 	{
@@ -57,8 +57,11 @@ void CMenu::SetupInput()
 		m_padDownDelay = 0;
 		m_padRightDelay = 0;
 		m_padUpDelay = 0;
-		angle = 0;
-		mag = 0;
+		for (int i=0;i<4;i++)
+		{
+			angle[i] = 0;
+			mag[i] = 0;
+		}
 		repeatButton = 0;
 		buttonHeld = (u32)-1;
 }
@@ -66,23 +69,32 @@ void CMenu::SetupInput()
 void CMenu::ScanInput()
 {
 	WPAD_ScanPads();
-	padsState = PadState();
-	//wd = WPAD_Data(m_paddata);
-	wd = WPAD_Data(0);
-	//if (m_paddata < 3)
-		//m_paddata++;
-	//else
-		//m_paddata = 0;	
+	padsState = WPadState();
+	WPADData *wd[4];
+	for(int i=0;i<4;i++)
+	{
+		wd[i] = WPAD_Data(i);
+		angle[i] = wd[i]->exp.nunchuk.js.ang;
+		mag[i] = wd[i]->exp.nunchuk.js.mag;
+	}
 	btn = _btnRepeat();
-	//Get Nunchuk values
-	angle = wd->exp.nunchuk.js.ang;
-	mag = wd->exp.nunchuk.js.mag;
+}
+
+int CMenu::WPadIR_Valid()
+{
+	for (int i=0;i<4;i++)
+	{
+		wd[i] = WPAD_Data(i);
+		if (wd[i]->ir.valid)
+			return true;
+	}
+	return false;
 }
 
 u32 CMenu::_btnRepeat()
 {
 	u32 b = 0;
-	btn = PadHeld();
+	btn = WPadHeld();
 
 	if ((btn & WPAD_BUTTON_LEFT) != 0)
 	{

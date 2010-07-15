@@ -389,7 +389,7 @@ private:
 	SZone m_mainButtonsZone2;
 
 	s32 padsState;
-	WPADData *wd;
+	WPADData *wd[4];
 	u32 btn;	
 	u32 m_padLeftDelay;
 	u32 m_padDownDelay;
@@ -397,14 +397,15 @@ private:
 	u32 m_padUpDelay;
 	u32 buttonHeld;
 	int repeatButton;
-	float angle;
-	float mag;
+	float angle[4];
+	float mag[4];
 	u32 _btnRepeat();
-	u32 PadState();
-	u32 PadHeld();
-	//WPADData* PadData();
+	u32 WPadState();
+	u32 WPadHeld();
+	//WPADData* WPadData();
 	void SetupInput();
 	void ScanInput();
+	int WPadIR_Valid();
 
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;
@@ -592,7 +593,7 @@ private:
 	void _CheatSettings();
 	void _CategorySettings();
 	//
-	void _mainLoopCommon(const WPADData *wd, bool withCF = false, bool blockReboot = false, bool adjusting = false);
+	void _mainLoopCommon(WPADData *wd[4], bool withCF = false, bool blockReboot = false, bool adjusting = false);
 	// 
 	void _launch(const u64 chanTitle, const std::string &id);
 	void _launchGame(const std::string &id);

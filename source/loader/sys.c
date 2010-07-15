@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <ogcsys.h>
 #include <stdlib.h>
-
+#include <wiiuse/wpad.h>
 #include "sys.h"
 #include "gecko.h"
 #include "loader/playlog.h"
@@ -44,6 +44,15 @@ void Sys_ExitToWiiMenu(bool b)
 
 void Sys_Exit(int ret)
 {
+	WPAD_Flush(0);
+	WPAD_Disconnect(0);
+	WPAD_Flush(1);
+	WPAD_Disconnect(1);
+	WPAD_Flush(2);
+	WPAD_Disconnect(2);
+	WPAD_Flush(3);
+	WPAD_Disconnect(3);
+    WPAD_Shutdown();
 	if (return_to_menu)
 	{
 		Playlog_Delete();
@@ -83,14 +92,35 @@ void Sys_Init(void)
 
 void Sys_Reboot(void)
 {
+	WPAD_Flush(0);
+	WPAD_Disconnect(0);
+	WPAD_Flush(1);
+	WPAD_Disconnect(1);
+	WPAD_Flush(2);
+	WPAD_Disconnect(2);
+	WPAD_Flush(3);
+	WPAD_Disconnect(3);
+    WPAD_Shutdown();
+
 	/* Restart console */
 	STM_RebootSystem();
 }
 
 void Sys_Shutdown(void)
 {
+	WPAD_Flush(0);
+	WPAD_Disconnect(0);
+	WPAD_Flush(1);
+	WPAD_Disconnect(1);
+	WPAD_Flush(2);
+	WPAD_Disconnect(2);
+	WPAD_Flush(3);
+	WPAD_Disconnect(3);
+    WPAD_Shutdown();
+
 	/* Poweroff console */
-	if(CONF_GetShutdownMode() == CONF_SHUTDOWN_IDLE) {
+	if(CONF_GetShutdownMode() == CONF_SHUTDOWN_IDLE)
+	{
 		s32 ret;
 
 		/* Set LED mode */
@@ -100,7 +130,9 @@ void Sys_Shutdown(void)
 
 		/* Shutdown to idle */
 		STM_ShutdownToIdle();
-	} else {
+	}
+	else
+	{
 		/* Shutdown to standby */
 		STM_ShutdownToStandby();
 	}
@@ -131,7 +163,8 @@ s32 Sys_GetCerts(signed_blob **certs, u32 *len)
 	IOS_Close(fd);
 
 	/* Set values */
-	if (ret > 0) {
+	if (ret > 0)
+	{
 		*certs = certificates;
 		*len   = sizeof(certificates);
 	}

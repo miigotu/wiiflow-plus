@@ -21,8 +21,9 @@ void CMenu::_about(void)
 	do
 	{
 		ScanInput();
-		if (wd->ir.valid)
-			m_btnMgr.mouse(wd->ir.x - m_cur.width() / 2, wd->ir.y - m_cur.height() / 2);
+		//for(int chan=0;chan<4;chan++)
+			if (WPadIR_Valid())
+				m_btnMgr.mouse(wd[0]->ir.x - m_cur.width() / 2, wd[0]->ir.y - m_cur.height() / 2);
 		if ((padsState & WPAD_BUTTON_A) != 0 && !(m_thrdWorking && m_thrdStop))
 		{
 			m_btnMgr.click();

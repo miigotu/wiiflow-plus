@@ -898,7 +898,7 @@ void CMenu::_initCF(void)
 			m_cf.findId(m_cfg.getString(" GENERAL", "current_game").c_str(), true);
 }
 
-void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, bool adjusting)
+void CMenu::_mainLoopCommon(WPADData *wd[4], bool withCF, bool blockReboot, bool adjusting)
 {
 	if (withCF)
 		m_cf.tick();
@@ -953,8 +953,9 @@ void CMenu::_mainLoopCommon(const WPADData *wd, bool withCF, bool blockReboot, b
 	
 	//m_vid.setup2DProjection();
 	m_btnMgr.draw();
-	if (wd->ir.valid)
-		m_cur.draw(wd->ir.x, wd->ir.y, wd->ir.angle);
+	//for (int chan=0;chan<4;chan++)
+		if (WPadIR_Valid())
+			m_cur.draw(wd[0]->ir.x, wd[0]->ir.y, wd[0]->ir.angle);
 	m_vid.render();
 	if (!blockReboot)
 	{

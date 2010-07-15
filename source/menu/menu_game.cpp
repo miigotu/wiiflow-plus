@@ -153,6 +153,7 @@ static void setLanguage(int l)
 void CMenu::_game(bool launch)
 {
 	bool b;
+	bool first = true;
 	if (!launch)
 	{
 		SetupInput();
@@ -164,14 +165,18 @@ void CMenu::_game(bool launch)
 		string id(m_cf.getId());
 		string title(m_cf.getTitle());
 		u64 chantitle = m_cf.getChanTitle();
-		ScanInput();
+		if (!first)
+			ScanInput();
+		else
+			first = false;
+		//for(int chan=0;chan<4;chan++)
+			if (WPadIR_Valid())
+				m_btnMgr.mouse(wd[0]->ir.x - m_cur.width() / 2, wd[0]->ir.y - m_cur.height() / 2);
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 		{
 			_stopSounds();
 			break;
 		}
-		if (wd->ir.valid)
-			m_btnMgr.mouse(wd->ir.x - m_cur.width() / 2, wd->ir.y - m_cur.height() / 2);
 		if ((padsState & WPAD_BUTTON_MINUS) != 0)
 		{
 			string videoPath = sfmt("%s/%.3s.thp", m_videoDir.c_str(), id.c_str());
@@ -256,104 +261,106 @@ void CMenu::_game(bool launch)
 				_gameSettings();
 				_showGame();
 			}
-			else if (launch || m_btnMgr.selected() == m_gameBtnPlay || (!wd->ir.valid && m_btnMgr.selected() == (u32)-1))
-			{
-				_hideGame();
-				m_cf.clear();
-				m_vid.waitMessage(m_waitMessage);
+			//for (int chan=0;chan<4;chan++)
+				if (launch || m_btnMgr.selected() == m_gameBtnPlay || (!WPadIR_Valid() && m_btnMgr.selected() == (u32)-1))
+				{
+					_hideGame();
+					m_cf.clear();
+					m_vid.waitMessage(m_waitMessage);
 
-				if (Playlog_Update(id.c_str(), title.c_str())<0)
-					Playlog_Delete();
+					if (Playlog_Update(id.c_str(), title.c_str())<0)
+						Playlog_Delete();
 
-				_launch(chantitle, id);
-				launch = false;
-				WPAD_SetVRes(0, m_vid.width() + m_cur.width(), m_vid.height() + m_cur.height());	// b/c IOS reload
-				_showGame();
-				_initCF();
-				m_cf.select();
-			}
-			else if (m_cf.mouseOver(m_vid, m_cur.x(), m_cur.y()))
+					_launch(chantitle, id);
+					launch = false;
+					WPAD_SetVRes(WPAD_CHAN_ALL, m_vid.width() + m_cur.width(), m_vid.height() + m_cur.height());	// b/c IOS reload
+					_showGame();
+					_initCF();
+					m_cf.select();
+				}
+			if (m_cf.mouseOver(m_vid, m_cur.x(), m_cur.y()))
 				m_cf.flip();
 		}
 		//Normal coverflow movement
-		if ((btn & WPAD_BUTTON_UP) != 0 //Wiimote
-			|| (((angle >= 315 && angle <= 360) || (angle >= 0 && angle < 45)) && mag > 0.75)) //Nunchuck
-		{
-			_stopSounds();
-			m_cf.up();
-			_showGame();
-			_playGameSound();
-		}
-		else if ((btn & WPAD_BUTTON_RIGHT) != 0 //Wiimote
-			|| ((angle >= 45 && angle < 135) && mag > 0.75)) //Nunchuck
-		{
-			_stopSounds();
-			m_cf.right();
-			_showGame();
-			_playGameSound();
-		}
-		else if ((btn & WPAD_BUTTON_DOWN) != 0 //Wiimote
-			|| ((angle >= 135 && angle < 225) && mag > 0.75)) //Nunchuck
-		{
-			_stopSounds();
-			m_cf.down();
-			_showGame();
-			_playGameSound();
-		}
-		else if ((btn & WPAD_BUTTON_LEFT) != 0  //Wiimote
-			|| ((angle >= 225 && angle < 315) && mag > 0.75)) //Nunchuck
-		{
-			_stopSounds();
-			m_cf.left();
-			_showGame();
-			_playGameSound();
-		}
-		// 
-		if (wd->ir.valid)
-		{
-			if (m_current_view == COVERFLOW_USB)
+		//for (int chan=0;chan<4;chan++)
+			if ((btn & WPAD_BUTTON_UP) != 0 //Wiimote
+				|| (((angle[0] >= 315 && angle[0] <= 360) || (angle[0] >= 0 && angle[0] < 45)) && mag[0] > 0.75)) //Nunchuck
 			{
-				b = m_cfg.getBool(id, "favorite", false);
-				m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
-				m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
-				m_btnMgr.show(m_gameLblUser[1]);
-				m_btnMgr.show(m_gameLblUser[2]);
-	
-				if (!m_locked)
+				_stopSounds();
+				m_cf.up();
+				_showGame();
+				_playGameSound();
+			}
+			else if ((btn & WPAD_BUTTON_RIGHT) != 0 //Wiimote
+				|| ((angle[0] >= 45 && angle[0] < 135) && mag[0] > 0.75)) //Nunchuck
+			{
+				_stopSounds();
+				m_cf.right();
+				_showGame();
+				_playGameSound();
+			}
+			else if ((btn & WPAD_BUTTON_DOWN) != 0 //Wiimote
+				|| ((angle[0] >= 135 && angle[0] < 225) && mag[0] > 0.75)) //Nunchuck
+			{
+				_stopSounds();
+				m_cf.down();
+				_showGame();
+				_playGameSound();
+			}
+			else if ((btn & WPAD_BUTTON_LEFT) != 0  //Wiimote
+				|| ((angle[0] >= 225 && angle[0] < 315) && mag[0] > 0.75)) //Nunchuck
+			{
+				_stopSounds();
+				m_cf.left();
+				_showGame();
+				_playGameSound();
+			}
+			// 
+			else if (WPadIR_Valid())
+			{
+				if (m_current_view == COVERFLOW_USB)
 				{
-					b = m_cfg.getBool(id, "adult_only", false);
-					m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
-					m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
-					m_btnMgr.show(m_gameBtnDelete);
-					m_btnMgr.show(m_gameBtnSettings);
+					b = m_cfg.getBool(id, "favorite", false);
+					m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
+					m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
+					m_btnMgr.show(m_gameLblUser[1]);
+					m_btnMgr.show(m_gameLblUser[2]);
+		
+					if (!m_locked)
+					{
+						b = m_cfg.getBool(id, "adult_only", false);
+						m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
+						m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
+						m_btnMgr.show(m_gameBtnDelete);
+						m_btnMgr.show(m_gameBtnSettings);
+					}
+				}
+				else if (m_current_view == COVERFLOW_CHANNEL)
+				{
+					b = m_cfg.getBool(id, "favorite", false);
+					m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
+					m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
+					m_btnMgr.show(m_gameLblUser[1]);
+					m_btnMgr.show(m_gameLblUser[2]);
+		
+					if (!m_locked)
+					{
+						b = m_cfg.getBool(id, "adult_only", false);
+						m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
+						m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
+					}
 				}
 			}
-			else if (m_current_view == COVERFLOW_CHANNEL)
+			else
 			{
-				b = m_cfg.getBool(id, "favorite", false);
-				m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
-				m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
-				m_btnMgr.show(m_gameLblUser[1]);
-				m_btnMgr.show(m_gameLblUser[2]);
-	
-				if (!m_locked)
-				{
-					b = m_cfg.getBool(id, "adult_only", false);
-					m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
-					m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
-				}
-			}
-		}
-		else
-		{
-			m_btnMgr.hide(m_gameBtnFavoriteOn);
-			m_btnMgr.hide(m_gameBtnFavoriteOff);
-			m_btnMgr.hide(m_gameBtnAdultOn);
-			m_btnMgr.hide(m_gameBtnAdultOff);
-			m_btnMgr.hide(m_gameBtnDelete);
-			m_btnMgr.hide(m_gameBtnSettings);
-			m_btnMgr.hide(m_gameLblUser[1]);
-			m_btnMgr.hide(m_gameLblUser[2]);
+				m_btnMgr.hide(m_gameBtnFavoriteOn);
+				m_btnMgr.hide(m_gameBtnFavoriteOff);
+				m_btnMgr.hide(m_gameBtnAdultOn);
+				m_btnMgr.hide(m_gameBtnAdultOff);
+				m_btnMgr.hide(m_gameBtnDelete);
+				m_btnMgr.hide(m_gameBtnSettings);
+				m_btnMgr.hide(m_gameLblUser[1]);
+				m_btnMgr.hide(m_gameLblUser[2]);
 		}
 		_mainLoopCommon(wd, true);
 	}

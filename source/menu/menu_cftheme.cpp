@@ -328,26 +328,27 @@ void CMenu::_cfTheme(void)
 	while (true)
 	{
 		ScanInput();
-		btnDelay = (wd->btns_h & WPAD_BUTTON_B) != 0 ? 1 : 4;
+		btnDelay = (WPadHeld() & WPAD_BUTTON_B) != 0 ? 1 : 4;
+		//for(int chan=0;chan<4;chan++)
+			if (WPadIR_Valid())
+				m_btnMgr.mouse(wd[0]->ir.x - m_cur.width() / 2, wd[0]->ir.y - m_cur.height() / 2);
 		if ((padsState & WPAD_BUTTON_HOME) != 0)
 		{
 			m_theme.clear();
 			m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), m_cfg.getString(" GENERAL", "theme", "defaut").c_str()).c_str());
 			break;
 		}
-		if (wd->ir.valid)
-			m_btnMgr.mouse(wd->ir.x - m_cur.width() / 2, wd->ir.y - m_cur.height() / 2);
 		else if ((padsState & WPAD_BUTTON_UP) != 0)
 			m_btnMgr.up();
 		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
 			m_btnMgr.down();
-		if ((wd->btns_h & WPAD_BUTTON_B) != 0 && (padsState & WPAD_BUTTON_1) != 0)
+		if ((WPadHeld() & WPAD_BUTTON_B) != 0 && (padsState & WPAD_BUTTON_1) != 0)
 		{
 			copyVersion = cfVersion;
 			copySelected = m_cf.selected();
 			copyWide = wide;
 		}
-		else if (copyVersion > 0 && (wd->btns_h & WPAD_BUTTON_B) != 0 && (padsState & WPAD_BUTTON_2) != 0)
+		else if (copyVersion > 0 && (WPadHeld() & WPAD_BUTTON_B) != 0 && (padsState & WPAD_BUTTON_2) != 0)
 		{
 			string domSrc(sfmt(copySelected ? "_COVERFLOW_%i_S" : "_COVERFLOW_%i", copyVersion));
 			string domDst(sfmt(m_cf.selected() ? "_COVERFLOW_%i_S" : "_COVERFLOW_%i", cfVersion));
@@ -379,7 +380,7 @@ void CMenu::_cfTheme(void)
 				m_cf.applySettings();
 		}
 		sel = m_cf.selected();
-		if ((wd->btns_h & WPAD_BUTTON_B) != 0)
+		if ((WPadHeld() & WPAD_BUTTON_B) != 0)
 		{
 			if ((padsState & WPAD_BUTTON_PLUS) != 0)
 			{
@@ -410,7 +411,7 @@ void CMenu::_cfTheme(void)
 		if (sel && !m_cf.selected())
 			m_cf.select();
 		++repeatButton;
-		if ((wd->btns_h & WPAD_BUTTON_A) == 0)
+		if ((WPadHeld() & WPAD_BUTTON_A) == 0)
 			buttonHeld = (u32)-1;
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16 && (repeatButton % btnDelay == 0))
 			padsState |= WPAD_BUTTON_A;
@@ -486,7 +487,7 @@ void CMenu::_cfTheme(void)
 						}
 			}
 		}
-		if (wd->ir.valid)
+		if (WPadIR_Valid() /*|| wd[1]->ir.valid || wd[2]->ir.valid || wd[3]->ir.valid*/)
 			_showCFTheme(curParam, cfVersion, wide);
 		else
 			_hideCFTheme();

@@ -84,16 +84,17 @@ int CMenu::_configSnd(void)
 	while (true)
 	{
 		ScanInput();
+		//for(int chan=0;chan<4;chan++)
+			if (WPadIR_Valid())
+				m_btnMgr.mouse(wd[0]->ir.x - m_cur.width() / 2, wd[0]->ir.y - m_cur.height() / 2);
 		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
-		if (wd->ir.valid)
-			m_btnMgr.mouse(wd->ir.x - m_cur.width() / 2, wd->ir.y - m_cur.height() / 2);
 		else if ((padsState & WPAD_BUTTON_UP) != 0)
 			m_btnMgr.up();
 		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
 			m_btnMgr.down();
 		++repeatButton;
-		if ((wd->btns_h & WPAD_BUTTON_A) == 0)
+		if ((WPadHeld() & WPAD_BUTTON_A) == 0)
 		{
 			buttonHeld = (u32)-1;
 			step = 1;
