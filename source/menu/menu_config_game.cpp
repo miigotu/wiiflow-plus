@@ -344,23 +344,23 @@ void CMenu::_gameSettings(void)
 	while (true)
 	{
 		ScanInput();
-		//for(int chan=0;chan<4;chan++)
-			if (WPadIR_Valid())
-				m_btnMgr.mouse(wd[0]->ir.x - m_cur.width() / 2, wd[0]->ir.y - m_cur.height() / 2);
-		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
+		for(int wmote=0;wmote<4;wmote++)
+			if (WPadIR_Valid(wmote))
+				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
+		if ((wpadsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
-		else if ((padsState & WPAD_BUTTON_UP) != 0)
+		else if ((wpadsState & WPAD_BUTTON_UP) != 0)
 			m_btnMgr.up();
-		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
+		else if ((wpadsState & WPAD_BUTTON_DOWN) != 0)
 			m_btnMgr.down();
-		if ((padsState & WPAD_BUTTON_MINUS) != 0 || (btn & WPAD_BUTTON_LEFT) != 0)
+		if ((wpadsState & WPAD_BUTTON_MINUS) != 0 || (btn & WPAD_BUTTON_LEFT) != 0)
 		{
 			if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 6) || m_gameSettingsPage > 51)
 				--m_gameSettingsPage;
 			_showGameSettings();
 			m_btnMgr.click(m_gameSettingsBtnPageM);
 		}
-		else if ((padsState & WPAD_BUTTON_PLUS) != 0 || (btn & WPAD_BUTTON_RIGHT) != 0)
+		else if ((wpadsState & WPAD_BUTTON_PLUS) != 0 || (btn & WPAD_BUTTON_RIGHT) != 0)
 		{
 			if (m_gameSettingsPage < 5 || (m_gameSettingsPage > 5 && m_gameSettingsPage < 53 && m_max_categories > 8)
 				|| (m_gameSettingsPage > 5 && m_gameSettingsPage < 52 && m_max_categories > 5))
@@ -368,7 +368,7 @@ void CMenu::_gameSettings(void)
 			_showGameSettings();
 			m_btnMgr.click(m_gameSettingsBtnPageP);
 		}
-		else if ((padsState & WPAD_BUTTON_A) != 0)
+		else if ((wpadsState & WPAD_BUTTON_A) != 0)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_gameSettingsBtnBack)

@@ -388,7 +388,8 @@ private:
 	SZone m_mainButtonsZone;
 	SZone m_mainButtonsZone2;
 
-	s32 padsState;
+	s32 wpadsState;
+	s32 wpadsHeld;
 	WPADData *wd[4];
 	u32 btn;	
 	u32 m_padLeftDelay;
@@ -405,7 +406,8 @@ private:
 	//WPADData* WPadData();
 	void SetupInput();
 	void ScanInput();
-	int WPadIR_Valid();
+	int WPadIR_Valid(int i);
+	bool WPadIR_ANY();
 
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;

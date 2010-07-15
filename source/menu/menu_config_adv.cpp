@@ -134,28 +134,28 @@ int CMenu::_configAdv(void)
 	while (true)
 	{
 		ScanInput();
-		//for(int chan=0;chan<4;chan++)
-			if (WPadIR_Valid())
-				m_btnMgr.mouse(wd[0]->ir.x - m_cur.width() / 2, wd[0]->ir.y - m_cur.height() / 2);
-		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
+		for(int wmote=0;wmote<4;wmote++)
+			if (WPadIR_Valid(wmote))
+				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
+		if ((wpadsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
-		else if ((padsState & WPAD_BUTTON_UP) != 0)
+		else if ((wpadsState & WPAD_BUTTON_UP) != 0)
 			m_btnMgr.up();
-		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
+		else if ((wpadsState & WPAD_BUTTON_DOWN) != 0)
 			m_btnMgr.down();
-		if ((btn & WPAD_BUTTON_LEFT) != 0 || (padsState & WPAD_BUTTON_MINUS) != 0 || ((padsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageM))
+		if ((btn & WPAD_BUTTON_LEFT) != 0 || (wpadsState & WPAD_BUTTON_MINUS) != 0 || ((wpadsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageM))
 		{
 			nextPage = max(1, m_locked ? 1 : g_curPage - 1);
 			m_btnMgr.click(m_configBtnPageM);
 			break;
 		}
-		if (!m_locked && ((btn & WPAD_BUTTON_RIGHT) != 0 || (padsState & WPAD_BUTTON_PLUS) != 0 || ((padsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageP)))
+		if (!m_locked && ((btn & WPAD_BUTTON_RIGHT) != 0 || (wpadsState & WPAD_BUTTON_PLUS) != 0 || ((wpadsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageP)))
 		{
 			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
 			m_btnMgr.click(m_configBtnPageP);
 			break;
 		}
-		if ((padsState & WPAD_BUTTON_A) != 0)
+		if ((wpadsState & WPAD_BUTTON_A) != 0)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_configBtnBack)

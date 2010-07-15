@@ -63,16 +63,16 @@ void CMenu::_CheatSettings() {
 	while (true)
 	{
 		ScanInput();
-		//for(int chan=0;chan<4;chan++)
-			if (WPadIR_Valid())
-				m_btnMgr.mouse(wd[0]->ir.x - m_cur.width() / 2, wd[0]->ir.y - m_cur.height() / 2);
-		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
+		for(int wmote=0;wmote<4;wmote++)
+			if (WPadIR_Valid(wmote))
+				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
+		if ((wpadsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
-		else if ((padsState & WPAD_BUTTON_UP) != 0)
+		else if ((wpadsState & WPAD_BUTTON_UP) != 0)
 			m_btnMgr.up();
-		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
+		else if ((wpadsState & WPAD_BUTTON_DOWN) != 0)
 			m_btnMgr.down();
-		if ((padsState & WPAD_BUTTON_MINUS) != 0 || (btn & WPAD_BUTTON_LEFT) != 0)
+		if ((wpadsState & WPAD_BUTTON_MINUS) != 0 || (btn & WPAD_BUTTON_LEFT) != 0)
 		{
 			if (m_cheatSettingsPage > 1)
 				--m_cheatSettingsPage;
@@ -80,7 +80,7 @@ void CMenu::_CheatSettings() {
 			_showCheatSettings();
 			m_btnMgr.click(m_cheatBtnPageM);
 		}
-		else if ((padsState & WPAD_BUTTON_PLUS) != 0 || (btn & WPAD_BUTTON_RIGHT) != 0)
+		else if ((wpadsState & WPAD_BUTTON_PLUS) != 0 || (btn & WPAD_BUTTON_RIGHT) != 0)
 		{
 			_hideCheatSettings();
 			if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
@@ -88,7 +88,7 @@ void CMenu::_CheatSettings() {
 			_showCheatSettings();
 			m_btnMgr.click(m_cheatBtnPageP);
 		}
-		else if ((WPadHeld() & WPAD_BUTTON_2) && (WPadHeld() & WPAD_BUTTON_1)!=0)
+		else if ((wpadsHeld & WPAD_BUTTON_2) && (wpadsHeld & WPAD_BUTTON_1)!=0)
 		{
 			remove(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str()));
 			remove(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));
@@ -96,7 +96,7 @@ void CMenu::_CheatSettings() {
 			m_cfg.remove(m_cf.getId(), "hooktype");
 			break;
 		}
-		if ((padsState & WPAD_BUTTON_A) != 0)
+		if ((wpadsState & WPAD_BUTTON_A) != 0)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_cheatBtnBack)

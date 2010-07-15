@@ -953,9 +953,9 @@ void CMenu::_mainLoopCommon(WPADData *wd[4], bool withCF, bool blockReboot, bool
 	
 	//m_vid.setup2DProjection();
 	m_btnMgr.draw();
-	//for (int chan=0;chan<4;chan++)
-		if (WPadIR_Valid())
-			m_cur.draw(wd[0]->ir.x, wd[0]->ir.y, wd[0]->ir.angle);
+	for(int wmote=0;wmote<4;wmote++)
+		if (WPadIR_Valid(wmote))
+			m_cur.draw(wd[wmote]->ir.x, wd[wmote]->ir.y, wd[wmote]->ir.angle);
 	m_vid.render();
 	if (!blockReboot)
 	{

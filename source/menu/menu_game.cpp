@@ -169,15 +169,15 @@ void CMenu::_game(bool launch)
 			ScanInput();
 		else
 			first = false;
-		//for(int chan=0;chan<4;chan++)
-			if (WPadIR_Valid())
-				m_btnMgr.mouse(wd[0]->ir.x - m_cur.width() / 2, wd[0]->ir.y - m_cur.height() / 2);
-		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
+		for(int wmote=0;wmote<4;wmote++)
+			if (WPadIR_Valid(wmote))
+				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
+		if ((wpadsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 		{
 			_stopSounds();
 			break;
 		}
-		if ((padsState & WPAD_BUTTON_MINUS) != 0)
+		else if ((wpadsState & WPAD_BUTTON_MINUS) != 0)
 		{
 			string videoPath = sfmt("%s/%.3s.thp", m_videoDir.c_str(), id.c_str());
 		
@@ -197,7 +197,7 @@ void CMenu::_game(bool launch)
 				m_video_playing = true;
 				
 				STexture videoBg;
-				while ((padsState & WPAD_BUTTON_B) == 0 && movie.GetNextFrame(&videoBg))
+				while ((wpadsState & WPAD_BUTTON_B) == 0 && movie.GetNextFrame(&videoBg))
 				{
 					_setBg(videoBg, videoBg);
 					m_bgCrossFade = 10;
@@ -211,21 +211,21 @@ void CMenu::_game(bool launch)
 				m_gameSound.play(m_bnrSndVol);
 			}
 		}
-		if ((padsState & WPAD_BUTTON_1) != 0)
+		else if ((wpadsState & WPAD_BUTTON_1) != 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		else if ((padsState & WPAD_BUTTON_2) != 0)
+		else if ((wpadsState & WPAD_BUTTON_2) != 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		if (launch || (padsState & WPAD_BUTTON_A) != 0)
+		else if (launch || (wpadsState & WPAD_BUTTON_A) != 0)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_mainBtnQuit)
@@ -261,30 +261,29 @@ void CMenu::_game(bool launch)
 				_gameSettings();
 				_showGame();
 			}
-			//for (int chan=0;chan<4;chan++)
-				if (launch || m_btnMgr.selected() == m_gameBtnPlay || (!WPadIR_Valid() && m_btnMgr.selected() == (u32)-1))
-				{
-					_hideGame();
-					m_cf.clear();
-					m_vid.waitMessage(m_waitMessage);
+			if (launch || m_btnMgr.selected() == m_gameBtnPlay || (!WPadIR_Valid(0) && !WPadIR_Valid(1) && !WPadIR_Valid(2) && !WPadIR_Valid(3) && m_btnMgr.selected() == (u32)-1))
+			{
+				_hideGame();
+				m_cf.clear();
+				m_vid.waitMessage(m_waitMessage);
 
-					if (Playlog_Update(id.c_str(), title.c_str())<0)
-						Playlog_Delete();
+				if (Playlog_Update(id.c_str(), title.c_str())<0)
+					Playlog_Delete();
 
-					_launch(chantitle, id);
-					launch = false;
-					WPAD_SetVRes(WPAD_CHAN_ALL, m_vid.width() + m_cur.width(), m_vid.height() + m_cur.height());	// b/c IOS reload
-					_showGame();
-					_initCF();
-					m_cf.select();
-				}
+				_launch(chantitle, id);
+				launch = false;
+				WPAD_SetVRes(WPAD_CHAN_ALL, m_vid.width() + m_cur.width(), m_vid.height() + m_cur.height());	// b/c IOS reload
+				_showGame();
+				_initCF();
+				m_cf.select();
+			}
 			if (m_cf.mouseOver(m_vid, m_cur.x(), m_cur.y()))
 				m_cf.flip();
 		}
 		//Normal coverflow movement
-		//for (int chan=0;chan<4;chan++)
+		for(int wmote=0;wmote<4;wmote++)
 			if ((btn & WPAD_BUTTON_UP) != 0 //Wiimote
-				|| (((angle[0] >= 315 && angle[0] <= 360) || (angle[0] >= 0 && angle[0] < 45)) && mag[0] > 0.75)) //Nunchuck
+				|| (((angle[wmote] >= 315 && angle[wmote] <= 360) || (angle[wmote] >= 0 && angle[wmote] < 45)) && mag[wmote] > 0.75)) //Nunchuck
 			{
 				_stopSounds();
 				m_cf.up();
@@ -292,7 +291,7 @@ void CMenu::_game(bool launch)
 				_playGameSound();
 			}
 			else if ((btn & WPAD_BUTTON_RIGHT) != 0 //Wiimote
-				|| ((angle[0] >= 45 && angle[0] < 135) && mag[0] > 0.75)) //Nunchuck
+				|| ((angle[wmote] >= 45 && angle[wmote] < 135) && mag[wmote] > 0.75)) //Nunchuck
 			{
 				_stopSounds();
 				m_cf.right();
@@ -300,7 +299,7 @@ void CMenu::_game(bool launch)
 				_playGameSound();
 			}
 			else if ((btn & WPAD_BUTTON_DOWN) != 0 //Wiimote
-				|| ((angle[0] >= 135 && angle[0] < 225) && mag[0] > 0.75)) //Nunchuck
+				|| ((angle[wmote] >= 135 && angle[wmote] < 225) && mag[wmote] > 0.75)) //Nunchuck
 			{
 				_stopSounds();
 				m_cf.down();
@@ -308,7 +307,7 @@ void CMenu::_game(bool launch)
 				_playGameSound();
 			}
 			else if ((btn & WPAD_BUTTON_LEFT) != 0  //Wiimote
-				|| ((angle[0] >= 225 && angle[0] < 315) && mag[0] > 0.75)) //Nunchuck
+				|| ((angle[wmote] >= 225 && angle[wmote] < 315) && mag[wmote] > 0.75)) //Nunchuck
 			{
 				_stopSounds();
 				m_cf.left();
@@ -316,7 +315,7 @@ void CMenu::_game(bool launch)
 				_playGameSound();
 			}
 			// 
-			else if (WPadIR_Valid())
+			else if (WPadIR_Valid(wmote))
 			{
 				if (m_current_view == COVERFLOW_USB)
 				{
@@ -361,10 +360,10 @@ void CMenu::_game(bool launch)
 				m_btnMgr.hide(m_gameBtnSettings);
 				m_btnMgr.hide(m_gameLblUser[1]);
 				m_btnMgr.hide(m_gameLblUser[2]);
-		}
+			}
 		_mainLoopCommon(wd, true);
 	}
-	SetupInput();
+	WPAD_Rumble(WPAD_CHAN_ALL, 0);
 	_waitForGameSoundExtract();
 	_hideGame();
 }

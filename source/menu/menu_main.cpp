@@ -106,9 +106,9 @@ int CMenu::main(void)
 		WDVD_GetCoverStatus(&disc_check);
 				
 		ScanInput();
-		//for(int chan=0;chan<4;chan++)
-			if (WPadIR_Valid())
-				m_btnMgr.mouse(wd[0]->ir.x - m_cur.width() / 2, wd[0]->ir.y - m_cur.height() / 2);
+		for(int wmote=0;wmote<4;wmote++)
+			if (WPadIR_Valid(wmote))
+				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
 		//check if Disc was inserted
 		if ((disc_check & 0x2) && (disc_check!=olddisc_check) && !m_locked && !WBFS_IsReadOnly()) {
 			_hideMain();
@@ -116,39 +116,38 @@ int CMenu::main(void)
 			_showMain();
 		}
 		//Check for exit or reload request
-		if ((padsState & WPAD_BUTTON_HOME) != 0)
+		if ((wpadsState & WPAD_BUTTON_HOME) != 0)
 		{
-			reload = (WPadHeld() & WPAD_BUTTON_B) != 0;
+			reload = (wpadsHeld & WPAD_BUTTON_B) != 0;
 			break;
 		}
 		++repeatButton;
 		if ((WPadHeld() & WPAD_BUTTON_A) == 0)
 			buttonHeld = (u32)-1;
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16)
-			padsState |= WPAD_BUTTON_A;
-		//Normal coverflow movement
-		//for(int chan=0;chan<4;chan++)
+			wpadsState |= WPAD_BUTTON_A;		//Normal coverflow movement
+		for(int wmote=0;wmote<4;wmote++)
 			if ((btn & WPAD_BUTTON_UP) != 0 //Wiimote
-				|| (((angle[0] >= 315 && angle[0] <= 360) || (angle[0] >= 0 && angle[0] < 45)) && mag[0] > 0.75)) //Nunchuck
+				|| (((angle[wmote] >= 315 && angle[wmote] <= 360) || (angle[wmote] >= 0 && angle[wmote] < 45)) && mag[wmote] > 0.75)) //Nunchuck
 				m_cf.up();
 			else if ((btn & WPAD_BUTTON_RIGHT) != 0 //Wiimote
-				|| ((angle[0] >= 45 && angle[0] < 135) && mag[0] > 0.75)) //Nunchuck
+				|| ((angle[wmote] >= 45 && angle[wmote] < 135) && mag[wmote] > 0.75)) //Nunchuck
 				m_cf.right();
 			else if ((btn & WPAD_BUTTON_DOWN) != 0 //Wiimote
-				|| ((angle[0] >= 135 && angle[0] < 225) && mag[0] > 0.75)) //Nunchuck
+				|| ((angle[wmote] >= 135 && angle[wmote] < 225) && mag[wmote] > 0.75)) //Nunchuck
 				m_cf.down();
 			else if ((btn & WPAD_BUTTON_LEFT) != 0  //Wiimote
-				|| ((angle[0] >= 225 && angle[0] < 315) && mag[0] > 0.75)) //Nunchuck
+				|| ((angle[wmote] >= 225 && angle[wmote] < 315) && mag[wmote] > 0.75)) //Nunchuck
 				m_cf.left();
 		//CF Layout select
-		if ((padsState & WPAD_BUTTON_1) != 0 && (WPadHeld() & WPAD_BUTTON_B) == 0)
+		if ((wpadsState & WPAD_BUTTON_1) != 0 && (wpadsHeld & WPAD_BUTTON_B) == 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		else if ((padsState & WPAD_BUTTON_2) != 0 && (WPadHeld() & WPAD_BUTTON_B) == 0)
+		else if ((wpadsState & WPAD_BUTTON_2) != 0 && (wpadsHeld & WPAD_BUTTON_B) == 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
@@ -156,8 +155,8 @@ int CMenu::main(void)
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
 		//Search by Alphabet
-		if (((padsState & WPAD_BUTTON_RIGHT) != 0 && (WPadHeld() & WPAD_BUTTON_B) != 0)
-			|| ((padsState & WPAD_BUTTON_PLUS) != 0 && m_alphaSearch == ((WPadHeld() & WPAD_BUTTON_B) == 0)))
+		if (((wpadsState & WPAD_BUTTON_RIGHT) != 0 && (wpadsHeld & WPAD_BUTTON_B) != 0)
+			|| ((wpadsState & WPAD_BUTTON_PLUS) != 0 && m_alphaSearch == ((wpadsHeld & WPAD_BUTTON_B) == 0)))
 		{
 			curLetter.resize(1);
 			curLetter[0] = m_cf.nextLetter();
@@ -166,8 +165,8 @@ int CMenu::main(void)
 			m_btnMgr.show(m_mainLblLetter);
 
 		}
-		else if (((padsState & WPAD_BUTTON_LEFT) != 0 && (WPadHeld() & WPAD_BUTTON_B) != 0)
-			|| ((padsState & WPAD_BUTTON_MINUS) != 0 && m_alphaSearch == ((WPadHeld() & WPAD_BUTTON_B) == 0)))
+		else if (((wpadsState & WPAD_BUTTON_LEFT) != 0 && (wpadsHeld & WPAD_BUTTON_B) != 0)
+			|| ((wpadsState & WPAD_BUTTON_MINUS) != 0 && m_alphaSearch == ((wpadsHeld & WPAD_BUTTON_B) == 0)))
 		{
 			curLetter.resize(1);
 			curLetter[0] = m_cf.prevLetter();
@@ -176,15 +175,15 @@ int CMenu::main(void)
 			m_btnMgr.show(m_mainLblLetter);
 		}
 		//Search by pages
-		else if ((padsState & WPAD_BUTTON_MINUS) != 0)
+		else if ((wpadsState & WPAD_BUTTON_MINUS) != 0)
 			m_cf.pageUp();
-		else if ((padsState & WPAD_BUTTON_PLUS) != 0)
+		else if ((wpadsState & WPAD_BUTTON_PLUS) != 0)
 			m_cf.pageDown();
 
-		if ((WPadHeld() & WPAD_BUTTON_B) != 0)
+		if ((wpadsHeld & WPAD_BUTTON_B) != 0)
 		{
 			//Sorting Selection
-			if ((padsState & WPAD_BUTTON_DOWN) != 0 )
+			if ((wpadsState & WPAD_BUTTON_DOWN) != 0 )
 			{
 				u32 sort = 0;
 				sort = m_cfg.getInt(" GENERAL", "sort", 0);
@@ -206,7 +205,7 @@ int CMenu::main(void)
 				m_btnMgr.show(m_mainLblNotice);
 			}
 			//Partition Selection
-			if ((padsState & WPAD_BUTTON_UP) != 0)
+			if ((wpadsState & WPAD_BUTTON_UP) != 0)
 			{
 				_hideMain();
 				s32 amountOfPartitions = WBFS_GetPartitionCount();
@@ -226,7 +225,7 @@ int CMenu::main(void)
 			}
 		}
 		//Events to Show Categories
-		if ((padsState & WPAD_BUTTON_B) != 0)
+		if ((wpadsState & WPAD_BUTTON_B) != 0)
 		{
 			if (buttonHeld != m_btnMgr.selected())
 				m_btnMgr.click();
@@ -260,7 +259,7 @@ int CMenu::main(void)
 			_initCF();
 		}
 		//Handling input when other gui buttons are selected
-		if ((padsState & WPAD_BUTTON_A) != 0)
+		if ((wpadsState & WPAD_BUTTON_A) != 0)
 		{
 			if (buttonHeld != m_btnMgr.selected())
 				m_btnMgr.click();
@@ -371,7 +370,7 @@ int CMenu::main(void)
 				if (m_cf.select())
 				{
 					_hideMain();
-					_game((WPadHeld() & WPAD_BUTTON_B) != 0);
+					_game((wpadsHeld & WPAD_BUTTON_B) != 0);
 					m_cf.cancel();
 					_showMain();
 				}
@@ -383,63 +382,60 @@ int CMenu::main(void)
 				m_btnMgr.hide(m_mainLblNotice);
 			}
 		//zones, showing and hiding buttons
-		//for (int chan=0;chan<4;chan++)
-		//{
-			if (!m_gameList.empty() && WPadIR_Valid() && m_cur.x() >= m_mainPrevZone.x && m_cur.y() >= m_mainPrevZone.y
-				&& m_cur.x() < m_mainPrevZone.x + m_mainPrevZone.w && m_cur.y() < m_mainPrevZone.y + m_mainPrevZone.h)
-				m_btnMgr.show(m_mainBtnPrev);
-			else
-				m_btnMgr.hide(m_mainBtnPrev);
-			if (!m_gameList.empty() && WPadIR_Valid() && m_cur.x() >= m_mainNextZone.x && m_cur.y() >= m_mainNextZone.y
-				&& m_cur.x() < m_mainNextZone.x + m_mainNextZone.w && m_cur.y() < m_mainNextZone.y + m_mainNextZone.h)
-				m_btnMgr.show(m_mainBtnNext);
-			else
-				m_btnMgr.hide(m_mainBtnNext);
-			if (!m_gameList.empty() && WPadIR_Valid() && m_cur.x() >= m_mainButtonsZone.x && m_cur.y() >= m_mainButtonsZone.y
-				&& m_cur.x() < m_mainButtonsZone.x + m_mainButtonsZone.w && m_cur.y() < m_mainButtonsZone.y + m_mainButtonsZone.h)
+		if (!m_gameList.empty() && WPadIR_ANY() && m_cur.x() >= m_mainPrevZone.x && m_cur.y() >= m_mainPrevZone.y
+			&& m_cur.x() < m_mainPrevZone.x + m_mainPrevZone.w && m_cur.y() < m_mainPrevZone.y + m_mainPrevZone.h)
+			m_btnMgr.show(m_mainBtnPrev);
+		else
+			m_btnMgr.hide(m_mainBtnPrev);
+		if (!m_gameList.empty() && WPadIR_ANY() && m_cur.x() >= m_mainNextZone.x && m_cur.y() >= m_mainNextZone.y
+			&& m_cur.x() < m_mainNextZone.x + m_mainNextZone.w && m_cur.y() < m_mainNextZone.y + m_mainNextZone.h)
+			m_btnMgr.show(m_mainBtnNext);
+		else
+			m_btnMgr.hide(m_mainBtnNext);
+		if (!m_gameList.empty() && WPadIR_ANY() && m_cur.x() >= m_mainButtonsZone.x && m_cur.y() >= m_mainButtonsZone.y
+			&& m_cur.x() < m_mainButtonsZone.x + m_mainButtonsZone.w && m_cur.y() < m_mainButtonsZone.y + m_mainButtonsZone.h)
+		{
+			m_btnMgr.show(m_mainLblUser[0]);
+			m_btnMgr.show(m_mainLblUser[1]);
+			m_btnMgr.show(m_mainBtnConfig);
+			m_btnMgr.show(m_mainBtnInfo);
+			m_btnMgr.show(m_mainBtnQuit);
+			m_btnMgr.show(m_favorites ? m_mainBtnFavoritesOn : m_mainBtnFavoritesOff);
+			m_btnMgr.hide(m_favorites ? m_mainBtnFavoritesOff : m_mainBtnFavoritesOn);
+		}
+		else
+		{
+			m_btnMgr.hide(m_mainLblUser[0]);
+			m_btnMgr.hide(m_mainLblUser[1]);
+			m_btnMgr.hide(m_mainBtnConfig);
+			m_btnMgr.hide(m_mainBtnInfo);
+			m_btnMgr.hide(m_mainBtnQuit);
+			m_btnMgr.hide(m_mainBtnFavoritesOn);
+			m_btnMgr.hide(m_mainBtnFavoritesOff);
+		}
+		if (!m_cfg.getBool(" GENERAL", "hidechannelsbutton", false) && !m_gameList.empty() && WPadIR_ANY() && m_cur.x() >= m_mainButtonsZone2.x && m_cur.y() >= m_mainButtonsZone2.y
+			&& m_cur.x() < m_mainButtonsZone2.x + m_mainButtonsZone2.w && m_cur.y() < m_mainButtonsZone2.y + m_mainButtonsZone2.h)
+		{
+			if (/*m_channels.CanIdentify() && */m_loaded_ios_base != 57)
 			{
-				m_btnMgr.show(m_mainLblUser[0]);
-				m_btnMgr.show(m_mainLblUser[1]);
-				m_btnMgr.show(m_mainBtnConfig);
-				m_btnMgr.show(m_mainBtnInfo);
-				m_btnMgr.show(m_mainBtnQuit);
-				m_btnMgr.show(m_favorites ? m_mainBtnFavoritesOn : m_mainBtnFavoritesOff);
-				m_btnMgr.hide(m_favorites ? m_mainBtnFavoritesOff : m_mainBtnFavoritesOn);
+				if (m_current_view == COVERFLOW_USB)
+					m_btnMgr.show(m_mainBtnChannel);
+				else if (m_current_view == COVERFLOW_CHANNEL)
+					m_btnMgr.show(m_mainBtnUsb);
+				m_btnMgr.show(m_mainLblUser[2]);
 			}
-			else
-			{
-				m_btnMgr.hide(m_mainLblUser[0]);
-				m_btnMgr.hide(m_mainLblUser[1]);
-				m_btnMgr.hide(m_mainBtnConfig);
-				m_btnMgr.hide(m_mainBtnInfo);
-				m_btnMgr.hide(m_mainBtnQuit);
-				m_btnMgr.hide(m_mainBtnFavoritesOn);
-				m_btnMgr.hide(m_mainBtnFavoritesOff);
-			}
-			if (!m_cfg.getBool(" GENERAL", "hidechannelsbutton", false) && !m_gameList.empty() && WPadIR_Valid() && m_cur.x() >= m_mainButtonsZone2.x && m_cur.y() >= m_mainButtonsZone2.y
-				&& m_cur.x() < m_mainButtonsZone2.x + m_mainButtonsZone2.w && m_cur.y() < m_mainButtonsZone2.y + m_mainButtonsZone2.h)
-			{
-				if (/*m_channels.CanIdentify() && */m_loaded_ios_base != 57)
-				{
-					if (m_current_view == COVERFLOW_USB)
-						m_btnMgr.show(m_mainBtnChannel);
-					else if (m_current_view == COVERFLOW_CHANNEL)
-						m_btnMgr.show(m_mainBtnUsb);
-					m_btnMgr.show(m_mainLblUser[2]);
-				}
-			}
-			else
-			{
-				m_btnMgr.hide(m_mainBtnChannel);
-				m_btnMgr.hide(m_mainBtnUsb);
-				m_btnMgr.hide(m_mainLblUser[2]);
-			}
-			//
-			if (!WPadIR_Valid() || m_btnMgr.selected() != (u32)-1)
-				m_cf.mouse(m_vid, -1, -1);
-			else
-				m_cf.mouse(m_vid, m_cur.x(), m_cur.y());
-		//}
+		}
+		else
+		{
+			m_btnMgr.hide(m_mainBtnChannel);
+			m_btnMgr.hide(m_mainBtnUsb);
+			m_btnMgr.hide(m_mainLblUser[2]);
+		}
+		//
+		if (!WPadIR_Valid(0) || !WPadIR_Valid(1) || !WPadIR_Valid(2) || !WPadIR_Valid(3) || m_btnMgr.selected() != (u32)-1)
+			m_cf.mouse(m_vid, -1, -1);
+		else
+			m_cf.mouse(m_vid, m_cur.x(), m_cur.y());
 		_mainLoopCommon(wd, true);
 	}
 	SetupInput();

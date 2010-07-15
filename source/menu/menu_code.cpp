@@ -43,16 +43,16 @@ bool CMenu::_code(char code[4], bool erase)
 	while (true)
 	{
 		ScanInput();
-		//for(int chan=0;chan<4;chan++)
-			if (WPadIR_Valid())
-				m_btnMgr.mouse(wd[0]->ir.x - m_cur.width() / 2, wd[0]->ir.y - m_cur.height() / 2);
-		if ((padsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
+		for(int wmote=0;wmote<4;wmote++)
+			if (WPadIR_Valid(wmote))
+				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
+		if ((wpadsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
 			break;
-		else if ((padsState & WPAD_BUTTON_UP) != 0)
+		else if ((wpadsState & WPAD_BUTTON_UP) != 0)
 			m_btnMgr.up();
-		else if ((padsState & WPAD_BUTTON_DOWN) != 0)
+		else if ((wpadsState & WPAD_BUTTON_DOWN) != 0)
 			m_btnMgr.down();
-		if ((padsState & WPAD_BUTTON_A) != 0)
+		if ((wpadsState & WPAD_BUTTON_A) != 0)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_codeBtnErase)
