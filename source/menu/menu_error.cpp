@@ -22,10 +22,8 @@ void CMenu::error(const wstringEx &msg)
 	_showError();
 	do
 	{
-		ScanInput();
-		_mainLoopCommon(wd);
-	} while ((wpadsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_A | WPAD_BUTTON_B)) == 0);
-	SetupInput();
+		_mainLoopCommon();
+	} while ((btnsPressed & (WBTN_HOME | WBTN_A | WBTN_B)) == 0);
 	_hideError(false);
 }
 

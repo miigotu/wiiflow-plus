@@ -327,28 +327,25 @@ void CMenu::_cfTheme(void)
 	m_cf.applySettings();
 	while (true)
 	{
-		ScanInput();
-		btnDelay = (wpadsHeld & WPAD_BUTTON_B) != 0 ? 1 : 4;
-		for(int wmote=0;wmote<4;wmote++)
-			if (WPadIR_Valid(wmote))
-				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
-		if ((wpadsState & WPAD_BUTTON_HOME) != 0)
+		_mainLoopCommon(true, false, curParam == 5 || curParam == 6 || curParam == 7);
+		btnDelay = (btnsHeld & WBTN_B) != 0 ? 1 : 4;
+		if ((btnsPressed & WBTN_HOME) != 0)
 		{
 			m_theme.clear();
 			m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), m_cfg.getString(" GENERAL", "theme", "defaut").c_str()).c_str());
 			break;
 		}
-		else if ((wpadsState & WPAD_BUTTON_UP) != 0)
+		else if ((btnsPressed & WBTN_UP) != 0)
 			m_btnMgr.up();
-		else if ((wpadsState & WPAD_BUTTON_DOWN) != 0)
+		else if ((btnsPressed & WBTN_DOWN) != 0)
 			m_btnMgr.down();
-		if ((wpadsHeld & WPAD_BUTTON_B) != 0 && (wpadsState & WPAD_BUTTON_1) != 0)
+		if ((btnsHeld & WBTN_B) != 0 && (btnsPressed & WBTN_1) != 0)
 		{
 			copyVersion = cfVersion;
 			copySelected = m_cf.selected();
 			copyWide = wide;
 		}
-		else if (copyVersion > 0 && (wpadsHeld & WPAD_BUTTON_B) != 0 && (wpadsState & WPAD_BUTTON_2) != 0)
+		else if (copyVersion > 0 && (btnsHeld & WBTN_B) != 0 && (btnsPressed & WBTN_2) != 0)
 		{
 			string domSrc(sfmt(copySelected ? "_COVERFLOW_%i_S" : "_COVERFLOW_%i", copyVersion));
 			string domDst(sfmt(m_cf.selected() ? "_COVERFLOW_%i_S" : "_COVERFLOW_%i", cfVersion));
@@ -380,16 +377,16 @@ void CMenu::_cfTheme(void)
 				m_cf.applySettings();
 		}
 		sel = m_cf.selected();
-		if ((wpadsHeld & WPAD_BUTTON_B) != 0)
+		if ((btnsHeld & WBTN_B) != 0)
 		{
-			if ((wpadsState & WPAD_BUTTON_PLUS) != 0)
+			if ((btnsPressed & WBTN_PLUS) != 0)
 			{
 				curParam = loopNum(curParam + 1, ARRAY_SIZE(CMenu::_cfParams));
 				if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
 					m_cf.select();
 				_showCFTheme(curParam, cfVersion, wide);
 			}
-			else if ((wpadsState & WPAD_BUTTON_MINUS) != 0)
+			else if ((btnsPressed & WBTN_MINUS) != 0)
 			{
 				curParam = loopNum(curParam - 1, ARRAY_SIZE(CMenu::_cfParams));
 				if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
@@ -399,23 +396,23 @@ void CMenu::_cfTheme(void)
 		}
 		else if (!sel)
 		{
-			if ((wpadsState & WPAD_BUTTON_PLUS) != 0)
+			if ((btnsPressed & WBTN_PLUS) != 0)
 				m_cf.pageDown();
-			else if ((wpadsState & WPAD_BUTTON_MINUS) != 0)
+			else if ((btnsPressed & WBTN_MINUS) != 0)
 				m_cf.pageUp();
 		}
-		if ((btn & WPAD_BUTTON_LEFT) != 0)
+		if ((btn & WBTN_LEFT) != 0)
 			m_cf.left();
-		else if ((btn & WPAD_BUTTON_RIGHT) != 0)
+		else if ((btn & WBTN_RIGHT) != 0)
 			m_cf.right();
 		if (sel && !m_cf.selected())
 			m_cf.select();
 		++repeatButton;
-		if ((wpadsHeld & WPAD_BUTTON_A) == 0)
+		if ((btnsHeld & WBTN_A) == 0)
 			buttonHeld = (u32)-1;
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16 && (repeatButton % btnDelay == 0))
-			wpadsState |= WPAD_BUTTON_A;
-		if ((wpadsState & WPAD_BUTTON_A) != 0)
+			btnsPressed |= WBTN_A;
+		if ((btnsPressed & WBTN_A) != 0)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() != (u32)-1)
@@ -492,7 +489,6 @@ void CMenu::_cfTheme(void)
 		else
 			_hideCFTheme();
 		m_cf.flip(true, curParam == 16);
-		_mainLoopCommon(wd, true, false, curParam == 5 || curParam == 6 || curParam == 7);
 	}
 	_hideCFTheme();
 	_loadCFLayout(1);

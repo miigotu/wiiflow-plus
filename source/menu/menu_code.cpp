@@ -42,17 +42,14 @@ bool CMenu::_code(char code[4], bool erase)
 		m_btnMgr.show(m_codeBtnErase);
 	while (true)
 	{
-		ScanInput();
-		for(int wmote=0;wmote<4;wmote++)
-			if (WPadIR_Valid(wmote))
-				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
-		if ((wpadsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
+		_mainLoopCommon(wd);
+		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0)
 			break;
-		else if ((wpadsState & WPAD_BUTTON_UP) != 0)
+		else if ((btnsPressed & WBTN_UP) != 0)
 			m_btnMgr.up();
-		else if ((wpadsState & WPAD_BUTTON_DOWN) != 0)
+		else if ((btnsPressed & WBTN_DOWN) != 0)
 			m_btnMgr.down();
-		if ((wpadsState & WPAD_BUTTON_A) != 0)
+		if ((btnsPressed & WBTN_A) != 0)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_codeBtnErase)
@@ -75,7 +72,6 @@ bool CMenu::_code(char code[4], bool erase)
 		}
 		if (n >= sizeof code)
 			break;
-		_mainLoopCommon(wd);
 	}
 	_hideCode();
 	return n == sizeof code;

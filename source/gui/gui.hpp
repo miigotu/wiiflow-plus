@@ -42,7 +42,7 @@ public:
 	void hide(u32 id, int dx, int dy, float scaleX, float scaleY, bool instant = false);
 	void hide(u32 id, bool instant = false);
 	void show(u32 id);
-	void mouse(int x, int y);
+	void mouse(int wmote, int x, int y);
 	void up(void);
 	void down(void);
 	void draw(void);

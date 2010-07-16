@@ -153,7 +153,6 @@ static void setLanguage(int l)
 void CMenu::_game(bool launch)
 {
 	bool b;
-	bool first = true;
 	if (!launch)
 	{
 		SetupInput();
@@ -165,19 +164,13 @@ void CMenu::_game(bool launch)
 		string id(m_cf.getId());
 		string title(m_cf.getTitle());
 		u64 chantitle = m_cf.getChanTitle();
-		if (!first)
-			ScanInput();
-		else
-			first = false;
-		for(int wmote=0;wmote<4;wmote++)
-			if (WPadIR_Valid(wmote))
-				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
-		if ((wpadsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
+		_mainLoopCommon(true);
+		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0)
 		{
 			_stopSounds();
 			break;
 		}
-		else if ((wpadsState & WPAD_BUTTON_MINUS) != 0)
+		else if ((btnsPressed & WBTN_MINUS) != 0)
 		{
 			string videoPath = sfmt("%s/%.3s.thp", m_videoDir.c_str(), id.c_str());
 		
@@ -197,35 +190,32 @@ void CMenu::_game(bool launch)
 				m_video_playing = true;
 				
 				STexture videoBg;
-				while ((wpadsState & WPAD_BUTTON_B) == 0 && movie.GetNextFrame(&videoBg))
+				while ((btnsPressed & WBTN_B) == 0 && movie.GetNextFrame(&videoBg))
 				{
 					_setBg(videoBg, videoBg);
 					m_bgCrossFade = 10;
-					ScanInput();
-					_mainLoopCommon(wd, false); // Redraw the background every frame
+					_mainLoopCommon(false); // Redraw the background every frame
 				}
-//				_setBg(m_gameBg, m_gameBgLQ);
-				
 				_showGame();
 				m_video_playing = false;
 				m_gameSound.play(m_bnrSndVol);
 			}
 		}
-		else if ((wpadsState & WPAD_BUTTON_1) != 0)
+		else if ((btnsPressed & WBTN_1) != 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		else if ((wpadsState & WPAD_BUTTON_2) != 0)
+		else if ((btnsPressed & WBTN_2) != 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		else if (launch || (wpadsState & WPAD_BUTTON_A) != 0)
+		else if (launch || (btnsPressed & WBTN_A) != 0)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_mainBtnQuit)
@@ -282,7 +272,7 @@ void CMenu::_game(bool launch)
 		}
 		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
-			if ((btn & WPAD_BUTTON_UP) != 0 //Wiimote
+			if ((btn & WBTN_UP) != 0 //Wiimote
 				|| (((angle[wmote] >= 315 && angle[wmote] <= 360) || (angle[wmote] >= 0 && angle[wmote] < 45)) && mag[wmote] > 0.75)) //Nunchuck
 			{
 				_stopSounds();
@@ -290,7 +280,7 @@ void CMenu::_game(bool launch)
 				_showGame();
 				_playGameSound();
 			}
-			else if ((btn & WPAD_BUTTON_RIGHT) != 0 //Wiimote
+			else if ((btn & WBTN_RIGHT) != 0 //Wiimote
 				|| ((angle[wmote] >= 45 && angle[wmote] < 135) && mag[wmote] > 0.75)) //Nunchuck
 			{
 				_stopSounds();
@@ -298,7 +288,7 @@ void CMenu::_game(bool launch)
 				_showGame();
 				_playGameSound();
 			}
-			else if ((btn & WPAD_BUTTON_DOWN) != 0 //Wiimote
+			else if ((btn & WBTN_DOWN) != 0 //Wiimote
 				|| ((angle[wmote] >= 135 && angle[wmote] < 225) && mag[wmote] > 0.75)) //Nunchuck
 			{
 				_stopSounds();
@@ -306,7 +296,7 @@ void CMenu::_game(bool launch)
 				_showGame();
 				_playGameSound();
 			}
-			else if ((btn & WPAD_BUTTON_LEFT) != 0  //Wiimote
+			else if ((btn & WBTN_LEFT) != 0  //Wiimote
 				|| ((angle[wmote] >= 225 && angle[wmote] < 315) && mag[wmote] > 0.75)) //Nunchuck
 			{
 				_stopSounds();
@@ -315,7 +305,7 @@ void CMenu::_game(bool launch)
 				_playGameSound();
 			}
 			// 
-			else if (WPadIR_Valid(wmote))
+			else if (WPadIR_ANY())
 			{
 				if (m_current_view == COVERFLOW_USB)
 				{
@@ -361,9 +351,7 @@ void CMenu::_game(bool launch)
 				m_btnMgr.hide(m_gameLblUser[1]);
 				m_btnMgr.hide(m_gameLblUser[2]);
 			}
-		_mainLoopCommon(wd, true);
 	}
-	WPAD_Rumble(WPAD_CHAN_ALL, 0);
 	_waitForGameSoundExtract();
 	_hideGame();
 }

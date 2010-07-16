@@ -90,6 +90,7 @@ int CMenu::main(void)
 	bool reload = false;
 	static u32 disc_check = 0, olddisc_check = 0;
 	int done = 0;
+
 	SetupInput();
 	_loadList();
 	_showMain();
@@ -102,13 +103,10 @@ int CMenu::main(void)
 	
 	while (true)
 	{
+		_mainLoopCommon(true);
+
 		olddisc_check = disc_check;
 		WDVD_GetCoverStatus(&disc_check);
-				
-		ScanInput();
-		for(int wmote=0;wmote<4;wmote++)
-			if (WPadIR_Valid(wmote))
-				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
 		//check if Disc was inserted
 		if ((disc_check & 0x2) && (disc_check!=olddisc_check) && !m_locked && !WBFS_IsReadOnly()) {
 			_hideMain();
@@ -116,38 +114,39 @@ int CMenu::main(void)
 			_showMain();
 		}
 		//Check for exit or reload request
-		if ((wpadsState & WPAD_BUTTON_HOME) != 0)
+		if ((btnsPressed & WBTN_HOME) != 0)
 		{
-			reload = (wpadsHeld & WPAD_BUTTON_B) != 0;
+			reload = (btnsHeld & WBTN_B) != 0;
 			break;
 		}
 		++repeatButton;
-		if ((WPadHeld() & WPAD_BUTTON_A) == 0)
+		if ((btnsHeld & WBTN_A) == 0)
 			buttonHeld = (u32)-1;
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16)
-			wpadsState |= WPAD_BUTTON_A;		//Normal coverflow movement
+			btnsPressed |= WBTN_A;
+		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
-			if ((btn & WPAD_BUTTON_UP) != 0 //Wiimote
+			if ((btn & WBTN_UP) != 0 //Wiimote
 				|| (((angle[wmote] >= 315 && angle[wmote] <= 360) || (angle[wmote] >= 0 && angle[wmote] < 45)) && mag[wmote] > 0.75)) //Nunchuck
 				m_cf.up();
-			else if ((btn & WPAD_BUTTON_RIGHT) != 0 //Wiimote
+			else if ((btn & WBTN_RIGHT) != 0 //Wiimote
 				|| ((angle[wmote] >= 45 && angle[wmote] < 135) && mag[wmote] > 0.75)) //Nunchuck
 				m_cf.right();
-			else if ((btn & WPAD_BUTTON_DOWN) != 0 //Wiimote
+			else if ((btn & WBTN_DOWN) != 0 //Wiimote
 				|| ((angle[wmote] >= 135 && angle[wmote] < 225) && mag[wmote] > 0.75)) //Nunchuck
 				m_cf.down();
-			else if ((btn & WPAD_BUTTON_LEFT) != 0  //Wiimote
+			else if ((btn & WBTN_LEFT) != 0  //Wiimote
 				|| ((angle[wmote] >= 225 && angle[wmote] < 315) && mag[wmote] > 0.75)) //Nunchuck
 				m_cf.left();
 		//CF Layout select
-		if ((wpadsState & WPAD_BUTTON_1) != 0 && (wpadsHeld & WPAD_BUTTON_B) == 0)
+		if ((btnsPressed & WBTN_1) != 0 && (btnsHeld & WBTN_B) == 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		else if ((wpadsState & WPAD_BUTTON_2) != 0 && (wpadsHeld & WPAD_BUTTON_B) == 0)
+		else if ((btnsPressed & WBTN_2) != 0 && (btnsHeld & WBTN_B) == 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
@@ -155,8 +154,8 @@ int CMenu::main(void)
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
 		//Search by Alphabet
-		if (((wpadsState & WPAD_BUTTON_RIGHT) != 0 && (wpadsHeld & WPAD_BUTTON_B) != 0)
-			|| ((wpadsState & WPAD_BUTTON_PLUS) != 0 && m_alphaSearch == ((wpadsHeld & WPAD_BUTTON_B) == 0)))
+		if (((btnsPressed & WBTN_RIGHT) != 0 && (btnsHeld & WBTN_B) != 0)
+			|| ((btnsPressed & WBTN_PLUS) != 0 && m_alphaSearch == ((btnsHeld & WBTN_B) == 0)))
 		{
 			curLetter.resize(1);
 			curLetter[0] = m_cf.nextLetter();
@@ -165,8 +164,8 @@ int CMenu::main(void)
 			m_btnMgr.show(m_mainLblLetter);
 
 		}
-		else if (((wpadsState & WPAD_BUTTON_LEFT) != 0 && (wpadsHeld & WPAD_BUTTON_B) != 0)
-			|| ((wpadsState & WPAD_BUTTON_MINUS) != 0 && m_alphaSearch == ((wpadsHeld & WPAD_BUTTON_B) == 0)))
+		else if (((btnsPressed & WBTN_LEFT) != 0 && (btnsHeld & WBTN_B) != 0)
+			|| ((btnsPressed & WBTN_MINUS) != 0 && m_alphaSearch == ((btnsHeld & WBTN_B) == 0)))
 		{
 			curLetter.resize(1);
 			curLetter[0] = m_cf.prevLetter();
@@ -175,15 +174,15 @@ int CMenu::main(void)
 			m_btnMgr.show(m_mainLblLetter);
 		}
 		//Search by pages
-		else if ((wpadsState & WPAD_BUTTON_MINUS) != 0)
+		else if ((btnsPressed & WBTN_MINUS) != 0)
 			m_cf.pageUp();
-		else if ((wpadsState & WPAD_BUTTON_PLUS) != 0)
+		else if ((btnsPressed & WBTN_PLUS) != 0)
 			m_cf.pageDown();
 
-		if ((wpadsHeld & WPAD_BUTTON_B) != 0)
+		if ((btnsHeld & WBTN_B) != 0)
 		{
 			//Sorting Selection
-			if ((wpadsState & WPAD_BUTTON_DOWN) != 0 )
+			if ((btnsPressed & WBTN_DOWN) != 0 )
 			{
 				u32 sort = 0;
 				sort = m_cfg.getInt(" GENERAL", "sort", 0);
@@ -205,7 +204,7 @@ int CMenu::main(void)
 				m_btnMgr.show(m_mainLblNotice);
 			}
 			//Partition Selection
-			if ((wpadsState & WPAD_BUTTON_UP) != 0)
+			if ((btnsPressed & WBTN_UP) != 0)
 			{
 				_hideMain();
 				s32 amountOfPartitions = WBFS_GetPartitionCount();
@@ -225,7 +224,7 @@ int CMenu::main(void)
 			}
 		}
 		//Events to Show Categories
-		if ((wpadsState & WPAD_BUTTON_B) != 0)
+		if ((btnsPressed & WBTN_B) != 0)
 		{
 			if (buttonHeld != m_btnMgr.selected())
 				m_btnMgr.click();
@@ -259,7 +258,7 @@ int CMenu::main(void)
 			_initCF();
 		}
 		//Handling input when other gui buttons are selected
-		if ((wpadsState & WPAD_BUTTON_A) != 0)
+		if ((btnsPressed & WBTN_A) != 0)
 		{
 			if (buttonHeld != m_btnMgr.selected())
 				m_btnMgr.click();
@@ -370,7 +369,7 @@ int CMenu::main(void)
 				if (m_cf.select())
 				{
 					_hideMain();
-					_game((wpadsHeld & WPAD_BUTTON_B) != 0);
+					_game((btnsHeld & WBTN_B) != 0);
 					m_cf.cancel();
 					_showMain();
 				}
@@ -436,9 +435,7 @@ int CMenu::main(void)
 			m_cf.mouse(m_vid, -1, -1);
 		else
 			m_cf.mouse(m_vid, m_cur.x(), m_cur.y());
-		_mainLoopCommon(wd, true);
 	}
-	SetupInput();
 	// 
 	GX_InvVtxCache();
 	GX_InvalidateTexAll();

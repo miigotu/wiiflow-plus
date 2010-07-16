@@ -7,29 +7,25 @@ void CMenu::_CategorySettings()
 {
 	SetupInput();
 	bool exitloop = false;
-
 	_showCategorySettings();
-	
 	while (true)
 	{
-		exitloop=false;
-		ScanInput();
-		for(int wmote=0;wmote<4;wmote++)
-			if (WPadIR_Valid(wmote))
-				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
-		if ((wpadsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
+		_mainLoopCommon();
+		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0)
 			break;
-		else if ((wpadsState & WPAD_BUTTON_UP) != 0)
+		else if ((btnsPressed & WBTN_UP) != 0)
 			m_btnMgr.up();
-		else if ((wpadsState & WPAD_BUTTON_DOWN) != 0)
+		else if ((btnsPressed & WBTN_DOWN) != 0)
 			m_btnMgr.down();
-		if ((wpadsState & WPAD_BUTTON_A) != 0)
+		if ((btnsPressed & WBTN_A) != 0)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_categoryBtnBack)
 				break;
-			for (int i = 0; i < 12; ++i) {
-				if (m_btnMgr.selected() == m_categoryBtn[i]) {
+			for (int i = 0; i < 12; ++i)
+			{
+				if (m_btnMgr.selected() == m_categoryBtn[i])
+				{
 					// handling code for clicked favorite
 					m_category = i;
 					m_cfg.setInt(" GENERAL", "category", i);
@@ -37,11 +33,9 @@ void CMenu::_CategorySettings()
 					break;
 				}
 			}
-			if (exitloop) {
-				break;
-			}
 		}
-		_mainLoopCommon(wd);
+		if (exitloop == true)
+			break;
 	}
 	_hideCategorySettings();
 }

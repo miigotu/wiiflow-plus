@@ -33,7 +33,7 @@ void CMenu::_system()
 	m_showtimer = -1;
 	while (true)
 	{
-		ScanInput();
+		_mainLoopCommon(false, m_thrdWorking);
 		if (m_showtimer == -1)
 		{
 			m_showtimer = 120;
@@ -61,16 +61,13 @@ void CMenu::_system()
 				newVer = CMenu::_version[i];
 				_showSystem();
 			}
-		for(int wmote=0;wmote<4;wmote++)
-			if (WPadIR_Valid(wmote))
-				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
-		if ((wpadsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0 && !m_thrdWorking)
+		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0 && !m_thrdWorking)
 			break;
-		else if ((wpadsState & WPAD_BUTTON_UP) != 0)
+		else if ((btnsPressed & WBTN_UP) != 0)
 			m_btnMgr.up();
-		else if ((wpadsState & WPAD_BUTTON_DOWN) != 0)
+		else if ((btnsPressed & WBTN_DOWN) != 0)
 			m_btnMgr.down();
-		if (((wpadsState & WPAD_BUTTON_A) != 0) && !(m_thrdWorking && m_thrdStop))
+		if (((btnsPressed & WBTN_A) != 0) && !(m_thrdWorking && m_thrdStop))
 		{
 			m_btnMgr.click();
 			if ((m_btnMgr.selected() == m_systemBtnDownload) && !m_thrdWorking)
@@ -181,7 +178,6 @@ void CMenu::_system()
 				m_btnMgr.hide(m_downloadLblMessage[msg], +400, 0, 1.f, 1.f);
 			}
 		}
-		_mainLoopCommon(wd, false, m_thrdWorking);
 		if (m_thrdStop && !m_thrdWorking)
 			break;
 

@@ -1,19 +1,20 @@
 #include "menu.hpp"
 #include "gecko.h"
 
+//#DEFINE INPUT_PAD_A(WBTN_A | PAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)
 using namespace std;
+
 
 static const u32 g_repeatDelay = 15;
 
 void CMenu::SetupInput()
 {
 	WPAD_Rumble(WPAD_CHAN_ALL, 0);
-
+	
 	m_padLeftDelay = 0;
 	m_padDownDelay = 0;
 	m_padRightDelay = 0;
 	m_padUpDelay = 0;
-	
 	repeatButton = 0;		
 	buttonHeld = (u32)-1;
 	
@@ -26,40 +27,74 @@ void CMenu::SetupInput()
 
 void CMenu::ScanInput()
 {
-	WPAD_ScanPads();
-	wpadsState = WPadState();
-	wpadsHeld = WPadHeld();
+	int right = 0;
+	
+    WPAD_ScanPads();
+    PAD_ScanPads();
+	
+	btnsPressed = ButtonsPressed();
+	btnsHeld = ButtonsHeld();
+	btn = _btnRepeat();
+
 	for(int wmote=0;wmote<4;wmote++)
 	{
 		wd[wmote] = WPAD_Data(wmote);
-		angle[wmote] = wd[wmote]->exp.nunchuk.js.ang;
-		mag[wmote] = wd[wmote]->exp.nunchuk.js.mag;
+		switch (wd[wmote]->exp.type)
+		{
+			case WPAD_EXP_NUNCHUK:
+			case WPAD_EXP_GUITARHERO3:
+				if (right == 0)
+				{
+					mag[wmote] = wd[wmote]->exp.nunchuk.js.mag;
+					angle[wmote] = wd[wmote]->exp.nunchuk.js.ang;
+				}
+				break;
+			case WPAD_EXP_CLASSIC:
+				if (right == 0)
+				{
+					mag[wmote] = wd[wmote]->exp.classic.ljs.mag;
+					angle[wmote] = wd[wmote]->exp.classic.ljs.ang;
+				} 
+				else
+				{
+					mag[wmote] = wd[wmote]->exp.classic.rjs.mag;
+					angle[wmote] = wd[wmote]->exp.classic.rjs.ang;
+				}
+				break;
+
+			default:
+				break;
+		}
+		if (WPadIR_Valid(wmote))
+		{
+			m_btnMgr.mouse(wmote, wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
+			m_cur.draw(wd[wmote]->ir.x, wd[wmote]->ir.y, wd[wmote]->ir.angle);
+		}
 	}
-	btn = _btnRepeat();
 }
 
-u32 CMenu::WPadState()
+u32 CMenu::ButtonsPressed()
 {
-	u32 ret;
-	for(int wmote=0;wmote<4;wmote++)
-	{
-		ret = WPAD_ButtonsDown(wmote);
-		if (ret != 0)
-			return ret;
-	}
-	return 0;
+    int i;
+    u32 buttons = 0;
+
+    for (i=3; i >= 0; i--) {
+        buttons |= PAD_ButtonsDown(i);
+        buttons |= WPAD_ButtonsDown(i);
+    }
+    return buttons;
 }
 
-u32 CMenu::WPadHeld()
+u32 CMenu::ButtonsHeld()
 {
-	u32 ret;
-	for(int wmote=0;wmote<4;wmote++)
-	{
-		ret = WPAD_ButtonsHeld(wmote);
-		if (ret != 0)
-			return ret;
-	}
-	return 0;
+    int i;
+    u32 buttons = 0;
+
+    for (i=3; i >= 0; i--) {
+        buttons |= PAD_ButtonsHeld(i);
+        buttons |= WPAD_ButtonsHeld(i);
+    }
+    return buttons;
 }
 
 int CMenu::WPadIR_Valid(int i)
@@ -72,49 +107,42 @@ int CMenu::WPadIR_Valid(int i)
 
 bool CMenu::WPadIR_ANY()
 {
-	bool ret = false;
-	for(int wmote=0;wmote<4;wmote++)
-	{
-		wd[wmote] = WPAD_Data(wmote);
-		if (wd[wmote]->ir.valid)
-			ret = true;
-	}
-	return ret;
+	return (wd[0]->ir.valid || wd[1]->ir.valid || wd[2]->ir.valid || wd[3]->ir.valid);
 }
 
 u32 CMenu::_btnRepeat()
 {
 	u32 b = 0;
-	btn = wpadsHeld;
+	btn = btnsHeld;
 
-	if ((btn & WPAD_BUTTON_LEFT) != 0)
+	if ((btn & WBTN_LEFT) != 0)
 	{
 		if (m_padLeftDelay == 0 || m_padLeftDelay > g_repeatDelay)
-			b |= WPAD_BUTTON_LEFT;
+			b |= WBTN_LEFT;
 		++m_padLeftDelay;
 	}
 	else
 		m_padLeftDelay = 0;
-	if ((btn & WPAD_BUTTON_DOWN) != 0)
+	if ((btn & WBTN_DOWN) != 0)
 	{
 		if (m_padDownDelay == 0 || m_padDownDelay > g_repeatDelay)
-			b |= WPAD_BUTTON_DOWN;
+			b |= WBTN_DOWN;
 		++m_padDownDelay;
 	}
 	else
 		m_padDownDelay = 0;
-	if ((btn & WPAD_BUTTON_RIGHT) != 0)
+	if ((btn & WBTN_RIGHT) != 0)
 	{
 		if (m_padRightDelay == 0 || m_padRightDelay > g_repeatDelay)
-			b |= WPAD_BUTTON_RIGHT;
+			b |= WBTN_RIGHT;
 		++m_padRightDelay;
 	}
 	else
 		m_padRightDelay = 0;
-	if ((btn & WPAD_BUTTON_UP) != 0)
+	if ((btn & WBTN_UP) != 0)
 	{
 		if (m_padUpDelay == 0 || m_padUpDelay > g_repeatDelay)
-			b |= WPAD_BUTTON_UP;
+			b |= WBTN_UP;
 		++m_padUpDelay;
 	}
 	else

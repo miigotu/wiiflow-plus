@@ -79,34 +79,31 @@ int CMenu::_config3(void)
 	_showConfig3();
 	while (true)
 	{
-		ScanInput();
-		for(int wmote=0;wmote<4;wmote++)
-			if (WPadIR_Valid(wmote))
-				m_btnMgr.mouse(wd[wmote]->ir.x - m_cur.width() / 2, wd[wmote]->ir.y - m_cur.height() / 2);
-		if ((wpadsState & (WPAD_BUTTON_HOME | WPAD_BUTTON_B)) != 0)
+		_mainLoopCommon();
+		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0)
 			break;
-		else if ((wpadsState & WPAD_BUTTON_UP) != 0)
+		else if ((btnsPressed & WBTN_UP) != 0)
 			m_btnMgr.up();
-		else if ((wpadsState & WPAD_BUTTON_DOWN) != 0)
+		else if ((btnsPressed & WBTN_DOWN) != 0)
 			m_btnMgr.down();
 		++repeatButton;
-		if ((wpadsHeld & WPAD_BUTTON_A) == 0)
+		if ((btnsHeld & WBTN_A) == 0)
 			buttonHeld = (u32)-1;
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16 && (repeatButton % 4 == 0))
-			wpadsState |= WPAD_BUTTON_A;
-		if ((btn & WPAD_BUTTON_LEFT) != 0 || (wpadsState & WPAD_BUTTON_MINUS) != 0 || ((wpadsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageM))
+			btnsPressed |= WBTN_A;
+		if ((btn & WBTN_LEFT) != 0 || (btnsPressed & WBTN_MINUS) != 0 || ((btnsPressed & WBTN_A) != 0 && m_btnMgr.selected() == m_configBtnPageM))
 		{
 			nextPage = max(1, m_locked ? 1 : g_curPage - 1);
 			m_btnMgr.click(m_configBtnPageM);
 			break;
 		}
-		if (!m_locked && ((btn & WPAD_BUTTON_RIGHT) != 0 || (wpadsState & WPAD_BUTTON_PLUS) != 0 || ((wpadsState & WPAD_BUTTON_A) != 0 && m_btnMgr.selected() == m_configBtnPageP)))
+		if (!m_locked && ((btn & WBTN_RIGHT) != 0 || (btnsPressed & WBTN_PLUS) != 0 || ((btnsPressed & WBTN_A) != 0 && m_btnMgr.selected() == m_configBtnPageP)))
 		{
 			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
 			m_btnMgr.click(m_configBtnPageP);
 			break;
 		}
-		if ((wpadsState & WPAD_BUTTON_A) != 0)
+		if ((btnsPressed & WBTN_A) != 0)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_configBtnBack)
@@ -142,7 +139,6 @@ int CMenu::_config3(void)
 				}
 			}
 		}
-		_mainLoopCommon(wd);
 	}
 	_hideConfig3();
 	return nextPage;

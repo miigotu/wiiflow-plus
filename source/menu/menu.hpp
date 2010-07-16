@@ -6,6 +6,8 @@
 #define APP_VERSION		"2.1"
 
 #include <wiiuse/wpad.h>
+#include <ogc/pad.h>
+
 #include <vector>
 #include <map>
 #include "cursor.hpp"
@@ -14,6 +16,7 @@
 #include "fanart.hpp"
 #include "loader/disc.h"
 #include "channels.h"
+#include "btnmap.h"
 
 #include "gct.h"
 
@@ -388,8 +391,8 @@ private:
 	SZone m_mainButtonsZone;
 	SZone m_mainButtonsZone2;
 
-	s32 wpadsState;
-	s32 wpadsHeld;
+	s32 btnsPressed;
+	s32 btnsHeld;
 	WPADData *wd[4];
 	u32 btn;	
 	u32 m_padLeftDelay;
@@ -401,14 +404,14 @@ private:
 	float angle[4];
 	float mag[4];
 	u32 _btnRepeat();
-	u32 WPadState();
-	u32 WPadHeld();
+	u32 ButtonsPressed();
+	u32 ButtonsHeld();
 	//WPADData* WPadData();
 	void SetupInput();
 	void ScanInput();
 	int WPadIR_Valid(int i);
 	bool WPadIR_ANY();
-
+	
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;
 	volatile bool m_thrdWorking;
@@ -595,7 +598,7 @@ private:
 	void _CheatSettings();
 	void _CategorySettings();
 	//
-	void _mainLoopCommon(WPADData *wd[4], bool withCF = false, bool blockReboot = false, bool adjusting = false);
+	void _mainLoopCommon(bool withCF = false, bool blockReboot = false, bool adjusting = false);
 	// 
 	void _launch(const u64 chanTitle, const std::string &id);
 	void _launchGame(const std::string &id);
