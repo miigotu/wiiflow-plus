@@ -43,13 +43,13 @@ bool CMenu::_code(char code[4], bool erase)
 	while (true)
 	{
 		_mainLoopCommon(wd);
-		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0)
+		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
 			break;
-		else if ((btnsPressed & WBTN_UP) != 0)
+		else if (BTN_UP_PRESSED)
 			m_btnMgr.up();
-		else if ((btnsPressed & WBTN_DOWN) != 0)
+		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if ((btnsPressed & WBTN_A) != 0)
+		if (BTN_A_PRESSED)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_codeBtnErase)

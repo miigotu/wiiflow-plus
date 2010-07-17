@@ -23,7 +23,7 @@ void CMenu::error(const wstringEx &msg)
 	do
 	{
 		_mainLoopCommon();
-	} while ((btnsPressed & (WBTN_HOME | WBTN_A | WBTN_B)) == 0);
+	} while ((wii_btnsPressed & (WBTN_HOME | WBTN_A | WBTN_B)) == 0);
 	_hideError(false);
 }
 

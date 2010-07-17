@@ -391,8 +391,6 @@ private:
 	SZone m_mainButtonsZone;
 	SZone m_mainButtonsZone2;
 
-	s32 btnsPressed;
-	s32 btnsHeld;
 	WPADData *wd[4];
 	u32 btn;	
 	u32 m_padLeftDelay;
@@ -401,15 +399,19 @@ private:
 	u32 m_padUpDelay;
 	u32 buttonHeld;
 	int repeatButton;
+	u32 wii_btnsPressed;
+	u32 wii_btnsHeld;
+	u32 gc_btnsPressed;
+	u32 gc_btnsHeld;
 	float angle[4];
 	float mag[4];
 	u32 _btnRepeat();
-	u32 ButtonsPressed();
-	u32 ButtonsHeld();
+	void ButtonsPressed();
+	void ButtonsHeld();
 	//WPADData* WPadData();
 	void SetupInput();
 	void ScanInput();
-	int WPadIR_Valid(int i);
+	bool WPadIR_Valid(int i);
 	bool WPadIR_ANY();
 	
 	volatile bool m_networkInit;

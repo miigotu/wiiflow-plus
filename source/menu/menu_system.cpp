@@ -61,13 +61,13 @@ void CMenu::_system()
 				newVer = CMenu::_version[i];
 				_showSystem();
 			}
-		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0 && !m_thrdWorking)
+		if (BTN_HOME_PRESSED || BTN_B_PRESSED && !m_thrdWorking)
 			break;
-		else if ((btnsPressed & WBTN_UP) != 0)
+		else if (BTN_UP_PRESSED)
 			m_btnMgr.up();
-		else if ((btnsPressed & WBTN_DOWN) != 0)
+		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if (((btnsPressed & WBTN_A) != 0) && !(m_thrdWorking && m_thrdStop))
+		if ((BTN_A_PRESSED) && !(m_thrdWorking && m_thrdStop))
 		{
 			m_btnMgr.click();
 			if ((m_btnMgr.selected() == m_systemBtnDownload) && !m_thrdWorking)

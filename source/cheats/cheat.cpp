@@ -43,7 +43,8 @@ void loadCheatFile(SmartBuf &buffer, u32 &size, const char *cheatPath, const cha
 	size = fileSize;
 }
 
-void CMenu::_CheatSettings() {
+void CMenu::_CheatSettings() 
+{
 	SetupInput();
 
 	// try to load cheat file
@@ -63,13 +64,13 @@ void CMenu::_CheatSettings() {
 	while (true)
 	{
 		_mainLoopCommon();
-		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0)
+		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
 			break;
-		else if ((btnsPressed & WBTN_UP) != 0)
+		else if (BTN_UP_PRESSED)
 			m_btnMgr.up();
-		else if ((btnsPressed & WBTN_DOWN) != 0)
+		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if ((btnsPressed & WBTN_MINUS) != 0 || (btn & WBTN_LEFT) != 0)
+		if (BTN_MINUS_PRESSED || BTN_LEFT_REPEAT)
 		{
 			if (m_cheatSettingsPage > 1)
 				--m_cheatSettingsPage;
@@ -77,7 +78,7 @@ void CMenu::_CheatSettings() {
 			_showCheatSettings();
 			m_btnMgr.click(m_cheatBtnPageM);
 		}
-		else if ((btnsPressed & WBTN_PLUS) != 0 || (btn & WBTN_RIGHT) != 0)
+		else if (BTN_PLUS_PRESSED || BTN_RIGHT_REPEAT)
 		{
 			_hideCheatSettings();
 			if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
@@ -85,7 +86,7 @@ void CMenu::_CheatSettings() {
 			_showCheatSettings();
 			m_btnMgr.click(m_cheatBtnPageP);
 		}
-		else if ((btnsHeld & WBTN_2) && (btnsHeld & WBTN_1)!=0)
+		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1)!=0)
 		{
 			remove(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str()));
 			remove(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));
@@ -93,7 +94,7 @@ void CMenu::_CheatSettings() {
 			m_cfg.remove(m_cf.getId(), "hooktype");
 			break;
 		}
-		if ((btnsPressed & WBTN_A) != 0)
+		if (BTN_A_PRESSED)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_cheatBtnBack)

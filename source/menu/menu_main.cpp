@@ -114,39 +114,39 @@ int CMenu::main(void)
 			_showMain();
 		}
 		//Check for exit or reload request
-		if ((btnsPressed & WBTN_HOME) != 0)
+		if (BTN_HOME_PRESSED)
 		{
-			reload = (btnsHeld & WBTN_B) != 0;
+			reload = BTN_B_HELD;
 			break;
 		}
 		++repeatButton;
-		if ((btnsHeld & WBTN_A) == 0)
+		if ((wii_btnsHeld & WBTN_A) == 0)
 			buttonHeld = (u32)-1;
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16)
-			btnsPressed |= WBTN_A;
+			wii_btnsPressed |= WBTN_A;
 		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
-			if ((btn & WBTN_UP) != 0 //Wiimote
-				|| (((angle[wmote] >= 315 && angle[wmote] <= 360) || (angle[wmote] >= 0 && angle[wmote] < 45)) && mag[wmote] > 0.75)) //Nunchuck
+			if (BTN_UP_REPEAT //Wiimote
+				|| LEFT_STICK_UP) //Nunchuck
 				m_cf.up();
-			else if ((btn & WBTN_RIGHT) != 0 //Wiimote
-				|| ((angle[wmote] >= 45 && angle[wmote] < 135) && mag[wmote] > 0.75)) //Nunchuck
+			else if (BTN_RIGHT_REPEAT //Wiimote
+				|| LEFT_STICK_RIGHT) //Nunchuck
 				m_cf.right();
-			else if ((btn & WBTN_DOWN) != 0 //Wiimote
-				|| ((angle[wmote] >= 135 && angle[wmote] < 225) && mag[wmote] > 0.75)) //Nunchuck
+			else if (BTN_DOWN_REPEAT //Wiimote
+				||  LEFT_STICK_DOWN) //Nunchuck
 				m_cf.down();
-			else if ((btn & WBTN_LEFT) != 0  //Wiimote
-				|| ((angle[wmote] >= 225 && angle[wmote] < 315) && mag[wmote] > 0.75)) //Nunchuck
+			else if (BTN_LEFT_REPEAT  //Wiimote
+				|| LEFT_STICK_LEFT) //Nunchuck
 				m_cf.left();
 		//CF Layout select
-		if ((btnsPressed & WBTN_1) != 0 && (btnsHeld & WBTN_B) == 0)
+		if (BTN_1_PRESSED && (wii_btnsHeld & WBTN_B) == 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		else if ((btnsPressed & WBTN_2) != 0 && (btnsHeld & WBTN_B) == 0)
+		else if (BTN_2_PRESSED && (wii_btnsHeld & WBTN_B) == 0)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
@@ -154,8 +154,8 @@ int CMenu::main(void)
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
 		//Search by Alphabet
-		if (((btnsPressed & WBTN_RIGHT) != 0 && (btnsHeld & WBTN_B) != 0)
-			|| ((btnsPressed & WBTN_PLUS) != 0 && m_alphaSearch == ((btnsHeld & WBTN_B) == 0)))
+		if ((BTN_RIGHT_PRESSED && BTN_B_HELD)
+			|| (BTN_PLUS_PRESSED && m_alphaSearch == ((wii_btnsHeld & WBTN_B) == 0)))
 		{
 			curLetter.resize(1);
 			curLetter[0] = m_cf.nextLetter();
@@ -164,8 +164,8 @@ int CMenu::main(void)
 			m_btnMgr.show(m_mainLblLetter);
 
 		}
-		else if (((btnsPressed & WBTN_LEFT) != 0 && (btnsHeld & WBTN_B) != 0)
-			|| ((btnsPressed & WBTN_MINUS) != 0 && m_alphaSearch == ((btnsHeld & WBTN_B) == 0)))
+		else if ((BTN_LEFT_PRESSED && BTN_B_HELD)
+			|| (BTN_MINUS_PRESSED && m_alphaSearch == ((wii_btnsHeld & WBTN_B) == 0)))
 		{
 			curLetter.resize(1);
 			curLetter[0] = m_cf.prevLetter();
@@ -174,15 +174,15 @@ int CMenu::main(void)
 			m_btnMgr.show(m_mainLblLetter);
 		}
 		//Search by pages
-		else if ((btnsPressed & WBTN_MINUS) != 0)
+		else if (BTN_MINUS_PRESSED)
 			m_cf.pageUp();
-		else if ((btnsPressed & WBTN_PLUS) != 0)
+		else if (BTN_PLUS_PRESSED)
 			m_cf.pageDown();
 
-		if ((btnsHeld & WBTN_B) != 0)
+		if (BTN_B_HELD)
 		{
 			//Sorting Selection
-			if ((btnsPressed & WBTN_DOWN) != 0 )
+			if (BTN_DOWN_PRESSED)
 			{
 				u32 sort = 0;
 				sort = m_cfg.getInt(" GENERAL", "sort", 0);
@@ -204,7 +204,7 @@ int CMenu::main(void)
 				m_btnMgr.show(m_mainLblNotice);
 			}
 			//Partition Selection
-			if ((btnsPressed & WBTN_UP) != 0)
+			if (BTN_UP_PRESSED)
 			{
 				_hideMain();
 				s32 amountOfPartitions = WBFS_GetPartitionCount();
@@ -224,7 +224,7 @@ int CMenu::main(void)
 			}
 		}
 		//Events to Show Categories
-		if ((btnsPressed & WBTN_B) != 0)
+		if (BTN_B_PRESSED)
 		{
 			if (buttonHeld != m_btnMgr.selected())
 				m_btnMgr.click();
@@ -247,7 +247,7 @@ int CMenu::main(void)
 			}
 			*/
 		}
-		if (done==0 && m_current_view == COVERFLOW_USB && m_cfg.getBool(" GENERAL", "category_on_start", false)) // Only supported in game mode (not for channels, since you don't have options for channels yet)
+		else if (done==0 && m_current_view == COVERFLOW_USB && m_cfg.getBool(" GENERAL", "category_on_start", false)) // Only supported in game mode (not for channels, since you don't have options for channels yet)
 		{
 			done = 1; //set done so it doesnt keep doing it
 			// show categories menu
@@ -258,7 +258,7 @@ int CMenu::main(void)
 			_initCF();
 		}
 		//Handling input when other gui buttons are selected
-		if ((btnsPressed & WBTN_A) != 0)
+		else if (BTN_A_PRESSED)
 		{
 			if (buttonHeld != m_btnMgr.selected())
 				m_btnMgr.click();
@@ -369,7 +369,7 @@ int CMenu::main(void)
 				if (m_cf.select())
 				{
 					_hideMain();
-					_game((btnsHeld & WBTN_B) != 0);
+					_game(BTN_B_HELD);
 					m_cf.cancel();
 					_showMain();
 				}

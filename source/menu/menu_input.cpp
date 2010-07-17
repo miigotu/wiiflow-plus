@@ -1,7 +1,6 @@
 #include "menu.hpp"
 #include "gecko.h"
 
-//#DEFINE INPUT_PAD_A(WBTN_A | PAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)
 using namespace std;
 
 
@@ -27,13 +26,14 @@ void CMenu::SetupInput()
 
 void CMenu::ScanInput()
 {
+	//use left sticks only for now
 	int right = 0;
 	
     WPAD_ScanPads();
     PAD_ScanPads();
 	
-	btnsPressed = ButtonsPressed();
-	btnsHeld = ButtonsHeld();
+	ButtonsPressed();
+	ButtonsHeld();
 	btn = _btnRepeat();
 
 	for(int wmote=0;wmote<4;wmote++)
@@ -73,31 +73,31 @@ void CMenu::ScanInput()
 	}
 }
 
-u32 CMenu::ButtonsPressed()
+void CMenu::ButtonsPressed()
 {
     int i;
-    u32 buttons = 0;
+	wii_btnsPressed = 0;
+	gc_btnsPressed = 0;
 
     for (i=3; i >= 0; i--) {
-        buttons |= PAD_ButtonsDown(i);
-        buttons |= WPAD_ButtonsDown(i);
+        wii_btnsPressed |= WPAD_ButtonsDown(i);
+        gc_btnsPressed |= PAD_ButtonsDown(i);
     }
-    return buttons;
 }
 
-u32 CMenu::ButtonsHeld()
+void CMenu::ButtonsHeld()
 {
     int i;
-    u32 buttons = 0;
+	wii_btnsHeld = 0;
+	gc_btnsHeld = 0;
 
     for (i=3; i >= 0; i--) {
-        buttons |= PAD_ButtonsHeld(i);
-        buttons |= WPAD_ButtonsHeld(i);
+        wii_btnsHeld |= WPAD_ButtonsHeld(i);
+        gc_btnsHeld |= PAD_ButtonsHeld(i);
     }
-    return buttons;
 }
 
-int CMenu::WPadIR_Valid(int i)
+bool CMenu::WPadIR_Valid(int i)
 {
 	wd[i] = WPAD_Data(i);
 	if (wd[i]->ir.valid)
@@ -113,9 +113,9 @@ bool CMenu::WPadIR_ANY()
 u32 CMenu::_btnRepeat()
 {
 	u32 b = 0;
-	btn = btnsHeld;
-
-	if ((btn & WBTN_LEFT) != 0)
+	btn = wii_btnsHeld;
+	//WPAD
+	if (BTN_LEFT_REPEAT)
 	{
 		if (m_padLeftDelay == 0 || m_padLeftDelay > g_repeatDelay)
 			b |= WBTN_LEFT;
@@ -123,7 +123,7 @@ u32 CMenu::_btnRepeat()
 	}
 	else
 		m_padLeftDelay = 0;
-	if ((btn & WBTN_DOWN) != 0)
+	if (BTN_DOWN_REPEAT)
 	{
 		if (m_padDownDelay == 0 || m_padDownDelay > g_repeatDelay)
 			b |= WBTN_DOWN;
@@ -131,7 +131,7 @@ u32 CMenu::_btnRepeat()
 	}
 	else
 		m_padDownDelay = 0;
-	if ((btn & WBTN_RIGHT) != 0)
+	if (BTN_RIGHT_REPEAT)
 	{
 		if (m_padRightDelay == 0 || m_padRightDelay > g_repeatDelay)
 			b |= WBTN_RIGHT;
@@ -139,10 +139,43 @@ u32 CMenu::_btnRepeat()
 	}
 	else
 		m_padRightDelay = 0;
-	if ((btn & WBTN_UP) != 0)
+	if (BTN_UP_REPEAT)
 	{
 		if (m_padUpDelay == 0 || m_padUpDelay > g_repeatDelay)
 			b |= WBTN_UP;
+		++m_padUpDelay;
+	}
+	else
+		m_padUpDelay = 0;
+	//GC Pad
+	if ((btn & BTN_LEFT) != 0)
+	{
+		if (m_padLeftDelay == 0 || m_padLeftDelay > g_repeatDelay)
+			b |= BTN_LEFT;
+		++m_padLeftDelay;
+	}
+	else
+		m_padLeftDelay = 0;
+	if ((btn & BTN_DOWN) != 0)
+	{
+		if (m_padDownDelay == 0 || m_padDownDelay > g_repeatDelay)
+			b |= BTN_DOWN;
+		++m_padDownDelay;
+	}
+	else
+		m_padDownDelay = 0;
+	if ((btn & BTN_RIGHT) != 0)
+	{
+		if (m_padRightDelay == 0 || m_padRightDelay > g_repeatDelay)
+			b |= BTN_RIGHT;
+		++m_padRightDelay;
+	}
+	else
+		m_padRightDelay = 0;
+	if ((btn & BTN_UP) != 0)
+	{
+		if (m_padUpDelay == 0 || m_padUpDelay > g_repeatDelay)
+			b |= BTN_UP;
 		++m_padUpDelay;
 	}
 	else

@@ -487,13 +487,13 @@ void CMenu::_download(string gameId)
 	while (true)
 	{
 		_mainLoopCommon(false, m_thrdWorking);
-		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0 && !m_thrdWorking)
+		if (BTN_HOME_PRESSED || BTN_B_PRESSED && !m_thrdWorking)
 			break;
-		else if ((btnsPressed & WBTN_UP) != 0)
+		else if (BTN_UP_PRESSED)
 			m_btnMgr.up();
-		else if ((btnsPressed & WBTN_DOWN) != 0)
+		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if (((btnsPressed & WBTN_A) != 0 || !gameId.empty()) && !(m_thrdWorking && m_thrdStop))
+		if ((BTN_A_PRESSED || !gameId.empty()) && !(m_thrdWorking && m_thrdStop))
 		{
 			m_btnMgr.click();
 			if ((m_btnMgr.selected() == m_downloadBtnAll || m_btnMgr.selected() == m_downloadBtnMissing || !gameId.empty()) && !m_thrdWorking)

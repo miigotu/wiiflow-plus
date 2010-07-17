@@ -344,20 +344,20 @@ void CMenu::_gameSettings(void)
 	while (true)
 	{
 		_mainLoopCommon(false);
-		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0)
+		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
 			break;
-		else if ((btnsPressed & WBTN_UP) != 0)
+		else if (BTN_UP_PRESSED)
 			m_btnMgr.up();
-		else if ((btnsPressed & WBTN_DOWN) != 0)
+		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if ((btnsPressed & WBTN_MINUS) != 0 || (btn & WBTN_LEFT) != 0)
+		if (BTN_MINUS_PRESSED || BTN_LEFT_REPEAT)
 		{
 			if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 6) || m_gameSettingsPage > 51)
 				--m_gameSettingsPage;
 			_showGameSettings();
 			m_btnMgr.click(m_gameSettingsBtnPageM);
 		}
-		else if ((btnsPressed & WBTN_PLUS) != 0 || (btn & WBTN_RIGHT) != 0)
+		else if (BTN_PLUS_PRESSED || BTN_RIGHT_REPEAT)
 		{
 			if (m_gameSettingsPage < 5 || (m_gameSettingsPage > 5 && m_gameSettingsPage < 53 && m_max_categories > 8)
 				|| (m_gameSettingsPage > 5 && m_gameSettingsPage < 52 && m_max_categories > 5))
@@ -365,7 +365,7 @@ void CMenu::_gameSettings(void)
 			_showGameSettings();
 			m_btnMgr.click(m_gameSettingsBtnPageP);
 		}
-		else if ((btnsPressed & WBTN_A) != 0)
+		else if (BTN_A_PRESSED)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_gameSettingsBtnBack)

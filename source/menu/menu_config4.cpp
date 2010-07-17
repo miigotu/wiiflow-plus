@@ -101,25 +101,25 @@ int CMenu::_config4(void)
 	while (true)
 	{
 		_mainLoopCommon();
-		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0)
+		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
 			break;
-		else if ((btnsPressed & WBTN_UP) != 0)
+		else if (BTN_UP_PRESSED)
 			m_btnMgr.up();
-		else if ((btnsPressed & WBTN_DOWN) != 0)
+		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if ((btn & WBTN_LEFT) != 0 || (btnsPressed & WBTN_MINUS) != 0 || ((btnsPressed & WBTN_A) != 0 && m_btnMgr.selected() == m_configBtnPageM))
+		if (BTN_LEFT_REPEAT || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageM))
 		{
 			nextPage = max(1, m_locked ? 1 : g_curPage - 1);
 			m_btnMgr.click(m_configBtnPageM);
 			break;
 		}
-		if (!m_locked && ((btn & WBTN_RIGHT) != 0 || (btnsPressed & WBTN_PLUS) != 0 || ((btnsPressed & WBTN_A) != 0 && m_btnMgr.selected() == m_configBtnPageP)))
+		if (!m_locked && (BTN_RIGHT_REPEAT || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageP)))
 		{
 			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
 			m_btnMgr.click(m_configBtnPageP);
 			break;
 		}
-		if ((btnsPressed & WBTN_A) != 0)
+		if (BTN_A_PRESSED)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_configBtnBack)

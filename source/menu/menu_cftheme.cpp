@@ -328,24 +328,24 @@ void CMenu::_cfTheme(void)
 	while (true)
 	{
 		_mainLoopCommon(true, false, curParam == 5 || curParam == 6 || curParam == 7);
-		btnDelay = (btnsHeld & WBTN_B) != 0 ? 1 : 4;
-		if ((btnsPressed & WBTN_HOME) != 0)
+		btnDelay = BTN_B_HELD ? 1 : 4;
+		if (BTN_HOME_PRESSED)
 		{
 			m_theme.clear();
 			m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), m_cfg.getString(" GENERAL", "theme", "defaut").c_str()).c_str());
 			break;
 		}
-		else if ((btnsPressed & WBTN_UP) != 0)
+		else if (BTN_UP_PRESSED)
 			m_btnMgr.up();
-		else if ((btnsPressed & WBTN_DOWN) != 0)
+		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if ((btnsHeld & WBTN_B) != 0 && (btnsPressed & WBTN_1) != 0)
+		if (BTN_B_HELD && BTN_1_PRESSED)
 		{
 			copyVersion = cfVersion;
 			copySelected = m_cf.selected();
 			copyWide = wide;
 		}
-		else if (copyVersion > 0 && (btnsHeld & WBTN_B) != 0 && (btnsPressed & WBTN_2) != 0)
+		else if (copyVersion > 0 && BTN_B_HELD && BTN_2_PRESSED)
 		{
 			string domSrc(sfmt(copySelected ? "_COVERFLOW_%i_S" : "_COVERFLOW_%i", copyVersion));
 			string domDst(sfmt(m_cf.selected() ? "_COVERFLOW_%i_S" : "_COVERFLOW_%i", cfVersion));
@@ -377,16 +377,16 @@ void CMenu::_cfTheme(void)
 				m_cf.applySettings();
 		}
 		sel = m_cf.selected();
-		if ((btnsHeld & WBTN_B) != 0)
+		if (BTN_B_HELD)
 		{
-			if ((btnsPressed & WBTN_PLUS) != 0)
+			if (BTN_PLUS_PRESSED)
 			{
 				curParam = loopNum(curParam + 1, ARRAY_SIZE(CMenu::_cfParams));
 				if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
 					m_cf.select();
 				_showCFTheme(curParam, cfVersion, wide);
 			}
-			else if ((btnsPressed & WBTN_MINUS) != 0)
+			else if (BTN_MINUS_PRESSED)
 			{
 				curParam = loopNum(curParam - 1, ARRAY_SIZE(CMenu::_cfParams));
 				if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
@@ -396,23 +396,23 @@ void CMenu::_cfTheme(void)
 		}
 		else if (!sel)
 		{
-			if ((btnsPressed & WBTN_PLUS) != 0)
+			if (BTN_PLUS_PRESSED)
 				m_cf.pageDown();
-			else if ((btnsPressed & WBTN_MINUS) != 0)
+			else if (BTN_MINUS_PRESSED)
 				m_cf.pageUp();
 		}
-		if ((btn & WBTN_LEFT) != 0)
+		if (BTN_LEFT_REPEAT)
 			m_cf.left();
-		else if ((btn & WBTN_RIGHT) != 0)
+		else if (BTN_RIGHT_REPEAT)
 			m_cf.right();
 		if (sel && !m_cf.selected())
 			m_cf.select();
 		++repeatButton;
-		if ((btnsHeld & WBTN_A) == 0)
+		if ((wii_btnsHeld & WBTN_A) == 0)
 			buttonHeld = (u32)-1;
 		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16 && (repeatButton % btnDelay == 0))
-			btnsPressed |= WBTN_A;
-		if ((btnsPressed & WBTN_A) != 0)
+			wii_btnsPressed |= WBTN_A;
+		if (BTN_A_PRESSED)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() != (u32)-1)

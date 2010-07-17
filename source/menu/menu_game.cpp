@@ -165,12 +165,12 @@ void CMenu::_game(bool launch)
 		string title(m_cf.getTitle());
 		u64 chantitle = m_cf.getChanTitle();
 		_mainLoopCommon(true);
-		if ((btnsPressed & (WBTN_HOME | WBTN_B)) != 0)
+		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
 		{
 			_stopSounds();
 			break;
 		}
-		else if ((btnsPressed & WBTN_MINUS) != 0)
+		else if (BTN_MINUS_PRESSED)
 		{
 			string videoPath = sfmt("%s/%.3s.thp", m_videoDir.c_str(), id.c_str());
 		
@@ -190,7 +190,7 @@ void CMenu::_game(bool launch)
 				m_video_playing = true;
 				
 				STexture videoBg;
-				while ((btnsPressed & WBTN_B) == 0 && movie.GetNextFrame(&videoBg))
+				while ((wii_btnsPressed & WBTN_B) == 0 && movie.GetNextFrame(&videoBg))
 				{
 					_setBg(videoBg, videoBg);
 					m_bgCrossFade = 10;
@@ -201,21 +201,21 @@ void CMenu::_game(bool launch)
 				m_gameSound.play(m_bnrSndVol);
 			}
 		}
-		else if ((btnsPressed & WBTN_1) != 0)
+		else if (BTN_1_PRESSED)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		else if ((btnsPressed & WBTN_2) != 0)
+		else if (BTN_2_PRESSED)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		else if (launch || (btnsPressed & WBTN_A) != 0)
+		else if (launch || BTN_A_PRESSED)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_mainBtnQuit)
@@ -272,32 +272,32 @@ void CMenu::_game(bool launch)
 		}
 		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
-			if ((btn & WBTN_UP) != 0 //Wiimote
-				|| (((angle[wmote] >= 315 && angle[wmote] <= 360) || (angle[wmote] >= 0 && angle[wmote] < 45)) && mag[wmote] > 0.75)) //Nunchuck
+			if (BTN_UP_REPEAT //Wiimote
+				|| LEFT_STICK_UP) //Nunchuck
 			{
 				_stopSounds();
 				m_cf.up();
 				_showGame();
 				_playGameSound();
 			}
-			else if ((btn & WBTN_RIGHT) != 0 //Wiimote
-				|| ((angle[wmote] >= 45 && angle[wmote] < 135) && mag[wmote] > 0.75)) //Nunchuck
+			else if (BTN_RIGHT_REPEAT //Wiimote
+				|| LEFT_STICK_RIGHT) //Nunchuck
 			{
 				_stopSounds();
 				m_cf.right();
 				_showGame();
 				_playGameSound();
 			}
-			else if ((btn & WBTN_DOWN) != 0 //Wiimote
-				|| ((angle[wmote] >= 135 && angle[wmote] < 225) && mag[wmote] > 0.75)) //Nunchuck
+			else if (BTN_DOWN_REPEAT //Wiimote
+				|| LEFT_STICK_DOWN) //Nunchuck
 			{
 				_stopSounds();
 				m_cf.down();
 				_showGame();
 				_playGameSound();
 			}
-			else if ((btn & WBTN_LEFT) != 0  //Wiimote
-				|| ((angle[wmote] >= 225 && angle[wmote] < 315) && mag[wmote] > 0.75)) //Nunchuck
+			else if (BTN_LEFT_REPEAT  //Wiimote
+				|| LEFT_STICK_LEFT) //Nunchuck
 			{
 				_stopSounds();
 				m_cf.left();
