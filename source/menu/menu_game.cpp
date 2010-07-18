@@ -249,7 +249,7 @@ void CMenu::_game(bool launch)
 				_gameSettings();
 				_showGame();
 			}
-			if (launch || m_btnMgr.selected() == m_gameBtnPlay || (!WPadIR_Valid(0) && !WPadIR_Valid(1) && !WPadIR_Valid(2) && !WPadIR_Valid(3) && m_btnMgr.selected() == (u32)-1))
+			else if (launch || m_btnMgr.selected() == m_gameBtnPlay/* || (!WPadIR_Valid(0) && !WPadIR_Valid(1) && !WPadIR_Valid(2) && !WPadIR_Valid(3) && m_btnMgr.selected() == (u32)-1)*/)
 			{
 				_hideGame();
 				m_cf.clear();
@@ -268,8 +268,8 @@ void CMenu::_game(bool launch)
 				_initCF();
 				m_cf.select();
 			}
-			if ((m_cf.mouseOver(m_vid, m_cursor1.x(), m_cursor1.y()))
-			|| (m_cf.mouseOver(m_vid, m_cursor2.x(), m_cursor4.y()))
+			else if ((m_cf.mouseOver(m_vid, m_cursor1.x(), m_cursor1.y()))
+			|| (m_cf.mouseOver(m_vid, m_cursor2.x(), m_cursor2.y()))
 			|| (m_cf.mouseOver(m_vid, m_cursor3.x(), m_cursor3.y()))
 			|| (m_cf.mouseOver(m_vid, m_cursor4.x(), m_cursor4.y())))
 				m_cf.flip();

@@ -87,7 +87,7 @@ int CMenu::main(void)
 {
 	wstringEx curLetter;
 	string prevTheme = m_cfg.getString(" GENERAL", "theme", "default");
-	bool reload = false;
+	m_reload = false;
 	static u32 disc_check = 0, olddisc_check = 0;
 	int done = 0;
 
@@ -116,7 +116,7 @@ int CMenu::main(void)
 		//Check for exit or reload request
 		if (BTN_HOME_PRESSED)
 		{
-			reload = BTN_B_HELD;
+			m_reload = BTN_B_HELD;
 			break;
 		}
 		++repeatButton;
@@ -176,7 +176,7 @@ int CMenu::main(void)
 		if (BTN_B_HELD)
 		{
 			//Sorting Selection
-			if (BTN_DOWN_PRESSED)
+			if (BTN_DOWN_PRESSED && !m_locked)
 			{
 				u32 sort = 0;
 				sort = m_cfg.getInt(" GENERAL", "sort", 0);
@@ -198,7 +198,7 @@ int CMenu::main(void)
 				m_btnMgr.show(m_mainLblNotice);
 			}
 			//Partition Selection
-			if (BTN_UP_PRESSED)
+			if (BTN_UP_PRESSED && !m_locked)
 			{
 				_hideMain();
 				s32 amountOfPartitions = WBFS_GetPartitionCount();
@@ -288,8 +288,8 @@ int CMenu::main(void)
 					_wbfsOp(CMenu::WO_ADD_GAME);
 					if (prevTheme != m_cfg.getString(" GENERAL", "theme"))
 					{
-					reload = true;
-					break;
+						m_reload = true;
+						break;
 					}
 					_showMain();
 				}
@@ -298,8 +298,8 @@ int CMenu::main(void)
 					error(_t("wbfsop11", L"The currently selected filesystem is read-only. You cannot install games or remove them."));
 					if (prevTheme != m_cfg.getString(" GENERAL", "theme"))
 					{
-					reload = true;
-					break;
+						m_reload = true;
+						break;
 					}
 					_showMain();
 				}
@@ -311,7 +311,7 @@ int CMenu::main(void)
 				_config(7);
 				if (prevTheme != m_cfg.getString(" GENERAL", "theme"))
 				{
-					reload = true;
+					m_reload = true;
 					break;
 				}
 				_showMain();
@@ -320,9 +320,9 @@ int CMenu::main(void)
 			{
 				_hideMain();
 				_config(1);
-				if (prevTheme != m_cfg.getString(" GENERAL", "theme"))
+				if (prevTheme != m_cfg.getString(" GENERAL", "theme") || m_reload == true)
 				{
-					reload = true;
+					m_reload = true;
 					break;
 				}
 				_showMain();
@@ -439,7 +439,7 @@ int CMenu::main(void)
 	m_cfg.save();
 //	m_loc.save();
 	_stopSounds();
-	if (reload)
+	if (m_reload)
 	{
 		m_vid.waitMessage(m_waitMessage);
 		return 1;

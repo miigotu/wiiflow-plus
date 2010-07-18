@@ -39,10 +39,12 @@ void CMenu::ScanInput()
 	ButtonsHeld();
 	wii_repeat = wii_btnRepeat();
 	gc_repeat = gc_btnRepeat();
-
+	
 	for(int wmote=0;wmote<4;wmote++)
 	{
 		wd[wmote] = WPAD_Data(wmote);
+		angle[wmote] = 0;
+		mag[wmote] = 0;		
 		switch (wd[wmote]->exp.type)
 		{
 			case WPAD_EXP_NUNCHUK:

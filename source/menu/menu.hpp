@@ -394,7 +394,8 @@ private:
 	SZone m_mainNextZone;
 	SZone m_mainButtonsZone;
 	SZone m_mainButtonsZone2;
-
+	bool m_reload;
+	
 	WPADData *wd[4];
 	u32 wii_repeat;	
 	u32 gc_repeat;	
