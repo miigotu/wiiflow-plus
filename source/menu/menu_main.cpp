@@ -126,17 +126,13 @@ int CMenu::main(void)
 			wii_btnsPressed |= WBTN_A;
 		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
-			if (BTN_UP_REPEAT //Wiimote
-				|| LEFT_STICK_UP) //Nunchuck
+			if (BTN_UP_REPEAT || LEFT_STICK_UP)
 				m_cf.up();
-			else if (BTN_RIGHT_REPEAT //Wiimote
-				|| LEFT_STICK_RIGHT) //Nunchuck
+			else if (BTN_RIGHT_REPEAT || LEFT_STICK_RIGHT)
 				m_cf.right();
-			else if (BTN_DOWN_REPEAT //Wiimote
-				||  LEFT_STICK_DOWN) //Nunchuck
+			else if (BTN_DOWN_REPEAT ||  LEFT_STICK_DOWN)
 				m_cf.down();
-			else if (BTN_LEFT_REPEAT  //Wiimote
-				|| LEFT_STICK_LEFT) //Nunchuck
+			else if (BTN_LEFT_REPEAT || LEFT_STICK_LEFT)
 				m_cf.left();
 		//CF Layout select
 		if (BTN_1_PRESSED && (wii_btnsHeld & WBTN_B) == 0)
@@ -154,8 +150,7 @@ int CMenu::main(void)
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
 		//Search by Alphabet
-		if ((BTN_RIGHT_PRESSED && BTN_B_HELD)
-			|| (BTN_PLUS_PRESSED && m_alphaSearch == ((wii_btnsHeld & WBTN_B) == 0)))
+		if ((BTN_RIGHT_PRESSED && BTN_B_HELD) || (BTN_PLUS_PRESSED && m_alphaSearch == ((wii_btnsHeld & WBTN_B) == 0)))
 		{
 			curLetter.resize(1);
 			curLetter[0] = m_cf.nextLetter();
@@ -164,8 +159,7 @@ int CMenu::main(void)
 			m_btnMgr.show(m_mainLblLetter);
 
 		}
-		else if ((BTN_LEFT_PRESSED && BTN_B_HELD)
-			|| (BTN_MINUS_PRESSED && m_alphaSearch == ((wii_btnsHeld & WBTN_B) == 0)))
+		else if ((BTN_LEFT_PRESSED && BTN_B_HELD) || (BTN_MINUS_PRESSED && m_alphaSearch == ((wii_btnsHeld & WBTN_B) == 0)))
 		{
 			curLetter.resize(1);
 			curLetter[0] = m_cf.prevLetter();
@@ -381,18 +375,15 @@ int CMenu::main(void)
 				m_btnMgr.hide(m_mainLblNotice);
 			}
 		//zones, showing and hiding buttons
-		if (!m_gameList.empty() && WPadIR_ANY() && m_cur.x() >= m_mainPrevZone.x && m_cur.y() >= m_mainPrevZone.y
-			&& m_cur.x() < m_mainPrevZone.x + m_mainPrevZone.w && m_cur.y() < m_mainPrevZone.y + m_mainPrevZone.h)
+		if (!m_gameList.empty() && m_show_zone_prev)
 			m_btnMgr.show(m_mainBtnPrev);
 		else
 			m_btnMgr.hide(m_mainBtnPrev);
-		if (!m_gameList.empty() && WPadIR_ANY() && m_cur.x() >= m_mainNextZone.x && m_cur.y() >= m_mainNextZone.y
-			&& m_cur.x() < m_mainNextZone.x + m_mainNextZone.w && m_cur.y() < m_mainNextZone.y + m_mainNextZone.h)
+		if (!m_gameList.empty() && m_show_zone_next)
 			m_btnMgr.show(m_mainBtnNext);
 		else
 			m_btnMgr.hide(m_mainBtnNext);
-		if (!m_gameList.empty() && WPadIR_ANY() && m_cur.x() >= m_mainButtonsZone.x && m_cur.y() >= m_mainButtonsZone.y
-			&& m_cur.x() < m_mainButtonsZone.x + m_mainButtonsZone.w && m_cur.y() < m_mainButtonsZone.y + m_mainButtonsZone.h)
+		if (!m_gameList.empty() && m_show_zone_main)
 		{
 			m_btnMgr.show(m_mainLblUser[0]);
 			m_btnMgr.show(m_mainLblUser[1]);
@@ -412,8 +403,7 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainBtnFavoritesOn);
 			m_btnMgr.hide(m_mainBtnFavoritesOff);
 		}
-		if (!m_cfg.getBool(" GENERAL", "hidechannelsbutton", false) && !m_gameList.empty() && WPadIR_ANY() && m_cur.x() >= m_mainButtonsZone2.x && m_cur.y() >= m_mainButtonsZone2.y
-			&& m_cur.x() < m_mainButtonsZone2.x + m_mainButtonsZone2.w && m_cur.y() < m_mainButtonsZone2.y + m_mainButtonsZone2.h)
+		if (!m_cfg.getBool(" GENERAL", "hidechannelsbutton", false) && !m_gameList.empty() && m_show_zone_main2)
 		{
 			if (/*m_channels.CanIdentify() && */m_loaded_ios_base != 57)
 			{
@@ -431,10 +421,16 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainLblUser[2]);
 		}
 		//
-		if (!WPadIR_Valid(0) || !WPadIR_Valid(1) || !WPadIR_Valid(2) || !WPadIR_Valid(3) || m_btnMgr.selected() != (u32)-1)
-			m_cf.mouse(m_vid, -1, -1);
+		if (m_shown_pointer == 1 && WPadIR_Valid(0))
+			m_cf.mouse(m_vid, 0, m_cursor1.x(), m_cursor1.y());
+		else if (m_shown_pointer == 2 && WPadIR_Valid(1))
+			m_cf.mouse(m_vid, 1, m_cursor2.x(), m_cursor2.y());
+		else if (m_shown_pointer == 3 && WPadIR_Valid(2))
+			m_cf.mouse(m_vid, 2, m_cursor3.x(), m_cursor3.y());
+		else if (m_shown_pointer == 4 && WPadIR_Valid(3))
+			m_cf.mouse(m_vid, 3, m_cursor4.x(), m_cursor4.y());
 		else
-			m_cf.mouse(m_vid, m_cur.x(), m_cur.y());
+			m_cf.mouse(m_vid, 0, -1, -1);
 	}
 	// 
 	GX_InvVtxCache();

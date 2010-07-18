@@ -62,7 +62,7 @@ public:
 	void drawEffect(void);
 	void hideCover(void);
 	void showCover(void);
-	void mouse(CVideo &vid, int x, int y);
+	void mouse(CVideo &vid, int wmote, int x, int y);
 	bool mouseOver(CVideo &vid, int x, int y);
 	// Accessors for settings
 	void setCompression(bool enable) { m_compressTextures = enable; }

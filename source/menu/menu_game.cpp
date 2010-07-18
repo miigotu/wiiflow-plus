@@ -231,9 +231,7 @@ void CMenu::_game(bool launch)
 					_showGame();
 				}
 				else
-				{
 					error(_t("wbfsop11", L"The currently selected filesystem is read-only. You cannot install games or remove them."));
-				}
 			}
 			else if (m_btnMgr.selected() == m_gameBtnFavoriteOn || m_btnMgr.selected() == m_gameBtnFavoriteOff)
 				m_cfg.setBool(id, "favorite", !m_cfg.getBool(id, "favorite", false));
@@ -262,42 +260,44 @@ void CMenu::_game(bool launch)
 
 				_launch(chantitle, id);
 				launch = false;
-				WPAD_SetVRes(WPAD_CHAN_ALL, m_vid.width() + m_cur.width(), m_vid.height() + m_cur.height());	// b/c IOS reload
+				WPAD_SetVRes(WPAD_CHAN_0, m_vid.width() + m_cursor1.width(), m_vid.height() + m_cursor1.height());	// b/c IOS reload
+				WPAD_SetVRes(WPAD_CHAN_1, m_vid.width() + m_cursor2.width(), m_vid.height() + m_cursor2.height());	// b/c IOS reload
+				WPAD_SetVRes(WPAD_CHAN_2, m_vid.width() + m_cursor3.width(), m_vid.height() + m_cursor3.height());	// b/c IOS reload
+				WPAD_SetVRes(WPAD_CHAN_3, m_vid.width() + m_cursor4.width(), m_vid.height() + m_cursor4.height());	// b/c IOS reload
 				_showGame();
 				_initCF();
 				m_cf.select();
 			}
-			if (m_cf.mouseOver(m_vid, m_cur.x(), m_cur.y()))
+			if ((m_cf.mouseOver(m_vid, m_cursor1.x(), m_cursor1.y()))
+			|| (m_cf.mouseOver(m_vid, m_cursor2.x(), m_cursor4.y()))
+			|| (m_cf.mouseOver(m_vid, m_cursor3.x(), m_cursor3.y()))
+			|| (m_cf.mouseOver(m_vid, m_cursor4.x(), m_cursor4.y())))
 				m_cf.flip();
 		}
 		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
-			if (BTN_UP_REPEAT //Wiimote
-				|| LEFT_STICK_UP) //Nunchuck
+			if (BTN_UP_REPEAT || LEFT_STICK_UP)
 			{
 				_stopSounds();
 				m_cf.up();
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_RIGHT_REPEAT //Wiimote
-				|| LEFT_STICK_RIGHT) //Nunchuck
+			else if (BTN_RIGHT_REPEAT || LEFT_STICK_RIGHT)
 			{
 				_stopSounds();
 				m_cf.right();
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_DOWN_REPEAT //Wiimote
-				|| LEFT_STICK_DOWN) //Nunchuck
+			else if (BTN_DOWN_REPEAT || LEFT_STICK_DOWN)
 			{
 				_stopSounds();
 				m_cf.down();
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_LEFT_REPEAT  //Wiimote
-				|| LEFT_STICK_LEFT) //Nunchuck
+			else if (BTN_LEFT_REPEAT || LEFT_STICK_LEFT)
 			{
 				_stopSounds();
 				m_cf.left();

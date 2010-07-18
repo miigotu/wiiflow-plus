@@ -142,7 +142,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 	while (true)
 	{
 		_mainLoopCommon(false, m_thrdWorking);
-		if (BTN_HOME_PRESSED || BTN_B_PRESSED && !m_thrdWorking)
+		if ((BTN_HOME_PRESSED || BTN_B_PRESSED) && !m_thrdWorking)
 			break;
 		else if (BTN_UP_PRESSED)
 			m_btnMgr.up();

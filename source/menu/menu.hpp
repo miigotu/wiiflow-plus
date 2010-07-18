@@ -44,8 +44,12 @@ private:
 		int h;
 	};
 	CVideo &m_vid;
-	CCursor m_cur;
+	CCursor m_cursor1;
+	CCursor m_cursor2;
+	CCursor m_cursor3;
+	CCursor m_cursor4;
 	CButtonsMgr m_btnMgr;
+
 	CCoverFlow m_cf;
 	CFanart m_fa;
 	std::vector<discHdr> m_gameList;
@@ -392,20 +396,23 @@ private:
 	SZone m_mainButtonsZone2;
 
 	WPADData *wd[4];
-	u32 btn;	
+	u32 wii_repeat;	
+	u32 gc_repeat;	
 	u32 m_padLeftDelay;
 	u32 m_padDownDelay;
 	u32 m_padRightDelay;
 	u32 m_padUpDelay;
 	u32 buttonHeld;
 	int repeatButton;
+	int m_shown_pointer;
 	u32 wii_btnsPressed;
 	u32 wii_btnsHeld;
 	u32 gc_btnsPressed;
 	u32 gc_btnsHeld;
 	float angle[4];
 	float mag[4];
-	u32 _btnRepeat();
+	u32 wii_btnRepeat();
+	u32 gc_btnRepeat();
 	void ButtonsPressed();
 	void ButtonsHeld();
 	//WPADData* WPadData();
@@ -413,7 +420,15 @@ private:
 	void ScanInput();
 	bool WPadIR_Valid(int i);
 	bool WPadIR_ANY();
-	
+	void ShowMainZone();
+	void ShowMainZone2();
+	void ShowPrevZone();
+	void ShowNextZone();
+	bool m_show_zone_main;
+	bool m_show_zone_main2;
+	bool m_show_zone_prev;
+	bool m_show_zone_next;
+
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;
 	volatile bool m_thrdWorking;

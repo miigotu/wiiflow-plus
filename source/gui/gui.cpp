@@ -139,26 +139,24 @@ void CButtonsMgr::mouse(int wmote, int x, int y)
 			SButton &but = *(CButtonsMgr::SButton *)&b;
 			w = (float)(but.w / 2);
 			h = (float)(but.h / 2);
-				if (but.visible && (float)x >= but.pos.x - w && (float)x < but.pos.x + w && (float)y >= but.pos.y - h && (float)y < but.pos.y + h)
+			if (but.visible && (float)x >= but.pos.x - w && (float)x < but.pos.x + w && (float)y >= but.pos.y - h && (float)y < but.pos.y + h)
+			{
+				m_selected = i;
+				but.targetScaleX = 1.05f;
+				but.targetScaleY = 1.05f;
+				// 
+				if (s != m_selected)
 				{
-					m_selected = i;
-					but.targetScaleX = 1.05f;
-					but.targetScaleY = 1.05f;
-					// 
-					if (s != m_selected)
+					if (m_soundVolume > 0)
+						but.hoverSound.play(m_soundVolume);
+					if (m_rumbleEnabled)
 					{
-						if (m_soundVolume > 0)
-							but.hoverSound.play(m_soundVolume);
-						if (m_rumbleEnabled)
-						{
-							m_rumble = 4;
-							WPAD_Rumble(wmote, 1);
-						}
+						m_rumble = 4;
+						WPAD_Rumble(wmote, 1);
 					}
-					break;
 				}
-				else
-					WPAD_Rumble(wmote, 0);
+				break;
+			}
 		}
 	}
 }

@@ -6,7 +6,10 @@
 
 using namespace std;
 
-extern const u8 generic_point_png[];
+extern const u8 player1_point_png[];
+extern const u8 player2_point_png[];
+extern const u8 player3_point_png[];
+extern const u8 player4_point_png[];
 
 static inline u32 coordsI8(u32 x, u32 y, u32 w)
 {
@@ -18,7 +21,7 @@ static inline u32 coordsRGBA8(u32 x, u32 y, u32 w)
 	return ((((y >> 2) * (w >> 2) + (x >> 2)) << 5) + ((y & 3) << 2) + (x & 3)) << 1;
 }
 
-bool CCursor::init(const char *png, bool wideFix, CColor shadowColor, float shadowX, float shadowY, bool blur)
+bool CCursor::init(const char *png, bool wideFix, CColor shadowColor, float shadowX, float shadowY, bool blur, int wmote)
 {
 	bool ok = true;
 	bool shadow = shadowColor.a > 0;
@@ -27,7 +30,16 @@ bool CCursor::init(const char *png, bool wideFix, CColor shadowColor, float shad
 	m_x = -1;
 	m_y = -1;
 	if (STexture::TE_OK != m_texture.fromPNGFile(png, GX_TF_RGBA8))
-		ok = STexture::TE_OK == m_texture.fromPNG(generic_point_png, GX_TF_RGBA8);
+	{
+		if (wmote == 0)
+			ok = STexture::TE_OK == m_texture.fromPNG(player1_point_png, GX_TF_RGBA8);
+		else if (wmote == 1)
+			ok = STexture::TE_OK == m_texture.fromPNG(player2_point_png, GX_TF_RGBA8);
+		else if (wmote == 2)
+			ok = STexture::TE_OK == m_texture.fromPNG(player3_point_png, GX_TF_RGBA8);
+		else if (wmote == 3)
+			ok = STexture::TE_OK == m_texture.fromPNG(player4_point_png, GX_TF_RGBA8);
+	}
 	if (ok && shadow)
 	{
 		m_shadowColor = shadowColor;

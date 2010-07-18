@@ -49,6 +49,7 @@ public:
 	void tick(void);
 	void click(u32 id = (u32)-1);
 	u32 selected(void) const { return m_selected; }
+	void deselect(void){ m_selected = false; }
 	void stopSounds(void);
 	void setSoundVolume(int vol);
 private:

@@ -1855,7 +1855,7 @@ u32 CCoverFlow::_currentPos(void) const
 	return m_covers[m_range / 2].index;
 }
 
-void CCoverFlow::mouse(CVideo &vid, int x, int y)
+void CCoverFlow::mouse(CVideo &vid, int wmote, int x, int y)
 {
 	if (m_covers.empty())
 		return;
