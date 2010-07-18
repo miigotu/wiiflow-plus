@@ -119,13 +119,13 @@ int CMenu::_config1(void)
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if (BTN_LEFT_REPEAT || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageM))
+		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageM))
 		{
 			nextPage = max(1, m_locked ? 1 : g_curPage - 1);
 			m_btnMgr.click(m_configBtnPageM);
 			break;
 		}
-		if (BTN_RIGHT_REPEAT || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageP))
+		if (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageP))
 		{
 			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
 			m_btnMgr.click(m_configBtnPageP);

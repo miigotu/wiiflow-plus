@@ -350,14 +350,14 @@ void CMenu::_gameSettings(void)
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if (BTN_MINUS_PRESSED || BTN_LEFT_REPEAT)
+		if (BTN_MINUS_PRESSED || BTN_LEFT_PRESSED)
 		{
 			if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 6) || m_gameSettingsPage > 51)
 				--m_gameSettingsPage;
 			_showGameSettings();
 			m_btnMgr.click(m_gameSettingsBtnPageM);
 		}
-		else if (BTN_PLUS_PRESSED || BTN_RIGHT_REPEAT)
+		else if (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED)
 		{
 			if (m_gameSettingsPage < 5 || (m_gameSettingsPage > 5 && m_gameSettingsPage < 53 && m_max_categories > 8)
 				|| (m_gameSettingsPage > 5 && m_gameSettingsPage < 52 && m_max_categories > 5))
