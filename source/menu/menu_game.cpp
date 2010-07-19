@@ -372,10 +372,11 @@ static SmartBuf extractDOL(const char *dolName, u32 &size, const char *gameId)
 
 void CMenu::_launch(const u64 chantitle, const string &id)
 {
+	string id2 = id;
 	if (m_current_view == COVERFLOW_CHANNEL) {
 		_launchChannel(chantitle, id);
 	} else if (m_current_view == COVERFLOW_USB) {
-		_launchGame(id);
+		_launchGame(id2, false);
 	}
 }
 
@@ -399,8 +400,52 @@ void CMenu::_launchChannel(const u64 chantitle, const string &id)
 	WII_LaunchTitle(chantitle);
 }
 
-void CMenu::_launchGame(const string &id)
+void CMenu::_launchGame(string &id, bool dvd)
 {
+	bool gc = false;
+	if (dvd)
+	{
+		u32 cover = 0;
+
+		struct discHdr *header;
+		header = (struct discHdr *)memalign(32, sizeof(struct discHdr));
+
+		Disc_SetUSB(NULL);
+		if (WDVD_GetCoverStatus(&cover) < 0)
+		{
+			error(L"WDVDGetCoverStatus Failed!");
+			if (BTN_B_PRESSED) return;
+		}
+		if (!(cover & 0x2))
+		{
+			error(L"Please insert a game disc.");
+			do {
+				WDVD_GetCoverStatus(&cover);
+				if (BTN_B_PRESSED) return;
+			} while(!(cover & 0x2));
+		}
+		/* Open Disc */
+		if (Disc_Open() < 0) 
+		{
+			error(L"Cannot Read DVD.");
+			if (BTN_B_PRESSED) return;
+		} 
+		/* Check disc */
+		if (Disc_IsWii() < 0)
+		{
+			if (Disc_IsGC() < 0) 
+			{
+				error(L"This is not a Wii or GC disc");
+				if (BTN_B_PRESSED) return;
+			}
+			else
+				gc = true;
+		}
+		/* Read header */
+		Disc_ReadHeader(header);
+		for (int i=0;i<6;i++)
+			id[i] = header->id[i];
+	}
 	bool vipatch = m_cfg.testOptBool(id, "vipatch", m_cfg.getBool(" GENERAL", "vipatch", false));
 	bool cheat = m_cfg.testOptBool(id, "cheat", m_cfg.getBool(" GENERAL", "cheat", false));
 	bool countryPatch = m_cfg.testOptBool(id, "country_patch", m_cfg.getBool(" GENERAL", "country_patch", false));
@@ -456,10 +501,10 @@ void CMenu::_launchGame(const string &id)
 	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing
 	
 	// Do every disc related action before reloading IOS
-	
-	if (get_frag_list((u8 *)id.c_str()) < 0) {
-		return;
-	}
+	if (!dvd)
+		if (get_frag_list((u8 *)id.c_str()) < 0)
+			return;
+
 	if (cheat)
 		loadCheatFile(cheatFile, cheatSize, m_cheatDir.c_str(), id.c_str());
 	
@@ -490,33 +535,52 @@ void CMenu::_launchGame(const string &id)
 		disableIOSReload();
 	if (!altdol.empty())
 		dolFile = extractDOL(altdol.c_str(), dolSize, id.c_str());
-
-	s32 ret = Disc_SetUSB((u8 *)id.c_str());
-	if (ret < 0)
+	if (!dvd)
 	{
-		gprintf("Set USB failed: %d\n", ret);
-		error(L"Disc_SetUSB failed");
-		if (iosLoaded)
-			Sys_LoadMenu();
-		return;
-	}
-	
-	WBFS_Close();
-	
-	if (Disc_Open() < 0)
-	{
-		error(L"Disc_Open failed");
-		if (iosLoaded) 	
-			Sys_LoadMenu();
-		return;
+		s32 ret = Disc_SetUSB((u8 *)id.c_str());
+		if (ret < 0)
+		{
+			gprintf("Set USB failed: %d\n", ret);
+			error(L"Disc_SetUSB failed");
+			if (iosLoaded)
+				Sys_LoadMenu();
+			return;
+		}
+		
+		WBFS_Close();
+		
+		if (Disc_Open() < 0)
+		{
+			error(L"Disc_Open failed");
+			if (iosLoaded) 	
+				Sys_LoadMenu();
+			return;
+		}
 	}
 	Fat_Unmount();
 	cleanup();
 	USBStorage_Deinit();
-	//Last arg of next staement dtermines dvd or not.
-	if (Disc_WiiBoot(videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, false) < 0)
+
+	if (gc)
 	{
-		Sys_LoadMenu();
+		WII_Initialize();
+		if (WII_LaunchTitle(0x0000000100000100ULL)<0)
+		{
+			Sys_LoadMenu();
+		}
+	} 
+	else 
+	{
+		if (dvd)
+		{
+			if (Disc_WiiBoot(true, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck) < 0)
+				Sys_LoadMenu();
+		}
+		else
+		{
+			if (Disc_WiiBoot(false, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck) < 0)
+				Sys_LoadMenu();
+		}
 	}
 }
 

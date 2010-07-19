@@ -25,6 +25,8 @@ extern const u8 btnchannel_png[];
 extern const u8 btnchannels_png[];
 extern const u8 btnusb_png[];
 extern const u8 btnusbs_png[];
+extern const u8 btndvd_png[];
+extern const u8 btndvds_png[];
 extern const u8 gradient_png[];
 extern const u8 favoriteson_png[];
 extern const u8 favoritesons_png[];
@@ -45,6 +47,7 @@ void CMenu::_hideMain(bool instant)
 	m_btnMgr.hide(m_mainBtnQuit, instant);
 	m_btnMgr.hide(m_mainBtnChannel, instant);
 	m_btnMgr.hide(m_mainBtnUsb, instant);
+	m_btnMgr.hide(m_mainBtnDVD, instant);
 	m_btnMgr.hide(m_mainBtnInit, instant);
 	m_btnMgr.hide(m_mainBtnInit2, instant);
 	m_btnMgr.hide(m_mainLblInit, instant);
@@ -105,14 +108,10 @@ int CMenu::main(void)
 	{
 		_mainLoopCommon(true);
 
+		//check if Disc was inserted
 		olddisc_check = disc_check;
 		WDVD_GetCoverStatus(&disc_check);
-		//check if Disc was inserted
-		if ((disc_check & 0x2) && (disc_check!=olddisc_check) && !m_locked && !WBFS_IsReadOnly()) {
-			_hideMain();
-			_wbfsOp(CMenu::WO_ADD_GAME);
-			_showMain();
-		}
+
 		//Check for exit or reload request
 		if (BTN_HOME_PRESSED)
 		{
@@ -333,6 +332,14 @@ int CMenu::main(void)
 				_about();
 				_showMain();
 			}
+			else if (m_btnMgr.selected() == m_mainBtnDVD)
+			{
+				_hideMain();
+				string dvddvd = "dvddvd";
+				m_vid.waitMessage(m_waitMessage);
+				_launchGame(dvddvd, true);
+				_showMain();
+			}
 			else if (m_btnMgr.selected() == m_mainBtnNext)
 			{
 				m_cf.right();
@@ -403,21 +410,30 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainBtnFavoritesOn);
 			m_btnMgr.hide(m_mainBtnFavoritesOff);
 		}
-		if (!m_cfg.getBool(" GENERAL", "hidechannelsbutton", false) && !m_gameList.empty() && m_show_zone_main2)
+		bool hideChannels, showDVD;
+		hideChannels = (m_cfg.getBool(" GENERAL", "hidechannelsbutton", false) || m_loaded_ios_base == 57);
+		showDVD = (disc_check & 0x2);
+		if (!(hideChannels && !showDVD) && !m_gameList.empty() && m_show_zone_main2)
+			m_btnMgr.show(m_mainLblUser[2]);
+		if (!m_gameList.empty() && m_show_zone_main2)
 		{
-			if (/*m_channels.CanIdentify() && */m_loaded_ios_base != 57)
+			if (!hideChannels)
 			{
 				if (m_current_view == COVERFLOW_USB)
 					m_btnMgr.show(m_mainBtnChannel);
 				else if (m_current_view == COVERFLOW_CHANNEL)
 					m_btnMgr.show(m_mainBtnUsb);
-				m_btnMgr.show(m_mainLblUser[2]);
 			}
+			if (showDVD)
+				m_btnMgr.show(m_mainBtnDVD);
+			else
+				m_btnMgr.hide(m_mainBtnDVD);
 		}
 		else
 		{
 			m_btnMgr.hide(m_mainBtnChannel);
 			m_btnMgr.hide(m_mainBtnUsb);
+			m_btnMgr.hide(m_mainBtnDVD);
 			m_btnMgr.hide(m_mainLblUser[2]);
 		}
 		//
@@ -457,6 +473,8 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	STexture texConfigS;
 	STexture texChannel;
 	STexture texChannels;
+	STexture texDVD;
+	STexture texDVDs;
 	STexture texUsb;
 	STexture texUsbs;
 	STexture texPrev;
@@ -481,6 +499,8 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	texConfigS.fromPNG(btnconfigs_png);
 	texChannel.fromPNG(btnchannel_png);
 	texChannels.fromPNG(btnchannels_png);
+	texDVD.fromPNG(btndvd_png);
+	texDVDs.fromPNG(btndvds_png);
 	texUsb.fromPNG(btnusb_png);
 	texUsbs.fromPNG(btnusbs_png);
 	texPrev.fromPNG(btnprev_png);
@@ -496,6 +516,7 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainBtnConfig = _addPicButton(theme, "MAIN/CONFIG_BTN", texConfig, texConfigS, 70, 412, 48, 48);
 	m_mainBtnQuit = _addPicButton(theme, "MAIN/QUIT_BTN", texQuit, texQuitS, 570, 412, 48, 48);
 	m_mainBtnChannel = _addPicButton(theme, "MAIN/CHANNEL_BTN", texChannel, texChannels, 520, 412, 48, 48);
+	m_mainBtnDVD = _addPicButton(theme, "MAIN/DVD_BTN", texDVD, texDVDs, 470, 412, 48, 48);
 	m_mainBtnUsb = _addPicButton(theme, "MAIN/USB_BTN", texUsb, texUsbs, 520, 412, 48, 48);
 	m_mainBtnNext = _addPicButton(theme, "MAIN/NEXT_BTN", texNext, texNextS, 540, 146, 80, 80);
 	m_mainBtnPrev = _addPicButton(theme, "MAIN/PREV_BTN", texPrev, texPrevS, 20, 146, 80, 80);
@@ -530,6 +551,7 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_mainBtnInfo, "MAIN/INFO_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnQuit, "MAIN/QUIT_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnChannel, "MAIN/CHANNEL_BTN", 0, 40, 0.f, 0.f);
+	_setHideAnim(m_mainBtnDVD, "MAIN/CHANNEL_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnUsb, "MAIN/USB_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnFavoritesOn, "MAIN/FAVORITES_ON", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnFavoritesOff, "MAIN/FAVORITES_OFF", 0, 40, 0.f, 0.f);

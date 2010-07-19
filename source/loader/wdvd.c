@@ -172,6 +172,24 @@ s32 WDVD_StopMotor(void)
 	return (ret == 1) ? 0 : -ret;
 }
 
+s32 WDVD_Eject(void)
+{
+	s32 ret;
+
+	memset(inbuf, 0, sizeof(inbuf));
+
+	/* Stop motor */
+	inbuf[0] = IOCTL_DI_STOPMOTOR << 24;
+	/* Eject DVD */
+	inbuf[1] = 1;
+
+	ret = IOS_Ioctl(di_fd, IOCTL_DI_STOPMOTOR, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+	if (ret < 0)
+		return ret;
+
+	return (ret == 1) ? 0 : -ret;
+}
+
 s32 WDVD_OpenPartition(u64 offset, void* Ticket, void* Certificate, unsigned int Cert_Len, void* Out)
 {
 	static ioctlv	Vectors[5]		__attribute__((aligned(0x20)));

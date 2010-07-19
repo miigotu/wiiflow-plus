@@ -127,6 +127,7 @@ private:
 	u32 m_mainBtnPrev;
 	u32 m_mainBtnQuit;
 	u32 m_mainBtnChannel;
+	u32 m_mainBtnDVD;
 	u32 m_mainBtnUsb;
 	u32 m_mainBtnInit;
 	u32 m_mainBtnInit2;
@@ -507,9 +508,9 @@ private:
 		float minMaxVal[4][2];
 	};
 	// 
+	bool _loadChannelList(void);
 	bool _loadList(void);
 	bool _loadGameList(void);
-	bool _loadChannelList(void);
 	void _initCF(void);
 	// 
 	void _initMainMenu(SThemeData &theme);
@@ -619,7 +620,7 @@ private:
 	void _mainLoopCommon(bool withCF = false, bool blockReboot = false, bool adjusting = false);
 	// 
 	void _launch(const u64 chanTitle, const std::string &id);
-	void _launchGame(const std::string &id);
+	void _launchGame(std::string &id, bool dvd);
 	void _launchChannel(const u64 chanTitle, const string &id);
 	bool _networkFix(void);
 	void _setAA(int aa);

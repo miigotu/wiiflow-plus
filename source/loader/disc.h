@@ -75,7 +75,7 @@ extern "C" {
 	s32	Disc_IsWii(void);
 	s32	Disc_IsGC(void);
 	s32	Disc_BootPartition(u64, u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8, bool);
-	s32	Disc_WiiBoot(u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8, bool);
+	s32	Disc_WiiBoot(bool, u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8);
 	s32	Disc_OpenPartition(u8 *);
 
 #ifdef __cplusplus

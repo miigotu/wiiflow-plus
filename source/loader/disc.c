@@ -36,6 +36,7 @@ u32 appentrypoint;
 static u32 *buffer = (u32 *)0x93000000;
 static u8  *diskid = (u8  *)0x80000000;
 
+GXRModeObj *disc_vmode = NULL;
 GXRModeObj *vmode = NULL;
 u32 vmode_reg = 0;
 
@@ -60,6 +61,7 @@ void __Disc_SetLowMem(bool dvd)
 	*(vu32 *)0x800000F0 = 0x01800000; // Simulated Memory Size
 	*(vu32 *)0x800000F4 = 0x817E5480;
 	*(vu32 *)0x800000F8 = 0x0E7BE2C0; // bus speed
+	*(vu32 *)0x800000FC = 0x2B73A840; // cpu speed
 	*(vu32 *)0xCD00643C = 0x00000000; // 32Mhz on Bus
 
 	/* Copy disc ID (online check) */
@@ -166,6 +168,7 @@ void __Disc_SelectVMode(u8 videoselected)
 		default:
 			break;
 	}
+	disc_vmode = vmode;
 }
 
 void __Disc_SetVMode(void)
@@ -479,7 +482,7 @@ s32 Disc_OpenPartition(u8 *id)
 	return 0;
 }
 
-s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck, bool dvd)
+s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck)
 {
 	u64 offset;
 	s32 ret;
