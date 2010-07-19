@@ -29,6 +29,7 @@ void CMenu::ScanInput()
 	
 	m_show_zone_main = false;
 	m_show_zone_main2 = false;
+	m_show_zone_main3 = false;
 	m_show_zone_prev = false;
 	m_show_zone_next = false;
 	
@@ -98,6 +99,7 @@ void CMenu::ScanInput()
 	}
 	ShowMainZone();
 	ShowMainZone2();
+	ShowMainZone3();
 	ShowPrevZone();
 	ShowNextZone();
 }
@@ -232,6 +234,7 @@ void CMenu::ShowMainZone()
 		&& m_cursor4.x() < m_mainButtonsZone.x + m_mainButtonsZone.w && m_cursor4.y() < m_mainButtonsZone.y + m_mainButtonsZone.h))
 		m_show_zone_main = true;
 }
+
 void CMenu::ShowMainZone2()
 {
 	m_show_zone_main2 = false;
@@ -245,6 +248,21 @@ void CMenu::ShowMainZone2()
 		&& m_cursor4.x() < m_mainButtonsZone2.x + m_mainButtonsZone2.w && m_cursor4.y() < m_mainButtonsZone2.y + m_mainButtonsZone2.h))
 		m_show_zone_main2 = true;
 }
+
+void CMenu::ShowMainZone3()
+{
+	m_show_zone_main3 = false;
+	if ((WPadIR_Valid(0) && m_cursor1.x() >= m_mainButtonsZone3.x && m_cursor1.y() >= m_mainButtonsZone3.y
+		&& m_cursor1.x() < m_mainButtonsZone3.x + m_mainButtonsZone3.w && m_cursor1.y() < m_mainButtonsZone3.y + m_mainButtonsZone3.h)
+		|| (WPadIR_Valid(1) && m_cursor2.x() >= m_mainButtonsZone3.x && m_cursor2.y() >= m_mainButtonsZone3.y
+		&& m_cursor2.x() < m_mainButtonsZone3.x + m_mainButtonsZone3.w && m_cursor2.y() < m_mainButtonsZone3.y + m_mainButtonsZone3.h)
+		|| (WPadIR_Valid(2) && m_cursor3.x() >= m_mainButtonsZone3.x && m_cursor3.y() >= m_mainButtonsZone3.y
+		&& m_cursor3.x() < m_mainButtonsZone3.x + m_mainButtonsZone3.w && m_cursor3.y() < m_mainButtonsZone3.y + m_mainButtonsZone3.h)
+		|| (WPadIR_Valid(3) && m_cursor4.x() >= m_mainButtonsZone3.x && m_cursor4.y() >= m_mainButtonsZone3.y
+		&& m_cursor4.x() < m_mainButtonsZone3.x + m_mainButtonsZone3.w && m_cursor4.y() < m_mainButtonsZone3.y + m_mainButtonsZone3.h))
+		m_show_zone_main3 = true;
+}
+
 void CMenu::ShowPrevZone()
 {
 	m_show_zone_prev = false;
@@ -258,6 +276,7 @@ void CMenu::ShowPrevZone()
 		&& m_cursor4.x() < m_mainPrevZone.x + m_mainPrevZone.w && m_cursor4.y() < m_mainPrevZone.y + m_mainPrevZone.h))
 		m_show_zone_prev = true;
 }
+
 void CMenu::ShowNextZone()
 {
 	m_show_zone_next = false;

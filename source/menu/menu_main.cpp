@@ -412,9 +412,11 @@ int CMenu::main(void)
 		}
 		bool hideChannels, showDVD;
 		hideChannels = (m_cfg.getBool(" GENERAL", "hidechannelsbutton", false) || m_loaded_ios_base == 57);
-		showDVD = (disc_check & 0x2);
-		if (!(hideChannels && !showDVD) && !m_gameList.empty() && m_show_zone_main2)
+		if (!hideChannels && !m_gameList.empty() && m_show_zone_main2)
+		{
 			m_btnMgr.show(m_mainLblUser[2]);
+			m_btnMgr.show(m_mainLblUser[3]);
+		}
 		if (!m_gameList.empty() && m_show_zone_main2)
 		{
 			if (!hideChannels)
@@ -424,6 +426,22 @@ int CMenu::main(void)
 				else if (m_current_view == COVERFLOW_CHANNEL)
 					m_btnMgr.show(m_mainBtnUsb);
 			}
+		}
+		else
+		{
+			m_btnMgr.hide(m_mainBtnChannel);
+			m_btnMgr.hide(m_mainBtnUsb);
+			m_btnMgr.hide(m_mainLblUser[2]);
+			m_btnMgr.hide(m_mainLblUser[3]);
+		}
+		showDVD = (disc_check & 0x2);
+		if (showDVD && !m_gameList.empty() && m_show_zone_main3)
+		{
+			m_btnMgr.show(m_mainLblUser[4]);
+			m_btnMgr.show(m_mainLblUser[5]);
+		}
+		if (!m_gameList.empty() && m_show_zone_main3)
+		{
 			if (showDVD)
 				m_btnMgr.show(m_mainBtnDVD);
 			else
@@ -431,10 +449,9 @@ int CMenu::main(void)
 		}
 		else
 		{
-			m_btnMgr.hide(m_mainBtnChannel);
-			m_btnMgr.hide(m_mainBtnUsb);
 			m_btnMgr.hide(m_mainBtnDVD);
-			m_btnMgr.hide(m_mainLblUser[2]);
+			m_btnMgr.hide(m_mainLblUser[4]);
+			m_btnMgr.hide(m_mainLblUser[5]);
 		}
 		//
 		if (m_shown_pointer == 1 && WPadIR_Valid(0))
@@ -544,6 +561,10 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainButtonsZone2.y = m_theme.getInt("MAIN/ZONES", "buttons2_y", 350);
 	m_mainButtonsZone2.w = m_theme.getInt("MAIN/ZONES", "buttons2_w", 704);
 	m_mainButtonsZone2.h = m_theme.getInt("MAIN/ZONES", "buttons2_h", 162);
+	m_mainButtonsZone3.x = m_theme.getInt("MAIN/ZONES", "buttons3_x", -32);
+	m_mainButtonsZone3.y = m_theme.getInt("MAIN/ZONES", "buttons3_y", 350);
+	m_mainButtonsZone3.w = m_theme.getInt("MAIN/ZONES", "buttons3_w", 704);
+	m_mainButtonsZone3.h = m_theme.getInt("MAIN/ZONES", "buttons3_h", 162);
 	//
 	_setHideAnim(m_mainBtnNext, "MAIN/NEXT_BTN", 0, 0, 0.f, 0.f);
 	_setHideAnim(m_mainBtnPrev, "MAIN/PREV_BTN", 0, 0, 0.f, 0.f);

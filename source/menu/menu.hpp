@@ -132,7 +132,7 @@ private:
 	u32 m_mainBtnInit;
 	u32 m_mainBtnInit2;
 	u32 m_mainLblInit;
-	u32 m_mainLblUser[4];
+	u32 m_mainLblUser[6];
 //Main Config menus
 	u32 m_configLblPage;
 	u32 m_configBtnPageM;
@@ -395,6 +395,7 @@ private:
 	SZone m_mainNextZone;
 	SZone m_mainButtonsZone;
 	SZone m_mainButtonsZone2;
+	SZone m_mainButtonsZone3;
 	bool m_reload;
 	
 	WPADData *wd[4];
@@ -424,10 +425,12 @@ private:
 	bool WPadIR_ANY();
 	void ShowMainZone();
 	void ShowMainZone2();
+	void ShowMainZone3();
 	void ShowPrevZone();
 	void ShowNextZone();
 	bool m_show_zone_main;
 	bool m_show_zone_main2;
+	bool m_show_zone_main3;
 	bool m_show_zone_prev;
 	bool m_show_zone_next;
 
