@@ -167,7 +167,7 @@ void CMenu::_game(bool launch)
 		_mainLoopCommon(true);
 		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
 		{
-			_stopSounds();
+			_stopBnrSound();
 			break;
 		}
 		else if (BTN_MINUS_PRESSED)
@@ -239,7 +239,7 @@ void CMenu::_game(bool launch)
 				m_cfg.setBool(id, "adult_only", !m_cfg.getBool(id, "adult_only", false));
 			else if (m_btnMgr.selected() == m_gameBtnBack)
 			{
-				_stopSounds();
+				_stopBnrSound();
 				break;
 			}
 			else if (m_btnMgr.selected() == m_gameBtnSettings)
@@ -278,28 +278,28 @@ void CMenu::_game(bool launch)
 		for(int wmote=0;wmote<4;wmote++)
 			if (BTN_UP_REPEAT || LEFT_STICK_UP)
 			{
-				_stopSounds();
+				_stopBnrSound();
 				m_cf.up();
 				_showGame();
 				_playGameSound();
 			}
 			else if (BTN_RIGHT_REPEAT || LEFT_STICK_RIGHT)
 			{
-				_stopSounds();
+				_stopBnrSound();
 				m_cf.right();
 				_showGame();
 				_playGameSound();
 			}
 			else if (BTN_DOWN_REPEAT || LEFT_STICK_DOWN)
 			{
-				_stopSounds();
+				_stopBnrSound();
 				m_cf.down();
 				_showGame();
 				_playGameSound();
 			}
 			else if (BTN_LEFT_REPEAT || LEFT_STICK_LEFT)
 			{
-				_stopSounds();
+				_stopBnrSound();
 				m_cf.left();
 				_showGame();
 				_playGameSound();
@@ -513,7 +513,8 @@ void CMenu::_launchGame(const string &id)
 	Fat_Unmount();
 	cleanup();
 	USBStorage_Deinit();
-	if (Disc_WiiBoot(videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck) < 0)
+	//Last arg of next staement dtermines dvd or not.
+	if (Disc_WiiBoot(videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, false) < 0)
 	{
 		Sys_LoadMenu();
 	}

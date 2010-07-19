@@ -1380,6 +1380,11 @@ void CMenu::_stopSounds(void)
 	_stopMusic();
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();
+	_stopBnrSound();
+}
+
+void CMenu::_stopBnrSound(void)
+{
 	m_gameSound.stop();
 	m_gameSound.data.release();
 	m_gameSoundTmp.data.release();

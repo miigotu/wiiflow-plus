@@ -35,20 +35,48 @@ struct discHdr
 	u8 unused3[30];
 } ATTRIBUTE_PACKED;
 
+struct gc_discHdr
+{
+	/* Game ID */
+	u8 id[6];
+
+	/* Game version */
+	u16 version;
+
+	/* Audio streaming */
+	u8 streaming;
+	u8 bufsize;
+
+	/* Padding */
+	u8 unused1[18];
+
+	/* Magic word */
+	u32 magic;
+
+	/* Padding */
+	u8 unused2[4];
+
+	/* Game title */
+	char title[124];
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-/* Prototypes */
-s32  Disc_Init(void);
-s32  Disc_Open(void);
-s32  Disc_Wait(void);
-s32  Disc_SetUSB(const u8 *);
-s32  Disc_ReadHeader(void *);
-s32  Disc_IsWii(void);
-s32  Disc_BootPartition(u64, u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8);
-s32  Disc_WiiBoot(u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8);
-s32 Disc_OpenPartition(u8 *);
+	/* Prototypes */
+	s32	Disc_Init(void);
+	s32	Disc_Open(void);
+	s32	Disc_Wait(void);
+	s32	Disc_SetUSB(const u8 *);
+	s32	Disc_ReadHeader(void *);
+	s32 Disc_ReadGCHeader(void *);
+	s32 Disc_Type(bool);
+	s32	Disc_IsWii(void);
+	s32	Disc_IsGC(void);
+	s32	Disc_BootPartition(u64, u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8, bool);
+	s32	Disc_WiiBoot(u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8, bool);
+	s32	Disc_OpenPartition(u8 *);
 
 #ifdef __cplusplus
 }

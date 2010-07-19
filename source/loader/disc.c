@@ -27,12 +27,13 @@
 /* Constants */
 #define PTABLE_OFFSET	0x40000
 #define WII_MAGIC	0x5D1C9EA3
+#define GC_MAGIC	0xC2339F3D
 
 //appentrypoint 
 u32 appentrypoint;
 	
 /* Disc pointers */
-static u32 buffer[0x20] ALIGNED(32);
+static u32 *buffer = (u32 *)0x93000000;
 static u8  *diskid = (u8  *)0x80000000;
 
 GXRModeObj *vmode = NULL;
@@ -49,8 +50,21 @@ static u8	Tmd_Buffer[0x49e4 + 0x1C] ALIGNED(32);
 #define        Bus_Speed		((u32*)0x800000f8)
 #define        CPU_Speed		((u32*)0x800000fc)
 
-void __Disc_SetLowMem(void)
+void __Disc_SetLowMem(bool dvd)
 {
+	/* Setup low memory */
+	*(vu32 *)0x80000030 = 0x00000000; // Arena Low
+	*(vu32 *)0x80000060 = 0x38A00040;
+	*(vu32 *)0x800000E4 = 0x80431A80;
+	*(vu32 *)0x800000EC = 0x81800000; // Dev Debugger Monitor Address
+	*(vu32 *)0x800000F0 = 0x01800000; // Simulated Memory Size
+	*(vu32 *)0x800000F4 = 0x817E5480;
+	*(vu32 *)0x800000F8 = 0x0E7BE2C0; // bus speed
+	*(vu32 *)0xCD00643C = 0x00000000; // 32Mhz on Bus
+
+	/* Copy disc ID (online check) */
+	memcpy((void *)0x80003180, (void *)0x80000000, 4);
+
 	// Patch in info missing from apploader reads
 	*Sys_Magic	= 0x0d15ea5e;
 	*Version	= 1;
@@ -58,24 +72,14 @@ void __Disc_SetLowMem(void)
 	*Bus_Speed	= 0x0E7BE2C0;
 	*CPU_Speed	= 0x2B73A840;
 
-	/* http://www.wiibrew.org/wiki/Memory_Map */
-	/* Setup low memory */
-	*(vu32 *)0x80000030 = 0x00000000;
-	*(vu32 *)0x80000060 = 0x38A00040;
-	*(vu32 *)0x800000E4 = 0x80431A80;
-	*(vu32 *)0x800000EC = 0x81800000;
-	*(vu32 *)0x800000F0 = 0x01800000;       // Simulated Memory Size
-	*BI2 = 0x817E5480;
-	*(vu32 *)0x800000F8 = 0x0E7BE2C0;
-	*(vu32 *)0xCD00643C = 0x00000000;       // 32Mhz on Bus
-
 	// From NeoGamme R4 (WiiPower)
 	*(vu32 *)0x800030F0 = 0x0000001C;
 	*(vu32 *)0x8000318C = 0x00000000;
 	*(vu32 *)0x80003190 = 0x00000000;
-
-	/* Copy disc ID (online check) */
-	memcpy((void *)0x80003180, (void *)0x80000000, 4);
+	// Fix for Sam & Max (WiiPower)
+	// (only works if started from DVD)
+	// Readded by Dr. Clipper
+	if (dvd) *(vu32*)0x80003184	= 0x80000000;	// Game ID Address
 
 	/* Flush cache */
 	DCFlushRange((void *)0x80000000, 0x3F00);
@@ -317,30 +321,55 @@ s32 Disc_SetUSB(const u8 *id) {
 
 s32 Disc_ReadHeader(void *outbuf)
 {
-	/* Read disc header */
+	/* Read Wii disc header */
 	return WDVD_UnencryptedRead(outbuf, sizeof(struct discHdr), 0);
 }
 
-s32 Disc_IsWii(void)
+s32 Disc_ReadGCHeader(void *outbuf)
 {
-	struct discHdr *header = (struct discHdr *)buffer;
+	/* Read GC disc header */
+	return WDVD_UnencryptedRead(outbuf, sizeof(struct gc_discHdr), 0);
+}
 
+s32 Disc_Type(bool gc)
+{
 	s32 ret;
+	u32 check;
+	u32 magic;
+	
+	if (!gc) {
+		check = WII_MAGIC;
+		struct discHdr *header = (struct discHdr *)buffer;
+		ret = Disc_ReadHeader(header);
+		magic = header->magic;
+	} else {
+		check = GC_MAGIC;
+		struct gc_discHdr *header = (struct gc_discHdr *)buffer;
+		ret = Disc_ReadGCHeader(header);
+		magic = header->magic;
+	}
 
-	/* Read disc header */
-	ret = Disc_ReadHeader(header);
 	if (ret < 0)
 		return ret;
-
+		
 	/* Check magic word */
-	if (header->magic != WII_MAGIC)
+	if (magic != check)
 		return -1;
 
 	return 0;
 }
 
+s32 Disc_IsWii(void)
+{
+	return Disc_Type(0);
+}
 
-s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode, u32 rtrn, u8 patchDiscCheck)
+s32 Disc_IsGC(void)
+{
+	return Disc_Type(1);
+}
+
+s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode, u32 rtrn, u8 patchDiscCheck, bool dvd)
 {
 	entry_point p_entry;
 
@@ -349,18 +378,18 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 		return ret;
 
 	/* Disconnect Wiimote */
-		WPAD_Flush(0);
-		WPAD_Disconnect(0);
-		WPAD_Flush(1);
-		WPAD_Disconnect(1);
-		WPAD_Flush(2);
-		WPAD_Disconnect(2);
-		WPAD_Flush(3);
-		WPAD_Disconnect(3);
+	WPAD_Flush(0);
+	WPAD_Disconnect(0);
+	WPAD_Flush(1);
+	WPAD_Disconnect(1);
+	WPAD_Flush(2);
+	WPAD_Disconnect(2);
+	WPAD_Flush(3);
+	WPAD_Disconnect(3);
     WPAD_Shutdown();
 	
 	/* Setup low memory */;
-	__Disc_SetLowMem();
+	__Disc_SetLowMem(dvd);
 
 	/* Select an appropriate video mode */
 	__Disc_SelectVMode(vidMode);
@@ -450,7 +479,7 @@ s32 Disc_OpenPartition(u8 *id)
 	return 0;
 }
 
-s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck)
+s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck, bool dvd)
 {
 	u64 offset;
 	s32 ret;
@@ -461,5 +490,5 @@ s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool 
 		return ret;
 
 	/* Boot partition */
-	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes, rtrn, patchDiscCheck);
+	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes, rtrn, patchDiscCheck, dvd);
 }
