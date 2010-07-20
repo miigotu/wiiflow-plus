@@ -1,6 +1,10 @@
 #ifndef _DISC_H_
 #define _DISC_H_
 
+#define ALT_DOL_EXT   1
+#define ALT_DOL_DISC 2
+#define ALT_DOL_PLUS 3
+
 /* Disc header structure */
 struct discHdr
 {
@@ -74,8 +78,8 @@ extern "C" {
 	s32 Disc_Type(bool);
 	s32	Disc_IsWii(void);
 	s32	Disc_IsGC(void);
-	s32	Disc_BootPartition(u64, u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8, bool);
-	s32	Disc_WiiBoot(bool, u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8);
+	s32	Disc_BootPartition(u64, u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8, bool, char *altDolDir);
+	s32	Disc_WiiBoot(bool, u8, const u8 *, u32, bool, bool, bool, const u8 *, u32, u8, u32, u8, char *altDolDir);
 	s32	Disc_OpenPartition(u8 *);
 
 #ifdef __cplusplus

@@ -356,12 +356,15 @@ void CMenu::_game(bool launch)
 	_hideGame();
 }
 
-static SmartBuf extractDOL(const char *dolName, u32 &size, const char *gameId)
+static SmartBuf extractDOL(const char *dolName, u32 &size, const char *gameId, s32 source, bool dvd)
 {
 	void *dol = NULL;
-	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId);
-	size = wbfs_extract_file(disc, (char *) dolName, &dol);
-	WBFS_CloseDisc(disc);
+	if (!dvd && source == ALT_DOL_DISC)
+	{
+		wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId);
+		size = wbfs_extract_file(disc, (char *) dolName, &dol);
+		WBFS_CloseDisc(disc);
+	}
 
 //	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
 //	dolFile = SmartBuf(wbfs_extract_file(wdisc, &size, ALL_PARTITIONS, dolName, ALLOC_COVER), SmartBuf::SRCALL_COVER);
@@ -462,7 +465,7 @@ void CMenu::_launchGame(string &id, bool dvd)
 	u8 patchVidMode = min((u32)m_cfg.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	hooktype = (u32) m_cfg.getInt(id, "hooktype", 1); // hooktype is defined in patchcode.h
 	debuggerselect = m_cfg.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
-	
+	m_locDol = ALT_DOL_DISC;
 
 	if (id == "RPWE41" || id == "RPWZ41" || id == "SPXP41") // Prince of Persia, Rival Swords
 	{
@@ -534,7 +537,7 @@ void CMenu::_launchGame(string &id, bool dvd)
 	if (mload && blockIOSReload)
 		disableIOSReload();
 	if (!altdol.empty())
-		dolFile = extractDOL(altdol.c_str(), dolSize, id.c_str());
+		dolFile = extractDOL(altdol.c_str(), dolSize, id.c_str(), m_locDol, dvd);
 	if (!dvd)
 	{
 		s32 ret = Disc_SetUSB((u8 *)id.c_str());
@@ -571,14 +574,15 @@ void CMenu::_launchGame(string &id, bool dvd)
 	} 
 	else 
 	{
+		char *altDolDir = (char *)&m_altDolDir;
 		if (dvd)
 		{
-			if (Disc_WiiBoot(true, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck) < 0)
+			if (Disc_WiiBoot(true, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir) < 0)
 				Sys_LoadMenu();
 		}
 		else
 		{
-			if (Disc_WiiBoot(false, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck) < 0)
+			if (Disc_WiiBoot(false, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir) < 0)
 				Sys_LoadMenu();
 		}
 	}

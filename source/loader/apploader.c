@@ -52,7 +52,7 @@ static void __noprint(const char *fmt, ...)
 }
 
 
-s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck)
+s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck, char *altDolDir)
 {
 	void *dst = NULL;
 	int len = 0;
@@ -154,8 +154,6 @@ static void dolPatches(void *dst, int len, void *params)
 	const SPatchCfg *p = (const SPatchCfg *)params;
 
 	maindolpatches(dst, len, p->cheat, p->vidMode, p->vmode, p->vipatch, p->countryString, false, p->patchVidModes, p->patchDiscCheck);
-	Remove_001_Protection(dst, len);
-	
 	DCFlushRange(dst, len);
 }
 
@@ -339,6 +337,8 @@ static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeOb
 		Anti_002_fix(dst, len);
 	if (countryString) // Country Patch by WiiPower
 		PatchCountryStrings(dst, len);
+
+	Remove_001_Protection(dst, len);
 	
 	// NSMB Patch by WiiPower
 	NewSuperMarioBrosPatch(dst,len);

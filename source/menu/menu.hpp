@@ -78,10 +78,11 @@ private:
 	std::string m_cacheDir;
 	std::string m_themeDir;
 	std::string m_musicDir;
+	std::string m_txtCheatDir;
+	std::string m_cheatDir;
 	std::string m_bcaDir;
 	std::string m_wipDir;
-	std::string m_cheatDir;
-	std::string m_txtCheatDir;
+	std::string m_altDolDir;
 	std::string m_videoDir;
 	std::string m_fanartDir;
 	const char* m_update_url;
@@ -460,6 +461,7 @@ private:
 	
 	u32 m_current_view;
 	u32 m_loaded_ios_base;
+	u32 m_locDol;
 private:
 	enum WBFS_OP { WO_ADD_GAME, WO_REMOVE_GAME, WO_FORMAT };
 	typedef std::pair<std::string, u32> FontDesc;
