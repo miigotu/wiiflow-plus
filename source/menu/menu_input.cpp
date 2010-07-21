@@ -176,7 +176,7 @@ u32 CMenu::wii_btnRepeat()
 		m_wpadRightDelay = 0;
 	if ((wii_repeat & WBTN_UP) != 0)
 	{
-		if (m_wpadUpDelay == 0 || m_padUpDelay > g_repeatDelay)
+		if (m_wpadUpDelay == 0 || m_wpadUpDelay > g_repeatDelay)
 			b |= WPAD_BUTTON_UP;
 		++m_wpadUpDelay;
 	}
