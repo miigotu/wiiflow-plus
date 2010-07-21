@@ -8,6 +8,10 @@ static const u32 g_repeatDelay = 15;
 
 void CMenu::SetupInput()
 {
+	m_wpadLeftDelay = 0;
+	m_wpadDownDelay = 0;
+	m_wpadRightDelay = 0;
+	m_wpadUpDelay = 0;
 	m_padLeftDelay = 0;
 	m_padDownDelay = 0;
 	m_padRightDelay = 0;
@@ -146,38 +150,38 @@ u32 CMenu::wii_btnRepeat()
 	u32 b = 0;
 	wii_repeat = wii_btnsHeld;
 
-	if (BTN_LEFT_REPEAT)
+	if ((wii_repeat & WBTN_LEFT) != 0)
 	{
-		if (m_padLeftDelay == 0 || m_padLeftDelay > g_repeatDelay)
-			b |= WBTN_LEFT;
-		++m_padLeftDelay;
+		if (m_wpadLeftDelay == 0 || m_wpadLeftDelay > g_repeatDelay)
+			b |= WPAD_BUTTON_LEFT;
+		++m_wpadLeftDelay;
 	}
 	else
-		m_padLeftDelay = 0;
-	if (BTN_DOWN_REPEAT)
+		m_wpadLeftDelay = 0;
+	if ((wii_repeat & WBTN_DOWN) != 0)
 	{
-		if (m_padDownDelay == 0 || m_padDownDelay > g_repeatDelay)
-			b |= WBTN_DOWN;
-		++m_padDownDelay;
+		if (m_wpadDownDelay == 0 || m_wpadDownDelay > g_repeatDelay)
+			b |= WPAD_BUTTON_DOWN;
+		++m_wpadDownDelay;
 	}
 	else
-		m_padDownDelay = 0;
-	if (BTN_RIGHT_REPEAT)
+		m_wpadDownDelay = 0;
+	if ((wii_repeat & WBTN_RIGHT) != 0)
 	{
-		if (m_padRightDelay == 0 || m_padRightDelay > g_repeatDelay)
-			b |= WBTN_RIGHT;
-		++m_padRightDelay;
+		if (m_wpadRightDelay == 0 || m_wpadRightDelay > g_repeatDelay)
+			b |= WPAD_BUTTON_RIGHT;
+		++m_wpadRightDelay;
 	}
 	else
-		m_padRightDelay = 0;
-	if (BTN_UP_REPEAT)
+		m_wpadRightDelay = 0;
+	if ((wii_repeat & WBTN_UP) != 0)
 	{
-		if (m_padUpDelay == 0 || m_padUpDelay > g_repeatDelay)
-			b |= WBTN_UP;
-		++m_padUpDelay;
+		if (m_wpadUpDelay == 0 || m_padUpDelay > g_repeatDelay)
+			b |= WPAD_BUTTON_UP;
+		++m_wpadUpDelay;
 	}
 	else
-		m_padUpDelay = 0;
+		m_wpadUpDelay = 0;
 	return b;
 }
 
@@ -186,7 +190,7 @@ u32 CMenu::gc_btnRepeat()
 	u32 b = 0;
 	gc_repeat = gc_btnsHeld;
 
-	if (BTN_LEFT_REPEAT)
+	if ((gc_repeat & BTN_LEFT) != 0)
 	{
 		if (m_padLeftDelay == 0 || m_padLeftDelay > g_repeatDelay)
 			b |= BTN_LEFT;
@@ -194,7 +198,7 @@ u32 CMenu::gc_btnRepeat()
 	}
 	else
 		m_padLeftDelay = 0;
-	if (BTN_DOWN_REPEAT)
+	if (gc_repeat & BTN_DOWN)
 	{
 		if (m_padDownDelay == 0 || m_padDownDelay > g_repeatDelay)
 			b |= BTN_DOWN;
@@ -202,7 +206,7 @@ u32 CMenu::gc_btnRepeat()
 	}
 	else
 		m_padDownDelay = 0;
-	if (BTN_RIGHT_REPEAT)
+	if (gc_repeat & BTN_RIGHT)
 	{
 		if (m_padRightDelay == 0 || m_padRightDelay > g_repeatDelay)
 			b |= BTN_RIGHT;
@@ -210,7 +214,7 @@ u32 CMenu::gc_btnRepeat()
 	}
 	else
 		m_padRightDelay = 0;
-	if (BTN_UP_REPEAT)
+	if (gc_repeat & BTN_UP)
 	{
 		if (m_padUpDelay == 0 || m_padUpDelay > g_repeatDelay)
 			b |= BTN_UP;

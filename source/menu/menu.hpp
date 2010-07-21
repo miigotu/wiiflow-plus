@@ -402,6 +402,10 @@ private:
 	WPADData *wd[4];
 	u32 wii_repeat;	
 	u32 gc_repeat;	
+	u32 m_wpadLeftDelay;
+	u32 m_wpadDownDelay;
+	u32 m_wpadRightDelay;
+	u32 m_wpadUpDelay;
 	u32 m_padLeftDelay;
 	u32 m_padDownDelay;
 	u32 m_padRightDelay;

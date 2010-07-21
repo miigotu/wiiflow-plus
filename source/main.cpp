@@ -129,6 +129,7 @@ int old_main(int argc, char **argv)
 	texWait.data.release();
 	texWaitHDD.data.release();
 	WPAD_Init();
+	PAD_Init();
 	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
 	MEM2_takeBigOnes(true);
 	do
