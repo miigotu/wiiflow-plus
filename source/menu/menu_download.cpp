@@ -570,7 +570,6 @@ void CMenu::_download(string gameId)
 		if (m_thrdStop && !m_thrdWorking)
 			break;
 	}
-	SetupInput();
 	_hideDownload();
 }
 

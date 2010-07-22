@@ -312,7 +312,6 @@ void CMenu::_cfTheme(void)
 {
 	u32 curParam = 0;
 	int cfVersion = 1;
-	SetupInput();
 	int btnDelay;
 	bool sel = false;
 	bool wide = m_vid.wide();

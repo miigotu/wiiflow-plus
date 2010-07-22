@@ -58,10 +58,27 @@
 #define BTN_1_REPEAT ((wii_repeat & WBTN_1)||(gc_repeat & BTN_1)!=0)
 #define BTN_2_REPEAT ((wii_repeat & WBTN_2)||(gc_repeat & BTN_2)!=0)
 
-#define LEFT_STICK_UP (((angle[wmote] >= 315 && angle[wmote] <= 360) || (angle[wmote] >= 0 && angle[wmote] < 45)) && mag[wmote] > 0.75)
-#define LEFT_STICK_RIGHT ((angle[wmote] >= 45 && angle[wmote] < 135) && mag[wmote] > 0.75)
-#define LEFT_STICK_DOWN ((angle[wmote] >= 135 && angle[wmote] < 225) && mag[wmote] > 0.75)
-#define LEFT_STICK_LEFT ((angle[wmote] >= 225 && angle[wmote] < 315) && mag[wmote] > 0.75)
+#define LEFT_WSTICK_UP (LEFT_WSTICK_ANG_UP && left_wstick_mag[wmote] > 0.15)
+#define LEFT_WSTICK_RIGHT (LEFT_WSTICK_ANG_RIGHT && left_wstick_mag[wmote] > 0.15)
+#define LEFT_WSTICK_DOWN (LEFT_WSTICK_ANG_DOWN && left_wstick_mag[wmote] > 0.15)
+#define LEFT_WSTICK_LEFT (LEFT_WSTICK_ANG_LEFT && left_wstick_mag[wmote] > 0.15)
+
+#define LEFT_WSTICK_ANG_UP ((left_wstick_angle[wmote] >= 315 && left_wstick_angle[wmote] <= 360) \
+		|| (left_wstick_angle[wmote] >= 0 && left_wstick_angle[wmote] < 45))
+#define LEFT_WSTICK_ANG_RIGHT (left_wstick_angle[wmote] >= 45 && left_wstick_angle[wmote] < 135)
+#define LEFT_WSTICK_ANG_DOWN (left_wstick_angle[wmote] >= 135 && left_wstick_angle[wmote] < 225)
+#define LEFT_WSTICK_ANG_LEFT (left_wstick_angle[wmote] >= 225 && left_wstick_angle[wmote] < 315)
+
+#define RIGHT_WSTICK_UP (RIGHT_WSTICK_ANG_UP && right_wstick_mag[wmote] > 0.15)
+#define RIGHT_WSTICK_RIGHT (RIGHT_WSTICK_ANG_RIGHT && right_wstick_mag[wmote] > 0.15)
+#define RIGHT_WSTICK_DOWN (RIGHT_WSTICK_ANG_DOWN && right_wstick_mag[wmote] > 0.15)
+#define RIGHT_WSTICK_LEFT (RIGHT_WSTICK_ANG_LEFT && right_wstick_mag[wmote] > 0.15)
+
+#define RIGHT_WSTICK_ANG_UP ((right_wstick_angle[wmote] >= 315 && right_wstick_angle[wmote] <= 360) \
+		|| (right_wstick_angle[wmote] >= 0 && right_wstick_angle[wmote] < 45))
+#define RIGHT_WSTICK_ANG_RIGHT (right_wstick_angle[wmote] >= 45 && right_wstick_angle[wmote] < 135)
+#define RIGHT_WSTICK_ANG_DOWN (right_wstick_angle[wmote] >= 135 && right_wstick_angle[wmote] < 225)
+#define RIGHT_WSTICK_ANG_LEFT (right_wstick_angle[wmote] >= 225 && right_wstick_angle[wmote] < 315)
 
 /*
 //Button values reference//

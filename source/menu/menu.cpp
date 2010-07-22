@@ -76,10 +76,6 @@ CMenu::CMenu(CVideo &vid) :
 	m_numCFVersions = 0;
 	m_bgCrossFade = 0;
 	m_bnrSndVol = 0;
-	m_padLeftDelay = 0;
-	m_padDownDelay = 0;
-	m_padRightDelay = 0;
-	m_padUpDelay = 0;
 	m_gameSettingsPage = 0;
 }
 

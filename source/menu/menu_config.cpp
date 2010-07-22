@@ -64,42 +64,33 @@ void CMenu::_config(int page)
 {
 	int nextPage = page;
 
-	SetupInput();
 	m_curGameId = m_cf.getId();
 	m_cf.clear();
 	while (nextPage > 0 && nextPage <= CMenu::_nbCfgPages)
 		switch (nextPage)
 		{
 			case 1:
-				SetupInput();
 				nextPage = _config1();
 				break;
 			case 2:
-				SetupInput();
 				nextPage = _configAdv();
 				break;
 			case 3:
-				SetupInput();
 				nextPage = _config4();
 				break;
 			case 4:
-				SetupInput();
 				nextPage = _configSnd();
 				break;
 			case 5:
-				SetupInput();
 				nextPage = _config2();
 				break;
 			case 6:
-				SetupInput();
 				nextPage = _config3();
 				break;
 			case 7:
-				SetupInput();
 				nextPage = _config5();
 				break;
 		}
-	SetupInput();
 	m_cfg.save();
 	m_cf.setBoxMode(m_cfg.getBool(" GENERAL", "box_mode"));
 	_initCF();
@@ -108,7 +99,8 @@ void CMenu::_config(int page)
 int CMenu::_config1(void)
 {
 	int nextPage = 0;
-
+	SetupInput();
+	
 	_showConfig();
 	while (true)
 	{

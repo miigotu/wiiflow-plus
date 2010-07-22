@@ -12,25 +12,27 @@ void CMenu::SetupInput()
 	m_wpadDownDelay = 0;
 	m_wpadRightDelay = 0;
 	m_wpadUpDelay = 0;
+	
 	m_padLeftDelay = 0;
 	m_padDownDelay = 0;
 	m_padRightDelay = 0;
 	m_padUpDelay = 0;
+	
 	repeatButton = 0;		
 	buttonHeld = (u32)-1;
-	
 	for(int wmote=0;wmote<4;wmote++)
 	{
-		angle[wmote] = 0;
-		mag[wmote] = 0;
+		wStickPointer_x[wmote] = 320;
+		wStickPointer_y[wmote] = 240;
+		left_wstick_angle[wmote] = 0;
+		left_wstick_mag[wmote] = 0;
+		right_wstick_angle[wmote] = 0;
+		right_wstick_mag[wmote] = 0;
 	}
 }
 
 void CMenu::ScanInput()
 {
-	//use left sticks only for now
-	int right = 0;
-	
 	m_show_zone_main = false;
 	m_show_zone_main2 = false;
 	m_show_zone_main3 = false;
@@ -42,37 +44,30 @@ void CMenu::ScanInput()
 	
 	ButtonsPressed();
 	ButtonsHeld();
+	RightStick();
+	
 	wii_repeat = wii_btnRepeat();
 	gc_repeat = gc_btnRepeat();
-	
 	for(int wmote=0;wmote<4;wmote++)
 	{
 		wd[wmote] = WPAD_Data(wmote);
-		angle[wmote] = 0;
-		mag[wmote] = 0;		
+		left_wstick_angle[wmote] = 0;
+		left_wstick_mag[wmote] = 0;		
+		right_wstick_angle[wmote] = 0;
+		right_wstick_mag[wmote] = 0;
 		switch (wd[wmote]->exp.type)
 		{
 			case WPAD_EXP_NUNCHUK:
 			case WPAD_EXP_GUITARHERO3:
-				if (right == 0)
-				{
-					mag[wmote] = wd[wmote]->exp.nunchuk.js.mag;
-					angle[wmote] = wd[wmote]->exp.nunchuk.js.ang;
-				}
+					left_wstick_mag[wmote] = wd[wmote]->exp.nunchuk.js.mag;
+					left_wstick_angle[wmote] = wd[wmote]->exp.nunchuk.js.ang;
 				break;
 			case WPAD_EXP_CLASSIC:
-				if (right == 0)
-				{
-					mag[wmote] = wd[wmote]->exp.classic.ljs.mag;
-					angle[wmote] = wd[wmote]->exp.classic.ljs.ang;
-				} 
-				else
-				{
-					mag[wmote] = wd[wmote]->exp.classic.rjs.mag;
-					angle[wmote] = wd[wmote]->exp.classic.rjs.ang;
-				}
+					left_wstick_mag[wmote] = wd[wmote]->exp.classic.ljs.mag;
+					left_wstick_angle[wmote] = wd[wmote]->exp.classic.ljs.ang;
+					right_wstick_mag[wmote] = wd[wmote]->exp.classic.rjs.mag;
+					right_wstick_angle[wmote] = wd[wmote]->exp.classic.rjs.ang;
 				break;
-
 			default:
 				break;
 		}
@@ -100,6 +95,26 @@ void CMenu::ScanInput()
 		m_shown_pointer = 4;
 		m_btnMgr.mouse(3, wd[3]->ir.x - m_cursor4.width() / 2, wd[3]->ir.y - m_cursor4.height() / 2);
 		m_cursor4.draw(wd[3]->ir.x, wd[3]->ir.y, wd[3]->ir.angle);
+	}
+	else if (pointerhidedelay[0] > 0  && !WPadIR_Valid(0))
+	{
+		m_btnMgr.mouse(0, wStickPointer_x[0] - m_cursor1.width() / 2, wStickPointer_y[0] - m_cursor1.height() / 2);
+		m_cursor1.draw(wStickPointer_x[0], wStickPointer_y[0], 0);
+	}
+	else if (pointerhidedelay[1] > 0  && !WPadIR_Valid(1))
+	{
+		m_btnMgr.mouse(1, wStickPointer_x[1] - m_cursor2.width() / 2, wStickPointer_y[1] - m_cursor2.height() / 2);
+		m_cursor2.draw(wStickPointer_x[1], wStickPointer_y[1], 0);
+	}
+	else if (pointerhidedelay[2] > 0  && !WPadIR_Valid(2))
+	{
+		m_btnMgr.mouse(2, wStickPointer_x[2] - m_cursor3.width() / 2, wStickPointer_y[2] - m_cursor3.height() / 2);
+		m_cursor3.draw(wStickPointer_x[2], wStickPointer_y[2], 0);
+	}
+	else if (pointerhidedelay[3] > 0  && !WPadIR_Valid(3))
+	{
+		m_btnMgr.mouse(3, wStickPointer_x[3] - m_cursor4.width() / 2, wStickPointer_y[3] - m_cursor4.height() / 2);
+		m_cursor4.draw(wStickPointer_x[3], wStickPointer_y[3], 0);
 	}
 	ShowMainZone();
 	ShowMainZone2();
@@ -130,6 +145,59 @@ void CMenu::ButtonsHeld()
         wii_btnsHeld |= WPAD_ButtonsHeld(i);
         gc_btnsHeld |= PAD_ButtonsHeld(i);
     }
+}
+
+void CMenu::RightStick()
+{
+	u8 speed = 0;
+    for (int i=3; i >= 0; i--)
+	{
+		int wmote = i;
+		if (right_wstick_mag[i] > 0.15)
+		{
+			if (RIGHT_WSTICK_LEFT)
+			{
+				speed = (u8)(right_wstick_mag[i] * 10.00);
+				if (wStickPointer_x[i] > 30) wStickPointer_x[i] = wStickPointer_x[i]-speed;
+				pointerhidedelay[i] = 100;
+				m_shown_pointer = (i+1)*10;
+			}
+			if (RIGHT_WSTICK_DOWN)
+			{
+				speed = (u8)(right_wstick_mag[i] * 10.00);
+				if (wStickPointer_y[i] < 500) wStickPointer_y[i] = wStickPointer_y[i]+speed;
+				pointerhidedelay[i] = 100;
+				m_shown_pointer = (i+1)*10;
+			}
+			if (RIGHT_WSTICK_RIGHT)
+			{
+				speed = (u8)(right_wstick_mag[i] * 10.00);
+				if (wStickPointer_x[i] < 670) wStickPointer_x[i] = wStickPointer_x[i]+speed;
+				pointerhidedelay[i] = 100;
+				m_shown_pointer = (i+1)*10;
+			}
+			if (RIGHT_WSTICK_UP)
+			{
+				speed = (u8)(right_wstick_mag[i] * 10.00);
+				if (wStickPointer_y[i] > 45) wStickPointer_y[i] = wStickPointer_y[i]-speed;
+				pointerhidedelay[i] = 100;
+				m_shown_pointer = (i+1)*10;
+			}
+		}
+		else
+			if (pointerhidedelay[i] > 0) 
+				pointerhidedelay[i]--;
+			else if (pointerhidedelay[i] < 0)
+				pointerhidedelay[i] = 0;
+			else
+			{
+				pointerhidedelay[i] = 0;
+				wStickPointer_x[i] = 320;
+				wStickPointer_y[i] = 240;
+			}
+    }
+	if (pointerhidedelay[0] == 0 && pointerhidedelay[1] == 0 && pointerhidedelay[2] == 0 && pointerhidedelay[3] == 0) 
+		m_shown_pointer = -128;
 }
 
 bool CMenu::WPadIR_Valid(int i)
@@ -228,13 +296,13 @@ u32 CMenu::gc_btnRepeat()
 void CMenu::ShowMainZone()
 {
 	m_show_zone_main = false;
-	if ((WPadIR_Valid(0) && m_cursor1.x() >= m_mainButtonsZone.x && m_cursor1.y() >= m_mainButtonsZone.y
+	if (((WPadIR_Valid(0) || m_shown_pointer==10) && m_cursor1.x() >= m_mainButtonsZone.x && m_cursor1.y() >= m_mainButtonsZone.y
 		&& m_cursor1.x() < m_mainButtonsZone.x + m_mainButtonsZone.w && m_cursor1.y() < m_mainButtonsZone.y + m_mainButtonsZone.h) 
-		|| (WPadIR_Valid(1) && m_cursor2.x() >= m_mainButtonsZone.x && m_cursor2.y() >= m_mainButtonsZone.y
+		|| ((WPadIR_Valid(1) || m_shown_pointer==20) && m_cursor2.x() >= m_mainButtonsZone.x && m_cursor2.y() >= m_mainButtonsZone.y
 		&& m_cursor2.x() < m_mainButtonsZone.x + m_mainButtonsZone.w && m_cursor2.y() < m_mainButtonsZone.y + m_mainButtonsZone.h)
-		|| (WPadIR_Valid(2) && m_cursor3.x() >= m_mainButtonsZone.x && m_cursor3.y() >= m_mainButtonsZone.y
+		|| ((WPadIR_Valid(2) || m_shown_pointer==30) && m_cursor3.x() >= m_mainButtonsZone.x && m_cursor3.y() >= m_mainButtonsZone.y
 		&& m_cursor3.x() < m_mainButtonsZone.x + m_mainButtonsZone.w && m_cursor3.y() < m_mainButtonsZone.y + m_mainButtonsZone.h)
-		|| (WPadIR_Valid(3) && m_cursor4.x() >= m_mainButtonsZone.x && m_cursor4.y() >= m_mainButtonsZone.y
+		|| ((WPadIR_Valid(3) || m_shown_pointer==40) && m_cursor4.x() >= m_mainButtonsZone.x && m_cursor4.y() >= m_mainButtonsZone.y
 		&& m_cursor4.x() < m_mainButtonsZone.x + m_mainButtonsZone.w && m_cursor4.y() < m_mainButtonsZone.y + m_mainButtonsZone.h))
 		m_show_zone_main = true;
 }
@@ -242,13 +310,13 @@ void CMenu::ShowMainZone()
 void CMenu::ShowMainZone2()
 {
 	m_show_zone_main2 = false;
-	if ((WPadIR_Valid(0) && m_cursor1.x() >= m_mainButtonsZone2.x && m_cursor1.y() >= m_mainButtonsZone2.y
+	if (((WPadIR_Valid(0) || m_shown_pointer==10) && m_cursor1.x() >= m_mainButtonsZone2.x && m_cursor1.y() >= m_mainButtonsZone2.y
 		&& m_cursor1.x() < m_mainButtonsZone2.x + m_mainButtonsZone2.w && m_cursor1.y() < m_mainButtonsZone2.y + m_mainButtonsZone2.h)
-		|| (WPadIR_Valid(1) && m_cursor2.x() >= m_mainButtonsZone2.x && m_cursor2.y() >= m_mainButtonsZone2.y
+		|| ((WPadIR_Valid(1) || m_shown_pointer==20) && m_cursor2.x() >= m_mainButtonsZone2.x && m_cursor2.y() >= m_mainButtonsZone2.y
 		&& m_cursor2.x() < m_mainButtonsZone2.x + m_mainButtonsZone2.w && m_cursor2.y() < m_mainButtonsZone2.y + m_mainButtonsZone2.h)
-		|| (WPadIR_Valid(2) && m_cursor3.x() >= m_mainButtonsZone2.x && m_cursor3.y() >= m_mainButtonsZone2.y
+		|| ((WPadIR_Valid(2) || m_shown_pointer==30) && m_cursor3.x() >= m_mainButtonsZone2.x && m_cursor3.y() >= m_mainButtonsZone2.y
 		&& m_cursor3.x() < m_mainButtonsZone2.x + m_mainButtonsZone2.w && m_cursor3.y() < m_mainButtonsZone2.y + m_mainButtonsZone2.h)
-		|| (WPadIR_Valid(3) && m_cursor4.x() >= m_mainButtonsZone2.x && m_cursor4.y() >= m_mainButtonsZone2.y
+		|| ((WPadIR_Valid(3) || m_shown_pointer==40) && m_cursor4.x() >= m_mainButtonsZone2.x && m_cursor4.y() >= m_mainButtonsZone2.y
 		&& m_cursor4.x() < m_mainButtonsZone2.x + m_mainButtonsZone2.w && m_cursor4.y() < m_mainButtonsZone2.y + m_mainButtonsZone2.h))
 		m_show_zone_main2 = true;
 }
@@ -256,13 +324,13 @@ void CMenu::ShowMainZone2()
 void CMenu::ShowMainZone3()
 {
 	m_show_zone_main3 = false;
-	if ((WPadIR_Valid(0) && m_cursor1.x() >= m_mainButtonsZone3.x && m_cursor1.y() >= m_mainButtonsZone3.y
+	if (((WPadIR_Valid(0) || m_shown_pointer==10) && m_cursor1.x() >= m_mainButtonsZone3.x && m_cursor1.y() >= m_mainButtonsZone3.y
 		&& m_cursor1.x() < m_mainButtonsZone3.x + m_mainButtonsZone3.w && m_cursor1.y() < m_mainButtonsZone3.y + m_mainButtonsZone3.h)
-		|| (WPadIR_Valid(1) && m_cursor2.x() >= m_mainButtonsZone3.x && m_cursor2.y() >= m_mainButtonsZone3.y
+		|| ((WPadIR_Valid(1) || m_shown_pointer==20) && m_cursor2.x() >= m_mainButtonsZone3.x && m_cursor2.y() >= m_mainButtonsZone3.y
 		&& m_cursor2.x() < m_mainButtonsZone3.x + m_mainButtonsZone3.w && m_cursor2.y() < m_mainButtonsZone3.y + m_mainButtonsZone3.h)
-		|| (WPadIR_Valid(2) && m_cursor3.x() >= m_mainButtonsZone3.x && m_cursor3.y() >= m_mainButtonsZone3.y
+		|| ((WPadIR_Valid(2) || m_shown_pointer==30) && m_cursor3.x() >= m_mainButtonsZone3.x && m_cursor3.y() >= m_mainButtonsZone3.y
 		&& m_cursor3.x() < m_mainButtonsZone3.x + m_mainButtonsZone3.w && m_cursor3.y() < m_mainButtonsZone3.y + m_mainButtonsZone3.h)
-		|| (WPadIR_Valid(3) && m_cursor4.x() >= m_mainButtonsZone3.x && m_cursor4.y() >= m_mainButtonsZone3.y
+		|| ((WPadIR_Valid(3) || m_shown_pointer==40) && m_cursor4.x() >= m_mainButtonsZone3.x && m_cursor4.y() >= m_mainButtonsZone3.y
 		&& m_cursor4.x() < m_mainButtonsZone3.x + m_mainButtonsZone3.w && m_cursor4.y() < m_mainButtonsZone3.y + m_mainButtonsZone3.h))
 		m_show_zone_main3 = true;
 }
@@ -270,13 +338,13 @@ void CMenu::ShowMainZone3()
 void CMenu::ShowPrevZone()
 {
 	m_show_zone_prev = false;
-	if ((WPadIR_Valid(0) && m_cursor1.x() >= m_mainPrevZone.x && m_cursor1.y() >= m_mainPrevZone.y
+	if (((WPadIR_Valid(0) || m_shown_pointer==10) && m_cursor1.x() >= m_mainPrevZone.x && m_cursor1.y() >= m_mainPrevZone.y
 		&& m_cursor1.x() < m_mainPrevZone.x + m_mainPrevZone.w && m_cursor1.y() < m_mainPrevZone.y + m_mainPrevZone.h)
-		|| (WPadIR_Valid(1) && m_cursor2.x() >= m_mainPrevZone.x && m_cursor2.y() >= m_mainPrevZone.y
+		|| ((WPadIR_Valid(1) || m_shown_pointer==20) && m_cursor2.x() >= m_mainPrevZone.x && m_cursor2.y() >= m_mainPrevZone.y
 		&& m_cursor2.x() < m_mainPrevZone.x + m_mainPrevZone.w && m_cursor2.y() < m_mainPrevZone.y + m_mainPrevZone.h)
-		|| (WPadIR_Valid(2) && m_cursor3.x() >= m_mainPrevZone.x && m_cursor3.y() >= m_mainPrevZone.y
+		|| ((WPadIR_Valid(2) || m_shown_pointer==30) && m_cursor3.x() >= m_mainPrevZone.x && m_cursor3.y() >= m_mainPrevZone.y
 		&& m_cursor3.x() < m_mainPrevZone.x + m_mainPrevZone.w && m_cursor3.y() < m_mainPrevZone.y + m_mainPrevZone.h)
-		|| (WPadIR_Valid(3) && m_cursor4.x() >= m_mainPrevZone.x && m_cursor4.y() >= m_mainPrevZone.y
+		|| ((WPadIR_Valid(3) || m_shown_pointer==40) && m_cursor4.x() >= m_mainPrevZone.x && m_cursor4.y() >= m_mainPrevZone.y
 		&& m_cursor4.x() < m_mainPrevZone.x + m_mainPrevZone.w && m_cursor4.y() < m_mainPrevZone.y + m_mainPrevZone.h))
 		m_show_zone_prev = true;
 }
@@ -284,13 +352,13 @@ void CMenu::ShowPrevZone()
 void CMenu::ShowNextZone()
 {
 	m_show_zone_next = false;
-	if ((WPadIR_Valid(0) && m_cursor1.x() >= m_mainNextZone.x && m_cursor1.y() >= m_mainNextZone.y
+	if (((WPadIR_Valid(0) || m_shown_pointer==10) && m_cursor1.x() >= m_mainNextZone.x && m_cursor1.y() >= m_mainNextZone.y
 		&& m_cursor1.x() < m_mainNextZone.x + m_mainNextZone.w && m_cursor1.y() < m_mainNextZone.y + m_mainNextZone.h)
-		|| (WPadIR_Valid(1) && m_cursor2.x() >= m_mainNextZone.x && m_cursor2.y() >= m_mainNextZone.y
+		|| ((WPadIR_Valid(1) || m_shown_pointer==20) && m_cursor2.x() >= m_mainNextZone.x && m_cursor2.y() >= m_mainNextZone.y
 		&& m_cursor2.x() < m_mainNextZone.x + m_mainNextZone.w && m_cursor2.y() < m_mainNextZone.y + m_mainNextZone.h)
-		|| (WPadIR_Valid(2) && m_cursor3.x() >= m_mainNextZone.x && m_cursor3.y() >= m_mainNextZone.y
+		|| ((WPadIR_Valid(2) || m_shown_pointer==30) && m_cursor3.x() >= m_mainNextZone.x && m_cursor3.y() >= m_mainNextZone.y
 		&& m_cursor3.x() < m_mainNextZone.x + m_mainNextZone.w && m_cursor3.y() < m_mainNextZone.y + m_mainNextZone.h)
-		|| (WPadIR_Valid(3) && m_cursor4.x() >= m_mainNextZone.x && m_cursor4.y() >= m_mainNextZone.y
+		|| ((WPadIR_Valid(3) || m_shown_pointer==40) && m_cursor4.x() >= m_mainNextZone.x && m_cursor4.y() >= m_mainNextZone.y
 		&& m_cursor4.x() < m_mainNextZone.x + m_mainNextZone.w && m_cursor4.y() < m_mainNextZone.y + m_mainNextZone.h))
 		m_show_zone_next = true;
 }

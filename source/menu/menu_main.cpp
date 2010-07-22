@@ -125,13 +125,13 @@ int CMenu::main(void)
 			wii_btnsPressed |= WBTN_A;
 		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
-			if (BTN_UP_REPEAT || LEFT_STICK_UP)
+			if (BTN_UP_REPEAT || LEFT_WSTICK_UP)
 				m_cf.up();
-			else if (BTN_RIGHT_REPEAT || LEFT_STICK_RIGHT)
+			else if (BTN_RIGHT_REPEAT || LEFT_WSTICK_RIGHT)
 				m_cf.right();
-			else if (BTN_DOWN_REPEAT ||  LEFT_STICK_DOWN)
+			else if (BTN_DOWN_REPEAT ||  LEFT_WSTICK_DOWN)
 				m_cf.down();
-			else if (BTN_LEFT_REPEAT || LEFT_STICK_LEFT)
+			else if (BTN_LEFT_REPEAT || LEFT_WSTICK_LEFT)
 				m_cf.left();
 		//CF Layout select
 		if (BTN_1_PRESSED && (wii_btnsHeld & WBTN_B) == 0)
@@ -454,14 +454,14 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainLblUser[5]);
 		}
 		//
-		if (m_shown_pointer == 1 && WPadIR_Valid(0))
+		if ((m_shown_pointer == 1 && WPadIR_Valid(0)) || m_shown_pointer == 10)
 			m_cf.mouse(m_vid, 0, m_cursor1.x(), m_cursor1.y());
-		else if (m_shown_pointer == 2 && WPadIR_Valid(1))
+		else if ((m_shown_pointer == 2 && WPadIR_Valid(1)) || m_shown_pointer == 20)
 			m_cf.mouse(m_vid, 1, m_cursor2.x(), m_cursor2.y());
-		else if (m_shown_pointer == 3 && WPadIR_Valid(2))
+		else if ((m_shown_pointer == 3 && WPadIR_Valid(2)) || m_shown_pointer == 30)
 			m_cf.mouse(m_vid, 2, m_cursor3.x(), m_cursor3.y());
-		else if (m_shown_pointer == 4 && WPadIR_Valid(3))
-			m_cf.mouse(m_vid, 3, m_cursor4.x(), m_cursor4.y());
+		else if ((m_shown_pointer == 4 && WPadIR_Valid(3)) || m_shown_pointer == 40)
+			m_cf.mouse(m_vid, 3, m_cursor4.x(), m_cursor4.y());	
 		else
 			m_cf.mouse(m_vid, 0, -1, -1);
 	}

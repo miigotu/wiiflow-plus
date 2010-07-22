@@ -276,28 +276,29 @@ void CMenu::_game(bool launch)
 		}
 		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
-			if (BTN_UP_REPEAT || LEFT_STICK_UP)
+		{
+			if (BTN_UP_REPEAT || LEFT_WSTICK_UP)
 			{
 				_stopBnrSound();
 				m_cf.up();
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_RIGHT_REPEAT || LEFT_STICK_RIGHT)
+			else if (BTN_RIGHT_REPEAT || LEFT_WSTICK_RIGHT)
 			{
 				_stopBnrSound();
 				m_cf.right();
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_DOWN_REPEAT || LEFT_STICK_DOWN)
+			else if (BTN_DOWN_REPEAT || LEFT_WSTICK_DOWN)
 			{
 				_stopBnrSound();
 				m_cf.down();
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_LEFT_REPEAT || LEFT_STICK_LEFT)
+			else if (BTN_LEFT_REPEAT || LEFT_WSTICK_LEFT)
 			{
 				_stopBnrSound();
 				m_cf.left();
@@ -314,6 +315,7 @@ void CMenu::_game(bool launch)
 					m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
 					m_btnMgr.show(m_gameLblUser[1]);
 					m_btnMgr.show(m_gameLblUser[2]);
+					m_btnMgr.show(m_gameLblUser[3]);
 		
 					if (!m_locked)
 					{
@@ -331,6 +333,7 @@ void CMenu::_game(bool launch)
 					m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
 					m_btnMgr.show(m_gameLblUser[1]);
 					m_btnMgr.show(m_gameLblUser[2]);
+					m_btnMgr.show(m_gameLblUser[3]);
 		
 					if (!m_locked)
 					{
@@ -350,7 +353,9 @@ void CMenu::_game(bool launch)
 				m_btnMgr.hide(m_gameBtnSettings);
 				m_btnMgr.hide(m_gameLblUser[1]);
 				m_btnMgr.hide(m_gameLblUser[2]);
+				m_btnMgr.hide(m_gameLblUser[3]);
 			}
+		}
 	}
 	_waitForGameSoundExtract();
 	_hideGame();

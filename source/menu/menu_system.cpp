@@ -182,7 +182,6 @@ void CMenu::_system()
 			break;
 
 	}
-	SetupInput();
 	_hideSystem();
 }
 

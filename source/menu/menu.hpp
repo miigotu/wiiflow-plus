@@ -400,34 +400,49 @@ private:
 	bool m_reload;
 	
 	WPADData *wd[4];
+	void RightStick();
+	int pointerhidedelay[4];
+	int wStickPointer_x[4];
+	int wStickPointer_y[4];
+	int pStickPointer_x[4];
+	int pStickPointer_y[4];
 	u32 wii_repeat;	
 	u32 gc_repeat;	
+	
 	u32 m_wpadLeftDelay;
 	u32 m_wpadDownDelay;
 	u32 m_wpadRightDelay;
 	u32 m_wpadUpDelay;
+	
 	u32 m_padLeftDelay;
 	u32 m_padDownDelay;
 	u32 m_padRightDelay;
 	u32 m_padUpDelay;
+	
 	u32 buttonHeld;
 	int repeatButton;
 	int m_shown_pointer;
+	
 	u32 wii_btnsPressed;
 	u32 wii_btnsHeld;
 	u32 gc_btnsPressed;
 	u32 gc_btnsHeld;
-	float angle[4];
-	float mag[4];
+	
+	float left_wstick_angle[4];
+	float left_wstick_mag[4];
+	float right_wstick_angle[4];
+	float right_wstick_mag[4];
+
 	u32 wii_btnRepeat();
 	u32 gc_btnRepeat();
 	void ButtonsPressed();
 	void ButtonsHeld();
-	//WPADData* WPadData();
+
 	void SetupInput();
 	void ScanInput();
 	bool WPadIR_Valid(int i);
 	bool WPadIR_ANY();
+	
 	void ShowMainZone();
 	void ShowMainZone2();
 	void ShowMainZone3();
