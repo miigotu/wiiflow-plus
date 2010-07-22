@@ -125,22 +125,22 @@ int CMenu::main(void)
 			wii_btnsPressed |= WBTN_A;
 		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
-			if (BTN_UP_REPEAT || LEFT_WSTICK_UP)
+			if (BTN_UP_REPEAT || RIGHT_STICK_UP)
 			{
 				m_cf.up();
 				_stopBnrSound();
 			}
-			else if (BTN_RIGHT_REPEAT || LEFT_WSTICK_RIGHT)
+			else if (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
 			{
 				m_cf.right();
 				_stopBnrSound();
 			}
-			else if (BTN_DOWN_REPEAT ||  LEFT_WSTICK_DOWN)
+			else if (BTN_DOWN_REPEAT ||  RIGHT_STICK_DOWN)
 			{
 				m_cf.down();
 				_stopBnrSound();
 			}
-			else if (BTN_LEFT_REPEAT || LEFT_WSTICK_LEFT)
+			else if (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
 			{
 				m_cf.left();
 				_stopBnrSound();

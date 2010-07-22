@@ -14,8 +14,8 @@
 #define BTN_B (PAD_BUTTON_B)
 #define BTN_1 (PAD_BUTTON_Y)
 #define BTN_2 (PAD_BUTTON_X)
-#define BTN_PLUS (PAD_TRIGGER_L)
-#define BTN_MINUS (PAD_TRIGGER_R)
+#define BTN_PLUS (PAD_TRIGGER_R)
+#define BTN_MINUS (PAD_TRIGGER_L)
 #define BTN_HOME (PAD_BUTTON_MENU)
 #define BTN_UP (PAD_BUTTON_UP)
 #define BTN_RIGHT (PAD_BUTTON_RIGHT)
@@ -58,27 +58,27 @@
 #define BTN_1_REPEAT ((wii_repeat & WBTN_1)||(gc_repeat & BTN_1)!=0)
 #define BTN_2_REPEAT ((wii_repeat & WBTN_2)||(gc_repeat & BTN_2)!=0)
 
-#define LEFT_WSTICK_UP (LEFT_WSTICK_ANG_UP && left_wstick_mag[wmote] > 0.15)
-#define LEFT_WSTICK_RIGHT (LEFT_WSTICK_ANG_RIGHT && left_wstick_mag[wmote] > 0.15)
-#define LEFT_WSTICK_DOWN (LEFT_WSTICK_ANG_DOWN && left_wstick_mag[wmote] > 0.15)
-#define LEFT_WSTICK_LEFT (LEFT_WSTICK_ANG_LEFT && left_wstick_mag[wmote] > 0.15)
+#define LEFT_STICK_UP ((LEFT_STICK_ANG_UP && left_stick_mag[wmote] > 0.15) || PAD_StickY(wmote) > 20)
+#define LEFT_STICK_RIGHT ((LEFT_STICK_ANG_RIGHT && left_stick_mag[wmote] > 0.15) || PAD_StickX(wmote) > 20)
+#define LEFT_STICK_DOWN ((LEFT_STICK_ANG_DOWN && left_stick_mag[wmote] > 0.15) || PAD_StickY(wmote) < -20)
+#define LEFT_STICK_LEFT ((LEFT_STICK_ANG_LEFT && left_stick_mag[wmote] > 0.15) || PAD_StickX(wmote) < -20)
 
-#define LEFT_WSTICK_ANG_UP ((left_wstick_angle[wmote] >= 315 && left_wstick_angle[wmote] <= 360) \
-		|| (left_wstick_angle[wmote] >= 0 && left_wstick_angle[wmote] < 45))
-#define LEFT_WSTICK_ANG_RIGHT (left_wstick_angle[wmote] >= 45 && left_wstick_angle[wmote] < 135)
-#define LEFT_WSTICK_ANG_DOWN (left_wstick_angle[wmote] >= 135 && left_wstick_angle[wmote] < 225)
-#define LEFT_WSTICK_ANG_LEFT (left_wstick_angle[wmote] >= 225 && left_wstick_angle[wmote] < 315)
+#define LEFT_STICK_ANG_UP ((left_stick_angle[wmote] >= 315 && left_stick_angle[wmote] <= 360) \
+		|| (left_stick_angle[wmote] >= 0 && left_stick_angle[wmote] < 45))
+#define LEFT_STICK_ANG_RIGHT (left_stick_angle[wmote] >= 45 && left_stick_angle[wmote] < 135)
+#define LEFT_STICK_ANG_DOWN (left_stick_angle[wmote] >= 135 && left_stick_angle[wmote] < 225)
+#define LEFT_STICK_ANG_LEFT (left_stick_angle[wmote] >= 225 && left_stick_angle[wmote] < 315)
 
-#define RIGHT_WSTICK_UP (RIGHT_WSTICK_ANG_UP && right_wstick_mag[wmote] > 0.15)
-#define RIGHT_WSTICK_RIGHT (RIGHT_WSTICK_ANG_RIGHT && right_wstick_mag[wmote] > 0.15)
-#define RIGHT_WSTICK_DOWN (RIGHT_WSTICK_ANG_DOWN && right_wstick_mag[wmote] > 0.15)
-#define RIGHT_WSTICK_LEFT (RIGHT_WSTICK_ANG_LEFT && right_wstick_mag[wmote] > 0.15)
+#define RIGHT_STICK_UP ((RIGHT_STICK_ANG_UP && right_stick_mag[wmote] > 0.15) || PAD_SubStickY(wmote) > 20)
+#define RIGHT_STICK_RIGHT ((RIGHT_STICK_ANG_RIGHT && right_stick_mag[wmote] > 0.15) || PAD_SubStickX(wmote) > 20)
+#define RIGHT_STICK_DOWN ((RIGHT_STICK_ANG_DOWN && right_stick_mag[wmote] > 0.15) || PAD_SubStickY(wmote) < -20)
+#define RIGHT_STICK_LEFT ((RIGHT_STICK_ANG_LEFT && right_stick_mag[wmote] > 0.15) || PAD_SubStickX(wmote) < -20)
 
-#define RIGHT_WSTICK_ANG_UP ((right_wstick_angle[wmote] >= 315 && right_wstick_angle[wmote] <= 360) \
-		|| (right_wstick_angle[wmote] >= 0 && right_wstick_angle[wmote] < 45))
-#define RIGHT_WSTICK_ANG_RIGHT (right_wstick_angle[wmote] >= 45 && right_wstick_angle[wmote] < 135)
-#define RIGHT_WSTICK_ANG_DOWN (right_wstick_angle[wmote] >= 135 && right_wstick_angle[wmote] < 225)
-#define RIGHT_WSTICK_ANG_LEFT (right_wstick_angle[wmote] >= 225 && right_wstick_angle[wmote] < 315)
+#define RIGHT_STICK_ANG_UP ((right_stick_angle[wmote] >= 315 && right_stick_angle[wmote] <= 360) \
+		|| (right_stick_angle[wmote] >= 0 && right_stick_angle[wmote] < 45))
+#define RIGHT_STICK_ANG_RIGHT (right_stick_angle[wmote] >= 45 && right_stick_angle[wmote] < 135)
+#define RIGHT_STICK_ANG_DOWN (right_stick_angle[wmote] >= 135 && right_stick_angle[wmote] < 225)
+#define RIGHT_STICK_ANG_LEFT (right_stick_angle[wmote] >= 225 && right_stick_angle[wmote] < 315)
 
 /*
 //Button values reference//

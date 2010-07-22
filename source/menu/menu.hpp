@@ -400,12 +400,10 @@ private:
 	bool m_reload;
 	
 	WPADData *wd[4];
-	void RightStick();
+	void LeftStick();
 	u8 pointerhidedelay[4];
-	u16 wStickPointer_x[4];
-	u16 wStickPointer_y[4];
-	u16 pStickPointer_x[4];
-	u16 pStickPointer_y[4];
+	u16 stickPointer_x[4];
+	u16 stickPointer_y[4];
 	u32 wii_repeat;	
 	u32 gc_repeat;	
 	
@@ -428,10 +426,10 @@ private:
 	u32 gc_btnsPressed;
 	u32 gc_btnsHeld;
 	
-	float left_wstick_angle[4];
-	float left_wstick_mag[4];
-	float right_wstick_angle[4];
-	float right_wstick_mag[4];
+	float left_stick_angle[4];
+	float left_stick_mag[4];
+	float right_stick_angle[4];
+	float right_stick_mag[4];
 
 	u32 wii_btnRepeat();
 	u32 gc_btnRepeat();

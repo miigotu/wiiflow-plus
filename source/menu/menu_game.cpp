@@ -274,28 +274,28 @@ void CMenu::_game(bool launch)
 		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
 		{
-			if (BTN_UP_REPEAT || LEFT_WSTICK_UP)
+			if (BTN_UP_REPEAT || RIGHT_STICK_UP)
 			{
 				_stopBnrSound();
 				m_cf.up();
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_RIGHT_REPEAT || LEFT_WSTICK_RIGHT)
+			else if (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
 			{
 				_stopBnrSound();
 				m_cf.right();
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_DOWN_REPEAT || LEFT_WSTICK_DOWN)
+			else if (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN)
 			{
 				_stopBnrSound();
 				m_cf.down();
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_LEFT_REPEAT || LEFT_WSTICK_LEFT)
+			else if (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
 			{
 				_stopBnrSound();
 				m_cf.left();
