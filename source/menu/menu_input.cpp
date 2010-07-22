@@ -197,7 +197,7 @@ void CMenu::RightStick()
 					wStickPointer_y[i] = (m_vid.height() + m_cursor1.height())/2;
 				}
 				else
-					pointerhidedelay[i] = 100;
+					if (pointerhidedelay[i] > 0) pointerhidedelay[i] = 100;
 			}
     }
 	if (pointerhidedelay[0] == 0 && pointerhidedelay[1] == 0 && pointerhidedelay[2] == 0 && pointerhidedelay[3] == 0) 

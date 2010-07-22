@@ -126,13 +126,25 @@ int CMenu::main(void)
 		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
 			if (BTN_UP_REPEAT || LEFT_WSTICK_UP)
+			{
 				m_cf.up();
+				_stopBnrSound();
+			}
 			else if (BTN_RIGHT_REPEAT || LEFT_WSTICK_RIGHT)
+			{
 				m_cf.right();
+				_stopBnrSound();
+			}
 			else if (BTN_DOWN_REPEAT ||  LEFT_WSTICK_DOWN)
+			{
 				m_cf.down();
+				_stopBnrSound();
+			}
 			else if (BTN_LEFT_REPEAT || LEFT_WSTICK_LEFT)
+			{
 				m_cf.left();
+				_stopBnrSound();
+			}
 		//CF Layout select
 		if (BTN_1_PRESSED && (wii_btnsHeld & WBTN_B) == 0)
 		{
