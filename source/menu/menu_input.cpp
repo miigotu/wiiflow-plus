@@ -22,12 +22,13 @@ void CMenu::SetupInput()
 	buttonHeld = (u32)-1;
 	for(int wmote=0;wmote<4;wmote++)
 	{
-		wStickPointer_x[wmote] = 320;
-		wStickPointer_y[wmote] = 240;
+		wStickPointer_x[wmote] = (m_vid.width() + m_cursor1.width())/2;
+		wStickPointer_y[wmote] = (m_vid.height() + m_cursor1.height())/2;
 		left_wstick_angle[wmote] = 0;
 		left_wstick_mag[wmote] = 0;
 		right_wstick_angle[wmote] = 0;
 		right_wstick_mag[wmote] = 0;
+		pointerhidedelay[wmote] = 0;
 	}
 }
 
@@ -75,46 +76,46 @@ void CMenu::ScanInput()
 	if (WPadIR_Valid(0))
 	{
 		m_shown_pointer = 1;
-		m_btnMgr.mouse(0, wd[0]->ir.x - m_cursor1.width() / 2, wd[0]->ir.y - m_cursor1.height() / 2);
 		m_cursor1.draw(wd[0]->ir.x, wd[0]->ir.y, wd[0]->ir.angle);
+		m_btnMgr.mouse(0, wd[0]->ir.x - m_cursor1.width() / 2, wd[0]->ir.y - m_cursor1.height() / 2);
+	}
+	else if (pointerhidedelay[0] > 0  && !WPadIR_Valid(0))
+	{
+		m_cursor1.draw(wStickPointer_x[0], wStickPointer_y[0], 0);
+		m_btnMgr.mouse(0, wStickPointer_x[0] - m_cursor1.width() / 2, wStickPointer_y[0] - m_cursor1.height() / 2);
 	}
 	else if (WPadIR_Valid(1))
 	{
 		m_shown_pointer = 2;
-		m_btnMgr.mouse(1, wd[1]->ir.x - m_cursor2.width() / 2, wd[1]->ir.y - m_cursor2.height() / 2);
 		m_cursor2.draw(wd[1]->ir.x, wd[1]->ir.y, wd[1]->ir.angle);
+		m_btnMgr.mouse(1, wd[1]->ir.x - m_cursor2.width() / 2, wd[1]->ir.y - m_cursor2.height() / 2);
+	}
+	else if (pointerhidedelay[1] > 0  && !WPadIR_Valid(1))
+	{
+		m_cursor2.draw(wStickPointer_x[1], wStickPointer_y[1], 0);
+		m_btnMgr.mouse(1, wStickPointer_x[1] - m_cursor2.width() / 2, wStickPointer_y[1] - m_cursor2.height() / 2);
 	}
 	else if (WPadIR_Valid(2))
 	{
 		m_shown_pointer = 3;
-		m_btnMgr.mouse(2, wd[2]->ir.x - m_cursor3.width() / 2, wd[2]->ir.y - m_cursor3.height() / 2);
 		m_cursor3.draw(wd[2]->ir.x, wd[2]->ir.y, wd[2]->ir.angle);
+		m_btnMgr.mouse(2, wd[2]->ir.x - m_cursor3.width() / 2, wd[2]->ir.y - m_cursor3.height() / 2);
+	}
+	else if (pointerhidedelay[2] > 0  && !WPadIR_Valid(2))
+	{
+		m_cursor3.draw(wStickPointer_x[2], wStickPointer_y[2], 0);
+		m_btnMgr.mouse(2, wStickPointer_x[2] - m_cursor3.width() / 2, wStickPointer_y[2] - m_cursor3.height() / 2);
 	}
 	else if (WPadIR_Valid(3))
 	{
 		m_shown_pointer = 4;
-		m_btnMgr.mouse(3, wd[3]->ir.x - m_cursor4.width() / 2, wd[3]->ir.y - m_cursor4.height() / 2);
 		m_cursor4.draw(wd[3]->ir.x, wd[3]->ir.y, wd[3]->ir.angle);
-	}
-	else if (pointerhidedelay[0] > 0  && !WPadIR_Valid(0))
-	{
-		m_btnMgr.mouse(0, wStickPointer_x[0] - m_cursor1.width() / 2, wStickPointer_y[0] - m_cursor1.height() / 2);
-		m_cursor1.draw(wStickPointer_x[0], wStickPointer_y[0], 0);
-	}
-	else if (pointerhidedelay[1] > 0  && !WPadIR_Valid(1))
-	{
-		m_btnMgr.mouse(1, wStickPointer_x[1] - m_cursor2.width() / 2, wStickPointer_y[1] - m_cursor2.height() / 2);
-		m_cursor2.draw(wStickPointer_x[1], wStickPointer_y[1], 0);
-	}
-	else if (pointerhidedelay[2] > 0  && !WPadIR_Valid(2))
-	{
-		m_btnMgr.mouse(2, wStickPointer_x[2] - m_cursor3.width() / 2, wStickPointer_y[2] - m_cursor3.height() / 2);
-		m_cursor3.draw(wStickPointer_x[2], wStickPointer_y[2], 0);
+		m_btnMgr.mouse(3, wd[3]->ir.x - m_cursor4.width() / 2, wd[3]->ir.y - m_cursor4.height() / 2);
 	}
 	else if (pointerhidedelay[3] > 0  && !WPadIR_Valid(3))
 	{
-		m_btnMgr.mouse(3, wStickPointer_x[3] - m_cursor4.width() / 2, wStickPointer_y[3] - m_cursor4.height() / 2);
 		m_cursor4.draw(wStickPointer_x[3], wStickPointer_y[3], 0);
+		m_btnMgr.mouse(3, wStickPointer_x[3] - m_cursor4.width() / 2, wStickPointer_y[3] - m_cursor4.height() / 2);
 	}
 	ShowMainZone();
 	ShowMainZone2();
@@ -158,46 +159,49 @@ void CMenu::RightStick()
 			if (RIGHT_WSTICK_LEFT)
 			{
 				speed = (u8)(right_wstick_mag[i] * 10.00);
-				if (wStickPointer_x[i] > 30) wStickPointer_x[i] = wStickPointer_x[i]-speed;
+				if (wStickPointer_x[i] > m_cursor1.width()/2) wStickPointer_x[i] = wStickPointer_x[i]-speed;
 				pointerhidedelay[i] = 100;
 				m_shown_pointer = (i+1)*10;
 			}
 			if (RIGHT_WSTICK_DOWN)
 			{
 				speed = (u8)(right_wstick_mag[i] * 10.00);
-				if (wStickPointer_y[i] < 500) wStickPointer_y[i] = wStickPointer_y[i]+speed;
+				if (wStickPointer_y[i] < (m_vid.height() + (m_cursor1.height()/2))) wStickPointer_y[i] = wStickPointer_y[i]+speed;
 				pointerhidedelay[i] = 100;
 				m_shown_pointer = (i+1)*10;
 			}
 			if (RIGHT_WSTICK_RIGHT)
 			{
 				speed = (u8)(right_wstick_mag[i] * 10.00);
-				if (wStickPointer_x[i] < 670) wStickPointer_x[i] = wStickPointer_x[i]+speed;
+				if (wStickPointer_x[i] < (m_vid.width() + (m_cursor1.width()/2))) wStickPointer_x[i] = wStickPointer_x[i]+speed;
 				pointerhidedelay[i] = 100;
 				m_shown_pointer = (i+1)*10;
 			}
 			if (RIGHT_WSTICK_UP)
 			{
 				speed = (u8)(right_wstick_mag[i] * 10.00);
-				if (wStickPointer_y[i] > 45) wStickPointer_y[i] = wStickPointer_y[i]-speed;
+				if (wStickPointer_y[i] > m_cursor1.height()/2) wStickPointer_y[i] = wStickPointer_y[i]-speed;
 				pointerhidedelay[i] = 100;
 				m_shown_pointer = (i+1)*10;
 			}
 		}
 		else
-			if (pointerhidedelay[i] > 0) 
+			if (pointerhidedelay[i] > 0 && !wii_btnsHeld && !wii_btnsPressed) 
 				pointerhidedelay[i]--;
-			else if (pointerhidedelay[i] < 0)
-				pointerhidedelay[i] = 0;
 			else
 			{
-				pointerhidedelay[i] = 0;
-				wStickPointer_x[i] = 320;
-				wStickPointer_y[i] = 240;
+				if (!wii_btnsHeld && !wii_btnsPressed)
+				{
+					pointerhidedelay[i] = 0;
+					wStickPointer_x[i] = (m_vid.width() + m_cursor1.width())/2;
+					wStickPointer_y[i] = (m_vid.height() + m_cursor1.height())/2;
+				}
+				else
+					pointerhidedelay[i] = 100;
 			}
     }
 	if (pointerhidedelay[0] == 0 && pointerhidedelay[1] == 0 && pointerhidedelay[2] == 0 && pointerhidedelay[3] == 0) 
-		m_shown_pointer = -128;
+		m_shown_pointer = 90;
 }
 
 bool CMenu::WPadIR_Valid(int i)

@@ -454,13 +454,13 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainLblUser[5]);
 		}
 		//
-		if ((m_shown_pointer == 1 && WPadIR_Valid(0)) || m_shown_pointer == 10)
+		if ((m_shown_pointer == 1 && WPadIR_Valid(0)) || (m_shown_pointer == 10 && !WPadIR_Valid(0)))
 			m_cf.mouse(m_vid, 0, m_cursor1.x(), m_cursor1.y());
-		else if ((m_shown_pointer == 2 && WPadIR_Valid(1)) || m_shown_pointer == 20)
+		else if ((m_shown_pointer == 2 && WPadIR_Valid(1)) || (m_shown_pointer == 20 && !WPadIR_Valid(1)))
 			m_cf.mouse(m_vid, 1, m_cursor2.x(), m_cursor2.y());
-		else if ((m_shown_pointer == 3 && WPadIR_Valid(2)) || m_shown_pointer == 30)
+		else if ((m_shown_pointer == 3 && WPadIR_Valid(2)) || (m_shown_pointer == 30 && !WPadIR_Valid(2)))
 			m_cf.mouse(m_vid, 2, m_cursor3.x(), m_cursor3.y());
-		else if ((m_shown_pointer == 4 && WPadIR_Valid(3)) || m_shown_pointer == 40)
+		else if ((m_shown_pointer == 4 && WPadIR_Valid(3)) || (m_shown_pointer == 40 && !WPadIR_Valid(3)))
 			m_cf.mouse(m_vid, 3, m_cursor4.x(), m_cursor4.y());	
 		else
 			m_cf.mouse(m_vid, 0, -1, -1);

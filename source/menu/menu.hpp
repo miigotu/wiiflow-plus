@@ -401,27 +401,27 @@ private:
 	
 	WPADData *wd[4];
 	void RightStick();
-	int pointerhidedelay[4];
-	int wStickPointer_x[4];
-	int wStickPointer_y[4];
-	int pStickPointer_x[4];
-	int pStickPointer_y[4];
+	u8 pointerhidedelay[4];
+	u16 wStickPointer_x[4];
+	u16 wStickPointer_y[4];
+	u16 pStickPointer_x[4];
+	u16 pStickPointer_y[4];
 	u32 wii_repeat;	
 	u32 gc_repeat;	
 	
-	u32 m_wpadLeftDelay;
-	u32 m_wpadDownDelay;
-	u32 m_wpadRightDelay;
-	u32 m_wpadUpDelay;
+	u8 m_wpadLeftDelay;
+	u8 m_wpadDownDelay;
+	u8 m_wpadRightDelay;
+	u8 m_wpadUpDelay;
 	
-	u32 m_padLeftDelay;
-	u32 m_padDownDelay;
-	u32 m_padRightDelay;
-	u32 m_padUpDelay;
+	u8 m_padLeftDelay;
+	u8 m_padDownDelay;
+	u8 m_padRightDelay;
+	u8 m_padUpDelay;
 	
 	u32 buttonHeld;
-	int repeatButton;
-	int m_shown_pointer;
+	u8 repeatButton;
+	s8 m_shown_pointer;
 	
 	u32 wii_btnsPressed;
 	u32 wii_btnsHeld;

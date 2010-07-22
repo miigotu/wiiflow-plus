@@ -166,10 +166,7 @@ void CMenu::_game(bool launch)
 		u64 chantitle = m_cf.getChanTitle();
 		_mainLoopCommon(true);
 		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
-		{
-			_stopBnrSound();
 			break;
-		}
 		else if (BTN_MINUS_PRESSED)
 		{
 			string videoPath = sfmt("%s/%.3s.thp", m_videoDir.c_str(), id.c_str());
