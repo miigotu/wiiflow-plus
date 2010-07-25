@@ -63,22 +63,22 @@
 #define LEFT_STICK_DOWN ((LEFT_STICK_ANG_DOWN && left_stick_mag[wmote] > 0.15) || PAD_StickY(wmote) < -20)
 #define LEFT_STICK_LEFT ((LEFT_STICK_ANG_LEFT && left_stick_mag[wmote] > 0.15) || PAD_StickX(wmote) < -20)
 
-#define LEFT_STICK_ANG_UP ((left_stick_angle[wmote] >= 315 && left_stick_angle[wmote] <= 360) \
-		|| (left_stick_angle[wmote] >= 0 && left_stick_angle[wmote] < 45))
-#define LEFT_STICK_ANG_RIGHT (left_stick_angle[wmote] >= 45 && left_stick_angle[wmote] < 135)
-#define LEFT_STICK_ANG_DOWN (left_stick_angle[wmote] >= 135 && left_stick_angle[wmote] < 225)
-#define LEFT_STICK_ANG_LEFT (left_stick_angle[wmote] >= 225 && left_stick_angle[wmote] < 315)
+#define LEFT_STICK_ANG_UP ((left_stick_angle[wmote] >= 300 && left_stick_angle[wmote] <= 360) \
+		|| (left_stick_angle[wmote] >= 0 && left_stick_angle[wmote] <= 60))
+#define LEFT_STICK_ANG_RIGHT (left_stick_angle[wmote] >= 30 && left_stick_angle[wmote] <= 150)
+#define LEFT_STICK_ANG_DOWN (left_stick_angle[wmote] >= 120 && left_stick_angle[wmote] <= 240)
+#define LEFT_STICK_ANG_LEFT (left_stick_angle[wmote] >= 210 && left_stick_angle[wmote] <= 330)
 
 #define RIGHT_STICK_UP ((RIGHT_STICK_ANG_UP && right_stick_mag[wmote] > 0.15) || PAD_SubStickY(wmote) > 20)
 #define RIGHT_STICK_RIGHT ((RIGHT_STICK_ANG_RIGHT && right_stick_mag[wmote] > 0.15) || PAD_SubStickX(wmote) > 20)
 #define RIGHT_STICK_DOWN ((RIGHT_STICK_ANG_DOWN && right_stick_mag[wmote] > 0.15) || PAD_SubStickY(wmote) < -20)
 #define RIGHT_STICK_LEFT ((RIGHT_STICK_ANG_LEFT && right_stick_mag[wmote] > 0.15) || PAD_SubStickX(wmote) < -20)
 
-#define RIGHT_STICK_ANG_UP ((right_stick_angle[wmote] >= 315 && right_stick_angle[wmote] <= 360) \
-		|| (right_stick_angle[wmote] >= 0 && right_stick_angle[wmote] < 45))
-#define RIGHT_STICK_ANG_RIGHT (right_stick_angle[wmote] >= 45 && right_stick_angle[wmote] < 135)
-#define RIGHT_STICK_ANG_DOWN (right_stick_angle[wmote] >= 135 && right_stick_angle[wmote] < 225)
-#define RIGHT_STICK_ANG_LEFT (right_stick_angle[wmote] >= 225 && right_stick_angle[wmote] < 315)
+#define RIGHT_STICK_ANG_UP ((right_stick_angle[wmote] >= 300 && right_stick_angle[wmote] <= 360) \
+		|| (right_stick_angle[wmote] >= 0 && right_stick_angle[wmote] <= 60))
+#define RIGHT_STICK_ANG_RIGHT (right_stick_angle[wmote] >= 30 && right_stick_angle[wmote] <= 150)
+#define RIGHT_STICK_ANG_DOWN (right_stick_angle[wmote] >= 120 && right_stick_angle[wmote] <= 240)
+#define RIGHT_STICK_ANG_LEFT (right_stick_angle[wmote] >= 210 && right_stick_angle[wmote] <= 330)
 
 /*
 //Button values reference//

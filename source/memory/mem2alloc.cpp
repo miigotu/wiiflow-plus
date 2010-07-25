@@ -120,6 +120,11 @@ void CMEM2Alloc::release(void *p)
 	LockMutex lock(m_mutex);
 	SBlock *i = (SBlock *)p - 1;
 	i->f = true;
+    // If there are no other blocks following yet,
+    // set the remaining size to free size. - Dimok
+	if(i->next == 0)
+        i->s = m_endAddress - i - 1;
+
 	// Merge with previous block
 	if (i->prev != 0 && i->prev->f)
 	{
@@ -199,4 +204,29 @@ void *CMEM2Alloc::reallocate(void *p, unsigned int s)
 	memcpy(n, p, i->s * sizeof (SBlock));
 	release(p);
 	return n;
+}
+
+unsigned int CMEM2Alloc::FreeSize()
+{
+    LockMutex lock(m_mutex);
+
+    if (m_first == 0)
+        return (const char *) m_endAddress - (const char *) m_baseAddress;
+
+	SBlock *i;
+    unsigned int size = 0;
+
+	for(i = m_first; i != 0; i = i->next)
+	{
+		if(i->f && i->next != 0)
+            size += i->s;
+
+        else if(i->f && i->next == 0)
+            size += m_endAddress - i - 1;
+
+        else if(!i->f && i->next == 0)
+            size += m_endAddress - i - i->s - 1;
+    }
+
+    return size*sizeof(SBlock);
 }

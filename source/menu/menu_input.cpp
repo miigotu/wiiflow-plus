@@ -47,7 +47,7 @@ void CMenu::ScanInput()
 	ButtonsPressed();
 	ButtonsHeld();
 	LeftStick();
-	
+
 	wii_repeat = wii_btnRepeat();
 	gc_repeat = gc_btnRepeat();
 	for(int wmote=0;wmote<4;wmote++)
@@ -60,15 +60,18 @@ void CMenu::ScanInput()
 		switch (wd[wmote]->exp.type)
 		{
 			case WPAD_EXP_NUNCHUK:
+				right_stick_mag[wmote] = wd[wmote]->exp.nunchuk.js.mag;
+				right_stick_angle[wmote] = wd[wmote]->exp.nunchuk.js.ang;
+				break;
 			case WPAD_EXP_GUITARHERO3:
-					right_stick_mag[wmote] = wd[wmote]->exp.nunchuk.js.mag;
-					right_stick_angle[wmote] = wd[wmote]->exp.nunchuk.js.ang;
+				left_stick_mag[wmote] = wd[wmote]->exp.nunchuk.js.mag;
+				left_stick_angle[wmote] = wd[wmote]->exp.nunchuk.js.ang;
 				break;
 			case WPAD_EXP_CLASSIC:
-					left_stick_mag[wmote] = wd[wmote]->exp.classic.ljs.mag;
-					left_stick_angle[wmote] = wd[wmote]->exp.classic.ljs.ang;
-					right_stick_mag[wmote] = wd[wmote]->exp.classic.rjs.mag;
-					right_stick_angle[wmote] = wd[wmote]->exp.classic.rjs.ang;
+				left_stick_mag[wmote] = wd[wmote]->exp.classic.ljs.mag;
+				left_stick_angle[wmote] = wd[wmote]->exp.classic.ljs.ang;
+				right_stick_mag[wmote] = wd[wmote]->exp.classic.rjs.mag;
+				right_stick_angle[wmote] = wd[wmote]->exp.classic.rjs.ang;
 				break;
 			default:
 				break;
@@ -162,7 +165,7 @@ void CMenu::LeftStick()
 				speed = (u8)(left_stick_mag[i] * 10.00);
 				pSpeed = (u8)abs(PAD_StickX(wmote))/10;
 				if (stickPointer_x[i] > m_cursor1.width()/2) stickPointer_x[i] = stickPointer_x[i]-speed-pSpeed;
-				pointerhidedelay[i] = 100;
+				pointerhidedelay[i] = 150;
 				m_shown_pointer = (i+1)*10;
 			}
 			if (LEFT_STICK_DOWN)
@@ -170,7 +173,7 @@ void CMenu::LeftStick()
 				speed = (u8)(left_stick_mag[i] * 10.00);
 				pSpeed = (u8)abs(PAD_StickY(wmote))/10;
 				if (stickPointer_y[i] < (m_vid.height() + (m_cursor1.height()/2))) stickPointer_y[i] = stickPointer_y[i]+speed+pSpeed;
-				pointerhidedelay[i] = 100;
+				pointerhidedelay[i] = 150;
 				m_shown_pointer = (i+1)*10;
 			}
 			if (LEFT_STICK_RIGHT)
@@ -178,7 +181,7 @@ void CMenu::LeftStick()
 				speed = (u8)(left_stick_mag[i] * 10.00);
 				pSpeed = (u8)abs(PAD_StickX(wmote))/10;
 				if (stickPointer_x[i] < (m_vid.width() + (m_cursor1.width()/2))) stickPointer_x[i] = stickPointer_x[i]+speed+pSpeed;
-				pointerhidedelay[i] = 100;
+				pointerhidedelay[i] = 150;
 				m_shown_pointer = (i+1)*10;
 			}
 			if (LEFT_STICK_UP)
@@ -186,7 +189,7 @@ void CMenu::LeftStick()
 				speed = (u8)(left_stick_mag[i] * 10.00);
 				pSpeed = (u8)abs(PAD_StickY(wmote))/10;
 				if (stickPointer_y[i] > m_cursor1.height()/2) stickPointer_y[i] = stickPointer_y[i]-speed-pSpeed;
-				pointerhidedelay[i] = 100;
+				pointerhidedelay[i] = 150;
 				m_shown_pointer = (i+1)*10;
 			}
 		}
@@ -202,7 +205,7 @@ void CMenu::LeftStick()
 					stickPointer_y[i] = (m_vid.height() + m_cursor1.height())/2;
 				}
 				else
-					if (pointerhidedelay[i] > 0) pointerhidedelay[i] = 100;
+					if (pointerhidedelay[i] > 0) pointerhidedelay[i] = 150;
 			}
     }
 	if (pointerhidedelay[0] == 0 && pointerhidedelay[1] == 0 && pointerhidedelay[2] == 0 && pointerhidedelay[3] == 0) 

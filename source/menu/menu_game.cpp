@@ -166,7 +166,10 @@ void CMenu::_game(bool launch)
 		u64 chantitle = m_cf.getChanTitle();
 		_mainLoopCommon(true);
 		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
+		{
+			_stopBnrSound();
 			break;
+		}
 		else if (BTN_MINUS_PRESSED)
 		{
 			string videoPath = sfmt("%s/%.3s.thp", m_videoDir.c_str(), id.c_str());
@@ -281,29 +284,28 @@ void CMenu::_game(bool launch)
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
+			if (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
 			{
 				_stopBnrSound();
 				m_cf.right();
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN)
+			if (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN)
 			{
 				_stopBnrSound();
 				m_cf.down();
 				_showGame();
 				_playGameSound();
 			}
-			else if (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
+			if (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
 			{
 				_stopBnrSound();
 				m_cf.left();
 				_showGame();
 				_playGameSound();
 			}
-			// 
-			else if (WPadIR_ANY())
+			if (WPadIR_ANY() || pointerhidedelay[0] > 0 || pointerhidedelay[1] > 0 || pointerhidedelay[2] > 0 || pointerhidedelay[3] > 0)
 			{
 				if (m_current_view == COVERFLOW_USB)
 				{
