@@ -906,7 +906,10 @@ void CMenu::_initCF(void)
 			}
 			int playcount = m_cfg.getInt(id, "playcount", 0);
 			unsigned int lastPlayed = m_cfg.getUInt(id, "lastplayed", 0);
-			m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
+			if (m_current_view == COVERFLOW_CHANNEL && chantitle == 281482209522966) 
+				m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/JODI.png", m_picDir.c_str()).c_str(), sfmt("%s/JODI.png", m_boxPicDir.c_str()).c_str(), playcount, lastPlayed);
+			else
+				m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
 		}
 	}
 	m_cf.setBoxMode(m_cfg.getBool(" GENERAL", "box_mode", true));
@@ -1175,7 +1178,7 @@ bool CMenu::_loadChannelList(void)
 		Channel *chan = m_channels.GetChannel(i);
 		
 		if (chan->id == NULL) continue; // Skip invalid channels
-		
+
 		memcpy(&b[i].id, chan->id, 4);
 		memcpy(&b[i].title, chan->name, sizeof(b->title)); // IMET header specifies max name length 42 (wchar, so * 4!), so we copy only the first 64 bytes here...
 		b[i].chantitle = chan->title;
