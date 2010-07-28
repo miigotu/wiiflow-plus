@@ -186,9 +186,6 @@ void CMenu::_CheatSettings()
 					m_btnMgr.setText(m_cheatLblItem[1], sfmt(GECKOURL, m_cf.getId().c_str()));
 					m_btnMgr.show(m_cheatLblItem[1]);
 				}
-				buffer.release();
-				cheatfile.data = NULL;
-				file = NULL;
 			}
 		}
 	}

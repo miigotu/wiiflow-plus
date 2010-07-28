@@ -690,7 +690,6 @@ private:
 	void _resumeMusic(void);
 	void _loopMusic(void);
 	void _stopSounds(void);
-	void _stopBnrSound(void);
 	// 
 	void _playGameSound(void);
 	void _loadGameSound(const u64 chantitle, const std::string &id);

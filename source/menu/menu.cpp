@@ -127,10 +127,13 @@ void CMenu::init(bool fromHBC)
 	}
 	else
 	{
-		wfdrv = drive = Fat_USBAvailable() ? "usb" : "sd";
+		drive = Fat_USBAvailable() ? "usb" : "sd";
+		wfdrv = drive;
 		if (!m_cfg.load(sfmt("%s:/%s/" CFG_FILENAME, drive, appdir2.c_str()).c_str()))
 			m_cfg.save();
 	}
+	//Make sure its loaded!
+	m_cfg.load(sfmt("%s:/%s/" CFG_FILENAME, wfdrv, appdir2.c_str()).c_str());
  	m_dataDir = sfmt("%s:/%s", wfdrv, appdir2.c_str());
 	m_dol = sfmt("%s:/%s/boot.dol", wfdrv, appdir2.c_str());
 	m_ver = sfmt("%s:/%s/versions", wfdrv, appdir2.c_str());
@@ -1378,12 +1381,5 @@ void CMenu::_stopSounds(void)
 	_stopMusic();
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();
-	_stopBnrSound();
-}
-
-void CMenu::_stopBnrSound(void)
-{
 	m_gameSound.stop();
-	m_gameSound.data.release();
-	m_gameSoundTmp.data.release();
 }

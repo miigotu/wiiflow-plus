@@ -284,7 +284,6 @@ static bool checkPNGFile(const char *filename)
 			fread(ptrPng.get(), 1, fileSize, file);
 	}
 	fclose(file);
-	file = NULL;
 	return !ptrPng ? false : checkPNGBuf(ptrPng.get());
 }
 
@@ -302,7 +301,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 	float dlWeight = 1.f - listWeight;
 	int count = 0;
 	int countFlat = 0;
-	FILE *file;
+	FILE *file = NULL;
 	char ip[16];
 	string url;
 	string path;
@@ -465,16 +464,13 @@ int CMenu::_coverDownloader(bool missingOnly)
 	else
 		_setThrdMsg(wfmt(_fmt("dlmsg9", L"%i/%i files downloaded. %i are front covers only."), count + countFlat, n, countFlat), 1.f);
 	LWP_MutexUnlock(m_mutex);
-	file = NULL;
-	png.data = NULL;
-	buffer.release();
 	m_thrdWorking = false;
 	return 0;
 }
 
 void CMenu::_download(string gameId)
 {
-	lwp_t thread = 0;
+	lwp_t thread = LWP_THREAD_NULL;
 	int msg = 0;
 	wstringEx prevMsg;
 
@@ -570,6 +566,11 @@ void CMenu::_download(string gameId)
 		if (m_thrdStop && !m_thrdWorking)
 			break;
 	}
+	if (thread != LWP_THREAD_NULL)
+	{
+		LWP_JoinThread(thread, NULL);
+		thread = LWP_THREAD_NULL;
+	}
 	_hideDownload();
 }
 
@@ -626,13 +627,13 @@ int CMenu::_versionTxtDownloaderInit(CMenu *m) //Handler to download versions tx
 
 int CMenu::_versionTxtDownloader() // code to download new version txt file
 {
-	block txt;
+	block vtxt;
 	char ip[16];
 	wstringEx ws;
 	SmartBuf buffer;
 	FILE *file = NULL;
 	u32 bufferSize = 1 * 0x001000;	// Maximum download size 4kb
-	buffer = smartAnyAlloc(bufferSize);
+	buffer = smartCoverAlloc(bufferSize);
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
@@ -666,8 +667,8 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 		m_thrdStep = 0.2f;
 		m_thrdStepLen = 0.9f - 0.2f;
 		gprintf("TXT update URL: %s\n\n", m_cfg.getString(" GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str());
-		txt = downloadfile(buffer.get(), bufferSize, m_cfg.getString(" GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str(),CMenu::_downloadProgress, this);
-		if (txt.data == 0 || txt.size < 19)
+		vtxt = downloadfile(buffer.get(), bufferSize, m_cfg.getString(" GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str(),CMenu::_downloadProgress, this);
+		if (vtxt.data == 0 || vtxt.size < 19)
 		{
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg20", L"No version information found."), 1.f); // TODO: Check for 16
@@ -684,7 +685,7 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 			sleep(1);
 			if (file != NULL)
 			{
-				fwrite(txt.data, 1, txt.size, file);
+				fwrite(vtxt.data, 1, vtxt.size, file);
 				fclose(file);
 				// version file valid, check for version with SVN_REV
 				int svnrev = atoi(SVN_REV);
@@ -716,9 +717,6 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 
 		}
 	}
-	file = NULL;
-	txt.data = NULL;
-	buffer.release();
 	m_thrdWorking = false;
 	return 0;
 }
@@ -732,7 +730,7 @@ int CMenu::_versionDownloaderInit(CMenu *m) //Handler to download new dol
 
 int CMenu::_versionDownloader() // code to download new dol
 {
-	block txt;
+	block newdol;
 	char ip[16];
 	wstringEx ws;
 	SmartBuf buffer;
@@ -787,8 +785,8 @@ int CMenu::_versionDownloader() // code to download new dol
 		m_thrdStep = 0.2f;
 		m_thrdStepLen = 0.9f - 0.2f;
 		gprintf("Update URL: %s\n", m_update_url);
-		txt = downloadfile(buffer.get(), bufferSize, m_update_url, CMenu::_downloadProgress, this);
-		if (txt.data == 0 || txt.size < 4000)
+		newdol = downloadfile(buffer.get(), bufferSize, m_update_url, CMenu::_downloadProgress, this);
+		if (newdol.data == 0 || newdol.size < 4000)
 		{
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
@@ -810,12 +808,11 @@ int CMenu::_versionDownloader() // code to download new dol
 			sleep(1);
 			if (file != NULL)
 			{
-				fwrite(txt.data, 1, txt.size, file);
+				fwrite(newdol.data, 1, newdol.size, file);
 				fclose(file);
 				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg20", L"WiiFlow will now exit to allow the update to take effect."), 1.f);
 				LWP_MutexUnlock(m_mutex);
-				file = NULL;
 				sleep(3);
 				exit(0);
 			}
@@ -828,9 +825,6 @@ int CMenu::_versionDownloader() // code to download new dol
 			}
 		}
 	}
-	file = NULL;
-	txt.data = NULL;
-	buffer.release();
 	m_thrdWorking = false;
 	return 0;
 }

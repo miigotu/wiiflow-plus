@@ -167,7 +167,7 @@ void CMenu::_game(bool launch)
 		_mainLoopCommon(true);
 		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
 		{
-			_stopBnrSound();
+			m_gameSound.stop();
 			break;
 		}
 		else if (BTN_MINUS_PRESSED)
@@ -239,7 +239,7 @@ void CMenu::_game(bool launch)
 				m_cfg.setBool(id, "adult_only", !m_cfg.getBool(id, "adult_only", false));
 			else if (m_btnMgr.selected() == m_gameBtnBack)
 			{
-				_stopBnrSound();
+				m_gameSound.stop();
 				break;
 			}
 			else if (m_btnMgr.selected() == m_gameBtnSettings)
@@ -249,7 +249,7 @@ void CMenu::_game(bool launch)
 				_gameSettings();
 				_showGame();
 			}
-			else if (launch || m_btnMgr.selected() == m_gameBtnPlay/* || (!WPadIR_Valid(0) && !WPadIR_Valid(1) && !WPadIR_Valid(2) && !WPadIR_Valid(3) && m_btnMgr.selected() == (u32)-1)*/)
+			else if (launch || m_btnMgr.selected() == m_gameBtnPlay || (!WPadIR_Valid(0) && !WPadIR_Valid(1) && !WPadIR_Valid(2) && !WPadIR_Valid(3) && m_btnMgr.selected() == (u32)-1))
 			{
 				_hideGame();
 				m_cf.clear();
@@ -279,30 +279,30 @@ void CMenu::_game(bool launch)
 		{
 			if (BTN_UP_REPEAT || RIGHT_STICK_UP)
 			{
-				_stopBnrSound();
 				m_cf.up();
 				_showGame();
+				m_gameSound.stop();
 				_playGameSound();
 			}
 			if (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
 			{
-				_stopBnrSound();
 				m_cf.right();
 				_showGame();
+				m_gameSound.stop();
 				_playGameSound();
 			}
 			if (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN)
 			{
-				_stopBnrSound();
 				m_cf.down();
 				_showGame();
+				m_gameSound.stop();
 				_playGameSound();
 			}
 			if (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
 			{
-				_stopBnrSound();
 				m_cf.left();
 				_showGame();
+				m_gameSound.stop();
 				_playGameSound();
 			}
 			if (WPadIR_ANY() || pointerhidedelay[0] > 0 || pointerhidedelay[1] > 0 || pointerhidedelay[2] > 0 || pointerhidedelay[3] > 0)

@@ -23,7 +23,7 @@ public:
 void CMenu::_system()
 {
 	int msg = 0,newIOS = mainIOS,newVer = atoi(SVN_REV);
-	lwp_t thread = 0;
+	lwp_t thread = LWP_THREAD_NULL;
 	wstringEx prevMsg;
 
 	SetupInput();
@@ -44,6 +44,12 @@ void CMenu::_system()
 			LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_versionTxtDownloaderInit, (void *)this, 0, 8192, 40);
 		}
 		if (m_showtimer > 0 && !m_thrdWorking)
+		{
+			if (thread != LWP_THREAD_NULL)
+			{
+				LWP_JoinThread(thread, NULL);
+				thread = LWP_THREAD_NULL;
+			}
 			if (--m_showtimer == 0)
 			{
 				m_btnMgr.hide(m_downloadPBar);
@@ -61,6 +67,7 @@ void CMenu::_system()
 				newVer = CMenu::_version[i];
 				_showSystem();
 			}
+		}
 		if ((BTN_HOME_PRESSED || BTN_B_PRESSED) && !m_thrdWorking)
 			break;
 		else if (BTN_UP_PRESSED)
@@ -180,7 +187,11 @@ void CMenu::_system()
 		}
 		if (m_thrdStop && !m_thrdWorking)
 			break;
-
+	}
+	if (thread != LWP_THREAD_NULL)
+	{
+		LWP_JoinThread(thread, NULL);
+		thread = LWP_THREAD_NULL;
 	}
 	_hideSystem();
 }
