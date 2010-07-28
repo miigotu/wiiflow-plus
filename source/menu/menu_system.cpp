@@ -9,7 +9,7 @@
 extern int mainIOS;
 extern int mainIOSRev;
 
-int ios_num = 0,version_num= 0, num_versions = 0, i;
+int ios_num = 0,version_num = 0, num_versions = 0, i;
 int CMenu::_version[9] = {0, atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV)};
 
 class LockMutex
@@ -62,7 +62,7 @@ void CMenu::_system()
 					CMenu::_version[i] = m_version.getInt(fmt("VERSION%i", i-1u), "version", atoi(SVN_REV));
 					//add the changelog info here
 				}
-				if (num_versions !=1) version_num++;
+				if (num_versions > 1 && version_num == 0) version_num = 1;
 				i = min((u32)version_num, ARRAY_SIZE(CMenu::_version) -1u);
 				newVer = CMenu::_version[i];
 				_showSystem();

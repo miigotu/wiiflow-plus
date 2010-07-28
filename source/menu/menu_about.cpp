@@ -21,7 +21,9 @@ void CMenu::_about(void)
 	do
 	{
 		_mainLoopCommon();
-		if ((BTN_HOME_PRESSED || BTN_B_PRESSED) && !(m_thrdWorking && m_thrdStop))
+		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
+			break;
+		if (BTN_A_PRESSED && !(m_thrdWorking && m_thrdStop))
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_aboutBtnSystem) {
@@ -32,7 +34,7 @@ void CMenu::_about(void)
 				_showAbout();
 			}
 		}
-	} while ((wii_btnsPressed & (WBTN_HOME | WBTN_B)) == 0);
+	} while (true);
 	_hideAbout(false);
 }
 
