@@ -87,69 +87,42 @@ void CMenu::init(bool fromHBC)
 	const char *defaultLanguage;
 	string appdir = APPDATA_DIR;
 	string appdir2 = APPDATA_DIR2;
+	struct stat bootdol;
 	
 	m_noHBC = !fromHBC;
 	m_waitMessage.fromPNG(wait_png);
 	// Data path
 	if (Fat_SDAvailable() && Fat_USBAvailable())
 	{
-		ifstream filestr;
-		filestr.open(sfmt("sd:/%s/boot.dol", appdir2.c_str()).c_str());
-		if (!filestr.fail())
-		{
-			filestr.close();
+		if (stat(sfmt("sd:/%s/boot.dol", appdir2.c_str()).c_str(), &bootdol) == 0)
 			wfdrv = "sd";
-			if (!m_cfg.load(sfmt("sd:/%s/" CFG_FILENAME, appdir2.c_str()).c_str()))
-				m_cfg.save();
-			bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", false);
-			drive = dataOnUSB ? "usb" : "sd";
-		}
-		else
-		{
-			filestr.close();
-			filestr.open(sfmt("usb:/%s/boot.dol", appdir2.c_str()).c_str());
-			if (!filestr.fail())
-			{
-				filestr.close();
-				wfdrv = "usb";
-				if (!m_cfg.load(sfmt("usb:/%s/" CFG_FILENAME, appdir2.c_str()).c_str()))
-					m_cfg.save();
-				bool dataOnUSB = m_cfg.getBool(" GENERAL", "data_on_usb", true);
-				drive = dataOnUSB ? "usb" : "sd";
-			}
-			else
-			{
-				filestr.close(); //This should not be possible unless wiiload w/o wiiflow intalled
-				if (!m_cfg.load(sfmt("sd:/%s/" CFG_FILENAME, appdir2.c_str()).c_str()))	//use sd in case usb is wbfs and nothing was detected.
-					m_cfg.save();
-			}
-		}
+		else if (stat(sfmt("usb:/%s/boot.dol", appdir2.c_str()).c_str(), &bootdol) == 0)
+			wfdrv = "usb";
 	}
 	else
-	{
-		drive = Fat_USBAvailable() ? "usb" : "sd";
-		wfdrv = drive;
-		if (!m_cfg.load(sfmt("%s:/%s/" CFG_FILENAME, drive, appdir2.c_str()).c_str()))
-			m_cfg.save();
-	}
-	//Make sure its loaded!
-	m_cfg.load(sfmt("%s:/%s/" CFG_FILENAME, wfdrv, appdir2.c_str()).c_str());
- 	m_dataDir = sfmt("%s:/%s", wfdrv, appdir2.c_str());
-	m_dol = sfmt("%s:/%s/boot.dol", wfdrv, appdir2.c_str());
-	m_ver = sfmt("%s:/%s/versions", wfdrv, appdir2.c_str());
+		wfdrv = Fat_USBAvailable() ? "usb" : "sd";
+
+	m_appDir = sfmt("%s:/%s", wfdrv, APPDATA_DIR2);
+	m_cfg.load(sfmt("%s/" CFG_FILENAME, m_appDir.c_str()).c_str());
+
+	drive = m_cfg.getBool(" GENERAL", "data_on_usb", strcmp(wfdrv, "usb") == 0) ? "usb" : "sd";
+	m_dataDir = sfmt("%s:/%s", drive, APPDATA_DIR);
+	
+	m_dol = sfmt("%s/boot.dol", m_appDir.c_str());
+	m_ver = sfmt("%s/versions", m_appDir.c_str());
 	//
-	m_picDir = m_cfg.getString(" GENERAL", "dir_flat_covers", sfmt("%s:/%s/covers", drive, appdir.c_str()));
-	m_boxPicDir = m_cfg.getString(" GENERAL", "dir_box_covers", sfmt("%s:/%s/boxcovers", drive, appdir.c_str()));
-	m_cacheDir = m_cfg.getString(" GENERAL", "dir_cache", sfmt("%s:/%s/cache", drive, appdir.c_str()));
-	m_themeDir = m_cfg.getString(" GENERAL", "dir_themes", sfmt("%s:/%s/themes", drive, appdir.c_str()));
-	m_musicDir = m_cfg.getString(" GENERAL", "dir_music", sfmt("%s:/%s/music", drive, appdir.c_str())); 
-	m_txtCheatDir = m_cfg.getString(" GENERAL", "dir_txtcheat", sfmt("%s:/%s/codes", drive, appdir.c_str()));
-	m_cheatDir = m_cfg.getString(" GENERAL", "dir_cheat", sfmt("%s:/%s/codes/gct", drive, appdir.c_str()));
-	m_bcaDir = m_cfg.getString(" GENERAL", "dir_bca", sfmt("%s:/%s/codes/bca", drive, appdir.c_str()));
-	m_wipDir = m_cfg.getString(" GENERAL", "dir_wip", sfmt("%s:/%s/codes/wip", drive, appdir.c_str()));
-	m_altDolDir = m_cfg.getString(" GENERAL", "dir_altdol", sfmt("%s:/%s/codes/alt_dols", drive, appdir.c_str()));
-	m_videoDir = m_cfg.getString(" GENERAL", "dir_trailers", sfmt("%s:/%s/trailers", drive, appdir.c_str()));
-	m_fanartDir = m_cfg.getString(" GENERAL", "dir_fanart", sfmt("%s:/%s/fanart", drive, appdir.c_str()));
+	m_picDir = m_cfg.getString(" GENERAL", "dir_flat_covers", sfmt("%s/covers", m_dataDir.c_str()));
+	m_boxPicDir = m_cfg.getString(" GENERAL", "dir_box_covers", sfmt("%s/boxcovers", m_dataDir.c_str()));
+	m_cacheDir = m_cfg.getString(" GENERAL", "dir_cache", sfmt("%s/cache", m_dataDir.c_str()));
+	m_themeDir = m_cfg.getString(" GENERAL", "dir_themes", sfmt("%s/themes", m_dataDir.c_str()));
+	m_musicDir = m_cfg.getString(" GENERAL", "dir_music", sfmt("%s/music", m_dataDir.c_str())); 
+	m_txtCheatDir = m_cfg.getString(" GENERAL", "dir_txtcheat", sfmt("%s/codes", m_dataDir.c_str()));
+	m_cheatDir = m_cfg.getString(" GENERAL", "dir_cheat", sfmt("%s/codes/gct", m_dataDir.c_str()));
+	m_bcaDir = m_cfg.getString(" GENERAL", "dir_bca", sfmt("%s/codes/bca", m_dataDir.c_str()));
+	m_wipDir = m_cfg.getString(" GENERAL", "dir_wip", sfmt("%s/codes/wip", m_dataDir.c_str()));
+	m_altDolDir = m_cfg.getString(" GENERAL", "dir_altdol", sfmt("%s/codes/alt_dols", m_dataDir.c_str()));
+	m_videoDir = m_cfg.getString(" GENERAL", "dir_trailers", sfmt("%s/trailers", m_dataDir.c_str()));
+	m_fanartDir = m_cfg.getString(" GENERAL", "dir_fanart", sfmt("%s/fanart", m_dataDir.c_str()));
 	m_cf.init();
 	// 
 	struct stat dummy;
@@ -160,6 +133,7 @@ void CMenu::init(bool fromHBC)
 		mkdir(m_boxPicDir.c_str(), 0777);
 		mkdir(m_cacheDir.c_str(), 0777);
 		mkdir(m_themeDir.c_str(), 0777);
+		mkdir(m_musicDir.c_str(), 0777);
 		mkdir(m_txtCheatDir.c_str(), 0777);
 		mkdir(m_cheatDir.c_str(), 0777);
 		mkdir(m_bcaDir.c_str(), 0777);
@@ -167,10 +141,13 @@ void CMenu::init(bool fromHBC)
 		mkdir(m_altDolDir.c_str(), 0777);
 		mkdir(m_videoDir.c_str(), 0777);
 		mkdir(m_fanartDir.c_str(), 0777);
-		mkdir(m_musicDir.c_str(), 0777);
+	}
+	if (stat(sfmt("%s:/", wfdrv).c_str(), &dummy) == 0)
+	{
+		mkdir(m_appDir.c_str(), 0777);
 	}
 	// INI files
-	m_loc.load(sfmt("%s/" LANG_FILENAME, m_dataDir.c_str()).c_str());
+	m_loc.load(sfmt("%s/" LANG_FILENAME, m_appDir.c_str()).c_str());
 	themeName = m_cfg.getString(" GENERAL", "theme", "DEFAULT");
 	m_themeDataDir = sfmt("%s/%s", m_themeDir.c_str(), themeName.c_str());
 	m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), themeName.c_str()).c_str());
@@ -880,7 +857,7 @@ void CMenu::_initCF(void)
 	Config titles;
 	u64 chantitle;
 
-	titles.load(sfmt("%s/titles.ini", m_dataDir.c_str()).c_str());	
+	titles.load(sfmt("%s/titles.ini", m_appDir.c_str()).c_str());	
 	m_cf.clear();
 	m_cf.reserve(m_gameList.size());
 	for (u32 i = 0; i < m_gameList.size(); ++i)
@@ -906,7 +883,7 @@ void CMenu::_initCF(void)
 			}
 			int playcount = m_cfg.getInt(id, "playcount", 0);
 			unsigned int lastPlayed = m_cfg.getUInt(id, "lastplayed", 0);
-			if (m_current_view == COVERFLOW_CHANNEL && chantitle == 281482209522966) 
+			if (m_current_view == COVERFLOW_CHANNEL && chantitle == 281482209522966ULL) 
 				m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/JODI.png", m_picDir.c_str()).c_str(), sfmt("%s/JODI.png", m_boxPicDir.c_str()).c_str(), playcount, lastPlayed);
 			else
 				m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
@@ -1252,7 +1229,7 @@ bool CMenu::_loadGameList(void)
 		return false;
 	}
 #if 0	
-	FILE *file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "hdrdump").c_str(), "wb");
+	FILE *file = fopen(sfmt("%s/%s", m_appDir.c_str(), "hdrdump").c_str(), "wb");
 	fwrite(buffer.get(), 1, len, file);
 	fclose(file);
 #endif

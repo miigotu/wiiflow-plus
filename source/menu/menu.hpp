@@ -72,6 +72,7 @@ private:
 	bool m_alphaSearch;
 	// 
 	std::string m_themeDataDir;
+	std::string m_appDir;
 	std::string m_dataDir;
 	std::string m_picDir;
 	std::string m_boxPicDir;

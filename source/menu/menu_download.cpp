@@ -865,7 +865,7 @@ int CMenu::_titleDownloader(bool missingOnly)
 		LWP_MutexUnlock(m_mutex);
 		return 0;
 	}
-	titles.load(sfmt("%s/titles.ini", m_dataDir.c_str()).c_str());
+	titles.load(sfmt("%s/titles.ini", m_appDir.c_str()).c_str());
 	langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
