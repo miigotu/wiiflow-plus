@@ -77,6 +77,7 @@ CMenu::CMenu(CVideo &vid) :
 	m_bgCrossFade = 0;
 	m_bnrSndVol = 0;
 	m_gameSettingsPage = 0;
+	m_picturenum = 0;
 }
 
 void CMenu::init(bool fromHBC)
@@ -85,8 +86,6 @@ void CMenu::init(bool fromHBC)
 	const char *drive = "sd";
 	const char *wfdrv = "sd";
 	const char *defaultLanguage;
-	string appdir = APPDATA_DIR;
-	string appdir2 = APPDATA_DIR2;
 	struct stat bootdol;
 	
 	m_noHBC = !fromHBC;
@@ -94,19 +93,21 @@ void CMenu::init(bool fromHBC)
 	// Data path
 	if (Fat_SDAvailable() && Fat_USBAvailable())
 	{
-		if (stat(sfmt("sd:/%s/boot.dol", appdir2.c_str()).c_str(), &bootdol) == 0)
+		if (stat(sfmt("sd:/%s/boot.dol", APPDATA_DIR2).c_str(), &bootdol) == 0)
 			wfdrv = "sd";
-		else if (stat(sfmt("usb:/%s/boot.dol", appdir2.c_str()).c_str(), &bootdol) == 0)
+		else if (stat(sfmt("usb:/%s/boot.dol", APPDATA_DIR2).c_str(), &bootdol) == 0)
 			wfdrv = "usb";
 	}
 	else
 		wfdrv = Fat_USBAvailable() ? "usb" : "sd";
 
 	m_appDir = sfmt("%s:/%s", wfdrv, APPDATA_DIR2);
+	//gprintf("Wiiflow boot.dol Location: %s\n", m_appDir.c_str());
 	m_cfg.load(sfmt("%s/" CFG_FILENAME, m_appDir.c_str()).c_str());
 
 	drive = m_cfg.getBool(" GENERAL", "data_on_usb", strcmp(wfdrv, "usb") == 0) ? "usb" : "sd";
 	m_dataDir = sfmt("%s:/%s", drive, APPDATA_DIR);
+	//gprintf("Data Directory: %s\n", m_dataDir.c_str());
 	
 	m_dol = sfmt("%s/boot.dol", m_appDir.c_str());
 	m_ver = sfmt("%s/versions", m_appDir.c_str());
@@ -228,7 +229,7 @@ void CMenu::init(bool fromHBC)
 	m_cf.setSoundVolume(m_cfg.getInt(" GENERAL", "sound_volume_coverflow", 255));
 	m_btnMgr.setSoundVolume(m_cfg.getInt(" GENERAL", "sound_volume_gui", 255));
 	m_bnrSndVol = m_cfg.getInt(" GENERAL", "sound_volume_bnr", 255);
-	m_alphaSearch = m_cfg.getBool(" GENERAL", "alphabetic_search_on_plus_minus", false);
+	//m_alphaSearch = m_cfg.getBool(" GENERAL", "alphabetic_search_on_plus_minus", false);
 	if (m_cfg.getBool(" GENERAL", "favorites_on_startup", false))
 		m_favorites = m_cfg.getBool(" GENERAL", "favorites", false);
 	if (m_cfg.getBool(" GENERAL", "fbi", false))
@@ -856,8 +857,10 @@ void CMenu::_initCF(void)
 	bool cmpr;
 	Config titles;
 	u64 chantitle;
-
-	titles.load(sfmt("%s/titles.ini", m_appDir.c_str()).c_str());	
+	m_titles_loaded = false;
+	
+	if (titles.load(sfmt("%s/titles.ini", m_appDir.c_str()).c_str()))
+		m_titles_loaded = true;
 	m_cf.clear();
 	m_cf.reserve(m_gameList.size());
 	for (u32 i = 0; i < m_gameList.size(); ++i)
@@ -976,6 +979,9 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		m_cf.startPicLoader();
 	if (!m_video_playing)
 		_loopMusic();
+	//Take Screenshot
+	if ((gc_btnsPressed & PAD_TRIGGER_Z) != 0)
+		m_vid.TakeScreenshot(sfmt("%s/%i.png", m_appDir.c_str(), m_picturenum++).c_str());
 }
 
 void CMenu::_setBg(const STexture &tex, const STexture &lqTex)

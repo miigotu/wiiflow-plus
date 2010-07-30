@@ -618,14 +618,14 @@ void CMenu::_textDownload(void)
 	m_btnMgr.setText(m_downloadLblWiiTDB, _t("dl10", L"Please donate\nto WiiTDB.com"));
 }
 
-int CMenu::_versionTxtDownloaderInit(CMenu *m) //Handler to download versions txt file
+s8 CMenu::_versionTxtDownloaderInit(CMenu *m) //Handler to download versions txt file
 {
 	if (!m->m_thrdWorking)
 		return 0;
 	return m->_versionTxtDownloader();
 }
 
-int CMenu::_versionTxtDownloader() // code to download new version txt file
+s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 {
 	block vtxt;
 	char ip[16];
@@ -721,14 +721,14 @@ int CMenu::_versionTxtDownloader() // code to download new version txt file
 	return 0;
 }
 
-int CMenu::_versionDownloaderInit(CMenu *m) //Handler to download new dol
+s8 CMenu::_versionDownloaderInit(CMenu *m) //Handler to download new dol
 {
 	if (!m->m_thrdWorking)
 		return 0;
 	return m->_versionDownloader();
 }
 
-int CMenu::_versionDownloader() // code to download new dol
+s8 CMenu::_versionDownloader() // code to download new dol
 {
 	block newdol;
 	char ip[16];

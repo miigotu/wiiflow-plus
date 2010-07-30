@@ -126,13 +126,13 @@ int CMenu::main(void)
 		//Normal coverflow movement
 		for(int wmote=0;wmote<4;wmote++)
 		{
-			if (BTN_UP_REPEAT || RIGHT_STICK_UP)
+			if ((BTN_UP_REPEAT || RIGHT_STICK_UP) && (wii_btnsHeld & WBTN_B) == 0)
 				m_cf.up();
-			if (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
+			if ((BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT) && (wii_btnsHeld & WBTN_B) == 0)
 				m_cf.right();
-			if (BTN_DOWN_REPEAT ||  RIGHT_STICK_DOWN)
+			if ((BTN_DOWN_REPEAT ||  RIGHT_STICK_DOWN) && (wii_btnsHeld & WBTN_B) == 0)
 				m_cf.down();
-			if (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
+			if ((BTN_LEFT_REPEAT || RIGHT_STICK_LEFT) && (wii_btnsHeld & WBTN_B) == 0)
 				m_cf.left();
 		}
 		//CF Layout select
@@ -150,34 +150,42 @@ int CMenu::main(void)
 			m_cf.applySettings();
 			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
 		}
-		//Search by Alphabet
-		if ((BTN_RIGHT_PRESSED && BTN_B_HELD) || (BTN_PLUS_PRESSED && m_alphaSearch == ((wii_btnsHeld & WBTN_B) == 0)))
-		{
-			curLetter.resize(1);
-			curLetter[0] = m_cf.nextLetter();
-			m_showtimer = 60;
-			m_btnMgr.setText(m_mainLblLetter, curLetter);
-			m_btnMgr.show(m_mainLblLetter);
-
-		}
-		else if ((BTN_LEFT_PRESSED && BTN_B_HELD) || (BTN_MINUS_PRESSED && m_alphaSearch == ((wii_btnsHeld & WBTN_B) == 0)))
-		{
-			curLetter.resize(1);
-			curLetter[0] = m_cf.prevLetter();
-			m_showtimer = 60;
-			m_btnMgr.setText(m_mainLblLetter, curLetter);
-			m_btnMgr.show(m_mainLblLetter);
-		}
-		//Search by pages
-		else if (BTN_MINUS_PRESSED)
-			m_cf.pageUp();
-		else if (BTN_PLUS_PRESSED)
-			m_cf.pageDown();
-
 		if (BTN_B_HELD)
 		{
+			//Search by Alphabet
+			if (BTN_DOWN_PRESSED)
+			{
+				if (m_cfg.getInt(" GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
+				{
+					m_cf.setSorting((Sorting)SORT_ALPHA);
+					m_cfg.setInt(" GENERAL", "sort", SORT_ALPHA);
+				}
+				curLetter.resize(1);
+				curLetter[0] = m_cf.nextLetter();
+				m_showtimer = 60;
+				m_btnMgr.setText(m_mainLblLetter, curLetter);
+				m_btnMgr.show(m_mainLblLetter);
+			}
+			else if (BTN_UP_PRESSED)
+			{
+				if (m_cfg.getInt(" GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
+				{
+					m_cf.setSorting((Sorting)SORT_ALPHA);
+					m_cfg.setInt(" GENERAL", "sort", SORT_ALPHA);
+				}
+				curLetter.resize(1);
+				curLetter[0] = m_cf.prevLetter();
+				m_showtimer = 60;
+				m_btnMgr.setText(m_mainLblLetter, curLetter);
+				m_btnMgr.show(m_mainLblLetter);
+			}
+			//Search by pages
+			else if (BTN_LEFT_PRESSED)
+				m_cf.pageUp();
+			else if (BTN_RIGHT_PRESSED)
+				m_cf.pageDown();
 			//Sorting Selection
-			if (BTN_DOWN_PRESSED && !m_locked)
+			else if (BTN_PLUS_PRESSED && !m_locked && m_titles_loaded)
 			{
 				u32 sort = 0;
 				sort = m_cfg.getInt(" GENERAL", "sort", 0);
@@ -199,7 +207,7 @@ int CMenu::main(void)
 				m_btnMgr.show(m_mainLblNotice);
 			}
 			//Partition Selection
-			if (BTN_UP_PRESSED && !m_locked)
+			else if (BTN_MINUS_PRESSED && !m_locked)
 			{
 				_hideMain();
 				s32 amountOfPartitions = WBFS_GetPartitionCount();
@@ -218,11 +226,11 @@ int CMenu::main(void)
 				_initCF();
 			}
 		}
-		//Events to Show Categories
 		if (BTN_B_PRESSED)
 		{
 			if (buttonHeld != m_btnMgr.selected())
 				m_btnMgr.click();
+			//Events to Show Categories
 			if (m_btnMgr.selected() == m_mainBtnFavoritesOn || m_btnMgr.selected() == m_mainBtnFavoritesOff)
 			{
 				if (m_current_view == COVERFLOW_USB) // Only supported in game mode (not for channels, since you don't have options for channels yet)
@@ -235,7 +243,7 @@ int CMenu::main(void)
 					_initCF();
 				}
 			}
-			/*
+			/*//Events to Switch off/on nand emu
 			if (m_btnMgr.selected() == m_mainBtnChannel || m_btnMgr.selected() == m_mainBtnUsb)
 			{
 				//switch to nand emu here.

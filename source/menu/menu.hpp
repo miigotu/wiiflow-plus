@@ -59,17 +59,19 @@ private:
 	Config m_version;
 	Channels m_channels;
 	SmartBuf m_music;
-	int m_aa;
+	u8 m_aa;
 	bool m_noHBC;
 	std::string m_curLanguage;
 	bool m_locked;
+	bool m_titles_loaded;
 	bool m_favorites;
-	int m_showtimer;
+	s16 m_showtimer;
+	u8 m_picturenum;
 	std::string m_curGameId;
 	std::string m_curChanId;
 	STexture m_waitMessage;
-	u32 m_numCFVersions;
-	bool m_alphaSearch;
+	u8 m_numCFVersions;
+	//bool m_alphaSearch;
 	// 
 	std::string m_themeDataDir;
 	std::string m_appDir;
@@ -202,8 +204,8 @@ private:
 	u32 m_config4BtnHome;
 	u32 m_config4LblSaveFavMode;
 	u32 m_config4BtnSaveFavMode;
-	u32 m_config4LblSearchMode;
-	u32 m_config4BtnSearchMode;
+	//u32 m_config4LblSearchMode;
+	//u32 m_config4BtnSearchMode;
 	u32 m_config4LblUser[4];
 	u32 m_config5LblPartitionName;
 	u32 m_config5LblPartition;
@@ -243,10 +245,10 @@ private:
 	u32 m_downloadLblWiiTDB;
 	u32 m_downloadLblUser[4];
 	u32 m_downloadBtnVersion;
-	static int _versionDownloaderInit(CMenu *m);
-	static int _versionTxtDownloaderInit(CMenu *m);
-	int _versionDownloader();
-	int _versionTxtDownloader();
+	static s8 _versionDownloaderInit(CMenu *m);
+	static s8 _versionTxtDownloaderInit(CMenu *m);
+	s8 _versionDownloader();
+	s8 _versionTxtDownloader();
 //Game menu
 	u32 m_gameLblInfo;
 	u32 m_gameBtnFavoriteOn;
@@ -390,8 +392,8 @@ private:
 // Category menu
 	u32 m_categoryBtn[12];
 	u32 m_categoryBtnBack;
-	int m_max_categories;
-	int m_category;
+	u8 m_max_categories;
+	u8 m_category;
 // Zones
 	SZone m_mainPrevZone;
 	SZone m_mainNextZone;

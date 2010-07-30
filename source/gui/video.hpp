@@ -60,6 +60,7 @@ public:
 	void renderStencil(void);
 	int stencilVal(int x, int y);
 	void waitMessage(const STexture &tex);
+	s32 TakeScreenshot(const char *);
 	void shiftViewPort(float x, float y);
 private:
 	GXRModeObj *m_rmode;
