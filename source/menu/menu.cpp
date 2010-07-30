@@ -12,10 +12,10 @@
 #include <fstream>
 #include <dirent.h>
 #include <mp3player.h>
+#include <time.h>
 
 #include "gecko.h"
 #include "channels.h"
-
 // Sounds
 extern const u8 click_wav[];
 extern const u32 click_wav_size;
@@ -77,7 +77,6 @@ CMenu::CMenu(CVideo &vid) :
 	m_bgCrossFade = 0;
 	m_bnrSndVol = 0;
 	m_gameSettingsPage = 0;
-	m_picturenum = 0;
 }
 
 void CMenu::init(bool fromHBC)
@@ -124,6 +123,7 @@ void CMenu::init(bool fromHBC)
 	m_altDolDir = m_cfg.getString(" GENERAL", "dir_altdol", sfmt("%s/codes/alt_dols", m_dataDir.c_str()));
 	m_videoDir = m_cfg.getString(" GENERAL", "dir_trailers", sfmt("%s/trailers", m_dataDir.c_str()));
 	m_fanartDir = m_cfg.getString(" GENERAL", "dir_fanart", sfmt("%s/fanart", m_dataDir.c_str()));
+	m_screenshotDir = m_cfg.getString(" GENERAL", "dir_screenshot", sfmt("%s/screenshots", m_dataDir.c_str()));
 	m_cf.init();
 	// 
 	struct stat dummy;
@@ -142,11 +142,11 @@ void CMenu::init(bool fromHBC)
 		mkdir(m_altDolDir.c_str(), 0777);
 		mkdir(m_videoDir.c_str(), 0777);
 		mkdir(m_fanartDir.c_str(), 0777);
+		mkdir(m_screenshotDir.c_str(), 0777);
 	}
 	if (stat(sfmt("%s:/", wfdrv).c_str(), &dummy) == 0)
-	{
 		mkdir(m_appDir.c_str(), 0777);
-	}
+
 	// INI files
 	m_loc.load(sfmt("%s/" LANG_FILENAME, m_appDir.c_str()).c_str());
 	themeName = m_cfg.getString(" GENERAL", "theme", "DEFAULT");
@@ -981,7 +981,17 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		_loopMusic();
 	//Take Screenshot
 	if ((gc_btnsPressed & PAD_TRIGGER_Z) != 0)
-		m_vid.TakeScreenshot(sfmt("%s/%i.png", m_appDir.c_str(), m_picturenum++).c_str());
+	{
+		time_t rawtime;
+		struct tm * timeinfo;
+		char buffer[80];
+
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+		strftime(buffer,80,"%b-%d-20%y-%Hh%Mm%Ss.png",timeinfo);
+		gprintf("Screenshot taken and saved to: %s/%s\n", m_screenshotDir.c_str(), buffer);
+		m_vid.TakeScreenshot(sfmt("%s/%s", m_screenshotDir.c_str(), buffer).c_str());
+	}
 }
 
 void CMenu::_setBg(const STexture &tex, const STexture &lqTex)

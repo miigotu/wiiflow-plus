@@ -67,7 +67,7 @@ void CMenu::_showMain(void)
 	m_btnMgr.show(m_mainBtnInfo);
 	m_btnMgr.show(m_mainBtnQuit);
 
-	if (/*m_channels.CanIdentify() && */m_loaded_ios_base !=57)
+	if (/*m_channels.CanIdentify() && */m_loaded_ios_base !=57 || m_gameList.empty())
 	{
 		if (m_current_view == COVERFLOW_USB)
 			m_btnMgr.show(m_mainBtnChannel);
@@ -427,7 +427,7 @@ int CMenu::main(void)
 			m_btnMgr.show(m_mainLblUser[2]);
 			m_btnMgr.show(m_mainLblUser[3]);
 		}
-		if (!m_gameList.empty() && m_show_zone_main2)
+		if (m_gameList.empty() || m_show_zone_main2)
 		{
 			if (!hideChannels)
 			{
@@ -445,12 +445,12 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainLblUser[3]);
 		}
 		showDVD = (disc_check & 0x2);
-		if (showDVD && !m_gameList.empty() && m_show_zone_main3)
+		if (showDVD && (m_gameList.empty() || m_show_zone_main3))
 		{
 			m_btnMgr.show(m_mainLblUser[4]);
 			m_btnMgr.show(m_mainLblUser[5]);
 		}
-		if (!m_gameList.empty() && m_show_zone_main3)
+		if (m_gameList.empty() || m_show_zone_main3)
 		{
 			if (showDVD)
 				m_btnMgr.show(m_mainBtnDVD);
@@ -547,8 +547,8 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainBtnUsb = _addPicButton(theme, "MAIN/USB_BTN", texUsb, texUsbs, 520, 412, 48, 48);
 	m_mainBtnNext = _addPicButton(theme, "MAIN/NEXT_BTN", texNext, texNextS, 540, 146, 80, 80);
 	m_mainBtnPrev = _addPicButton(theme, "MAIN/PREV_BTN", texPrev, texPrevS, 20, 146, 80, 80);
-	m_mainBtnInit = _addButton(theme, "MAIN/BIG_SETTINGS_BTN", theme.titleFont, L"", 60, 180, 520, 120, CColor(0xFFFFFFFF));
-	m_mainBtnInit2 = _addButton(theme, "MAIN/BIG_SETTINGS_BTN2", theme.titleFont, L"", 60, 310, 520, 120, CColor(0xFFFFFFFF));
+	m_mainBtnInit = _addButton(theme, "MAIN/BIG_SETTINGS_BTN", theme.titleFont, L"", 72, 180, 496, 96, CColor(0xFFFFFFFF));
+	m_mainBtnInit2 = _addButton(theme, "MAIN/BIG_SETTINGS_BTN2", theme.titleFont, L"", 72, 290, 496, 96, CColor(0xFFFFFFFF));
 	m_mainLblInit = _addLabel(theme, "MAIN/MESSAGE", theme.lblFont, L"", 40, 40, 560, 140, CColor(0xFFFFFFFF), FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_mainBtnFavoritesOn = _addPicButton(theme, "MAIN/FAVORITES_ON", texFavOn, texFavOnS, 300, 412, 56, 56);
 	m_mainBtnFavoritesOff = _addPicButton(theme, "MAIN/FAVORITES_OFF", texFavOff, texFavOffS, 300, 412, 56, 56);

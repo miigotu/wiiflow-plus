@@ -66,7 +66,6 @@ private:
 	bool m_titles_loaded;
 	bool m_favorites;
 	s16 m_showtimer;
-	u8 m_picturenum;
 	std::string m_curGameId;
 	std::string m_curChanId;
 	STexture m_waitMessage;
@@ -88,6 +87,7 @@ private:
 	std::string m_altDolDir;
 	std::string m_videoDir;
 	std::string m_fanartDir;
+	std::string m_screenshotDir;
 	const char* m_update_url;
 	std::string m_dol;
 	std::string m_ver;
