@@ -121,14 +121,14 @@ void CMenu::_hideGame(bool instant)
 void CMenu::_showGame(void)
 {
 	m_cf.showCover();
-	if (!m_cfg.getBool(" GENERAL", "disable_fa", false) && m_fa.load(m_fanartDir.c_str(), m_cf.getId().c_str()))
+	if (m_fa.load(m_fanartDir.c_str(), m_cf.getId().c_str()))
 	{
 		STexture bg, bglq;
 		m_fa.getBackground(bg, bglq);
 		_setBg(bg, bglq);
 		
 		m_cf.setSelectedTextColor(m_fa.getTextColor());
-
+		
 		if (!m_cfg.getBool(" GENERAL", "disable_fa_hidecovers", false) && m_fa.hideCover(m_disable_scaa))
 			m_cf.hideCover();
 	}
@@ -169,6 +169,12 @@ void CMenu::_game(bool launch)
 		{
 			m_gameSound.stop();
 			break;
+		}
+		else if (BTN_PLUS_PRESSED)
+		{
+			_hideGame();
+			_gameinfo();
+			_showGame();
 		}
 		else if (BTN_MINUS_PRESSED)
 		{

@@ -369,6 +369,72 @@ void CButtonsMgr::setText(u32 id, const wstringEx &text, bool unwrap)
 	}
 }
 
+void CButtonsMgr::setText(u32 id, const wstringEx &text, u32 startline,bool unwrap)
+{
+	CButtonsMgr::SLabel *lbl;
+
+	if (id < m_elts.size())
+	{
+		switch (m_elts[id]->t)
+		{
+			case CButtonsMgr::GUIELT_BUTTON:
+				//((CButtonsMgr::SButton *)m_elts[id].get())->text = text;
+				break;
+			case CButtonsMgr::GUIELT_LABEL:
+				lbl = (CButtonsMgr::SLabel *)m_elts[id].get();
+				lbl->text.setText(lbl->font, text, startline);
+				if (unwrap)
+					lbl->text.setFrame(100000, lbl->textStyle, true, true);
+				lbl->text.setFrame(lbl->w, lbl->textStyle, false, !unwrap);
+				break;
+			case CButtonsMgr::GUIELT_PROGRESS:
+				break;
+		}
+	}
+}
+
+void CButtonsMgr::setTexture(u32 id, STexture &bg)
+{
+CButtonsMgr::SLabel *lbl;
+
+	if (id < m_elts.size())
+	{
+		switch (m_elts[id]->t)
+		{
+			case CButtonsMgr::GUIELT_BUTTON:
+				break;
+			case CButtonsMgr::GUIELT_LABEL:
+				lbl = (CButtonsMgr::SLabel *)m_elts[id].get();
+				lbl->texBg = bg;//change texture
+				break;
+			case CButtonsMgr::GUIELT_PROGRESS:
+				break;
+		}
+	}
+}
+
+void CButtonsMgr::setTexture(u32 id, STexture &bg, int width, int height)
+{
+CButtonsMgr::SLabel *lbl;
+
+	if (id < m_elts.size())
+	{
+		switch (m_elts[id]->t)
+		{
+			case CButtonsMgr::GUIELT_BUTTON:
+				break;
+			case CButtonsMgr::GUIELT_LABEL:
+				lbl = (CButtonsMgr::SLabel *)m_elts[id].get();
+				lbl->texBg = bg;//change texture
+				lbl->w = width;
+				lbl->h = height;
+				break;
+			case CButtonsMgr::GUIELT_PROGRESS:
+				break;
+		}
+	}
+}
+
 void CButtonsMgr::setProgress(u32 id, float f, bool instant)
 {
 	CButtonsMgr::SProgressBar *b;

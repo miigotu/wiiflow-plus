@@ -28,11 +28,13 @@ class CText
 {
 public:
 	void setText(SFont font, const wstringEx &t);
+	void setText(SFont font, const wstringEx &t, u32 startline);
 	void setColor(const CColor &c);
 	void setFrame(float width, u16 style, bool ignoreNewlines = false, bool instant = false);
 	void tick(void);
 	void draw(void);
 private:
+	
 	struct SWord
 	{
 		wstringEx text;
@@ -44,6 +46,7 @@ private:
 	std::vector<CLine> m_lines;
 	SFont m_font;
 	CColor m_color;
+	u32 firstLine;
 };
 
 // Nothing to do with CText. Q&D helpers for string formating.

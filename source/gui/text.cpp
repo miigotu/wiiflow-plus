@@ -260,6 +260,8 @@ void CText::setText(SFont font, const wstringEx &t)
 	m_font = font;
 	if (!m_font.font)
 		return;
+
+	firstLine = 0;
 	// Don't care about performance
 	lines = stringToVector(t, L'\n');
 	m_lines.reserve(lines.size());
@@ -290,6 +292,48 @@ void CText::setText(SFont font, const wstringEx &t)
 	}
 }
 
+void CText::setText(SFont font, const wstringEx &t, u32 startline)
+{
+	CText::SWord w;
+	vector<wstringEx> lines;
+
+	m_lines.clear();
+	m_font = font;
+	if (!m_font.font)
+		return;
+
+	firstLine = startline;
+	// Don't care about performance
+	lines = stringToVector(t, L'\n');
+	m_lines.reserve(lines.size());
+	// 
+	for (u32 k = 0; k < lines.size(); ++k)
+	{
+		wstringEx &l = lines[k];
+		m_lines.push_back(CText::CLine());
+		m_lines.back().reserve(32);
+		wstringEx::size_type i = l.find_first_not_of(g_whitespaces);
+		wstringEx::size_type j;
+		while (i != wstringEx::npos)
+		{
+			j = l.find_first_of(g_whitespaces, i);
+			if (j != wstringEx::npos && j > i)
+			{
+				w.text.assign(l, i, j - i);
+				m_lines.back().push_back(w);
+				i = l.find_first_not_of(g_whitespaces, j);
+			}
+			else if (j == wstringEx::npos)
+			{
+				w.text.assign(l, i, l.size() - i);
+				m_lines.back().push_back(w);
+				i = wstringEx::npos;
+			}
+		}
+	}
+}
+
+
 void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 {
 	float posX;
@@ -305,7 +349,11 @@ void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 	posX = 0.f;
 	posY = 0.f;
 	lineBeg = 0;
-	for (u32 k = 0; k < m_lines.size(); ++k)
+
+	if(firstLine > m_lines.size())
+		firstLine = 0;
+
+	for (u32 k = firstLine; k < m_lines.size(); ++k)
 	{
 		CText::CLine &words = m_lines[k];
 		if (words.empty())
@@ -341,7 +389,7 @@ void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 	{
 		posX -= space;
 		shift = (style & FTGX_JUSTIFY_CENTER) != 0 ? -posX * 0.5f : -posX;
-		for (u32 k = 0; k < m_lines.size(); ++k)
+		for (u32 k = firstLine; k < m_lines.size(); ++k)
 			for (u32 j = lineBeg; j < m_lines[k].size(); ++j)
 				m_lines[k][j].targetPos.x += shift;
 	}
@@ -349,12 +397,12 @@ void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 	{
 		posY += (float)m_font.lineSpacing;
 		shift = (style & FTGX_ALIGN_MIDDLE) != 0 ? -posY * 0.5f : -posY;
-		for (u32 k = 0; k < m_lines.size(); ++k)
+		for (u32 k = firstLine; k < m_lines.size(); ++k)
 			for (u32 j = 0; j < m_lines[k].size(); ++j)
 				m_lines[k][j].targetPos.y += shift;
 	}
 	if (instant)
-		for (u32 k = 0; k < m_lines.size(); ++k)
+		for (u32 k = firstLine; k < m_lines.size(); ++k)
 			for (u32 i = 0; i < m_lines[k].size(); ++i)
 				m_lines[k][i].pos = m_lines[k][i].targetPos;
 }
@@ -375,7 +423,8 @@ void CText::draw(void)
 {
 	if (!m_font.font)
 		return;
-	for (u32 k = 0; k < m_lines.size(); ++k)
+
+	for (u32 k = firstLine; k < m_lines.size(); ++k)
 		for (u32 i = 0; i < m_lines[k].size(); ++i)
 		{
 			m_font.font->setX(m_lines[k][i].pos.x);

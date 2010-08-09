@@ -609,6 +609,7 @@ void CMenu::_buildMenus(void)
 	_initCheatSettingsMenu(theme); 
 	_initCategorySettingsMenu(theme);
 	_initSystemMenu(theme);
+	_initGameInfoMenu(theme);
 }
 
 SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, SFont def)

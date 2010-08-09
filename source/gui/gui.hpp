@@ -38,6 +38,9 @@ public:
 		const SSoundEffect &clickSound = _noSound, const SSoundEffect &hoverSound = _noSound);
 	u32 addProgressBar(int x, int y, u32 width, u32 height, SButtonTextureSet &texSet);
 	void setText(u32 id, const wstringEx &text, bool unwrap = false);
+	void setText(u32 id, const wstringEx &text, u32 startline, bool unwrap = false);
+	void setTexture(u32 id ,STexture &bg);
+	void setTexture(u32 id, STexture &bg, int width, int height);
 	void setProgress(u32 id, float f, bool instant = false);
 	void hide(u32 id, int dx, int dy, float scaleX, float scaleY, bool instant = false);
 	void hide(u32 id, bool instant = false);

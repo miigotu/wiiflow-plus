@@ -386,9 +386,30 @@ private:
 	u32 m_cheatLblItem[6];
 	u32 m_cheatBtnItem[6];
 	u32 m_cheatSettingsPage;
-	u32 m_cheatLblUser[5];
+	u32 m_cheatLblUser[3];
 	STexture m_cheatBg;
 	GCTCheats m_cheatfile;
+// Gameinfo menu
+	u32 m_gameinfoLblTitle;
+	//u32 m_gameinfoLblID;
+	u32 m_gameinfoLblSynopsis;
+	u32 m_gameinfoLblDev;
+	u32 m_gameinfoLblRegion;
+	u32 m_gameinfoLblPublisher;
+	u32 m_gameinfoLblRlsdate;
+	u32 m_gameinfoLblGenre;
+	u32 m_gameinfoLblRating;
+	u32 m_gameinfoLblWifiplayers;
+	u32 m_gameinfoLblUser[2];
+	u32 m_gameinfoLblControlsReq[4];
+	u32 m_gameinfoLblControls[4];
+	STexture m_gameinfoBg;
+	STexture m_rating;
+	STexture m_wifi;
+	STexture m_controlsreq[4];
+	STexture m_controls[4];
+	//STexture *m_controlsreq;
+	//STexture *m_controls;
 // Category menu
 	u32 m_categoryBtn[12];
 	u32 m_categoryBtnBack;
@@ -559,6 +580,7 @@ private:
 	void _initCheatSettingsMenu(SThemeData &theme);
 	void _initCategorySettingsMenu(SThemeData &theme);
 	void _initSystemMenu(SThemeData &theme);
+	void _initGameInfoMenu(SThemeData &theme);
 	//
 	void _textCategorySettings(void);
 	void _textCheatSettings(void);
@@ -579,6 +601,7 @@ private:
 	void _textAbout(void);
 	void _textWBFS(void);
 	void _textGameSettings(void);
+	void _textGameInfo(void);
 	//
 	void _hideCheatSettings(bool instant = false);
 	void _hideError(bool instant = false);
@@ -599,6 +622,7 @@ private:
 	void _hideGameSettings(bool instant = false);
 	void _hideCategorySettings(bool instant = false);
 	void _hideSystem(bool instant = false);
+	void _hideGameInfo(bool instant = false);
 	//
 	void _showError(void);
 	void _showMain(void);
@@ -616,6 +640,7 @@ private:
 	void _showCategorySettings(void);
 	void _showCheatSettings(void);
 	void _showSystem(void);
+	void _showGameInfo(void);
 	void _showWBFS(WBFS_OP op);
 	void _showCFTheme(u32 curParam, int version, bool wide);
 	void _showGameSettings(void);
@@ -639,6 +664,7 @@ private:
 	bool _wbfsOp(WBFS_OP op);
 	void _cfTheme(void);
 	void _system(void);
+	void _gameinfo(void);
 	void _gameSettings(void);
 	void _CheatSettings();
 	void _CategorySettings();

@@ -1,6 +1,7 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_
 
+#include <gctypes.h>
 /* Constants */
 #define KB_SIZE		1024.0
 #define MB_SIZE		1048576.0
