@@ -66,7 +66,7 @@ public:
 	
 	void getBackground(STexture &hq, STexture &lq);
 	u32 getTextColor(void);
-	bool hideCover(void);
+	bool hideCover(bool disable_scaa);
 	void draw(bool front = true);
 	void tick();
 

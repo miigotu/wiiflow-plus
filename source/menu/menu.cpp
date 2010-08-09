@@ -240,6 +240,7 @@ void CMenu::init(bool fromHBC)
 	//if (m_current_view > COVERFLOW_MAX) m_current_view = COVERFLOW_USB;
 	m_current_view = COVERFLOW_USB;
 	m_loaded_ios_base = get_ios_base();
+	m_disable_scaa = m_cfg.getBool(" GENERAL", "disable_fa_scaa", false);
 }
 
 void CMenu::cleanup(void)
@@ -909,7 +910,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	m_fa.tick();
 	_updateBg();
 	
-	if (m_fa.hideCover())
+	if (m_fa.hideCover(m_disable_scaa))
 		m_cf.hideCover();
 	else
 		m_cf.showCover();
