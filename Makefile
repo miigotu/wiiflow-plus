@@ -15,7 +15,7 @@ include $(DEVKITPPC)/wii_rules
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	boot
+TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source \
 				source/cheats \
@@ -48,30 +48,26 @@ INCLUDES	:=	source \
 				source/libs/libfat \
 				source/libs/libntfs \
 				source/libs/libwbfs
-				
-#---------------------------------------------------------------------------------
-# MS Visual Studio Style Fix
-#---------------------------------------------------------------------------------
-STYLEFIX	= 2>&1 | sed -e 's/\([a-zA-Z\.]\+\):\([0-9]\+\):\([0-9]\+:\)\?\(.\+\)/\1(\2):\4/' -e 's/undefined/error: undefined/'
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	 = -g -O2 -Wall -Wno-char-subscripts $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DMAIN_IOS=249
-CXXFLAGS = -g -O2 -Wall -Wno-char-subscripts -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H
+CFLAGS	 = -g -O5 -Wall -Wno-char-subscripts $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DMAIN_IOS=249
+CXXFLAGS = -g -O5 -Wall -Wno-char-subscripts -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H
 
 LDFLAGS	 = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000,-wrap,malloc,-wrap,free,-wrap,memalign,-wrap,calloc,-wrap,realloc,-wrap,malloc_usable_size -T../rvl.ld
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=  -ltremor -lfreetype -lwiiuse -lbte -lasnd -lpng -lz -logc -lm -lmad -ljpeg -lmxml
+LIBS	:=  -ltremor -lfreetype -lwiiuse -lbte -lasnd -lpng -lz -logc -lm -lmad -ljpeg
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(PORTLIBS) $(CURDIR)
+LIBDIRS	:=	$(CURDIR) \
+			$(PORTLIBS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -138,8 +134,6 @@ ios222:
 	@bash ./buildtype.sh 222
 	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@cp $(OUTPUT).dol wii/apps/wiiflow/ios222/boot.dol
-	@cp $(OUTPUT).elf wii/apps/wiiflow/ios222/boot.elf
 	
 #---------------------------------------------------------------------------------
 ios223:
@@ -158,8 +152,6 @@ ios249:
 	@bash ./buildtype.sh 249
 	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@cp $(OUTPUT).dol wii/apps/wiiflow/ios249/boot.dol
-	@cp $(OUTPUT).elf wii/apps/wiiflow/ios249/boot.elf
 	
 #---------------------------------------------------------------------------------
 ios250:
@@ -168,27 +160,14 @@ ios250:
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
-beta249:
-	@bash ./buildtype.sh 249
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@[ -d beta ] || mkdir -p beta
-	@cp $(OUTPUT).dol beta/249-beta-$(notdir $(CURDIR)).dol
-	@cp $(OUTPUT).elf beta/249-beta-$(notdir $(CURDIR)).elf
-	@cp $(BUILD)/*.map beta/
+# Make sure to update versions.txt and commit all changes before running make release, or folders may be wrong.
+release:
+	@bash ./release.sh $(OUTPUT)
+#---------------------------------------------------------------------------------
+beta:
+	@bash ./beta.sh $(OUTPUT)
 
 #---------------------------------------------------------------------------------
-beta222:
-	@bash ./buildtype.sh 222
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@[ -d beta ] || mkdir -p beta
-	@cp $(OUTPUT).dol beta/222-beta-$(notdir $(CURDIR)).dol
-	@cp $(OUTPUT).elf beta/222-beta-$(notdir $(CURDIR)).elf
-	@cp $(BUILD)/*.map beta/
-
-#---------------------------------------------------------------------------------
-	
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
