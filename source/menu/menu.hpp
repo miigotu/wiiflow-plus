@@ -386,7 +386,7 @@ private:
 	u32 m_cheatLblItem[6];
 	u32 m_cheatBtnItem[6];
 	u32 m_cheatSettingsPage;
-	u32 m_cheatLblUser[3];
+	u32 m_cheatLblUser[5];
 	STexture m_cheatBg;
 	GCTCheats m_cheatfile;
 // Gameinfo menu
