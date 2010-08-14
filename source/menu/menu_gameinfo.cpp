@@ -206,7 +206,7 @@ void CMenu::_gameinfo(void)
 			m_btnMgr.hide(m_gameinfoLblSynopsis,true);
 		}
 
-	} while ((wii_btnsPressed & (WBTN_HOME | WBTN_B)) == 0);
+	} while (!BTN_HOME_PRESSED && !BTN_B_PRESSED);
 
 	_hideGameInfo(false);
 }

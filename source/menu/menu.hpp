@@ -488,6 +488,7 @@ private:
 	volatile bool m_thrdMessageAdded;
 	SSoundEffect m_gameSound;
 	SSoundEffect m_gameSoundTmp;
+	SSoundEffect m_cameraSound;
 	std::string m_gameSoundId;
 	u64 m_gameSoundTitle;
 	lwp_t m_gameSoundThread;
@@ -542,6 +543,7 @@ private:
 		STexture btnTexMinusS;
 		SSoundEffect clickSound;
 		SSoundEffect hoverSound;
+		SSoundEffect cameraSound;
 	};
 	struct SCFParamDesc
 	{

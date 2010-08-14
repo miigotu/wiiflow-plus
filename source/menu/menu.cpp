@@ -21,6 +21,8 @@ extern const u8 click_wav[];
 extern const u32 click_wav_size;
 extern const u8 hover_wav[];
 extern const u32 hover_wav_size;
+extern const u8 camera_wav[];
+extern const u32 camera_wav_size;
 // Pics
 extern const u8 wait_png[];
 extern const u8 fbi_png[];
@@ -552,6 +554,9 @@ void CMenu::_buildMenus(void)
 	theme.clickSound = _sound(theme.soundSet, " GENERAL", "click_sound", theme.clickSound);
 	theme.hoverSound.fromWAV(hover_wav, hover_wav_size);
 	theme.hoverSound = _sound(theme.soundSet, " GENERAL", "hover_sound", theme.hoverSound);
+	theme.cameraSound.fromWAV(camera_wav, camera_wav_size);
+	theme.cameraSound = _sound(theme.soundSet, " GENERAL", "camera_sound", theme.cameraSound);
+	m_cameraSound = theme.cameraSound;
 	// Default textures
 	theme.btnTexL.fromPNG(butleft_png);
 	theme.btnTexL = _texture(theme.texSet, " GENERAL", "button_texture_left", theme.btnTexL); 
@@ -993,6 +998,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		strftime(buffer,80,"%b-%d-20%y-%Hh%Mm%Ss.png",timeinfo);
 		gprintf("Screenshot taken and saved to: %s/%s\n", m_screenshotDir.c_str(), buffer);
 		m_vid.TakeScreenshot(sfmt("%s/%s", m_screenshotDir.c_str(), buffer).c_str());
+		m_cameraSound.play(255);
 	}
 }
 
