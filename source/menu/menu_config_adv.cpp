@@ -184,15 +184,17 @@ int CMenu::_configAdv(void)
 			}
 			else if (m_btnMgr.selected() == m_configAdvBtnCurLanguageP)
 			{
-				m_curLanguage = m_loc.nextDomain(m_curLanguage);
-				m_cfg.setString(" GENERAL", "language", m_curLanguage);
+				m_curLanguage = m_loclist.nextDomain(m_curLanguage);
+				if (m_loc.load(sfmt("%s/languages/%s.ini", m_dataDir.c_str(), m_curLanguage.c_str()).c_str()))
+					m_cfg.setString(" GENERAL", "language", m_curLanguage);
 				_updateText();
 				_showConfigAdv();
 			}
 			else if (m_btnMgr.selected() == m_configAdvBtnCurLanguageM)
 			{
-				m_curLanguage = m_loc.prevDomain(m_curLanguage);
-				m_cfg.setString(" GENERAL", "language", m_curLanguage);
+				m_curLanguage = m_loclist.prevDomain(m_curLanguage);
+				if (m_loc.load(sfmt("%s/languages/%s.ini", m_dataDir.c_str(), m_curLanguage.c_str()).c_str()))
+					m_cfg.setString(" GENERAL", "language", m_curLanguage);
 				_updateText();
 				_showConfigAdv();
 			}

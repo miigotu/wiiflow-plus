@@ -4,7 +4,7 @@
 #define APPDATA_DIR		"wiiflow"
 #define APPDATA_DIR2	"apps/wiiflow"
 #define CFG_FILENAME	"wiiflow.ini"
-#define LANG_FILENAME	"language.ini"
+#define LANG_FILENAME	"languages.ini"
 
 #ifdef __cplusplus
 extern "C" {

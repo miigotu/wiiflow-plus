@@ -55,6 +55,7 @@ private:
 	std::vector<discHdr> m_gameList;
 	Config m_cfg;
 	Config m_loc;
+	Config m_loclist;
 	Config m_theme;
 	Config m_version;
 	Channels m_channels;
