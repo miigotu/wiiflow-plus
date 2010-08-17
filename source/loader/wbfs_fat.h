@@ -23,6 +23,7 @@ int  WBFS_FAT_find_fname(u8 *id, char *fname, int len);
 
 bool WBFS_FAT_IsReadOnly(void);
 
+char* strcopy(char *dest, const char *src, int size);
 #ifdef __cplusplus
 }
 #endif

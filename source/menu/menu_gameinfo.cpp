@@ -7,119 +7,60 @@
 #include "gecko.h"
 
 extern const u8		wifi1_png[];
-extern const u32	wifi1_png_size;
 extern const u8		wifi2_png[];
-extern const u32	wifi2_png_size;
 extern const u8		wifi4_png[];
-extern const u32	wifi4_png_size;
 extern const u8		wifi8_png[];
-extern const u32	wifi8_png_size;
 extern const u8		wifi12_png[];
-extern const u32	wifi12_png_size;
 extern const u8		wifi16_png[];
-extern const u32	wifi16_png_size;
 extern const u8		wifi32_png[];
-extern const u32	wifi32_png_size;
-
-//extern const u8		guitar_png[];
-//extern const u32	guitar_png_size;
-extern const u8		guitarR_png[];
-extern const u32	guitarR_png_size;
-
-extern const u8		microphone_png[];
-extern const u32	microphone_png_size;
 
 extern const u8		wiimote1_png[];
-extern const u32	wiimote1_png_size;
 extern const u8		wiimote2_png[];
-extern const u32	wiimote2_png_size;
 extern const u8		wiimote3_png[];
-extern const u32	wiimote3_png_size;
 extern const u8		wiimote4_png[];
-extern const u32	wiimote4_png_size;
+extern const u8		wiimote8_png[];
 
+//extern const u8		guitar_png[];
+extern const u8		guitarR_png[];
+extern const u8		microphone_png[];
 extern const u8		gcncontroller_png[];
-extern const u32	gcncontroller_png_size;
-extern const u8		gcncontrollerR_png[];
-extern const u32	gcncontrollerR_png_size;
-
+//extern const u8		gcncontrollerR_png[];
 extern const u8		classiccontroller_png[];
-extern const u32	classiccontroller_png_size;
-extern const u8		classiccontrollerR_png[];
-extern const u32	classiccontrollerR_png_size;
-
 extern const u8		nunchuk_png[];
-extern const u32	nunchuk_png_size;
 extern const u8		nunchukR_png[];
-extern const u32	nunchukR_png_size;
-
 extern const u8		dancepadR_png[];
-extern const u32	dancepadR_size;
 extern const u8		dancepad_png[];
-extern const u32	dancepad_png_size;
-
 extern const u8		balanceboard_png[];
-extern const u32	balanceboard_png_size;
 extern const u8		balanceboardR_png[];
-extern const u32	balanceboardR_png_size;
-
 extern const u8		drums_png[];
-extern const u32	drums_png_size;
 extern const u8		drumsR_png[];
-extern const u32	drumsR_png_size;
-
 extern const u8		motionplus_png[];
-extern const u32	motionplus_png_size;
 extern const u8		motionplusR_png[];
-extern const u32	motionplusR_png_size;
-
 extern const u8		wheel_png[];
-extern const u32	wheel_png_size;
-
 extern const u8		zapper_png[];
-extern const u32	zapper_png_size;
-
 extern const u8		wiispeak_png[];
-extern const u32	wiispeak_png_size;
 
 //Ratings
 extern const u8		norating_png[];
-extern const u32	norating_png_size;
 
 extern const u8		esrb_ec_png[];
-extern const u32	esrb_ec_png_size;
 extern const u8		esrb_e_png[];
-extern const u32	esrb_e_png_size;
 extern const u8		esrb_eten_png[];
-extern const u32	esrb_eten_png_size;
 extern const u8		esrb_t_png[];
-extern const u32	esrb_t_png_size;
 extern const u8		esrb_m_png[];
-extern const u32	esrb_m_png_size;
 extern const u8		esrb_ao_png[];
-extern const u32	esrb_ao_png_size;
 
 extern const u8		cero_a_png[];
-extern const u32	cero_a_png_size;
 extern const u8		cero_b_png[];
-extern const u32	cero_b_png_size;
 extern const u8		cero_c_png[];
-extern const u32	cero_c_png_size;
 extern const u8		cero_d_png[];
-extern const u32	cero_d_png_size;
 extern const u8		cero_z_png[];
-extern const u32	cero_z_png_size;
 
 extern const u8		pegi_3_png[];
-extern const u32	pegi_3_png_size;
 extern const u8		pegi_7_png[];
-extern const u32	pegi_7_png_size;
 extern const u8		pegi_12_png[];
-extern const u32	pegi_12_png_size;
 extern const u8		pegi_16_png[];
-extern const u32	pegi_16_png_size;
 extern const u8		pegi_18_png[];
-extern const u32	pegi_18_png_size;
 
 extern struct gameXMLinfo gameinfo;
 extern struct gameXMLinfo gameinfo_reset;
@@ -213,6 +154,7 @@ void CMenu::_gameinfo(void)
 
 void CMenu::_hideGameInfo(bool instant)
 {
+	m_btnMgr.hide(m_gameinfoLblID, instant);
 	m_btnMgr.hide(m_gameinfoLblTitle, instant);
 	m_btnMgr.hide(m_gameinfoLblSynopsis, instant);
 	m_btnMgr.hide(m_gameinfoLblDev, instant);
@@ -241,9 +183,9 @@ void CMenu::_showGameInfo(void)
 	_setBg(m_gameinfoBg, m_gameinfoBg);
 	_textGameInfo();
 	
-	m_btnMgr.show(m_gameinfoLblTitle);
-	
 	if(titlecheck) {
+	m_btnMgr.show(m_gameinfoLblID);
+	m_btnMgr.show(m_gameinfoLblTitle);
 	m_btnMgr.show(m_gameinfoLblRating);
 	m_btnMgr.show(m_gameinfoLblRegion);	
 	m_btnMgr.show(m_gameinfoLblDev);
@@ -276,8 +218,8 @@ void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 	STexture emptyTex;
 	_addUserLabels(theme, m_gameinfoLblUser, ARRAY_SIZE(m_gameinfoLblUser), "GAMEINFO");
 	m_gameinfoBg = _texture(theme.texSet, "GAMEINFO/BG", "texture", theme.bg);
-	m_gameinfoLblTitle = _addLabel(theme, "GAMEINFO/TITLE", theme.btnFont, L"", 125, 25, 420, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
-	//m_gameinfoLblID = _addLabel(theme, "GAMEINFO/GAMEID", theme.btnFont, L"", 125, 25, 420, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
+	m_gameinfoLblID = _addLabel(theme, "GAMEINFO/GAMEID", theme.btnFont, L"", 125, 15, 420, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
+	m_gameinfoLblTitle = _addLabel(theme, "GAMEINFO/TITLE", theme.btnFont, L"", 125, 60, 440, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 	m_gameinfoLblGenre = _addLabel(theme, "GAMEINFO/GENRE", theme.thxFont, L"", 40, 140, 460, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblDev = _addLabel(theme, "GAMEINFO/DEVELOPER", theme.thxFont, L"", 40, 170, 460, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblPublisher = _addLabel(theme, "GAMEINFO/PUBLISHER", theme.thxFont, L"", 40, 200, 460, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
@@ -299,8 +241,8 @@ void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 		_setHideAnim(m_gameinfoLblControls[i], dom.c_str(), 0, -100, 0.f, 0.f);
 	}
 	// 
+	_setHideAnim(m_gameinfoLblID, "GAMEINFO/GAMEID",0, 100, 0.f, 0.f);
 	_setHideAnim(m_gameinfoLblTitle, "GAMEINFO/TITLE", 0, 100, 0.f, 0.f);
-	//_setHideAnim(m_gameinfoLblTitle, "GAMEINFO/GAMEID",0, -100, 0.f, 0.f);
 	_setHideAnim(m_gameinfoLblRating, "GAMEINFO/RATING", 100, 0, 0.f, 0.f);
 	_setHideAnim(m_gameinfoLblSynopsis, "GAMEINFO/SYNOPSIS", -100, 0, 0.f, 0.f);
 	_setHideAnim(m_gameinfoLblRegion, "GAMEINFO/REGION", 0, -100, 0.f, 0.f);
@@ -326,16 +268,15 @@ void CMenu::_textGameInfo(void)
 		
 	if(titlecheck)
 	{
-		gprintf("Title: %s\n",gameinfo.title);
-		//gprintf("Players: %i\n",gameinfo.players);
-		
+		gprintf("ID: %s\nTitle: %s\n", gameinfo.id, gameinfo.title);
+		m_btnMgr.setText(m_gameinfoLblID, wfmt(L"%s", gameinfo.id), true);
 		m_btnMgr.setText(m_gameinfoLblTitle, wfmt(L"%s", gameinfo.title), true);
 		m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", "" ), false);
-		m_btnMgr.setText(m_gameinfoLblDev, wfmt(L"Developer: %s", gameinfo.developer), true);
-		m_btnMgr.setText(m_gameinfoLblPublisher, wfmt(L"Publisher: %s", gameinfo.publisher), true);
-		m_btnMgr.setText(m_gameinfoLblRegion, wfmt(L"Region: %s", gameinfo.region), true);
-		m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(L"Release Date: %i-%i-%i", gameinfo.day,gameinfo.month,gameinfo.year), true);
-		m_btnMgr.setText(m_gameinfoLblGenre, wfmt(L"Genre: %s", gameinfo.genre), true);
+		m_btnMgr.setText(m_gameinfoLblDev, wfmt(_fmt("gameinfo1",L"Developer: %s"), gameinfo.developer), true);
+		m_btnMgr.setText(m_gameinfoLblPublisher, wfmt(_fmt("gameinfo2",L"Publisher: %s"), gameinfo.publisher), true);
+		m_btnMgr.setText(m_gameinfoLblRegion, wfmt(_fmt("gameinfo3",L"Region: %s"), gameinfo.region), true);
+		m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), gameinfo.day,gameinfo.month,gameinfo.year), true);
+		m_btnMgr.setText(m_gameinfoLblGenre, wfmt(_fmt("gameinfo5",L"Genre: %s"), gameinfo.genre), true);
 		
 		//Ratings
 		switch(ConvertRatingToIndex(gameinfo.ratingtype)) {
@@ -460,9 +401,7 @@ void CMenu::_textGameInfo(void)
 			else if(players == 4)
 				m_controlsreq[x].fromPNG(wiimote4_png);
 			else if(players == 8)
-				m_controlsreq[x].fromPNG(wiimote4_png);
-			else 
-				m_controlsreq[x].fromPNG(gcncontrollerR_png);
+				m_controlsreq[x].fromPNG(wiimote8_png);
 
 			m_btnMgr.setTexture(m_gameinfoLblControlsReq[x] ,m_controlsreq[x], 20, 60);
 			x++;

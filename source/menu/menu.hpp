@@ -392,7 +392,7 @@ private:
 	GCTCheats m_cheatfile;
 // Gameinfo menu
 	u32 m_gameinfoLblTitle;
-	//u32 m_gameinfoLblID;
+	u32 m_gameinfoLblID;
 	u32 m_gameinfoLblSynopsis;
 	u32 m_gameinfoLblDev;
 	u32 m_gameinfoLblRegion;
