@@ -193,7 +193,7 @@ void CMenu::init(bool fromHBC)
 	}
 	if (CONF_GetArea() == CONF_AREA_BRA)
 		defaultLanguage = "BRAZILIAN";
-	m_curLanguage = m_locList.getString("GENERAL", "language", defaultLanguage);
+	m_curLanguage = m_loclist.getString("GENERAL", "language", defaultLanguage);
 	m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str());
 	// 
 	m_aa = 3;
