@@ -95,13 +95,10 @@ void CMenu::_textAbout(void)
 	m_btnMgr.setText(m_aboutLblTitle, wfmt(_fmt("appname", L"%s v%s r%s"), APP_NAME, APP_VERSION, SVN_REV), true);
 	m_btnMgr.setText(m_aboutLblOrigAuthor, wfmt(_fmt("about1", L"Loader by %s"), LOADER_AUTHOR), true);
 	m_btnMgr.setText(m_aboutLblAuthor, wfmt(_fmt("about2", L"GUI by %s"), GUI_AUTHOR), true);
-	wstringEx thanksTo(m_cfg.getWString(" GENERAL", "insertnamehere"));
-	if (!thanksTo.empty())
-		thanksTo.append(L", ");
 	wstringEx translator(m_loc.getWString(m_curLanguage, "translation_author"));
 	if (!translator.empty())
 		translator.append(L", ");
-	m_btnMgr.setText(m_aboutLblInfo, wfmt(_fmt("about3", L"Thanks to :\n\n%s%s%s\n\n%s\n%s"), thanksTo.toUTF8().c_str(), translator.toUTF8().c_str(), THANKS, THANKS_SITES, THANKS_CODE), true);
+	m_btnMgr.setText(m_aboutLblInfo, wfmt(_fmt("about3", L"Thanks to :\n\n%s%s%s\n\n%s\n%s"), translator.toUTF8().c_str(), THANKS, THANKS_SITES, THANKS_CODE), true);
 	if ((is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 18) ||
 		(is_ios_type(IOS_TYPE_HERMES) && IOS_GetRevision() >= 5))
 		m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"IOS%i rev%i, base IOS%i"), mainIOS, mainIOSRev, get_ios_base()), true);

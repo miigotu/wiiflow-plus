@@ -121,7 +121,7 @@ void CMenu::_hideGame(bool instant)
 void CMenu::_showGame(void)
 {
 	m_cf.showCover();
-	if (!m_cfg.getBool(" GENERAL", "disable_fa", false) && m_fa.load(m_fanartDir.c_str(), m_cf.getId().c_str()))
+	if (!m_cfg.getBool("GENERAL", "disable_fa", false) && m_fa.load(m_fanartDir.c_str(), m_cf.getId().c_str()))
 	{
 		STexture bg, bglq;
 		m_fa.getBackground(bg, bglq);
@@ -129,7 +129,7 @@ void CMenu::_showGame(void)
 		
 		m_cf.setSelectedTextColor(m_fa.getTextColor());
 
-		if (!m_cfg.getBool(" GENERAL", "disable_fa_hidecovers", false) && m_fa.hideCover(m_disable_scaa))
+		if (!m_cfg.getBool("GENERAL", "disable_fa_hidecovers", false) && m_fa.hideCover(m_disable_scaa))
 			m_cf.hideCover();
 	}
 	else
@@ -153,6 +153,7 @@ static void setLanguage(int l)
 void CMenu::_game(bool launch)
 {
 	bool b;
+	m_game_settings.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
 	if (!launch)
 	{
 		SetupInput();
@@ -188,8 +189,8 @@ void CMenu::_game(bool launch)
 				_hideGame();
 						
 				WiiMovie movie(videoPath.c_str());
-				movie.SetScreenSize(m_cfg.getInt(" GENERAL", "tv_width", 640), m_cfg.getInt(" GENERAL", "tv_height", 480), m_cfg.getInt(" GENERAL", "tv_x", 0), m_cfg.getInt(" GENERAL", "tv_y", 0));
-				movie.SetVolume(m_cfg.getInt(" GENERAL", "sound_volume_bnr", 255));
+				movie.SetScreenSize(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480), m_cfg.getInt("GENERAL", "tv_x", 0), m_cfg.getInt("GENERAL", "tv_y", 0));
+				movie.SetVolume(m_cfg.getInt("GENERAL", "sound_volume_bnr", 255));
 				movie.Play();
 				
 				m_gameSound.stop();
@@ -209,17 +210,17 @@ void CMenu::_game(bool launch)
 		}
 		else if (BTN_1_PRESSED)
 		{
-			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1), m_numCFVersions);
+			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
-			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
+			m_cfg.setInt("GENERAL", "last_cf_mode", cfVersion);
 		}
 		else if (BTN_2_PRESSED)
 		{
-			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
+			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
-			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
+			m_cfg.setInt("GENERAL", "last_cf_mode", cfVersion);
 		}
 		else if (launch || BTN_A_PRESSED)
 		{
@@ -240,9 +241,9 @@ void CMenu::_game(bool launch)
 					error(_t("wbfsop11", L"The currently selected filesystem is read-only. You cannot install games or remove them."));
 			}
 			else if (m_btnMgr.selected() == m_gameBtnFavoriteOn || m_btnMgr.selected() == m_gameBtnFavoriteOff)
-				m_cfg.setBool(id, "favorite", !m_cfg.getBool(id, "favorite", false));
+				m_game_settings.setBool(id, "favorite", !m_game_settings.getBool(id, "favorite", false));
 			else if (m_btnMgr.selected() == m_gameBtnAdultOn || m_btnMgr.selected() == m_gameBtnAdultOff)
-				m_cfg.setBool(id, "adult_only", !m_cfg.getBool(id, "adult_only", false));
+				m_game_settings.setBool(id, "adult_only", !m_game_settings.getBool(id, "adult_only", false));
 			else if (m_btnMgr.selected() == m_gameBtnBack)
 			{
 				m_gameSound.stop();
@@ -315,7 +316,7 @@ void CMenu::_game(bool launch)
 			{
 				if (m_current_view == COVERFLOW_USB)
 				{
-					b = m_cfg.getBool(id, "favorite", false);
+					b = m_game_settings.getBool(id, "favorite", false);
 					m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
 					m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
 					m_btnMgr.show(m_gameLblUser[1]);
@@ -324,7 +325,7 @@ void CMenu::_game(bool launch)
 		
 					if (!m_locked)
 					{
-						b = m_cfg.getBool(id, "adult_only", false);
+						b = m_game_settings.getBool(id, "adult_only", false);
 						m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
 						m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
 						m_btnMgr.show(m_gameBtnDelete);
@@ -333,7 +334,7 @@ void CMenu::_game(bool launch)
 				}
 				else if (m_current_view == COVERFLOW_CHANNEL)
 				{
-					b = m_cfg.getBool(id, "favorite", false);
+					b = m_game_settings.getBool(id, "favorite", false);
 					m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
 					m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
 					m_btnMgr.show(m_gameLblUser[1]);
@@ -342,7 +343,7 @@ void CMenu::_game(bool launch)
 		
 					if (!m_locked)
 					{
-						b = m_cfg.getBool(id, "adult_only", false);
+						b = m_game_settings.getBool(id, "adult_only", false);
 						m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
 						m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
 					}
@@ -362,6 +363,8 @@ void CMenu::_game(bool launch)
 			}
 		}
 	}
+	m_game_settings.save();
+	m_game_settings.unload();
 	_waitForGameSoundExtract();
 	_hideGame();
 }
@@ -385,6 +388,7 @@ static SmartBuf extractDOL(const char *dolName, u32 &size, const char *gameId, s
 
 void CMenu::_launch(const u64 chantitle, const string &id)
 {
+	m_gconfigsettings.load(sfmt("%s/gameconfig2.ini", m_settingsDir.c_str()).c_str());
 	string id2 = id;
 	if (m_current_view == COVERFLOW_CHANNEL) {
 		_launchChannel(chantitle, id);
@@ -395,10 +399,10 @@ void CMenu::_launch(const u64 chantitle, const string &id)
 
 void CMenu::_launchChannel(const u64 chantitle, const string &id)
 {
-	m_cfg.setString(" GENERAL", "current_game", id);
-	m_cfg.setInt(id, "playcount", m_cfg.getInt(id, "playcount", 0) + 1);
-	m_cfg.setUInt(id, "lastplayed", time(NULL));
-	
+	m_cfg.setString("GENERAL", "current_game", id);
+	m_gconfigsettings.setInt(id, "playcount", m_gconfigsettings.getInt(id, "playcount", 0) + 1);
+	m_gconfigsettings.setUInt(id, "lastplayed", time(NULL));
+	m_gconfigsettings.save();
 	m_cfg.save();
 	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing
 	cleanup();
@@ -459,22 +463,22 @@ void CMenu::_launchGame(string &id, bool dvd)
 		for (int i=0;i<6;i++)
 			id[i] = header->id[i];
 	}
-	bool vipatch = m_cfg.testOptBool(id, "vipatch", m_cfg.getBool(" GENERAL", "vipatch", false));
-	bool cheat = m_cfg.testOptBool(id, "cheat", m_cfg.getBool(" GENERAL", "cheat", false));
-	bool countryPatch = m_cfg.testOptBool(id, "country_patch", m_cfg.getBool(" GENERAL", "country_patch", false));
-	bool err002Fix = m_cfg.testOptBool(id, "error_002_fix", m_cfg.getBool(" GENERAL", "error_002_fix", true));
-	bool patchDiscCheck = !m_cfg.testOptBool(id, "disable_dvd_patch", false);
-	u8 videoMode = (u8)min((u32)m_cfg.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
-	string altdol = m_cfg.getString(id, "dol");
-	int language = min((u32)m_cfg.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
-	const char *rtrn = m_cfg.getBool(id, "returnto", true) ? m_cfg.getString(" GENERAL", "returnto").c_str() : NULL;
-	int iosNum = CMenu::_ios[min((u32)m_cfg.getInt(id, "ios", 0), ARRAY_SIZE(CMenu::_ios) - 1u)];
+	bool vipatch = m_gconfigsettings.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
+	bool cheat = m_gconfigsettings.testOptBool(id, "cheat", m_cfg.getBool("GENERAL", "cheat", false));
+	bool countryPatch = m_gconfigsettings.testOptBool(id, "country_patch", m_cfg.getBool("GENERAL", "country_patch", false));
+	bool err002Fix = m_gconfigsettings.testOptBool(id, "error_002_fix", m_cfg.getBool("GENERAL", "error_002_fix", true));
+	bool patchDiscCheck = !m_gconfigsettings.testOptBool(id, "disable_dvd_patch", false);
+	u8 videoMode = (u8)min((u32)m_gconfigsettings.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
+	string altdol = m_gconfigsettings.getString(id, "dol");
+	int language = min((u32)m_gconfigsettings.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
+	const char *rtrn = m_gconfigsettings.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
+	int iosNum = CMenu::_ios[min((u32)m_gconfigsettings.getInt(id, "ios", 0), ARRAY_SIZE(CMenu::_ios) - 1u)];
 	if (iosNum == 0)
 		iosNum = mainIOS;
 
-	u8 patchVidMode = min((u32)m_cfg.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
-	hooktype = (u32) m_cfg.getInt(id, "hooktype", 1); // hooktype is defined in patchcode.h
-	debuggerselect = m_cfg.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
+	u8 patchVidMode = min((u32)m_gconfigsettings.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
+	hooktype = (u32) m_gconfigsettings.getInt(id, "hooktype", 1); // hooktype is defined in patchcode.h
+	debuggerselect = m_gconfigsettings.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
 	m_locDol = ALT_DOL_DISC;
 
 	if (id == "RPWE41" || id == "RPWZ41" || id == "SPXP41") // Prince of Persia, Rival Swords
@@ -500,16 +504,18 @@ void CMenu::_launchGame(string &id, bool dvd)
 
 	_waitForGameSoundExtract();
 	if (videoMode == 0)
-		videoMode = (u8)min((u32)m_cfg.getInt(" GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
+		videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
 	if (language == 0)
-		language = min((u32)m_cfg.getInt(" GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
+		language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
 	if (strcasecmp(altdol.c_str(), "main.dol") == 0)
 		altdol.clear();
-	m_cfg.setString(" GENERAL", "current_game", id);
-	m_cfg.setInt(id, "playcount", m_cfg.getInt(id, "playcount", 0) + 1);
-	m_cfg.setUInt(id, "lastplayed", time(NULL));
+	m_cfg.setString("GENERAL", "current_game", id);
+	m_gconfigsettings.setInt(id, "playcount", m_gconfigsettings.getInt(id, "playcount", 0) + 1);
+	m_gconfigsettings.setUInt(id, "lastplayed", time(NULL));
 	
 	m_cfg.save();
+	m_gconfigsettings.save();
+	m_game_settings.save();
 	setLanguage(language);
 	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing
 	

@@ -326,17 +326,17 @@ int CMenu::_coverDownloader(bool missingOnly)
 		m_thrdWorking = false;
 		return 0;
 	}
-	savePNG = m_cfg.getBool(" GENERAL", "keep_png", true);
+	savePNG = m_cfg.getBool("GENERAL", "keep_png", true);
 
 	if (m_current_view == COVERFLOW_CHANNEL) 
 	{
-		fmtURLBox = stringToVector(m_cfg.getString(" GENERAL", "url_full_covers_id4", FMT_BPIC4_URL), '|');
-		fmtURLFlat = stringToVector(m_cfg.getString(" GENERAL", "url_flat_covers_id4", FMT_PIC4_URL), '|');
+		fmtURLBox = stringToVector(m_cfg.getString("GENERAL", "url_full_covers_id4", FMT_BPIC4_URL), '|');
+		fmtURLFlat = stringToVector(m_cfg.getString("GENERAL", "url_flat_covers_id4", FMT_PIC4_URL), '|');
 	}
 	else
 	{
-		fmtURLBox = stringToVector(m_cfg.getString(" GENERAL", "url_full_covers", FMT_BPIC6_URL), '|');
-		fmtURLFlat = stringToVector(m_cfg.getString(" GENERAL", "url_flat_covers", FMT_PIC6_URL), '|');
+		fmtURLBox = stringToVector(m_cfg.getString("GENERAL", "url_full_covers", FMT_BPIC6_URL), '|');
+		fmtURLFlat = stringToVector(m_cfg.getString("GENERAL", "url_flat_covers", FMT_PIC6_URL), '|');
 	}
 	nbSteps = m_gameList.size();
 	step = 0;
@@ -668,8 +668,8 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 
 		m_thrdStep = 0.2f;
 		m_thrdStepLen = 0.9f - 0.2f;
-		gprintf("TXT update URL: %s\n\n", m_cfg.getString(" GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str());
-		vtxt = downloadfile(buffer.get(), bufferSize, m_cfg.getString(" GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str(),CMenu::_downloadProgress, this);
+		gprintf("TXT update URL: %s\n\n", m_cfg.getString("GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str());
+		vtxt = downloadfile(buffer.get(), bufferSize, m_cfg.getString("GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str(),CMenu::_downloadProgress, this);
 		if (vtxt.data == 0 || vtxt.size < 19)
 		{
 			LWP_MutexLock(m_mutex);
@@ -867,7 +867,7 @@ int CMenu::_titleDownloader(bool missingOnly)
 		LWP_MutexUnlock(m_mutex);
 		return 0;
 	}
-	titles.load(sfmt("%s/titles.ini", m_appDir.c_str()).c_str());
+	titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str());
 	langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);

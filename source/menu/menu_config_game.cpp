@@ -295,30 +295,30 @@ void CMenu::_showGameSettings(void)
 		maxpage = 3;
 
 	m_btnMgr.setText(m_gameSettingsLblPage, wfmt(L"%i / %i", page, maxpage));
-	m_btnMgr.setText(m_gameSettingsBtnOcarina, _optBoolToString(m_cfg.getOptBool(id, "cheat")));
-	m_btnMgr.setText(m_gameSettingsBtnVipatch, _optBoolToString(m_cfg.getOptBool(id, "vipatch", 0)));
-	m_btnMgr.setText(m_gameSettingsBtnCountryPatch, _optBoolToString(m_cfg.getOptBool(id, "country_patch", 0)));
-	m_btnMgr.setText(m_gameSettingsBtnErr2Fix, _optBoolToString(m_cfg.getOptBool(id, "error_002_fix")));
-	m_btnMgr.setText(m_gameSettingsBtnBlockIOSReload, m_cfg.getBool(id, "block_ios_reload", false) ? _t("on", L"On") : _t("off", L"Off"));
-	i = min((u32)m_cfg.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
+	m_btnMgr.setText(m_gameSettingsBtnOcarina, _optBoolToString(m_gconfigsettings.getOptBool(id, "cheat")));
+	m_btnMgr.setText(m_gameSettingsBtnVipatch, _optBoolToString(m_gconfigsettings.getOptBool(id, "vipatch", 0)));
+	m_btnMgr.setText(m_gameSettingsBtnCountryPatch, _optBoolToString(m_gconfigsettings.getOptBool(id, "country_patch", 0)));
+	m_btnMgr.setText(m_gameSettingsBtnErr2Fix, _optBoolToString(m_gconfigsettings.getOptBool(id, "error_002_fix")));
+	m_btnMgr.setText(m_gameSettingsBtnBlockIOSReload, m_gconfigsettings.getBool(id, "block_ios_reload", false) ? _t("on", L"On") : _t("off", L"Off"));
+	i = min((u32)m_gconfigsettings.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblVideo, _t(CMenu::_videoModes[i].id, CMenu::_videoModes[i].text));
-	i = min((u32)m_cfg.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
+	i = min((u32)m_gconfigsettings.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblLanguage, _t(CMenu::_languages[i].id, CMenu::_languages[i].text));
-	m_btnMgr.setText(m_gameSettingsLblAltDol, m_cfg.getString(id, "dol", "main.dol"));
-	i = min((u32)m_cfg.getInt(id, "ios", 0), ARRAY_SIZE(CMenu::_ios) - 1u);
+	m_btnMgr.setText(m_gameSettingsLblAltDol, m_gconfigsettings.getString(id, "dol", "main.dol"));
+	i = min((u32)m_gconfigsettings.getInt(id, "ios", 0), ARRAY_SIZE(CMenu::_ios) - 1u);
 	if (i == 0)
 		m_btnMgr.setText(m_gameSettingsLblIOS, _t("def", L"Default"));
 	else
 		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i", CMenu::_ios[i])));
-	i = min((u32)m_cfg.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
+	i = min((u32)m_gconfigsettings.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblPatchVidModesVal, _t(CMenu::_vidModePatch[i].id, CMenu::_vidModePatch[i].text));
 
-	i = min((u32)m_cfg.getInt(id, "hooktype", 1), ARRAY_SIZE(CMenu::_hooktype) - 1u);
+	i = min((u32)m_gconfigsettings.getInt(id, "hooktype", 1), ARRAY_SIZE(CMenu::_hooktype) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblHooktypeVal, _t(CMenu::_hooktype[i].id, CMenu::_hooktype[i].text));
 
 	m_btnMgr.setText(m_gameSettingsBtnCategoryMain, _fmt("cfgg16",  wfmt(L"Select",i).c_str() )); 
 	
-	char *categories = (char *) m_cfg.getString(id, "categories", "").c_str();
+	char *categories = (char *) m_cat.getString("CATEGORIES", id, "").c_str();
 	memset(&m_gameSettingCategories, '0', sizeof(m_gameSettingCategories));
 	if (strlen(categories) == sizeof(m_gameSettingCategories))
 	{
@@ -327,19 +327,20 @@ void CMenu::_showGameSettings(void)
 	for (int i=0; i<12; ++i) {
 		m_btnMgr.setText(m_gameSettingsBtnCategory[i], _optBoolToString(m_gameSettingCategories[i] == '1'));
 	}
-	m_btnMgr.setText(m_gameSettingsBtnDvdPatch,  m_cfg.getBool(id, "disable_dvd_patch", false) ? _t("on", L"On") : _t("def", L"Default"));
-	m_btnMgr.setText(m_gameSettingsBtnReturnTo,  m_cfg.getBool(id, "returnto", true) ? _t("def", L"Default") : _t("on", L"On"));		
-	m_btnMgr.setText(m_gameSettingsLblDebuggerV, m_cfg.getBool(id, "debugger", false) ? _t("gecko", L"Gecko") : _t("def", L"Default"));		
+	m_btnMgr.setText(m_gameSettingsBtnDvdPatch,  m_gconfigsettings.getBool(id, "disable_dvd_patch", false) ? _t("on", L"On") : _t("def", L"Default"));
+	m_btnMgr.setText(m_gameSettingsBtnReturnTo,  m_gconfigsettings.getBool(id, "returnto", true) ? _t("def", L"Default") : _t("on", L"On"));		
+	m_btnMgr.setText(m_gameSettingsLblDebuggerV, m_gconfigsettings.getBool(id, "debugger", false) ? _t("gecko", L"Gecko") : _t("def", L"Default"));		
 }
 
 void CMenu::_gameSettings(void)
 {
+	m_gconfigsettings.load(sfmt("%s/gameconfig2.ini", m_settingsDir.c_str()).c_str());
 	bool dolsListed = false;
 	vector<string> dols;
 	string id(m_cf.getId());
 
 	m_gameSettingsPage = 1;
-	dols.push_back(m_cfg.getString(id, "dol", "main.dol"));
+	dols.push_back(m_gconfigsettings.getString(id, "dol", "main.dol"));
 	_showGameSettings();
 	while (true)
 	{
@@ -385,89 +386,89 @@ void CMenu::_gameSettings(void)
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnOcarina)
 			{
-				int intoption = loopNum(m_cfg.getOptBool(id, "cheat") + 1, 3);
+				int intoption = loopNum(m_gconfigsettings.getOptBool(id, "cheat") + 1, 3);
 				if (intoption !=0 && intoption !=1)
-					m_cfg.remove(id, "cheat");
+					m_gconfigsettings.remove(id, "cheat");
 				else
-					m_cfg.setOptBool(id, "cheat", intoption);
+					m_gconfigsettings.setOptBool(id, "cheat", intoption);
 					_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnVipatch)
 			{
-//				m_cfg.setOptBool(id, "vipatch", loopNum(m_cfg.getOptBool(id, "vipatch") + 1, 3));
-				bool booloption = m_cfg.getBool(id, "vipatch");
+//				m_gconfigsettings.setOptBool(id, "vipatch", loopNum(m_gconfigsettings.getOptBool(id, "vipatch") + 1, 3));
+				bool booloption = m_gconfigsettings.getBool(id, "vipatch");
 				if (booloption != false)
-					m_cfg.remove(id, "vipatch");
+					m_gconfigsettings.remove(id, "vipatch");
 				else
-					m_cfg.setBool(id, "vipatch", true);
+					m_gconfigsettings.setBool(id, "vipatch", true);
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnCountryPatch)
 			{
-//				m_cfg.setOptBool(id, "country_patch", loopNum(m_cfg.getOptBool(id, "country_patch") + 1, 3));
-				bool booloption = m_cfg.getBool(id, "country_patch");
+//				m_gconfigsettings.setOptBool(id, "country_patch", loopNum(m_gconfigsettings.getOptBool(id, "country_patch") + 1, 3));
+				bool booloption = m_gconfigsettings.getBool(id, "country_patch");
 				if (booloption != false)
-					m_cfg.remove(id, "country_patch");
+					m_gconfigsettings.remove(id, "country_patch");
 				else
-					m_cfg.setBool(id, "country_patch", true);
+					m_gconfigsettings.setBool(id, "country_patch", true);
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnErr2Fix)
 			{
-				int intoption = loopNum(m_cfg.getOptBool(id, "error_002_fix") + 1, 3);
+				int intoption = loopNum(m_gconfigsettings.getOptBool(id, "error_002_fix") + 1, 3);
 				if (intoption !=0 && intoption !=1)
-					m_cfg.remove(id, "error_002_fix");
+					m_gconfigsettings.remove(id, "error_002_fix");
 				else
-					m_cfg.setOptBool(id, "error_002_fix", intoption);
+					m_gconfigsettings.setOptBool(id, "error_002_fix", intoption);
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnBlockIOSReload)
 			{
-				bool booloption = m_cfg.getBool(id, "block_ios_reload");
+				bool booloption = m_gconfigsettings.getBool(id, "block_ios_reload");
 				if (booloption != false)
-					m_cfg.remove(id, "block_ios_reload");
+					m_gconfigsettings.remove(id, "block_ios_reload");
 				else
-				m_cfg.setBool(id, "block_ios_reload", true);
+				m_gconfigsettings.setBool(id, "block_ios_reload", true);
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnLanguageP)
 			{
-				m_cfg.setInt(id, "language", (int)loopNum((u32)m_cfg.getInt(id, "language", 0) + 1, ARRAY_SIZE(CMenu::_languages)));
+				m_gconfigsettings.setInt(id, "language", (int)loopNum((u32)m_gconfigsettings.getInt(id, "language", 0) + 1, ARRAY_SIZE(CMenu::_languages)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnLanguageM)
 			{
-				m_cfg.setInt(id, "language", (int)loopNum((u32)m_cfg.getInt(id, "language", 0) - 1, ARRAY_SIZE(CMenu::_languages)));
+				m_gconfigsettings.setInt(id, "language", (int)loopNum((u32)m_gconfigsettings.getInt(id, "language", 0) - 1, ARRAY_SIZE(CMenu::_languages)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnVideoP)
 			{
-				m_cfg.setInt(id, "video_mode", (int)loopNum((u32)m_cfg.getInt(id, "video_mode", 0) + 1, ARRAY_SIZE(CMenu::_videoModes)));
+				m_gconfigsettings.setInt(id, "video_mode", (int)loopNum((u32)m_gconfigsettings.getInt(id, "video_mode", 0) + 1, ARRAY_SIZE(CMenu::_videoModes)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnVideoM)
 			{
-				m_cfg.setInt(id, "video_mode", (int)loopNum((u32)m_cfg.getInt(id, "video_mode", 0) - 1, ARRAY_SIZE(CMenu::_videoModes)));
+				m_gconfigsettings.setInt(id, "video_mode", (int)loopNum((u32)m_gconfigsettings.getInt(id, "video_mode", 0) - 1, ARRAY_SIZE(CMenu::_videoModes)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnIOSP)
 			{
-				m_cfg.setInt(id, "ios", (int)loopNum((u32)m_cfg.getInt(id, "ios", 0) + 1, ARRAY_SIZE(CMenu::_ios)));
+				m_gconfigsettings.setInt(id, "ios", (int)loopNum((u32)m_gconfigsettings.getInt(id, "ios", 0) + 1, ARRAY_SIZE(CMenu::_ios)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnIOSM)
 			{
-				m_cfg.setInt(id, "ios", (int)loopNum((u32)m_cfg.getInt(id, "ios", 0) - 1, ARRAY_SIZE(CMenu::_ios)));
+				m_gconfigsettings.setInt(id, "ios", (int)loopNum((u32)m_gconfigsettings.getInt(id, "ios", 0) - 1, ARRAY_SIZE(CMenu::_ios)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnPatchVidModesP)
 			{
-				m_cfg.setInt(id, "patch_video_modes", (int)loopNum((u32)m_cfg.getInt(id, "patch_video_modes", 0) + 1, ARRAY_SIZE(CMenu::_vidModePatch)));
+				m_gconfigsettings.setInt(id, "patch_video_modes", (int)loopNum((u32)m_gconfigsettings.getInt(id, "patch_video_modes", 0) + 1, ARRAY_SIZE(CMenu::_vidModePatch)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnPatchVidModesM)
 			{
-				m_cfg.setInt(id, "patch_video_modes", (int)loopNum((u32)m_cfg.getInt(id, "patch_video_modes", 0) - 1, ARRAY_SIZE(CMenu::_vidModePatch)));
+				m_gconfigsettings.setInt(id, "patch_video_modes", (int)loopNum((u32)m_gconfigsettings.getInt(id, "patch_video_modes", 0) - 1, ARRAY_SIZE(CMenu::_vidModePatch)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnAltDolP || m_btnMgr.selected() == m_gameSettingsBtnAltDolM)
@@ -482,12 +483,12 @@ void CMenu::_gameSettings(void)
 					dolsListed = true;
 					m_cf.startPicLoader();
 				}
-				int i = find(dols.begin(), dols.end(), m_cfg.getString(id, "dol")) - dols.begin();
+				int i = find(dols.begin(), dols.end(), m_gconfigsettings.getString(id, "dol")) - dols.begin();
 				if (m_btnMgr.selected() == m_gameSettingsBtnAltDolP)
 					++i;
 				else
 					--i;
-				m_cfg.setString(id, "dol", dols[loopNum(i, (int)dols.size())]);
+				m_gconfigsettings.setString(id, "dol", dols[loopNum(i, (int)dols.size())]);
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnCover)
@@ -508,41 +509,41 @@ void CMenu::_gameSettings(void)
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnHooktypeP)
 			{
-				m_cfg.setInt(id, "hooktype", (int)loopNum((u32)m_cfg.getInt(id, "hooktype", 1) + 1, ARRAY_SIZE(CMenu::_hooktype)));
+				m_gconfigsettings.setInt(id, "hooktype", (int)loopNum((u32)m_gconfigsettings.getInt(id, "hooktype", 1) + 1, ARRAY_SIZE(CMenu::_hooktype)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnHooktypeM)
 			{
-				m_cfg.setInt(id, "hooktype", (int)loopNum((u32)m_cfg.getInt(id, "hooktype", 1) - 1, ARRAY_SIZE(CMenu::_hooktype)));
+				m_gconfigsettings.setInt(id, "hooktype", (int)loopNum((u32)m_gconfigsettings.getInt(id, "hooktype", 1) - 1, ARRAY_SIZE(CMenu::_hooktype)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnDvdPatch)
 			{
-				m_cfg.setBool(id, "disable_dvd_patch", !m_cfg.getBool(id, "disable_dvd_patch", false));
+				m_gconfigsettings.setBool(id, "disable_dvd_patch", !m_gconfigsettings.getBool(id, "disable_dvd_patch", false));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnReturnTo)
 			{
 				_hideGameSettings();
-				m_cfg.setBool(id, "returnto", !m_cfg.getBool(id, "returnto", false));
+				m_gconfigsettings.setBool(id, "returnto", !m_gconfigsettings.getBool(id, "returnto", false));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnDebuggerP)
 			{
-				bool booloption = m_cfg.getBool(id, "debugger");
+				bool booloption = m_gconfigsettings.getBool(id, "debugger");
 				if (booloption != false)
-					m_cfg.remove(id, "debugger");
+					m_gconfigsettings.remove(id, "debugger");
 				else
-				m_cfg.setBool(id, "debugger", true);
+				m_gconfigsettings.setBool(id, "debugger", true);
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnDebuggerM)
 			{
-				bool booloption = m_cfg.getBool(id, "debugger");
+				bool booloption = m_gconfigsettings.getBool(id, "debugger");
 				if (booloption != false)
-					m_cfg.remove(id, "debugger");
+					m_gconfigsettings.remove(id, "debugger");
 				else
-				m_cfg.setBool(id, "debugger", true);
+				m_gconfigsettings.setBool(id, "debugger", true);
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnCategoryMain)
@@ -558,12 +559,14 @@ void CMenu::_gameSettings(void)
 					char categories[13];
 					memset(&categories, 0, sizeof(categories));
 					memcpy(&categories, &m_gameSettingCategories, sizeof(m_gameSettingCategories));
-					m_cfg.setString(id, "categories", categories);
+					m_cat.setString("CATEGORIES", id, categories);
 					_showGameSettings();
 					break;
 				}
 		}
 	}
+	m_gconfigsettings.save();
+	m_gconfigsettings.unload();
 	_hideGameSettings();
 }
 
@@ -752,7 +755,7 @@ void CMenu::_textGameSettings(void)
 	m_btnMgr.setText(m_gameSettingsLblReturnTo, _t("cfgg20", L"Disable Return To"));
 	m_btnMgr.setText(m_gameSettingsLblDebugger, _t("cfgg22", L"Debugger"));
 	for (int i = 1; i < 12; ++i)
-		m_btnMgr.setText(m_gameSettingsLblCategory[i], m_cfg.getWString(" GENERAL", fmt("cat%d",i), m_loc.getWString(m_curLanguage, fmt("cat%d", i), wfmt(L"Category %i",i).c_str())));
+		m_btnMgr.setText(m_gameSettingsLblCategory[i], m_cat.getWString("GENERAL", fmt("cat%d",i), wfmt(L"Category %i",i).c_str()));
 }
 
 static void addDolToList(void *o, const char *fileName)

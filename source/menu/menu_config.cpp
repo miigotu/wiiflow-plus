@@ -56,8 +56,8 @@ void CMenu::_showConfig(void)
 			m_btnMgr.show(m_configLblUser[i]);
 	// 
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage + 1 : CMenu::_nbCfgPages));
-	m_btnMgr.setText(m_configBtnRumble, m_cfg.getBool(" GENERAL", "rumble") ? _t("on", L"On") : _t("off", L"Off"));
-	m_btnMgr.setText(m_configBtnBoxMode, m_cfg.getBool(" GENERAL", "box_mode") ? _t("on", L"On") : _t("off", L"Off"));
+	m_btnMgr.setText(m_configBtnRumble, m_cfg.getBool("GENERAL", "rumble") ? _t("on", L"On") : _t("off", L"Off"));
+	m_btnMgr.setText(m_configBtnBoxMode, m_cfg.getBool("GENERAL", "box_mode") ? _t("on", L"On") : _t("off", L"Off"));
 }
 
 void CMenu::_config(int page)
@@ -92,7 +92,7 @@ void CMenu::_config(int page)
 				break;
 		}
 	m_cfg.save();
-	m_cf.setBoxMode(m_cfg.getBool(" GENERAL", "box_mode"));
+	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode"));
 	_initCF();
 }
 
@@ -138,7 +138,7 @@ int CMenu::_config1(void)
 			{
 				char code[4];
 				_hideConfig();
-				if (_code(code) && memcmp(code, m_cfg.getString(" GENERAL", "parent_code", "").c_str(), 4) == 0)
+				if (_code(code) && memcmp(code, m_cfg.getString("GENERAL", "parent_code", "").c_str(), 4) == 0)
 					m_locked = false;
 				_showConfig();
 			}
@@ -148,20 +148,20 @@ int CMenu::_config1(void)
 				_hideConfig();
 				if (_code(code, true))
 				{
-					m_cfg.setString(" GENERAL", "parent_code", string(code, 4).c_str());
+					m_cfg.setString("GENERAL", "parent_code", string(code, 4).c_str());
 					m_locked = true;
 				}
 				_showConfig();
 			}
 			else if (m_btnMgr.selected() == m_configBtnBoxMode)
 			{
-				m_cfg.setBool(" GENERAL", "box_mode", !m_cfg.getBool(" GENERAL", "box_mode"));
+				m_cfg.setBool("GENERAL", "box_mode", !m_cfg.getBool("GENERAL", "box_mode"));
 				_showConfig();
 			}
 			else if (m_btnMgr.selected() == m_configBtnRumble)
 			{
-				m_cfg.setBool(" GENERAL", "rumble", !m_cfg.getBool(" GENERAL", "rumble"));
-				m_btnMgr.setRumble(m_cfg.getBool(" GENERAL", "rumble"));
+				m_cfg.setBool("GENERAL", "rumble", !m_cfg.getBool("GENERAL", "rumble"));
+				m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble"));
 				_showConfig();
 			}
 		}

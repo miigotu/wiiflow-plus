@@ -89,7 +89,7 @@ void CMenu::_showMain(void)
 int CMenu::main(void)
 {
 	wstringEx curLetter;
-	string prevTheme = m_cfg.getString(" GENERAL", "theme", "default");
+	string prevTheme = m_cfg.getString("GENERAL", "theme", "default");
 	m_reload = false;
 	static u32 disc_check = 0, olddisc_check = 0;
 	int done = 0;
@@ -138,27 +138,27 @@ int CMenu::main(void)
 		//CF Layout select
 		if (BTN_1_PRESSED && (wii_btnsHeld & WBTN_B) == 0)
 		{
-			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1), m_numCFVersions);
+			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
-			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
+			m_cfg.setInt("GENERAL", "last_cf_mode", cfVersion);
 		}
 		else if (BTN_2_PRESSED && (wii_btnsHeld & WBTN_B) == 0)
 		{
-			int cfVersion = 1 + loopNum(m_cfg.getInt(" GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
+			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
-			m_cfg.setInt(" GENERAL", "last_cf_mode", cfVersion);
+			m_cfg.setInt("GENERAL", "last_cf_mode", cfVersion);
 		}
 		if (BTN_B_HELD)
 		{
 			//Search by Alphabet
 			if (BTN_DOWN_PRESSED)
 			{
-				if (m_cfg.getInt(" GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
-					m_cfg.setInt(" GENERAL", "sort", SORT_ALPHA);
+					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
 				}
 				curLetter.resize(1);
 				curLetter[0] = m_cf.nextLetter();
@@ -168,10 +168,10 @@ int CMenu::main(void)
 			}
 			else if (BTN_UP_PRESSED)
 			{
-				if (m_cfg.getInt(" GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
-					m_cfg.setInt(" GENERAL", "sort", SORT_ALPHA);
+					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
 				}
 				curLetter.resize(1);
 				curLetter[0] = m_cf.prevLetter();
@@ -188,11 +188,11 @@ int CMenu::main(void)
 			else if (BTN_PLUS_PRESSED && !m_locked && m_titles_loaded)
 			{
 				u32 sort = 0;
-				sort = m_cfg.getInt(" GENERAL", "sort", 0);
+				sort = m_cfg.getInt("GENERAL", "sort", 0);
 				++sort;
 				if (sort >= 4) sort = 0;
 				m_cf.setSorting((Sorting)sort);
-				m_cfg.setInt(" GENERAL", "sort", sort);
+				m_cfg.setInt("GENERAL", "sort", sort);
 				wstringEx curSort ;
 				if (sort == SORT_ALPHA)
 					curSort = m_loc.getWString(m_curLanguage, "alphabetically", L"Alphabetically");
@@ -217,7 +217,7 @@ int CMenu::main(void)
 				gprintf("Next item: %d\n", currentPartition);
 				WBFS_GetPartitionName(currentPartition, (char *) &buf);
 				gprintf("Which is: %s\n", buf);
-				m_cfg.setString(" GENERAL", "partition", buf);
+				m_cfg.setString("GENERAL", "partition", buf);
 				m_showtimer=60; 
 				m_btnMgr.setText(m_mainLblNotice, (string)buf);
 				m_btnMgr.show(m_mainLblNotice);
@@ -250,7 +250,7 @@ int CMenu::main(void)
 			}
 			*/
 		}
-		else if (done==0 && m_current_view == COVERFLOW_USB && m_cfg.getBool(" GENERAL", "category_on_start", false)) // Only supported in game mode (not for channels, since you don't have options for channels yet)
+		else if (done==0 && m_current_view == COVERFLOW_USB && m_cat.getBool("GENERAL", "category_on_start", false)) // Only supported in game mode (not for channels, since you don't have options for channels yet)
 		{
 			done = 1; //set done so it doesnt keep doing it
 			// show categories menu
@@ -281,10 +281,10 @@ int CMenu::main(void)
 				else if (m_btnMgr.selected() == m_mainBtnUsb)
 				{
 					m_current_view = COVERFLOW_USB;
-					m_category = m_cfg.getInt(" GENERAL", "category", 0);
+					m_category = m_cat.getInt("GENERAL", "category", 0);
 				}
 				_hideMain();
-				//m_cfg.setInt(" GENERAL", "currentview", m_current_view);
+				//m_cfg.setInt("GENERAL", "currentview", m_current_view);
 				_loadList();
 				_initCF();
 				_showMain();
@@ -295,7 +295,7 @@ int CMenu::main(void)
 				{
 					_hideMain();
 					_wbfsOp(CMenu::WO_ADD_GAME);
-					if (prevTheme != m_cfg.getString(" GENERAL", "theme"))
+					if (prevTheme != m_cfg.getString("GENERAL", "theme"))
 					{
 						m_reload = true;
 						break;
@@ -305,7 +305,7 @@ int CMenu::main(void)
 				else
 				{
 					error(_t("wbfsop11", L"The currently selected filesystem is read-only. You cannot install games or remove them."));
-					if (prevTheme != m_cfg.getString(" GENERAL", "theme"))
+					if (prevTheme != m_cfg.getString("GENERAL", "theme"))
 					{
 						m_reload = true;
 						break;
@@ -318,7 +318,7 @@ int CMenu::main(void)
 				_hideMain();
 				//_config(2);
 				_config(7);
-				if (prevTheme != m_cfg.getString(" GENERAL", "theme"))
+				if (prevTheme != m_cfg.getString("GENERAL", "theme"))
 				{
 					m_reload = true;
 					break;
@@ -329,7 +329,7 @@ int CMenu::main(void)
 			{
 				_hideMain();
 				_config(1);
-				if (prevTheme != m_cfg.getString(" GENERAL", "theme") || m_reload == true)
+				if (prevTheme != m_cfg.getString("GENERAL", "theme") || m_reload == true)
 				{
 					m_reload = true;
 					break;
@@ -371,7 +371,7 @@ int CMenu::main(void)
 			else if (m_btnMgr.selected() == m_mainBtnFavoritesOn || m_btnMgr.selected() == m_mainBtnFavoritesOff)
 			{
 				m_favorites = !m_favorites;
-				m_cfg.setInt(" GENERAL", "favorites", m_favorites);
+				m_cfg.setInt("GENERAL", "favorites", m_favorites);
 				m_curGameId = m_cf.getId();
 				_initCF();
 			}
@@ -421,7 +421,7 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainBtnFavoritesOff);
 		}
 		bool hideChannels, showDVD;
-		hideChannels = (m_cfg.getBool(" GENERAL", "hidechannelsbutton", false) || m_loaded_ios_base == 57);
+		hideChannels = (m_cfg.getBool("GENERAL", "hidechannelsbutton", false) || m_loaded_ios_base == 57);
 		if (!hideChannels && (m_gameList.empty() || m_show_zone_main2))
 		{
 			if (m_current_view == COVERFLOW_USB)
@@ -468,6 +468,7 @@ int CMenu::main(void)
 	GX_InvalidateTexAll();
 	m_cf.clear();
 	m_cfg.save();
+	m_cat.save();
 //	m_loc.save();
 	_stopSounds();
 	if (m_reload)

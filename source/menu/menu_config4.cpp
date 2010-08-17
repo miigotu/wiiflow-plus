@@ -66,10 +66,10 @@ void CMenu::_showConfig4(void)
 			m_btnMgr.show(m_config4LblUser[i]);
  
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
-	//m_alphaSearch = m_cfg.getBool(" GENERAL", "alphabetic_search_on_plus_minus", false);
-	m_btnMgr.setText(m_config4BtnHome, m_cfg.getBool(" GENERAL", "exit_to_wii_menu") ? _t("on", L"On") : _t("off", L"Off"));
-	m_btnMgr.setText(m_config4BtnSaveFavMode, m_cfg.getBool(" GENERAL", "favorites_on_startup") ? _t("on", L"On") : _t("off", L"Off"));
-	//m_btnMgr.setText(m_config4BtnSearchMode, m_cfg.getBool(" GENERAL", "alphabetic_search_on_plus_minus") ? _t("smalpha", L"Alphabetic") : _t("smpage", L"Pages"));
+	//m_alphaSearch = m_cfg.getBool("GENERAL", "alphabetic_search_on_plus_minus", false);
+	m_btnMgr.setText(m_config4BtnHome, m_cfg.getBool("GENERAL", "exit_to_wii_menu") ? _t("on", L"On") : _t("off", L"Off"));
+	m_btnMgr.setText(m_config4BtnSaveFavMode, m_cfg.getBool("GENERAL", "favorites_on_startup") ? _t("on", L"On") : _t("off", L"Off"));
+	//m_btnMgr.setText(m_config4BtnSearchMode, m_cfg.getBool("GENERAL", "alphabetic_search_on_plus_minus") ? _t("smalpha", L"Alphabetic") : _t("smpage", L"Pages"));
 
 	wstringEx channelName = m_loc.getWString(m_curLanguage, "disabled", L"Disabled");
 
@@ -77,7 +77,7 @@ void CMenu::_showConfig4(void)
 	m_channels.Init(0x00010001, langCode);
 	amountOfChannels = m_channels.Count();
 
-	string currentChanId = m_cfg.getString(" GENERAL", "returnto" );
+	string currentChanId = m_cfg.getString("GENERAL", "returnto" );
 	if (currentChanId.size() > 0)
 	{
 		for (int i = 0; i < amountOfChannels; i++)
@@ -126,28 +126,28 @@ int CMenu::_config4(void)
 				break;
 			else if (m_btnMgr.selected() == m_config4BtnHome)
 			{
-				m_cfg.setBool(" GENERAL", "exit_to_wii_menu", !m_cfg.getBool(" GENERAL", "exit_to_wii_menu"));
-				Sys_ExitToWiiMenu(m_noHBC || m_cfg.getBool(" GENERAL", "exit_to_wii_menu", false));
+				m_cfg.setBool("GENERAL", "exit_to_wii_menu", !m_cfg.getBool("GENERAL", "exit_to_wii_menu"));
+				Sys_ExitToWiiMenu(m_noHBC || m_cfg.getBool("GENERAL", "exit_to_wii_menu", false));
 				_showConfig4();
 			}
 			else if (m_btnMgr.selected() == m_config4BtnSaveFavMode)
 			{
-				m_cfg.setBool(" GENERAL", "favorites_on_startup", !m_cfg.getBool(" GENERAL", "favorites_on_startup"));
+				m_cfg.setBool("GENERAL", "favorites_on_startup", !m_cfg.getBool("GENERAL", "favorites_on_startup"));
 				_showConfig4();
 			}
 			/*else if (m_btnMgr.selected() == m_config4BtnSearchMode)
 			{
-				m_alphaSearch = !m_cfg.getBool(" GENERAL", "alphabetic_search_on_plus_minus", false);
-				m_cfg.setBool(" GENERAL", "alphabetic_search_on_plus_minus", m_alphaSearch);
+				m_alphaSearch = !m_cfg.getBool("GENERAL", "alphabetic_search_on_plus_minus", false);
+				m_cfg.setBool("GENERAL", "alphabetic_search_on_plus_minus", m_alphaSearch);
 				_showConfig4();
 			}*/
 			else if (m_btnMgr.selected() == m_config4BtnReturnToP)
 			{
 				currentChannelIndex = (currentChannelIndex >= amountOfChannels - 1) ? -1 : currentChannelIndex + 1;
 				if (currentChannelIndex == -1)
-					m_cfg.remove(" GENERAL", "returnto");
+					m_cfg.remove("GENERAL", "returnto");
 				else
-					m_cfg.setString(" GENERAL", "returnto", m_channels.GetId(currentChannelIndex));
+					m_cfg.setString("GENERAL", "returnto", m_channels.GetId(currentChannelIndex));
 				_showConfig4();
 			}
 			else if (m_btnMgr.selected() == m_config4BtnReturnToM)
@@ -155,9 +155,9 @@ int CMenu::_config4(void)
 				if (currentChannelIndex == -1) currentChannelIndex = amountOfChannels;
 				currentChannelIndex--;
 				if (currentChannelIndex == -1)
-					m_cfg.remove(" GENERAL", "returnto");
+					m_cfg.remove("GENERAL", "returnto");
 				else
-					m_cfg.setString(" GENERAL", "returnto", m_channels.GetId(currentChannelIndex));
+					m_cfg.setString("GENERAL", "returnto", m_channels.GetId(currentChannelIndex));
 				_showConfig4();
 			}
 		}

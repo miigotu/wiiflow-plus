@@ -56,6 +56,9 @@ private:
 	Config m_cfg;
 	Config m_loc;
 	Config m_loclist;
+	Config m_cat;
+	Config m_gconfigsettings;
+	Config m_game_settings;
 	Config m_theme;
 	Config m_version;
 	Channels m_channels;
@@ -89,6 +92,8 @@ private:
 	std::string m_videoDir;
 	std::string m_fanartDir;
 	std::string m_screenshotDir;
+	std::string m_settingsDir;
+	std::string m_languagesDir;
 	const char* m_update_url;
 	std::string m_dol;
 	std::string m_ver;

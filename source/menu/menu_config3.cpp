@@ -65,10 +65,10 @@ void CMenu::_showConfig3(void)
 			m_btnMgr.show(m_config3LblUser[i]);
 	// 
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
-	m_btnMgr.setText(m_config3LblTVWidthVal, wfmt(L"%i", 640 * 640 / max(1, m_cfg.getInt(" GENERAL", "tv_width", 640))));
-	m_btnMgr.setText(m_config3LblTVHeightVal, wfmt(L"%i", 480 * 480 / max(1, m_cfg.getInt(" GENERAL", "tv_height", 480))));
-	m_btnMgr.setText(m_config3LblTVXVal, wfmt(L"%i", -m_cfg.getInt(" GENERAL", "tv_x", 0)));
-	m_btnMgr.setText(m_config3LblTVYVal, wfmt(L"%i", m_cfg.getInt(" GENERAL", "tv_y", 0)));
+	m_btnMgr.setText(m_config3LblTVWidthVal, wfmt(L"%i", 640 * 640 / max(1, m_cfg.getInt("GENERAL", "tv_width", 640))));
+	m_btnMgr.setText(m_config3LblTVHeightVal, wfmt(L"%i", 480 * 480 / max(1, m_cfg.getInt("GENERAL", "tv_height", 480))));
+	m_btnMgr.setText(m_config3LblTVXVal, wfmt(L"%i", -m_cfg.getInt("GENERAL", "tv_x", 0)));
+	m_btnMgr.setText(m_config3LblTVYVal, wfmt(L"%i", m_cfg.getInt("GENERAL", "tv_y", 0)));
 }
 
 int CMenu::_config3(void)
@@ -123,15 +123,15 @@ int CMenu::_config3(void)
 				else if (m_btnMgr.selected() == m_config3BtnTVXM || m_btnMgr.selected() == m_config3BtnTVYP)
 					step = 1;
 				if (m_btnMgr.selected() == m_config3BtnTVWidthM || m_btnMgr.selected() == m_config3BtnTVWidthP)
-					m_cfg.setInt(" GENERAL", "tv_width", min(max(512, m_cfg.getInt(" GENERAL", "tv_width", 640) + step), 800));
+					m_cfg.setInt("GENERAL", "tv_width", min(max(512, m_cfg.getInt("GENERAL", "tv_width", 640) + step), 800));
 				else if (m_btnMgr.selected() == m_config3BtnTVHeightM || m_btnMgr.selected() == m_config3BtnTVHeightP)
-					m_cfg.setInt(" GENERAL", "tv_height", min(max(384, m_cfg.getInt(" GENERAL", "tv_height", 480) + step), 600));
+					m_cfg.setInt("GENERAL", "tv_height", min(max(384, m_cfg.getInt("GENERAL", "tv_height", 480) + step), 600));
 				else if (m_btnMgr.selected() == m_config3BtnTVXP || m_btnMgr.selected() == m_config3BtnTVXM)
-					m_cfg.setInt(" GENERAL", "tv_x", min(max(-50, m_cfg.getInt(" GENERAL", "tv_x", 0) + step), 50));
+					m_cfg.setInt("GENERAL", "tv_x", min(max(-50, m_cfg.getInt("GENERAL", "tv_x", 0) + step), 50));
 				else if (m_btnMgr.selected() == m_config3BtnTVYP || m_btnMgr.selected() == m_config3BtnTVYM)
-					m_cfg.setInt(" GENERAL", "tv_y", min(max(-30, m_cfg.getInt(" GENERAL", "tv_y", 0) + step), 30));
+					m_cfg.setInt("GENERAL", "tv_y", min(max(-30, m_cfg.getInt("GENERAL", "tv_y", 0) + step), 30));
 				_showConfig3();
-				m_vid.set2DViewport(m_cfg.getInt(" GENERAL", "tv_width", 640), m_cfg.getInt(" GENERAL", "tv_height", 480), m_cfg.getInt(" GENERAL", "tv_x", 0), m_cfg.getInt(" GENERAL", "tv_y", 0));
+				m_vid.set2DViewport(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480), m_cfg.getInt("GENERAL", "tv_x", 0), m_cfg.getInt("GENERAL", "tv_y", 0));
 				if (buttonHeld != m_btnMgr.selected())
 				{
 					repeatButton = 0;

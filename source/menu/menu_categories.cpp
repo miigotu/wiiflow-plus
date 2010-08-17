@@ -28,7 +28,7 @@ void CMenu::_CategorySettings()
 				{
 					// handling code for clicked favorite
 					m_category = i;
-					m_cfg.setInt(" GENERAL", "category", i);
+					m_cat.setInt("GENERAL", "category", i);
 					exitloop = true;
 					break;
 				}
@@ -85,6 +85,6 @@ void CMenu::_textCategorySettings(void)
 	m_btnMgr.setText(m_categoryBtnBack, _t("cd1", L"Back"));
 	m_btnMgr.setText(m_categoryBtn[0], _t("dl3", L"All"));
 	for (int i = 1; i < 12; i++)
-	m_btnMgr.setText(m_categoryBtn[i], m_cfg.getWString(" GENERAL", sfmt("cat%d",i).c_str(), m_loc.getWString(m_curLanguage, sfmt("cat%d", i).c_str(), wfmt(L"Category %i",i).c_str())));
+	m_btnMgr.setText(m_categoryBtn[i], m_cat.getWString("GENERAL", sfmt("cat%d",i).c_str(), wfmt(L"Category %i",i).c_str()));
 }
 

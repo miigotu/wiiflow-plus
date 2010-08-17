@@ -64,12 +64,12 @@ void CMenu::_showConfig5(void)
 			m_btnMgr.show(m_config5LblUser[i]);
 	// 
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
-	m_btnMgr.setText(m_config5LblPartition, m_cfg.getString(" GENERAL", "partition", "WBFS1"));
-	m_btnMgr.setText(m_config5BtnInstallDirectory, m_cfg.getBool(" GENERAL", "install_directory", true) ? _t("on", L"On") : _t("off", L"Off"));
+	m_btnMgr.setText(m_config5LblPartition, m_cfg.getString("GENERAL", "partition", "WBFS1"));
+	m_btnMgr.setText(m_config5BtnInstallDirectory, m_cfg.getBool("GENERAL", "install_directory", true) ? _t("on", L"On") : _t("off", L"Off"));
 	
-//	i = min(max(0, m_cfg.getInt(" GENERAL", "game_language", 0)), (int)ARRAY_SIZE(CMenu::_languages) - 1);
+//	i = min(max(0, m_cfg.getInt("GENERAL", "game_language", 0)), (int)ARRAY_SIZE(CMenu::_languages) - 1);
 //	m_btnMgr.setText(m_config2LblLanguage, _t(CMenu::_languages[i].id, CMenu::_languages[i].text));
-//	m_btnMgr.setText(m_config2BtnOcarina, m_cfg.getBool(" GENERAL", "cheat") ? _t("on", L"On") : _t("off", L"Off"));
+//	m_btnMgr.setText(m_config2BtnOcarina, m_cfg.getBool("GENERAL", "cheat") ? _t("on", L"On") : _t("off", L"Off"));
 }
 
 int CMenu::_config5(void)
@@ -123,7 +123,7 @@ int CMenu::_config5(void)
 				gprintf("Next item: %d\n", currentPartition);
 				WBFS_GetPartitionName(currentPartition, (char *) &buf);
 				gprintf("Which is: %s\n", buf);
-				m_cfg.setString(" GENERAL", "partition", buf);
+				m_cfg.setString("GENERAL", "partition", buf);
 				_showConfig5();
 			}
 			else if (m_btnMgr.selected() == m_config5BtnPartitionM)
@@ -133,19 +133,19 @@ int CMenu::_config5(void)
 				gprintf("Next item: %d\n", currentPartition);
 				WBFS_GetPartitionName(currentPartition, (char *) &buf);
 				gprintf("Which is: %s\n", buf);
-				m_cfg.setString(" GENERAL", "partition", buf);
+				m_cfg.setString("GENERAL", "partition", buf);
 				_showConfig5();
 			}
 			else if (m_btnMgr.selected() == m_config5BtnInstallDirectory)
 			{
-				m_cfg.setBool(" GENERAL", "install_directory", !m_cfg.getBool(" GENERAL", "install_directory", true));
+				m_cfg.setBool("GENERAL", "install_directory", !m_cfg.getBool("GENERAL", "install_directory", true));
 				_showConfig5();
 			}
 		}
 	}
 //	if (bCurrentPartition != currentPartition)
 //	{
-		gprintf("Switching partition to %s\n", m_cfg.getString(" GENERAL", "partition").c_str());
+		gprintf("Switching partition to %s\n", m_cfg.getString("GENERAL", "partition").c_str());
 		_loadList();
 //	}
 	

@@ -72,7 +72,7 @@ void CMenu::_showConfigAdv(void)
 	// 
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
 	m_btnMgr.setText(m_configAdvLblCurLanguage, m_curLanguage);
-	m_btnMgr.setText(m_configAdvLblCurTheme, m_cfg.getString(" GENERAL", "theme"));
+	m_btnMgr.setText(m_configAdvLblCurTheme, m_cfg.getString("GENERAL", "theme"));
 }
 
 static string upperCase(string text)
@@ -120,7 +120,7 @@ int CMenu::_configAdv(void)
 	int nextPage = 0;
 	vector<string> themes;
 	int curTheme;
-	string prevTheme = m_cfg.getString(" GENERAL", "theme");
+	string prevTheme = m_cfg.getString("GENERAL", "theme");
 
 	listThemes(m_themeDir.c_str(), themes);
 	curTheme = 0;
@@ -173,28 +173,28 @@ int CMenu::_configAdv(void)
 			else if (m_btnMgr.selected() == m_configAdvBtnCurThemeP)
 			{
 				curTheme = loopNum(curTheme + 1, (int)themes.size());
-				m_cfg.setString(" GENERAL", "theme", themes[curTheme]);
+				m_cfg.setString("GENERAL", "theme", themes[curTheme]);
 				_showConfigAdv();
 			}
 			else if (m_btnMgr.selected() == m_configAdvBtnCurThemeM)
 			{
 				curTheme = loopNum(curTheme - 1, (int)themes.size());
-				m_cfg.setString(" GENERAL", "theme", themes[curTheme]);
+				m_cfg.setString("GENERAL", "theme", themes[curTheme]);
 				_showConfigAdv();
 			}
 			else if (m_btnMgr.selected() == m_configAdvBtnCurLanguageP)
 			{
 				m_curLanguage = m_loclist.nextDomain(m_curLanguage);
-				if (m_loc.load(sfmt("%s/languages/%s.ini", m_dataDir.c_str(), m_curLanguage.c_str()).c_str()))
-					m_cfg.setString(" GENERAL", "language", m_curLanguage);
+				if (m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str()))
+					m_cfg.setString("GENERAL", "language", m_curLanguage);
 				_updateText();
 				_showConfigAdv();
 			}
 			else if (m_btnMgr.selected() == m_configAdvBtnCurLanguageM)
 			{
 				m_curLanguage = m_loclist.prevDomain(m_curLanguage);
-				if (m_loc.load(sfmt("%s/languages/%s.ini", m_dataDir.c_str(), m_curLanguage.c_str()).c_str()))
-					m_cfg.setString(" GENERAL", "language", m_curLanguage);
+				if (m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str()))
+					m_cfg.setString("GENERAL", "language", m_curLanguage);
 				_updateText();
 				_showConfigAdv();
 			}

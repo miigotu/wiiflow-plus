@@ -55,7 +55,7 @@ bool CMenu::_code(char code[4], bool erase)
 			if (m_btnMgr.selected() == m_codeBtnErase)
 			{
 				memset(code, 0, sizeof code);
-				m_cfg.remove(" GENERAL", "parent_code");
+				m_cfg.remove("GENERAL", "parent_code");
 				n = 0;
 				m_locked = false;
 			}
