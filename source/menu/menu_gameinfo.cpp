@@ -480,7 +480,7 @@ void CMenu::_textGameInfo(void)
 		if(classiccontroller && x < 4)
 		{
 			m_controls[x].fromPNG(classiccontroller_png);
-			m_btnMgr.setTexture(m_gameinfoLblControls[x] ,m_controls[x], 52, 60);
+			m_btnMgr.setTexture(m_gameinfoLblControls[x] ,m_controls[x], 60, 60);
 			x++;
 		}
 		if(nunchuk && x < 4)
@@ -518,8 +518,8 @@ void CMenu::_textGameInfo(void)
 		}
 		if(microphone && x < 4)
 		{
-			m_controls[x].fromPNG(gcncontroller_png);
-			m_btnMgr.setTexture(m_gameinfoLblControls[x] ,m_controls[x], 60, 60);
+			m_controls[x].fromPNG(microphone_png);
+			m_btnMgr.setTexture(m_gameinfoLblControls[x] ,m_controls[x], 48, 60);
 			x++;
 		}
 		if(gamecube && x < 4)
