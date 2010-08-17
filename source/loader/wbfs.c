@@ -713,7 +713,7 @@ s32 WBFS_GetCurrentPartition() {
 
 s32 WBFS_GetPartitionCount() {
 	if (InitPartitionList()) return -1;
-	if (!Sys_SupportsExternalModule()) return plist.wbfs_n;
+	if (!Sys_SupportsExternalModule(true)) return plist.wbfs_n;
 	return plist.wbfs_n + plist.fat_n + plist.ntfs_n;
 }
 
@@ -722,7 +722,7 @@ s32 WBFS_GetPartitionName(u32 index, char *buf) {
 	// Get the name of the partition
 
 	memset(buf, 0, 6);
-	if (Sys_SupportsExternalModule()) {
+	if (Sys_SupportsExternalModule(true)) {
 		switch(plist.pinfo[index].fs_type)
 		{
 			case FS_TYPE_WBFS: snprintf(buf, 6, "WBFS%d", plist.pinfo[index].wbfs_i); break;

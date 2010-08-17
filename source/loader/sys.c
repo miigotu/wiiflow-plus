@@ -172,12 +172,12 @@ s32 Sys_GetCerts(signed_blob **certs, u32 *len)
 	return ret;
 }
 
-bool Sys_SupportsExternalModule(void)
+bool Sys_SupportsExternalModule(bool part_select)
 {
 //	u32 version = IOS_GetVersion();
 	u32 revision = IOS_GetRevision();
 	
-	bool retval = (is_ios_type(IOS_TYPE_WANIN) && revision >= 18) || (is_ios_type(IOS_TYPE_HERMES) && revision >= 4);
+	bool retval =  (part_select && is_ios_type(IOS_TYPE_WANIN) && revision >= 17) || (is_ios_type(IOS_TYPE_WANIN) && revision >= 18) || (is_ios_type(IOS_TYPE_HERMES) && revision >= 4);
 	gprintf("IOS Version: %d, Revision %d, returning %d\n", IOS_GetVersion(), revision, retval);
 	return retval;
 }
