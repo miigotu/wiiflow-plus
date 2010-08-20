@@ -880,7 +880,7 @@ void CMenu::_initCF(void)
 	{
 		id = string((const char *)m_gameList[i].id, m_gameList[i].id[5] == 0 ? strlen((const char *) m_gameList[i].id) : sizeof m_gameList[0].id);
 		chantitle = m_gameList[i].chantitle;
-		if ((!m_favorites || m_game_settings.getBool(id, "favorite", false)) && (!m_locked || !m_game_settings.getBool(id, "adult_only", false)) && !m_gconfigsettings.getBool(id, "hidden", false))
+		if ((!m_favorites || m_game_settings.getBool("FAVORITES", id, false)) && (!m_locked || !m_game_settings.getBool("ADULTONLY", id, false)) && !m_gconfigsettings.getBool("HIDDEN", id, false))
 		{
 			if (m_category != 0)
 			{
@@ -1234,7 +1234,7 @@ bool CMenu::_loadGameList(void)
 	FILE *file = 0;
 	long fileSize = 0;
 
-	file = fopen("sd:/wiiflow/hdrdump", "rb");
+	file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "hdrdump").c_str(), "rb");
 	if (file == 0)
 		return false;
 	fseek(file, 0, SEEK_END);
@@ -1262,7 +1262,7 @@ bool CMenu::_loadGameList(void)
 		return false;
 	}
 #if 0	
-	FILE *file = fopen(sfmt("%s/%s", m_appDir.c_str(), "hdrdump").c_str(), "wb");
+	FILE *file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "hdrdump").c_str(), "wb");
 	fwrite(buffer.get(), 1, len, file);
 	fclose(file);
 #endif

@@ -267,9 +267,9 @@ void CMenu::_game(bool launch)
 					error(_t("wbfsop11", L"The currently selected filesystem is read-only. You cannot install games or remove them."));
 			}
 			else if (m_btnMgr.selected() == m_gameBtnFavoriteOn || m_btnMgr.selected() == m_gameBtnFavoriteOff)
-				m_game_settings.setBool(id, "favorite", !m_game_settings.getBool(id, "favorite", false));
+				m_game_settings.setBool("FAVORITES", id, !m_game_settings.getBool("FAVORITES", id, false));
 			else if (m_btnMgr.selected() == m_gameBtnAdultOn || m_btnMgr.selected() == m_gameBtnAdultOff)
-				m_game_settings.setBool(id, "adult_only", !m_game_settings.getBool(id, "adult_only", false));
+				m_game_settings.setBool("ADULTONLY", id, !m_game_settings.getBool("ADULTONLY", id, false));
 			else if (m_btnMgr.selected() == m_gameBtnBack)
 			{
 				m_gameSound.stop();
@@ -342,7 +342,7 @@ void CMenu::_game(bool launch)
 			{
 				if (m_current_view == COVERFLOW_USB)
 				{
-					b = m_game_settings.getBool(id, "favorite", false);
+					b = m_game_settings.getBool("FAVORITES", id, false);
 					m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
 					m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
 					m_btnMgr.show(m_gameLblUser[1]);
@@ -351,7 +351,7 @@ void CMenu::_game(bool launch)
 		
 					if (!m_locked)
 					{
-						b = m_game_settings.getBool(id, "adult_only", false);
+						b = m_game_settings.getBool("ADULTONLY", id, false);
 						m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
 						m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
 						m_btnMgr.show(m_gameBtnDelete);
@@ -360,7 +360,7 @@ void CMenu::_game(bool launch)
 				}
 				else if (m_current_view == COVERFLOW_CHANNEL)
 				{
-					b = m_game_settings.getBool(id, "favorite", false);
+					b = m_game_settings.getBool("FAVORITES", id, false);
 					m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
 					m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
 					m_btnMgr.show(m_gameLblUser[1]);
@@ -369,7 +369,7 @@ void CMenu::_game(bool launch)
 		
 					if (!m_locked)
 					{
-						b = m_game_settings.getBool(id, "adult_only", false);
+						b = m_game_settings.getBool("ADULTONLY", id, false);
 						m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
 						m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
 					}
