@@ -184,17 +184,23 @@ int CMenu::_configAdv(void)
 			}
 			else if (m_btnMgr.selected() == m_configAdvBtnCurLanguageP)
 			{
-				m_curLanguage = m_loclist.nextDomain(m_curLanguage);
+				int lang = (int)loopNum((u32)m_cfg.getInt("GENERAL", "language", 0) + 1, ARRAY_SIZE(CMenu::_translations));
+				m_curLanguage = CMenu::_translations[lang];
+				/* m_curLanguage = m_loclist.nextDomain(m_curLanguage);
+				if (m_curLanguage == "GENERAL") m_curLanguage = m_loclist.nextDomain(m_curLanguage); */
 				if (m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str()))
-					m_cfg.setString("GENERAL", "language", m_curLanguage);
+					m_cfg.setInt("GENERAL", "language", lang);
 				_updateText();
 				_showConfigAdv();
 			}
 			else if (m_btnMgr.selected() == m_configAdvBtnCurLanguageM)
 			{
-				m_curLanguage = m_loclist.prevDomain(m_curLanguage);
+				int lang = (int)loopNum((u32)m_cfg.getInt("GENERAL", "language", 0) - 1, ARRAY_SIZE(CMenu::_translations));
+				m_curLanguage = CMenu::_translations[lang];
+				/* m_curLanguage = m_loclist.prevDomain(m_curLanguage);
+				if (m_curLanguage == "GENERAL") m_curLanguage = m_loclist.prevDomain(m_curLanguage); */
 				if (m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str()))
-					m_cfg.setString("GENERAL", "language", m_curLanguage);
+					m_cfg.setInt("GENERAL", "language", lang);
 				_updateText();
 				_showConfigAdv();
 			}

@@ -154,7 +154,6 @@ void CMenu::init(bool fromHBC)
 		mkdir(m_appDir.c_str(), 0777);
 
 	// INI files
-	m_loclist.load(sfmt("%s/" LANG_FILENAME, m_languagesDir.c_str()).c_str());
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
 	themeName = m_cfg.getString("GENERAL", "theme", "DEFAULT");
 	m_themeDataDir = sfmt("%s/%s", m_themeDir.c_str(), themeName.c_str());
@@ -193,7 +192,8 @@ void CMenu::init(bool fromHBC)
 	}
 	if (CONF_GetArea() == CONF_AREA_BRA)
 		defaultLanguage = "BRAZILIAN";
-	m_curLanguage = m_loclist.getString("GENERAL", "language", defaultLanguage);
+	int lang = m_cfg.getInt("GENERAL", "language", 0);
+	m_curLanguage = CMenu::_translations[lang];
 	m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str());
 	// 
 	m_aa = 3;

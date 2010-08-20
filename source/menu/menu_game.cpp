@@ -40,6 +40,32 @@ extern const u8 delete_png[];
 extern const u8 deletes_png[];
 extern int mainIOS;
 
+const string CMenu::_translations[23] = {
+	"Default",
+	"Arab",
+	"Brazilian",
+	"Chinese_S",
+	"Chinese_T",
+	"Danish",
+	"Dutch",
+	"English",
+	"Finnish",
+	"French",
+	"Gallego",
+	"German",
+	"Hungarian",
+	"Italian",
+	"Japanese",
+	"Norwegian",
+	"Polish",
+	"Portuguese",
+	"Russian",
+	"Spanish",
+	"Swedish",
+	"Tagalog",
+	"Turkish"
+};
+
 const CMenu::SOption CMenu::_languages[11] = {
 	{ "lngdef", L"Default" },
 	{ "lngjap", L"Japanese" },

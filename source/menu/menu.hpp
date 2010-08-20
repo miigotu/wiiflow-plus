@@ -736,6 +736,7 @@ private:
 	static int _loadGameSoundThrd(CMenu *m);
 	// 
 	struct SOption { const char id[10]; const wchar_t text[16]; };
+	static const string _translations[23];
 	static const SOption _languages[11];
 	static const SOption _videoModes[7];
 	static const SOption _vidModePatch[4];
