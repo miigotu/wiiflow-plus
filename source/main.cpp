@@ -38,7 +38,7 @@ int old_main(int argc, char **argv)
 	bool wbfsOK = false;
 	int ret = 0;
 	bool hbc;
-
+	
 	// Narolez: check if ios argument is passed in argv[0] (by NForwarder) or argv[1] (by wiiload or whatever)
 	char *arg = argc > 1 ? argv[1] : argc == 1 ? argv[0] : NULL;
 	if (arg != NULL && strcasestr(arg, "ios=") != 0)
@@ -83,7 +83,7 @@ int old_main(int argc, char **argv)
 	// 36 MB for general purpose allocations
 	// 12 MB for covers (and temporary buffers)
 	// adds 15 MB from MEM1 to obtain 27 MB for covers (about 150 HQ covers on screen)
-	MEM2_init(40, 12);	// Max ~48
+	MEM2_init(36, 12);	// Max ~48
 
 	// Launched through the HBC?
     hbc = *((u32 *) 0x80001804) == 0x53545542 && *((u32 *) 0x80001808) == 0x48415858;

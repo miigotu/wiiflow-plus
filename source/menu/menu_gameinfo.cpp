@@ -107,6 +107,7 @@ void CMenu::_gameinfo(void)
 						
 			m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.synopsis ), line, false);
 
+			m_btnMgr.hide(m_gameinfoLblID, true);
 			m_btnMgr.hide(m_gameinfoLblDev, true);
 			m_btnMgr.hide(m_gameinfoLblRegion, true);
 			m_btnMgr.hide(m_gameinfoLblPublisher, true);
