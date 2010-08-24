@@ -39,6 +39,9 @@ typedef struct _ntfs_attr_search_ctx ntfs_attr_search_ctx;
 extern ntfschar AT_UNNAMED[];
 extern ntfschar STREAM_SDS[];
 
+/* The little endian Unicode string $TXF_DATA as a global constant. */
+extern ntfschar TXF_DATA[10];
+
 /**
  * enum ntfs_lcn_special_values - special return values for ntfs_*_vcn_to_lcn()
  *
@@ -186,6 +189,7 @@ struct _ntfs_attr {
 	u32 compression_block_size;
 	u8 compression_block_size_bits;
 	u8 compression_block_clusters;
+	s8 unused_runs; /* pre-reserved entries available */
 };
 
 /**
@@ -195,6 +199,9 @@ struct _ntfs_attr {
 typedef enum {
 	NA_Initialized,		/* 1: structure is initialized. */
 	NA_NonResident,		/* 1: Attribute is not resident. */
+	NA_BeingNonResident,	/* 1: Attribute is being made not resident. */
+	NA_FullyMapped,		/* 1: Attribute has been fully mapped */
+	NA_ComprClosing,	/* 1: Compressed attribute is being closed */
 } ntfs_attr_state_bits;
 
 #define  test_nattr_flag(na, flag)	 test_bit(NA_##flag, (na)->state)
@@ -208,6 +215,18 @@ typedef enum {
 #define NAttrNonResident(na)		 test_nattr_flag(na, NonResident)
 #define NAttrSetNonResident(na)		  set_nattr_flag(na, NonResident)
 #define NAttrClearNonResident(na)	clear_nattr_flag(na, NonResident)
+
+#define NAttrBeingNonResident(na)	test_nattr_flag(na, BeingNonResident)
+#define NAttrSetBeingNonResident(na)	set_nattr_flag(na, BeingNonResident)
+#define NAttrClearBeingNonResident(na)	clear_nattr_flag(na, BeingNonResident)
+
+#define NAttrFullyMapped(na)		test_nattr_flag(na, FullyMapped)
+#define NAttrSetFullyMapped(na)		set_nattr_flag(na, FullyMapped)
+#define NAttrClearFullyMapped(na)	clear_nattr_flag(na, FullyMapped)
+
+#define NAttrComprClosing(na)		test_nattr_flag(na, ComprClosing)
+#define NAttrSetComprClosing(na)	set_nattr_flag(na, ComprClosing)
+#define NAttrClearComprClosing(na)	clear_nattr_flag(na, ComprClosing)
 
 #define GenNAttrIno(func_name, flag)			\
 extern int NAttr##func_name(ntfs_attr *na);		\
@@ -281,12 +300,11 @@ extern runlist_element *ntfs_attr_find_vcn(ntfs_attr *na, const VCN vcn);
 
 extern int ntfs_attr_size_bounds_check(const ntfs_volume *vol,
 		const ATTR_TYPES type, const s64 size);
-extern int ntfs_attr_can_be_non_resident(const ntfs_volume *vol,
-		const ATTR_TYPES type);
 extern int ntfs_attr_can_be_resident(const ntfs_volume *vol,
 		const ATTR_TYPES type);
 int ntfs_attr_make_non_resident(ntfs_attr *na,
 		ntfs_attr_search_ctx *ctx);
+int ntfs_attr_force_non_resident(ntfs_attr *na);
 extern int ntfs_make_room_for_attr(MFT_RECORD *m, u8 *pos, u32 size);
 
 extern int ntfs_resident_attr_record_add(ntfs_inode *ni, ATTR_TYPES type,

@@ -222,14 +222,14 @@ bool NTFS_Mount(u32 sector)
 			__io_usbstorage.startup();
 
 			/* Mount device */
-/*			
+			
 			g_ntfsOK = ntfsMount("ntfs", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
 		} else if (wbfsDev == WBFS_DEVICE_SDHC) {
 			g_ntfsOK = ntfsMount("ntfs", &__io_sdhc, 0, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
-*/			
-			g_ntfsOK = ntfsMount("ntfs", &__io_usbstorage_ro, sector, CACHE, SECTORS, NTFS_DEFAULT);
+			
+/* 			g_ntfsOK = ntfsMount("ntfs", &__io_usbstorage_ro, sector, CACHE, SECTORS, NTFS_DEFAULT);
 		} else if (wbfsDev == WBFS_DEVICE_SDHC) {
-			g_ntfsOK = ntfsMount("ntfs", &__io_sdhc_ro, 0, CACHE, SECTORS, NTFS_DEFAULT);
+			g_ntfsOK = ntfsMount("ntfs", &__io_sdhc_ro, 0, CACHE, SECTORS, NTFS_DEFAULT); */
 			if (!g_ntfsOK) {
 				g_ntfsOK = ntfsMount("ntfs", &__io_wiisd, 0, CACHE, SECTORS_SD, NTFS_DEFAULT);
 			}

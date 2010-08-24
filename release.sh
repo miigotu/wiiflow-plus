@@ -17,24 +17,24 @@ done
 
 rev_old=$(cat ./source/svnrev.h 2>/dev/null | tr -d '\n' | sed 's/[^0-9]*\([0-9]*\).*/\1/')
 
-	mkdir -p releases/txt
-	mkdir -p releases/r$rev_new
-	mkdir -p releases/r$rev_new/debug
+	mkdir -p Compiles/txt
+	mkdir -p Compiles/r$rev_new
+	mkdir -p Compiles/r$rev_new/debug
 
 	make ios249
-	cp $1.dol releases/r$rev_new/249_boot.dol
+	cp $1.dol Compiles/r$rev_new/249_boot.dol
 	make ios250
-	cp $1.dol releases/r$rev_new/250_boot.dol
+	cp $1.dol Compiles/r$rev_new/250_boot.dol
 	make ios222
-	cp $1.dol releases/r$rev_new/222_boot.dol
+	cp $1.dol Compiles/r$rev_new/222_boot.dol
 	make ios223
-	cp $1.dol releases/r$rev_new/223_boot.dol
+	cp $1.dol Compiles/r$rev_new/223_boot.dol
 	make ios224
-	cp $1.dol releases/r$rev_new/224_boot.dol
+	cp $1.dol Compiles/r$rev_new/224_boot.dol
 	
-	cp $1.elf releases/r$rev_new/debug/boot.elf
-	cp build/*.map releases/r$rev_new/debug/boot.map
-	cp versions.txt releases/txt/versions.txt
+	cp $1.elf Compiles/r$rev_new/debug/boot.elf
+	cp build/*.map Compiles/r$rev_new/debug/boot.map
+	cp versions.txt Compiles/txt/versions.txt
 
 	echo >&2
 

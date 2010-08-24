@@ -57,8 +57,8 @@ private:
 	Config m_loc;
 	Config m_loclist;
 	Config m_cat;
-	Config m_gconfigsettings;
-	Config m_game_settings;
+	Config m_gcfg1;
+	Config m_gcfg2;
 	Config m_theme;
 	Config m_version;
 	Channels m_channels;
@@ -567,6 +567,7 @@ private:
 	bool _loadList(void);
 	bool _loadGameList(void);
 	void _initCF(void);
+	void titledump(bool channels, SmartBuf buffer, u32 len);
 	// 
 	void _initMainMenu(SThemeData &theme);
 	void _initErrorMenu(SThemeData &theme);

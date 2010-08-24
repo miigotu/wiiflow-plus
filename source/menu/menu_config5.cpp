@@ -79,7 +79,7 @@ int CMenu::_config5(void)
 	
 	s32 amountOfPartitions = WBFS_GetPartitionCount();
 	s32 currentPartition = WBFS_GetCurrentPartition();
-//	s32 bCurrentPartition = currentPartition;
+	s32 bCurrentPartition = currentPartition;
 
 	gprintf("Current Partition: %d\n", currentPartition);
 	gprintf("Amount of partitions: %d\n", amountOfPartitions);
@@ -105,12 +105,12 @@ int CMenu::_config5(void)
 			m_btnMgr.click(m_configBtnPageM);
 			break;
 		}
-		/*if (!m_locked && (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageP)))
+		if (!m_locked && (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageP)))
 		{
 			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
 			m_btnMgr.click(m_configBtnPageP);
 			break;
-		}*/
+		}
 		if (BTN_A_PRESSED)
 		{
 			m_btnMgr.click();
@@ -143,11 +143,11 @@ int CMenu::_config5(void)
 			}
 		}
 	}
-//	if (bCurrentPartition != currentPartition)
-//	{
+	if (currentPartition != bCurrentPartition)
+	{
 		gprintf("Switching partition to %s\n", m_cfg.getString("GENERAL", "partition").c_str());
 		_loadList();
-//	}
+	}
 	
 	_hideConfig5();
 	return nextPage;

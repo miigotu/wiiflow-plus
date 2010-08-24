@@ -880,7 +880,7 @@ void CMenu::_initCF(void)
 	{
 		id = string((const char *)m_gameList[i].id, m_gameList[i].id[5] == 0 ? strlen((const char *) m_gameList[i].id) : sizeof m_gameList[0].id);
 		chantitle = m_gameList[i].chantitle;
-		if ((!m_favorites || m_game_settings.getBool("FAVORITES", id, false)) && (!m_locked || !m_game_settings.getBool("ADULTONLY", id, false)) && !m_gconfigsettings.getBool("HIDDEN", id, false))
+		if ((!m_favorites || m_gcfg1.getBool("FAVORITES", id, false)) && (!m_locked || !m_gcfg1.getBool("ADULTONLY", id, false)) && !m_gcfg1.getBool("HIDDEN", id, false))
 		{
 			if (m_category != 0)
 			{
@@ -897,8 +897,8 @@ void CMenu::_initCF(void)
 				else
 					w = titles.getWString("TITLES", id.substr(0, 4), string(m_gameList[i].title, sizeof m_gameList[0].title));
 			}
-			int playcount = m_gconfigsettings.getInt(id, "playcount", 0);
-			unsigned int lastPlayed = m_gconfigsettings.getUInt(id, "lastplayed", 0);
+			int playcount = m_gcfg1.getInt("PLAYCOUNT", id, 0);
+			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
 			if (m_current_view == COVERFLOW_CHANNEL && chantitle == 281482209522966ULL) 
 				m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/JODI.png", m_picDir.c_str()).c_str(), sfmt("%s/JODI.png", m_boxPicDir.c_str()).c_str(), playcount, lastPlayed);
 			else
@@ -1180,6 +1180,7 @@ bool CMenu::_loadChannelList(void)
 	if (!buffer)
 		return false;
 	memset(buffer.get(), 0, len);
+
 	
 	m_gameList.clear();
 	m_gameList.reserve(count);
@@ -1195,6 +1196,7 @@ bool CMenu::_loadChannelList(void)
 	
 		m_gameList.push_back(b[i]);
 	}
+	//titledump(false, buffer, len);
 	return true;
 }
 
@@ -1266,6 +1268,7 @@ bool CMenu::_loadGameList(void)
 	fwrite(buffer.get(), 1, len, file);
 	fclose(file);
 #endif
+	//titledump(false, buffer, len);
 	m_gameList.clear();
 	m_gameList.reserve(count);
 	discHdr *b = (discHdr *)buffer.get();
@@ -1395,4 +1398,15 @@ void CMenu::_stopSounds(void)
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();
 	m_gameSound.stop();
+}
+
+void CMenu::titledump(bool channels, SmartBuf buffer, u32 len)
+{
+	FILE *file = 0;
+	if (channels)
+		file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "channels.txt").c_str(), "wb");
+	else
+		file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "games.txt").c_str(), "wb");
+	fwrite(buffer.get(), 1, len, file);
+	fclose(file); 
 }
