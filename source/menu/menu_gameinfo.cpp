@@ -212,7 +212,7 @@ void CMenu::_showGameInfo(void)
 void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 {
 	if(!DatabaseLoaded())
-		ReloadXMLDatabase(m_appDir.c_str(),(char*)m_curLanguage.c_str(),1);
+		ReloadXMLDatabase(m_settingsDir.c_str(),(char*)m_curLanguage.c_str(),1);
 	
 	gprintf("_initGameInfoMenu\n");
 	
@@ -262,7 +262,7 @@ void CMenu::_textGameInfo(void)
 	cnt_controls = 0;
 
 	if(!DatabaseLoaded())
-		ReloadXMLDatabase(m_appDir.c_str(),(char*)m_curLanguage.c_str(),1);
+		ReloadXMLDatabase(m_settingsDir.c_str(),(char*)m_curLanguage.c_str(),1);
 
 	if(DatabaseLoaded()) 
 		titlecheck = LoadGameInfoFromXML((char*)m_cf.getId().c_str());
