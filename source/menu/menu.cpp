@@ -871,7 +871,10 @@ void CMenu::_initCF(void)
 	Config titles;
 	u64 chantitle;
 	m_titles_loaded = false;
-	
+	if (m_current_view == COVERFLOW_USB) m_gamelistdump = m_cfg.getBool("GENERAL", "dump_gamelist", true);
+	else if (m_current_view == COVERFLOW_CHANNEL) m_gamelistdump = m_cfg.getBool("GENERAL", "dump_chanlist", true);
+	if (m_gamelistdump)
+		m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
 	if (titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str()))
 		m_titles_loaded = true;
 	m_cf.clear();
@@ -899,11 +902,24 @@ void CMenu::_initCF(void)
 			}
 			int playcount = m_gcfg1.getInt("PLAYCOUNT", id, 0);
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
+
+			if (m_current_view == COVERFLOW_CHANNEL && m_gamelistdump)
+				m_dump.setWString("CHANNELS", id.substr(0, 4), w);
+			else if (m_current_view == COVERFLOW_USB && m_gamelistdump)
+				m_dump.setWString("GAMES", id, w);
+
 			if (m_current_view == COVERFLOW_CHANNEL && chantitle == 281482209522966ULL) 
 				m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/JODI.png", m_picDir.c_str()).c_str(), sfmt("%s/JODI.png", m_boxPicDir.c_str()).c_str(), playcount, lastPlayed);
 			else
 				m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
 		}
+	}
+	if (m_gamelistdump)
+	{
+		m_dump.save();
+		m_dump.unload();
+		if (m_current_view == COVERFLOW_CHANNEL) m_cfg.setBool("GENERAL", "dump_gamelist", false);
+		else if (m_current_view == COVERFLOW_CHANNEL) m_cfg.setBool("GENERAL", "dump_chanlist", false);
 	}
 	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode", true));
 	cmpr = m_cfg.getBool("GENERAL", "allow_texture_compression", true);
@@ -1196,7 +1212,6 @@ bool CMenu::_loadChannelList(void)
 	
 		m_gameList.push_back(b[i]);
 	}
-	//titledump(false, buffer, len);
 	return true;
 }
 
@@ -1268,7 +1283,7 @@ bool CMenu::_loadGameList(void)
 	fwrite(buffer.get(), 1, len, file);
 	fclose(file);
 #endif
-	//titledump(false, buffer, len);
+
 	m_gameList.clear();
 	m_gameList.reserve(count);
 	discHdr *b = (discHdr *)buffer.get();
@@ -1398,15 +1413,4 @@ void CMenu::_stopSounds(void)
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();
 	m_gameSound.stop();
-}
-
-void CMenu::titledump(bool channels, SmartBuf buffer, u32 len)
-{
-	FILE *file = 0;
-	if (channels)
-		file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "channels.txt").c_str(), "wb");
-	else
-		file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "games.txt").c_str(), "wb");
-	fwrite(buffer.get(), 1, len, file);
-	fclose(file); 
 }

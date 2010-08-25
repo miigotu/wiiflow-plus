@@ -61,15 +61,17 @@ private:
 	Config m_gcfg2;
 	Config m_theme;
 	Config m_version;
+	Config m_dump;
 	Channels m_channels;
 	SmartBuf m_music;
 	u8 m_aa;
 	bool m_noHBC;
-	std::string m_curLanguage;
+	bool m_gamelistdump;
 	bool m_locked;
 	bool m_titles_loaded;
 	bool m_favorites;
 	s16 m_showtimer;
+	std::string m_curLanguage;
 	std::string m_curGameId;
 	std::string m_curChanId;
 	STexture m_waitMessage;
@@ -567,7 +569,6 @@ private:
 	bool _loadList(void);
 	bool _loadGameList(void);
 	void _initCF(void);
-	void titledump(bool channels, SmartBuf buffer, u32 len);
 	// 
 	void _initMainMenu(SThemeData &theme);
 	void _initErrorMenu(SThemeData &theme);
