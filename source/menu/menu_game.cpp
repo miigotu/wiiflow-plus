@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <time.h>
 #include "network/http.h"
+#include "network/gcard.h"
 
 #include "loader/wbfs.h"
 #include "loader/usbstorage.h"
@@ -431,6 +432,7 @@ void CMenu::_launchChannel(const u64 chantitle, const string &id)
 	m_gcfg2.setUInt("LASTPLAYED", id, time(NULL));
 	m_gcfg2.save();
 	m_cfg.save();
+
 	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing
 	cleanup();
 	
@@ -540,6 +542,15 @@ void CMenu::_launchGame(string &id, bool dvd)
 	m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg2.getInt("PLAYCOUNT", id, 0) + 1);
 	m_gcfg1.setUInt("LASTPLAYED", id, time(NULL));
 	
+	if (has_enabled_providers())
+	{
+		char ip[16];
+		if (m_networkInit || !_initNetwork(ip))
+		{
+			add_game_to_card(id.c_str());
+		}
+	}
+	
 	m_gcfg1.save();
 	m_gcfg2.save();
 	m_cfg.save();
@@ -557,32 +568,6 @@ void CMenu::_launchGame(string &id, bool dvd)
 	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) id.c_str());
 	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) id.c_str());
 	ocarina_load_code((u8 *) id.c_str(), cheatFile.get(), cheatSize);
-
-	//Get if WiinerTag is activated
-	bool wiinnertag = m_cfg.getBool("GENERAL", "use_wiinnertag", false);
-	if(wiinnertag) {
-		gprintf("Using WiinerTag\n");
-		char ip[16];
-		
-		if (m_networkInit || !_initNetwork(ip)) {
-		
-		char url[150];
-		char url_base[70] = "http://www.wiinnertag.com/wiinnertag_scripts/update_sign.php";
-		string key = m_cfg.getString("GENERAL", "wiinnertag_key", "");
-		
-		u32 bufferSize = 0x080000;	// Maximum download size 512kb
-		SmartBuf buffer = smartAnyAlloc(bufferSize);
-				
-		snprintf(url, 200, "%s?key=%s&game_id=%s", url_base, key.c_str(), id.c_str());
-		
-		block file = downloadfile(buffer.get(), bufferSize, url, CMenu::_downloadProgress, this);
-		if (file.data == NULL || file.size == 0 || file.data[0] == '<')
-			{
-				//Treating of errors
-				usleep(10000*1000);			
-			}		
-		}
-	}
 
 	// Reload IOS, if requested
 	if (iosNum != mainIOS || !_networkFix())
