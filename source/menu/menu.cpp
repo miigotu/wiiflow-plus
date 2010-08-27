@@ -896,6 +896,7 @@ void CMenu::_initCF(void)
 		m_titles_loaded = true;
 	m_cf.clear();
 	m_cf.reserve(m_gameList.size());
+	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
 	for (u32 i = 0; i < m_gameList.size(); ++i)
 	{
 		id = string((const char *)m_gameList[i].id, m_gameList[i].id[5] == 0 ? strlen((const char *) m_gameList[i].id) : sizeof m_gameList[0].id);
@@ -931,6 +932,7 @@ void CMenu::_initCF(void)
 				m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
 		}
 	}
+	m_gcfg1.unload();
 	if (m_gamelistdump)
 	{
 		m_dump.save();
