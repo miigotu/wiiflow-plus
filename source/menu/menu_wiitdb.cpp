@@ -47,6 +47,7 @@ u32 CMenu::_updateWiiTDBAsync(void *obj)
 
 	rebuild_database(m->m_settingsDir.c_str(), (char *) m->m_curLanguage.c_str(), 1, (bool (*)(void *, float)) CMenu::_updateProgress, (void *) m);
 	
+	m->m_thrdStop = true;
 	m->m_thrdWorking = false;
 	return 0;
 }
@@ -120,5 +121,9 @@ void CMenu::_updateWiiTDB()
 			thread = LWP_THREAD_NULL;
 		}
 		_hideWiiTDBUpdate();
+	}
+	else
+	{
+		ReloadXMLDatabase(m_settingsDir.c_str(), (char *) m_curLanguage.c_str(), 1);
 	}
 }

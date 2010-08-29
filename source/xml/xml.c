@@ -524,68 +524,6 @@ void readTitles(struct gameXMLinfo *gameinfo, char * start) {
 	}
 }
 
-u8 rebuild_database(const char *xmlfilepath, char *argdblang, bool argJPtoEN, bool (*f)(void *, float), void *ud)
-{
-	callback = f;
-	userdata = ud;
-
-	u8 ret = ReloadXMLDatabase(xmlfilepath, argdblang, argJPtoEN);
-	
-	callback = NULL;
-	userdata = NULL;
-	
-	return ret;
-}
-
-u8 wiitdb_requires_update(const char *xmlfilepath)
-{
-	char pathname[200];
-	struct stat orig;
-	memset(&orig, 0, sizeof(struct stat));
-	sprintf(pathname, "%s/wiitdb.zip", xmlfilepath);
-	if (stat(pathname, &orig) == -1)
-	{
-		gprintf("Can't find %s\n", pathname);
-		// try wiitdb.xml
-		sprintf(pathname, "%s/wiitdb.xml", xmlfilepath);
-		if (stat(pathname, &orig) == -1)
-		{
-			gprintf("Can't find %s\n", pathname);
-			gprintf("Deleting database files\n");
-
-			// Delete .db and .idx file
-			sprintf(pathname, "%s/wiitdb.db", xmlfilepath);
-			remove(pathname);
-			sprintf(pathname, "%s/wiitdb.idx", xmlfilepath);
-			remove(pathname);
-			
-			return 0; // Cannot stat original files, no update required
-		}
-	}
-	gprintf("Found either .zip or .xml file, date is %i\n", orig.st_mtime);
-
-	struct stat db_files;
-	memset(&db_files, 0, sizeof(struct stat));
-	
-	sprintf(pathname, "%s/wiitdb.db", xmlfilepath);
-	if (stat(pathname, &db_files) == -1 || orig.st_mtime > db_files.st_mtime)
-	{
-		gprintf("db file not found found or older, recreating databases: %i\n", db_files.st_mtime);
-		return 1; // XML or ZIP file is newer, force creation of new files
-	}
-	gprintf("db file not older: %i\n", db_files.st_mtime);
-	
-	sprintf(pathname, "%s/wiitdb.idx", xmlfilepath);
-	if (stat(pathname, &db_files) == -1 || orig.st_mtime > db_files.st_mtime)
-	{
-		gprintf("idx file not found or older, recreating databases: %i\n", db_files.st_mtime);
-		return 1; // XML or ZIP file is newer, force creation of new files
-	}
-	gprintf("idx file not older: %i\n", db_files.st_mtime);
-	
-	return 0;
-}
-
 int OpenDbFiles(const char *xmlfilepath, bool writing)
 {
 	if (db != NULL)
@@ -641,6 +579,14 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 		return;
 	}
 	tmp = strndup(start, end-start);
+	
+	char *slash = strstr(tmp, "/");
+	if (slash != NULL)
+	{
+		slash = strndup(start, slash-tmp);
+		free(tmp);
+		tmp = slash;
+	}
 	
 	char games[7] = "";
 	readNode(tmp, games, "\" games=\"","\"");
@@ -773,29 +719,10 @@ bool OpenXMLDatabase(const char* xmlfilepath, char* argdblang, bool argJPtoEN)
 {
 	if (db != NULL && game_idx != NULL) {
 		return 1;
-	}
-
-	char *xmlData = NULL;
-
-	// First check if the database file is up to date...
-	if (OpenDbFiles(xmlfilepath, false) == 0)
-	{
-		char pathname[200];
-		sprintf(pathname, "%s/wiitdb.zip", xmlfilepath);
-		xmlData = OpenXMLFile(pathname);
-		if(xmlData == NULL)
-		{
-			sprintf(pathname, "%s/wiitdb.xml", xmlfilepath);
-			xmlData = OpenXMLFile(pathname);
-			if (xmlData == NULL) {
-					CloseXMLDatabase();
-					return 0;
-				}
-	
-		}
-		LoadTitlesFromXML(xmlfilepath, xmlData, argdblang, argJPtoEN);
-		free(xmlData);
-		xmlData = NULL;
+	} 
+	else if (db == NULL || idx == NULL) {
+		CloseXMLDatabase();
+		OpenDbFiles(xmlfilepath, false);
 	}
 
 	if (db == NULL || idx == NULL)
@@ -844,5 +771,83 @@ bool LoadGameInfoFromXML(char * gameid)
 		}
 		ptr += 6;
 	}
+	return 0;
+}
+
+u8 rebuild_database(const char *xmlfilepath, char *argdblang, bool argJPtoEN, bool (*f)(void *, float), void *ud)
+{
+	callback = f;
+	userdata = ud;
+
+	char pathname[200];
+	sprintf(pathname, "%s/wiitdb.zip", xmlfilepath);
+	char * xmlData = OpenXMLFile(pathname);
+	if(xmlData == NULL)
+	{
+		sprintf(pathname, "%s/wiitdb.xml", xmlfilepath);
+		xmlData = OpenXMLFile(pathname);
+		if (xmlData == NULL) {
+			CloseXMLDatabase();
+			return 1;
+		}
+	}
+	LoadTitlesFromXML(xmlfilepath, xmlData, argdblang, argJPtoEN);
+	free(xmlData);
+	xmlData = NULL;
+
+	OpenXMLDatabase(xmlfilepath, argdblang, argJPtoEN);
+	
+	callback = NULL;
+	userdata = NULL;
+	
+	return 0;
+}
+
+u8 wiitdb_requires_update(const char *xmlfilepath)
+{
+	char pathname[200];
+	struct stat orig;
+	memset(&orig, 0, sizeof(struct stat));
+	sprintf(pathname, "%s/wiitdb.zip", xmlfilepath);
+	if (stat(pathname, &orig) == -1)
+	{
+		gprintf("Can't find %s\n", pathname);
+		// try wiitdb.xml
+		sprintf(pathname, "%s/wiitdb.xml", xmlfilepath);
+		if (stat(pathname, &orig) == -1)
+		{
+			gprintf("Can't find %s\n", pathname);
+			gprintf("Deleting database files\n");
+
+			// Delete .db and .idx file
+			sprintf(pathname, "%s/wiitdb.db", xmlfilepath);
+			remove(pathname);
+			sprintf(pathname, "%s/wiitdb.idx", xmlfilepath);
+			remove(pathname);
+			
+			return 0; // Cannot stat original files, no update required
+		}
+	}
+	gprintf("Found either .zip or .xml file, date is %i\n", orig.st_mtime);
+
+	struct stat db_files;
+	memset(&db_files, 0, sizeof(struct stat));
+	
+	sprintf(pathname, "%s/wiitdb.db", xmlfilepath);
+	if (stat(pathname, &db_files) == -1 || orig.st_mtime > db_files.st_mtime)
+	{
+		gprintf("db file not found found or older, recreating databases: %i\n", db_files.st_mtime);
+		return 1; // XML or ZIP file is newer, force creation of new files
+	}
+	gprintf("db file not older: %i\n", db_files.st_mtime);
+	
+	sprintf(pathname, "%s/wiitdb.idx", xmlfilepath);
+	if (stat(pathname, &db_files) == -1 || orig.st_mtime > db_files.st_mtime)
+	{
+		gprintf("idx file not found or older, recreating databases: %i\n", db_files.st_mtime);
+		return 1; // XML or ZIP file is newer, force creation of new files
+	}
+	gprintf("idx file not older: %i\n", db_files.st_mtime);
+	
 	return 0;
 }

@@ -19,7 +19,7 @@
 #define TAG_LOC			"loc"
 #define TAG_REGION		"region"
 #define TITLES_URL		"http://www.wiitdb.com/titles.txt?LANG=%s"
-#define WIITDB_URL		"http://www.wiitdb.com/wiitdb.zip?LANG=%s?FALLBACK=TRUE"
+#define WIITDB_URL		"http://www.wiitdb.com/wiitdb.zip?LANG=%s&FALLBACK=TRUE&WIIWARE=TRUE"
 
 //Need to use wiiflow.ini to set these still
 #define UPDATE_URL_VERSION	"http://update.wiiflow.org/txt/versions.txt"
