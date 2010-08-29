@@ -26,7 +26,7 @@
 
 #include "apploader.h"
 #include "patchcode.h"
-#include "gecko.h"
+//#include "gecko.h"
 
 extern void patchhook(u32 address, u32 len);
 extern void patchhook2(u32 address, u32 len);
@@ -434,7 +434,7 @@ bool PatchReturnTo(void *Address, int Size, u32 id) {
 		//find a safe place or the patch to hang out
 		if ( ! ad[ 3 ] && memcmp( Addr, SearchPattern2, 12 )==0 ) {
 			ad[ 3 ] = (u32)Addr + 0x30;
-			gprintf("found a safe place @ %08x\n", ad[ 3 ]);
+//			gprintf("found a safe place @ %08x\n", ad[ 3 ]);
 			//hexdump( Addr, 0x50 );
 		}
 		//find __OSLaunchMenu() and remember some addresses in it
@@ -476,7 +476,7 @@ bool PatchReturnTo(void *Address, int Size, u32 id) {
     //if the function is found and if it is not too far into the main.dol
     if( found == 3 && ( ad[ 2 ] - ad[ 3 ] < 0x1000001 ) && ad[ 3 ] )
     {
-		gprintf("patch __OSLaunchMenu( 0x00010001, 0x%08x )\n", id);
+//		gprintf("patch __OSLaunchMenu( 0x00010001, 0x%08x )\n", id);
 		u32 nop = 0x60000000;
 
 		//the magic that writes the TID to the registers
@@ -508,7 +508,7 @@ bool PatchReturnTo(void *Address, int Size, u32 id) {
 		addr = (u32*)ad[ 0 ];
 		memcpy( addr, &newval, sizeof( u32 ) );
 		memcpy( addr + 4, &nop, sizeof( u32 ) );
-		gprintf("\t%p -> %08x\n", addr, newval );
+//		gprintf("\t%p -> %08x\n", addr, newval );
 
 		//ES_GetTicketViews() again
 		newval = ( ad[ 3 ] - ad[ 1 ] );
@@ -517,7 +517,7 @@ bool PatchReturnTo(void *Address, int Size, u32 id) {
 		addr = (u32*)ad[ 1 ];
 		memcpy( addr, &newval, sizeof( u32 ) );
 		memcpy( addr + 4, &nop, sizeof( u32 ) );
-		gprintf("\t%p -> %08x\n", addr, newval );
+//		gprintf("\t%p -> %08x\n", addr, newval );
 
 		//ES_LaunchTitle()
 		newval = ( ad[ 3 ] - ad[ 2 ] );
@@ -526,18 +526,18 @@ bool PatchReturnTo(void *Address, int Size, u32 id) {
 		addr = (u32*)ad[ 2 ];
 		memcpy( addr, &newval, sizeof( u32 ) );
 		memcpy( addr + 4, &nop, sizeof( u32 ) );
-		gprintf("\t%p -> %08x\n", addr, newval );
+//		gprintf("\t%p -> %08x\n", addr, newval );
 
 	patched = 1;
     }
     else
     {
-		gprintf("not patched\n");
-		gprintf("found %d addresses\n", found);
-		int i;
-		for( i = 0; i< 4; i++)
-			gprintf("ad[ %d ]: %08x\n", i, ad[ i ] );
-		gprintf("offset : %08x\n", ad[ 2 ] - ad[ 3 ] );
+//		gprintf("not patched\n");
+//		gprintf("found %d addresses\n", found);
+//		int i;
+//		for( i = 0; i< 4; i++)
+//			gprintf("ad[ %d ]: %08x\n", i, ad[ i ] );
+//		gprintf("offset : %08x\n", ad[ 2 ] - ad[ 3 ] );
     }
     return patched;
 }

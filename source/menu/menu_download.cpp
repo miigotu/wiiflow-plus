@@ -289,8 +289,30 @@ static bool checkPNGFile(const char *filename)
 	return !ptrPng ? false : checkPNGBuf(ptrPng.get());
 }
 
+void CMenu::_initAsyncNetwork()
+{
+	m_thrdNetwork = true;
+	
+	lwp_t thread = LWP_THREAD_NULL;
+	LWP_CreateThread(&thread, (void *(*)(void *)) CMenu::_initStaticNetwork, this, 0, 8192, 40);
+}
+
+int CMenu::_initStaticNetwork(CMenu *m)
+{
+	char ip[16];
+	memset(&ip, 0, sizeof(ip));
+	if_config(ip, NULL, NULL, true);
+	
+	m->m_thrdNetwork = false;
+	return 0;
+}
+
 int CMenu::_initNetwork(char *ip)
 {
+	while (m_thrdNetwork)
+	{
+		usleep(100);
+	}
 	return if_config(ip, NULL, NULL, true);
 }
 

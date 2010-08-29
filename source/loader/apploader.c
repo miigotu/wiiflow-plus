@@ -12,8 +12,6 @@
 #include "wbfs.h"
 #include "sys.h"
 
-#include "gecko.h"
-
 typedef struct _SPatchCfg
 {
 	bool cheat;
@@ -317,8 +315,6 @@ static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeOb
 {
 	DCFlushRange(dst, len);
 	
-	gprintf("Applying patches...");
-
 	// Patch NoDiscInDrive only for IOS 249 < rev13 or IOS 222/223/224
 	if (patchDiscCheck && 
 		((is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() < 13) ||
@@ -345,7 +341,6 @@ static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeOb
 
 	do_wip_code((u8 *) dst, len);
 	
-	gprintf("done\n");
 	DCFlushRange(dst, len);
 }
 

@@ -178,6 +178,10 @@ static void setLanguage(int l)
 		configbytes[0] = 0xCD;
 }
 
+extern "C" {
+	bool DatabaseLoaded(void);
+}
+
 void CMenu::_game(bool launch)
 {
 	bool b;
@@ -201,9 +205,12 @@ void CMenu::_game(bool launch)
 		}
 		else if (BTN_PLUS_PRESSED)
 		{
-			_hideGame();
-			_gameinfo();
-			_showGame();
+			if (DatabaseLoaded())
+			{
+				_hideGame();
+				_gameinfo();
+				_showGame();
+			}
 		}
 		else if (BTN_MINUS_PRESSED)
 		{

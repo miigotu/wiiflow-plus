@@ -31,7 +31,6 @@ struct gameXMLinfo
 	long caseColor;
 };
 
-struct gameXMLinfo *game_info;
 char * getLang(int lang);
 bool ReloadXMLDatabase(const char* xmlfilepath, char* argdblang, bool argJPtoEN);
 void CloseXMLDatabase();
@@ -42,6 +41,9 @@ char ConvertRatingToIndex(char *ratingtext);
 void ConvertRating(char *ratingvalue, char *fromrating, char *torating, char *destvalue, int destsize);
 int getIndexFromId(char * gameid);
 int getCountPlayers(char * gameid);
+
+u8 wiitdb_requires_update(const char *xmlfilepath);
+u8 rebuild_database(const char *xmlfilepath, char *argdblang, bool argJPtoEN, bool (*f)(void *, float), void *ud);
 
 bool DatabaseLoaded(void);
 int getControllerTypes(char *controller, char * gameid);

@@ -4,10 +4,12 @@
 #include <malloc.h>
 #include <string.h>
 
+#define MAX_URL_SIZE 178 // 128 + 48 + 6
+
 struct provider
 {
 	char url[128];
-	char key[32];
+	char key[48];
 	u8 enabled;
 };
 
@@ -22,7 +24,7 @@ u8 register_card_provider(const char *url, const char *key, u8 enabled)
 		providers = new_providers;
 		memset(&providers[amount_of_providers], 0, sizeof(struct provider));
 		strncpy((char *) &providers[amount_of_providers].url, url, 128);
-		strncpy((char *) &providers[amount_of_providers].key, key, 32);
+		strncpy((char *) &providers[amount_of_providers].key, key, 48);
 		providers[amount_of_providers].enabled = enabled;
 		amount_of_providers++;
 		return 0;
@@ -35,7 +37,7 @@ u8 has_enabled_providers()
 	int i;
 	for (i = 0; i < amount_of_providers && providers != NULL; i++)
 	{
-		if (providers[i].enabled)
+		if (providers[i].enabled && strlen(providers[i].key) > 0)
 		{
 			return 1;
 		}
@@ -48,20 +50,23 @@ extern bool str_replace(char *str, char *olds, char *news, int size); // In xml.
 void add_game_to_card(const char *gameid)
 {
 	int i;
+	
+	char *url = (char *) malloc(MAX_URL_SIZE); // Too much memory, but only like 10 bytes
+	memset(url, 0, sizeof(url));
+	
+	u8 *data = malloc(1024);
+	
 	for (i = 0; i < amount_of_providers && providers != NULL; i++)
 	{
-		if (providers[i].enabled)
+		if (providers[i].enabled && strlen(providers[i].key) > 0)
 		{
-			char url[150]; // 128 + 32 = 150
-			memset(&url, 0, 150);
-			strcpy((char *) &url, (char *) &providers[i].url);
-
-			str_replace((char *) &url, (char *) "{KEY}", providers[i].key, 150);		
-			str_replace((char *) &url, (char *) "{ID6}", (char *) gameid, 150);
-			
-			u8 data[1024];
-			memset(&data, 0, 1024);
-			downloadfile((u8 *) &data, 1024, url, NULL, NULL);
+			strcpy(url, (char *) &providers[i].url);
+			str_replace(url, (char *) "{KEY}", (char *) &providers[i].key, MAX_URL_SIZE);		
+			str_replace(url, (char *) "{ID6}", (char *) gameid, MAX_URL_SIZE);
+			memset(data, 0, 1024);
+			downloadfile(data, 1024, url, NULL, NULL);
 		}
 	}
+	free(data);
+	free(url);
 }

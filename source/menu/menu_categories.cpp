@@ -45,18 +45,30 @@ void CMenu::_hideCategorySettings(bool instant)
 	m_btnMgr.hide(m_categoryBtnBack,instant);
 	for (int i = 0; i < 12; ++i)
 		m_btnMgr.hide(m_categoryBtn[i],instant);
+
+	for (u32 i = 0; i < ARRAY_SIZE(m_categoryLblUser); ++i)
+		if (m_categoryLblUser[i] != -1u)
+			m_btnMgr.hide(m_categoryLblUser[i], instant);
 }
 
 void CMenu::_showCategorySettings(void)
 {
+	_setBg(m_categoryBg, m_categoryBg);
+	
 	m_btnMgr.show(m_categoryBtnBack);
 	for (int i = 0; i < m_max_categories+1; ++i)
 		m_btnMgr.show(m_categoryBtn[i]);
+		
+	for (u32 i = 0; i < ARRAY_SIZE(m_categoryLblUser); ++i)
+		if (m_categoryLblUser[i] != -1u)
+			m_btnMgr.show(m_categoryLblUser[i]);
 }
 
 
 void CMenu::_initCategorySettingsMenu(CMenu::SThemeData &theme)
 {
+	_addUserLabels(theme, m_categoryLblUser, ARRAY_SIZE(m_categoryLblUser), "CATEGORY");
+	m_categoryBg = _texture(theme.texSet, "CATEGORY/BG", "texture", theme.bg);
 	m_categoryBtnBack = _addButton(theme, "CATEGORY/BACK_BTN", theme.btnFont, L"", 420, 410, 200, 56, theme.btnFontColor);
 	m_categoryBtn[0] = _addButton(theme, "CATEGORY/ALL_BTN", theme.btnFont, L"",  60, 40, 200, 50, theme.btnFontColor);
 	m_categoryBtn[1] = _addButton(theme, "CATEGORY/1_BTN", theme.btnFont, L"", 340, 40, 200, 50, theme.btnFontColor);

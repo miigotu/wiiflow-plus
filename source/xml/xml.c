@@ -7,12 +7,16 @@ Load game information from XML - Lustar
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <ogc/lwp.h>
 #include "../loader/utils.h"
 #include "../loader/wbfs_fat.h"
 #include "xml.h"
 
 #include "unzip/unzip.h"
 #include "unzip/miniunz.h"
+
+#include "gecko.h"
 
 /* config */
 char xmlCfgLang[3];
@@ -21,6 +25,10 @@ FILE *db;
 FILE *idx;
 int amount_of_games;
 void *game_idx = NULL;
+
+bool (*callback)(void *, float) = NULL;
+void *userdata = NULL;
+f32 progress_step;
 
 int db_debug = 0;
 
@@ -516,6 +524,68 @@ void readTitles(struct gameXMLinfo *gameinfo, char * start) {
 	}
 }
 
+u8 rebuild_database(const char *xmlfilepath, char *argdblang, bool argJPtoEN, bool (*f)(void *, float), void *ud)
+{
+	callback = f;
+	userdata = ud;
+
+	u8 ret = ReloadXMLDatabase(xmlfilepath, argdblang, argJPtoEN);
+	
+	callback = NULL;
+	userdata = NULL;
+	
+	return ret;
+}
+
+u8 wiitdb_requires_update(const char *xmlfilepath)
+{
+	char pathname[200];
+	struct stat orig;
+	memset(&orig, 0, sizeof(struct stat));
+	sprintf(pathname, "%s/wiitdb.zip", xmlfilepath);
+	if (stat(pathname, &orig) == -1)
+	{
+		gprintf("Can't find %s\n", pathname);
+		// try wiitdb.xml
+		sprintf(pathname, "%s/wiitdb.xml", xmlfilepath);
+		if (stat(pathname, &orig) == -1)
+		{
+			gprintf("Can't find %s\n", pathname);
+			gprintf("Deleting database files\n");
+
+			// Delete .db and .idx file
+			sprintf(pathname, "%s/wiitdb.db", xmlfilepath);
+			remove(pathname);
+			sprintf(pathname, "%s/wiitdb.idx", xmlfilepath);
+			remove(pathname);
+			
+			return 0; // Cannot stat original files, no update required
+		}
+	}
+	gprintf("Found either .zip or .xml file, date is %i\n", orig.st_mtime);
+
+	struct stat db_files;
+	memset(&db_files, 0, sizeof(struct stat));
+	
+	sprintf(pathname, "%s/wiitdb.db", xmlfilepath);
+	if (stat(pathname, &db_files) == -1 || orig.st_mtime > db_files.st_mtime)
+	{
+		gprintf("db file not found found or older, recreating databases: %i\n", db_files.st_mtime);
+		return 1; // XML or ZIP file is newer, force creation of new files
+	}
+	gprintf("db file not older: %i\n", db_files.st_mtime);
+	
+	sprintf(pathname, "%s/wiitdb.idx", xmlfilepath);
+	if (stat(pathname, &db_files) == -1 || orig.st_mtime > db_files.st_mtime)
+	{
+		gprintf("idx file not found or older, recreating databases: %i\n", db_files.st_mtime);
+		return 1; // XML or ZIP file is newer, force creation of new files
+	}
+	gprintf("idx file not older: %i\n", db_files.st_mtime);
+	
+	return 0;
+}
+
 int OpenDbFiles(const char *xmlfilepath, bool writing)
 {
 	if (db != NULL)
@@ -528,9 +598,16 @@ int OpenDbFiles(const char *xmlfilepath, bool writing)
 		fclose(idx);
 		idx = NULL;
 	}
+	
+	if (!writing && wiitdb_requires_update(xmlfilepath))
+	{
+		return 0;
+	}
+	
 	char pathname[200];
 	sprintf(pathname, "%s/wiitdb.db", xmlfilepath);
 	db = fopen(pathname, writing ? "wb" : "rb");
+
 	sprintf(pathname, "%s/wiitdb.idx", xmlfilepath);
 	idx = fopen(pathname, writing ? "wb" : "rb");
 
@@ -554,7 +631,31 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 	// First check if the database file is up to date...
 	OpenDbFiles(xmlfilepath, true);
 
-	while (1) {
+	// First find the amount of games
+	start = strstr(xmlData, "<WiiTDB");
+	if (start == NULL) {
+		return;
+	}
+	end = strstr(start, "/>");
+	if (end == NULL) { 
+		return;
+	}
+	tmp = strndup(start, end-start);
+	
+	char games[7] = "";
+	readNode(tmp, games, "\" games=\"","\"");
+	free(tmp);
+	
+	amount_of_games = atoi(games);
+	progress_step = 1.f / amount_of_games;
+
+	char titlespath[200];
+	sprintf(titlespath, "%s/titles.new", xmlfilepath);
+	FILE *titles = fopen(titlespath, "w");
+	fwrite("[TITLES]\n", 9, 1, titles);
+
+	bool abort = false;
+	while (!abort) {
 		start = strstr(xmlData, "<game");
 		if (start == NULL) {
 			break;
@@ -620,15 +721,50 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 		// Write game id to idx file
 		fwrite(gameinfo.id, 6, 1, idx);
 		fwrite(&gameinfo, sizeof(struct gameXMLinfo), 1, db);
+		
+		fwrite(gameinfo.id, 6, 1, titles);
+		fwrite("=", 1, 1, titles);
+		fwrite(gameinfo.title, strlen(gameinfo.title), 1, titles);
+		fwrite("\n", 1, 1, titles);
 
 		n++;
+		if (callback != NULL)
+		{
+			abort = !callback(userdata, n * progress_step);
+		}
 	}
 
 	fflush(idx);
 	fflush(db);
 
-	amount_of_games = ftell(idx) / 6;
+	fclose(titles);
+	titles = NULL;
+	
+	char pathname[200];
+	if (abort && n != amount_of_games)
+	{
+		// Delete intermediate files, if the files are not complete
+		fclose(idx);
+		fclose(db);
+		
+		idx = NULL;
+		db = NULL;
 
+		char pathname[200];
+		sprintf(pathname, "%s/wiitdb.db", xmlfilepath);
+		remove(pathname);
+		sprintf(pathname, "%s/wiitdb.idx", xmlfilepath);
+		remove(pathname);
+		
+		remove(titlespath);
+	}
+	else
+	{
+		sprintf(pathname, "%s/titles.ini", xmlfilepath);
+		// Move titles.new to titles.ini
+		rename(titlespath, pathname);
+	}
+	
 	OpenDbFiles(xmlfilepath, false);
 }
 

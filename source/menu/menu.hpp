@@ -124,6 +124,7 @@ private:
 	STexture m_gameSettingsBg;
 	STexture m_gameBgLQ;
 	STexture m_mainBgLQ;
+	STexture m_categoryBg;
 	// 
 	u32 m_errorLblMessage;
 	u32 m_errorLblIcon;
@@ -421,6 +422,7 @@ private:
 // Category menu
 	u32 m_categoryBtn[12];
 	u32 m_categoryBtnBack;
+	u32 m_categoryLblUser[4];
 	u8 m_max_categories;
 	u8 m_category;
 // Zones
@@ -487,6 +489,7 @@ private:
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;
 	volatile bool m_thrdWorking;
+	volatile bool m_thrdNetwork;
 	float m_thrdStep;
 	float m_thrdStepLen;
 	std::string m_coverDLGameId;
@@ -633,6 +636,7 @@ private:
 	void _hideCategorySettings(bool instant = false);
 	void _hideSystem(bool instant = false);
 	void _hideGameInfo(bool instant = false);
+	void _hideWiiTDBUpdate(bool instant = false);
 	//
 	void _showError(void);
 	void _showMain(void);
@@ -654,6 +658,7 @@ private:
 	void _showWBFS(WBFS_OP op);
 	void _showCFTheme(u32 curParam, int version, bool wide);
 	void _showGameSettings(void);
+	void _showWiiTDBUpdate(void);
 	void _setBg(const STexture &tex, const STexture &lqTex);
 	void _updateBg(void);
 	void _drawBg(void);
@@ -718,6 +723,8 @@ private:
 	static int _titleDownloaderAll(CMenu *m);
 	static int _titleDownloaderMissing(CMenu *m);
 	static int _update(CMenu *m);
+	static int _initStaticNetwork(CMenu *m);
+	void _initAsyncNetwork();
 	int _initNetwork(char *ip);
 	static void _addDiscProgress(int status, int total, void *user_data);
 	static int _gameInstaller(void *obj);
@@ -730,6 +737,10 @@ private:
 	void _resumeMusic(void);
 	void _loopMusic(void);
 	void _stopSounds(void);
+	//
+	static bool _updateProgress(void *obj, float progress);
+	static u32 _updateWiiTDBAsync(void *obj);
+	void _updateWiiTDB();
 	// 
 	void _playGameSound(void);
 	void _loadGameSound(const u64 chantitle, const std::string &id);

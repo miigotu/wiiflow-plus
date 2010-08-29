@@ -1,6 +1,7 @@
 
 #include "menu.hpp"
 #include "loader/wdvd.h"
+#include "network/gcard.h"
 
 #include <unistd.h>
 #include <fstream>
@@ -94,13 +95,20 @@ int CMenu::main(void)
 	static u32 disc_check = 0, olddisc_check = 0;
 	int done = 0;
 
+	// Start network asynchronious, if configured and required
+	if (m_cfg.getBool("GENERAL", "async_network", true) || has_enabled_providers())
+	{
+		_initAsyncNetwork();
+	}
+
 	SetupInput();
 	_loadList();
+	_searchMusic();
+	_startMusic();
+	_updateWiiTDB();
 	_showMain();
 	m_curGameId.clear();
 	_initCF();
-	_searchMusic();
-	_startMusic();
 
 	WDVD_GetCoverStatus(&disc_check);
 	

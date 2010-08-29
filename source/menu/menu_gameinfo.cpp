@@ -63,7 +63,6 @@ extern const u8		pegi_16_png[];
 extern const u8		pegi_18_png[];
 
 extern struct gameXMLinfo gameinfo;
-extern struct gameXMLinfo gameinfo_reset;
 
 static bool titlecheck = false;
 u8 cnt_controlsreq = 0, cnt_controls = 0;
@@ -211,9 +210,6 @@ void CMenu::_showGameInfo(void)
 
 void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 {
-	if(!DatabaseLoaded())
-		ReloadXMLDatabase(m_settingsDir.c_str(),(char*)m_curLanguage.c_str(),1);
-	
 	gprintf("_initGameInfoMenu\n");
 	
 	STexture emptyTex;
@@ -261,11 +257,7 @@ void CMenu::_textGameInfo(void)
 	cnt_controlsreq = 0;
 	cnt_controls = 0;
 
-	if(!DatabaseLoaded())
-		ReloadXMLDatabase(m_settingsDir.c_str(),(char*)m_curLanguage.c_str(),1);
-
-	if(DatabaseLoaded()) 
-		titlecheck = LoadGameInfoFromXML((char*)m_cf.getId().c_str());
+	titlecheck = LoadGameInfoFromXML((char*)m_cf.getId().c_str());
 		
 	if(titlecheck)
 	{

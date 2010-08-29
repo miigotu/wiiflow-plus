@@ -261,11 +261,6 @@ void CMenu::init(bool fromHBC)
 	register_card_provider(m_cfg.getString("GAMERCARD", "wiinnertag_url", WIINNERTAG_URL).c_str(),
 						   m_cfg.getString("GAMERCARD", "wiinnertag_key", "").c_str(),
 						   m_cfg.getBool("GAMERCARD", "wiinnertag_enable", false) ? 1 : 0);
-						   
-	// TODO: Add code to launch a thread for network initialization
-	//       if has_enabled_providers() == 1
-	// That will speed up registering games with either ncard or wiinnertag
-	// right before launching.
 }
 
 void CMenu::cleanup(void)
