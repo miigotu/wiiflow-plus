@@ -299,21 +299,45 @@ void CMenu::_initAsyncNetwork()
 
 int CMenu::_initStaticNetwork(CMenu *m)
 {
+	LockMutex lock(m->m_networkMutex);
+	net_init();
+
 	char ip[16];
-	memset(&ip, 0, sizeof(ip));
-	if_config(ip, NULL, NULL, true);
+	int val = if_config(ip, NULL, NULL, true);
+	m->m_networkInit = !val;
+	return val;
 	
 	m->m_thrdNetwork = false;
 	return 0;
 }
 
-int CMenu::_initNetwork(char *ip)
+int CMenu::_initNetwork()
 {
-	while (m_thrdNetwork)
-	{
-		usleep(100);
-	}
-	return if_config(ip, NULL, NULL, true);
+	LockMutex lock(m_networkMutex);
+	if (m_networkInit) return 0;
+
+	net_init();
+
+	char ip[16];
+	int val = if_config(ip, NULL, NULL, true);
+	
+	m_networkInit = !val;
+	return val;
+}
+
+#define STACK_ALIGN(type, name, cnt, alignment)         \
+					u8 _al__##name[((sizeof(type)*(cnt)) + (alignment) + \
+					(((sizeof(type)*(cnt))%(alignment)) > 0 ? ((alignment) - \
+					((sizeof(type)*(cnt))%(alignment))) : 0))]; \
+					type *name = (type*)(((u32)(_al__##name)) + ((alignment) - (( \
+					(u32)(_al__##name))&((alignment)-1))))
+
+void CMenu::_deinitNetwork()
+{
+	_networkFix();
+	net_deinit();
+	
+	m_networkInit = false;
 }
 
 int CMenu::_coverDownloader(bool missingOnly)
@@ -326,7 +350,6 @@ int CMenu::_coverDownloader(bool missingOnly)
 	int count = 0;
 	int countFlat = 0;
 	FILE *file = NULL;
-	char ip[16];
 	string url;
 	string path;
 	block png;
@@ -387,7 +410,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg1", L"Initializing network..."), listWeight + dlWeight * (float)step / (float)nbSteps);
 		LWP_MutexUnlock(m_mutex);
-		if (!m_networkInit && _initNetwork(ip) < 0)
+		if (_initNetwork() < 0)
 		{
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
@@ -396,7 +419,6 @@ int CMenu::_coverDownloader(bool missingOnly)
 			return 0;
 		}
 		m_thrdStepLen = dlWeight / (float)nbSteps;
-		m_networkInit = true;
 		for (u32 i = 0; i < coverList.size() && !m_thrdStop; ++i)
 		{
 			// Try to get the full cover
@@ -652,7 +674,6 @@ s8 CMenu::_versionTxtDownloaderInit(CMenu *m) //Handler to download versions txt
 s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 {
 	block vtxt;
-	char ip[16];
 	wstringEx ws;
 	SmartBuf buffer;
 	FILE *file = NULL;
@@ -673,7 +694,7 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
 	LWP_MutexUnlock(m_mutex);
 	
-	if (!m_networkInit && _initNetwork(ip) < 0)
+	if (_initNetwork() < 0)
 	{
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
@@ -681,8 +702,6 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 	}
 	else
 	{
-		m_networkInit = true;
-
 		// DLoad txt file
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg11", L"Downloading..."), 0.2f);
@@ -755,7 +774,6 @@ s8 CMenu::_versionDownloaderInit(CMenu *m) //Handler to download new dol
 s8 CMenu::_versionDownloader() // code to download new dol
 {
 	block newdol;
-	char ip[16];
 	wstringEx ws;
 	SmartBuf buffer;
 	FILE *file = NULL;
@@ -793,7 +811,7 @@ s8 CMenu::_versionDownloader() // code to download new dol
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
 	LWP_MutexUnlock(m_mutex);
 	
-	if (!m_networkInit && _initNetwork(ip) < 0)
+	if (_initNetwork() < 0)
 	{
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
@@ -871,7 +889,6 @@ int CMenu::_titleDownloader(bool missingOnly)
 {
 	block txt;
 	Config titles;
-	char ip[16];
 	string langCode;
 	wstringEx ws;
 	bool ok = false;
@@ -894,7 +911,7 @@ int CMenu::_titleDownloader(bool missingOnly)
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
 	LWP_MutexUnlock(m_mutex);
-	if (!m_networkInit && _initNetwork(ip) < 0)
+	if (_initNetwork() < 0)
 	{
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
@@ -902,7 +919,6 @@ int CMenu::_titleDownloader(bool missingOnly)
 	}
 	else
 	{
-		m_networkInit = true;
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg11", L"Downloading..."), 0.1f);
 		LWP_MutexUnlock(m_mutex);

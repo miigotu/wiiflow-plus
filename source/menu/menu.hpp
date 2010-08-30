@@ -494,6 +494,7 @@ private:
 	float m_thrdStepLen;
 	std::string m_coverDLGameId;
 	mutex_t m_mutex;
+	mutex_t m_networkMutex;
 	wstringEx m_thrdMessage;
 	volatile float m_thrdProgress;
 	volatile bool m_thrdMessageAdded;
@@ -725,7 +726,8 @@ private:
 	static int _update(CMenu *m);
 	static int _initStaticNetwork(CMenu *m);
 	void _initAsyncNetwork();
-	int _initNetwork(char *ip);
+	int _initNetwork();
+	void _deinitNetwork();
 	static void _addDiscProgress(int status, int total, void *user_data);
 	static int _gameInstaller(void *obj);
 	wstringEx _optBoolToString(int b);

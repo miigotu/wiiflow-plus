@@ -274,6 +274,7 @@ void CMenu::cleanup(void)
 	m_mutex = 0;
 	LWP_MutexDestroy(m_gameSndMutex);
 	m_gameSndMutex = 0;
+	_deinitNetwork();
 }
 
 void CMenu::_setAA(int aa)

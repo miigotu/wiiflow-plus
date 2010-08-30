@@ -157,13 +157,12 @@ void CMenu::_CheatSettings()
 				SmartBuf buffer;
 				block cheatfile;
 				FILE *file;
-				char ip[16];
+//				char ip[16];
 				
-				if (!m_networkInit && _initNetwork(ip) < 0) {
+				if (_initNetwork() < 0) {
 					m_btnMgr.hide(m_cheatLblTitle);
 					break;
 				}
-				m_networkInit = true;
 
 				buffer = smartCoverAlloc(bufferSize);
 				cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, this);

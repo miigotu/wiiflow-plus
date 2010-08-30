@@ -549,13 +549,9 @@ void CMenu::_launchGame(string &id, bool dvd)
 	m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg2.getInt("PLAYCOUNT", id, 0) + 1);
 	m_gcfg1.setUInt("LASTPLAYED", id, time(NULL));
 	
-	if (has_enabled_providers())
+	if (has_enabled_providers() && !_initNetwork())
 	{
-		char ip[16];
-		if (m_networkInit || !_initNetwork(ip))
-		{
-			add_game_to_card(id.c_str());
-		}
+		add_game_to_card(id.c_str());
 	}
 	
 	m_gcfg1.save();
@@ -636,16 +632,8 @@ void CMenu::_launchGame(string &id, bool dvd)
 	else 
 	{
 		char *altDolDir = (char *)&m_altDolDir;
-		if (dvd)
-		{
-			if (Disc_WiiBoot(true, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir) < 0)
-				Sys_LoadMenu();
-		}
-		else
-		{
-			if (Disc_WiiBoot(false, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir) < 0)
-				Sys_LoadMenu();
-		}
+		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir) < 0)
+			Sys_LoadMenu();
 	}
 }
 
