@@ -502,7 +502,7 @@ void CMenu::_gameSettings(void)
 			else if (m_btnMgr.selected() == m_gameSettingsBtnCheat)
 			{
 				//Handler for Cheat Button
-				Fat_Mount();
+				Mount_Devices();
 				_hideGameSettings();
 				_CheatSettings();
 				_showGameSettings();

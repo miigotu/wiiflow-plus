@@ -64,7 +64,7 @@ void CMenu::_showConfig5(void)
 			m_btnMgr.show(m_config5LblUser[i]);
 	// 
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
-	m_btnMgr.setText(m_config5LblPartition, m_cfg.getString("GENERAL", "partition", "FAT1"));
+	m_btnMgr.setText(m_config5LblPartition, m_cfg.getString("GENERAL", "partition", "WBFS1"));
 	m_btnMgr.setText(m_config5BtnInstallDirectory, m_cfg.getBool("GENERAL", "install_directory", true) ? _t("on", L"On") : _t("off", L"Off"));
 	
 //	i = min(max(0, m_cfg.getInt("GENERAL", "game_language", 0)), (int)ARRAY_SIZE(CMenu::_languages) - 1);

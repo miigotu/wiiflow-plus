@@ -446,7 +446,7 @@ void CMenu::_launchChannel(const u64 chantitle, const string &id)
 	COVER_clear();
 	WBFS_Close();
 	
-	Fat_Unmount();
+	Unmount_All_Devices();
 	cleanup();
 	USBStorage_Deinit();
 
@@ -621,7 +621,7 @@ void CMenu::_launchGame(string &id, bool dvd)
 			return;
 		}
 	}
-	Fat_Unmount();
+	Unmount_All_Devices();
 	cleanup();
 	USBStorage_Deinit();
 

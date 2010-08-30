@@ -221,9 +221,8 @@ s32 _WBFS_FAT_GetHeadersCount()
 			// but this is a little bit slower 
 			// open 'partition' file
 			part = WBFS_FAT_OpenPart(fpath);
-			if (!part) {
-				continue;
-			}
+			if (!part) continue;
+
 			/* Get header */
 			ret = wbfs_get_disc_info(part, 0, (u8*)&tmpHdr,
 					sizeof(struct discHdr), &size);
@@ -741,6 +740,6 @@ s32 WBFS_FAT_DVD_Size(u64 *comp_size, u64 *real_size)
 }
 
 bool WBFS_FAT_IsReadOnly(void) {
-	return wbfs_part_fs == PART_FS_NTFS;
-	//return false;
+	//return wbfs_part_fs == PART_FS_NTFS;
+	return false;
 }

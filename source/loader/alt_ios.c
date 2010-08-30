@@ -114,7 +114,7 @@ bool loadIOS(int n, bool init)
 		WPAD_Flush(3);
 		WPAD_Disconnect(3);
 		WPAD_Shutdown();
-		Fat_Unmount();
+		Unmount_All_Devices();
 
 		int curIndex = WBFS_GetCurrentPartition();
 		WBFS_GetPartitionName(curIndex, (char *) &partition);
@@ -160,7 +160,7 @@ bool loadIOS(int n, bool init)
 	}
 	if (init)
 	{
-		Fat_Mount();
+		Mount_Devices();
 		WBFS_OpenNamed((char *) &partition);
 
 		Disc_Init();

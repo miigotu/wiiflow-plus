@@ -519,7 +519,7 @@ s32 WBFS_AddGame(progress_callback_t spinner, void *spinner_data)
 		return -1;
 
 	/* Add game to device */
-	partition_selector_t part_sel = ALL_PARTITIONS;
+	partition_selector_t part_sel = ONLY_GAME_PARTITION;
 	int copy_1_1 = 0;
 /*
 	switch (CFG.install_partitions) {

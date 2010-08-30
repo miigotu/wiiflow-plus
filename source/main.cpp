@@ -70,7 +70,7 @@ int old_main(int argc, char **argv)
 		}
 	}
 	
-	// Fat_Mount(); // Wake up certain drives
+	// Mount_Devices(); // Wake up certain drives
 
 	gprintf("Loading cIOS: %d\n", mainIOS);
 
@@ -101,10 +101,12 @@ int old_main(int argc, char **argv)
 
 	if (iosOK)
 	{
-		Fat_Mount(); // this will power up the drive if it is not ready
+		Mount_Devices(); // this will power up the drive if it is not ready
 		
 		gprintf("SD Available: %d\n", Fat_SDAvailable());
 		gprintf("USB Available: %d\n", Fat_USBAvailable());
+		gprintf("NTFS_SD Available: %d\n", Ntfs_SDAvailable());
+		gprintf("NTFS_USB Available: %d\n", Ntfs_USBAvailable());
 				
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		if (!wbfsOK)
@@ -134,7 +136,7 @@ int old_main(int argc, char **argv)
 	MEM2_takeBigOnes(true);
 	do
 	{
-		Fat_Mount();
+		Mount_Devices();
 		CMenu menu(vid);
 		menu.init(hbc);
 		mainMenu = &menu;
@@ -150,7 +152,7 @@ int old_main(int argc, char **argv)
 			ret = menu.main();
 		}
 		vid.cleanup();
-		Fat_Unmount();
+		Unmount_All_Devices();
 	} while (ret == 1);
 	return ret;
 };
