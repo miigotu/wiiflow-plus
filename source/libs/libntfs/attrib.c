@@ -64,9 +64,6 @@
 #include "logging.h"
 #include "misc.h"
 #include "efs.h"
-#include "ntfs.h"
-
-#define STANDARD_COMPRESSION_UNIT 4
 
 ntfschar AT_UNNAMED[] = { const_cpu_to_le16('\0') };
 ntfschar STREAM_SDS[] = { const_cpu_to_le16('$'),

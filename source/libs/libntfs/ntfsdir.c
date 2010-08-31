@@ -416,7 +416,7 @@ int ntfs_readdir_filler (DIR_ITER *dirState, const ntfschar *name, const int nam
 
             // Open the entry
             ntfs_inode *ni = ntfs_pathname_to_inode(dir->vd->vol, dir->ni, entry_name);
-            if (!ni) 
+            if (!ni)
                 return -1;
 
             // Double check that this entry can be emuerated (as described by the volume descriptor)
