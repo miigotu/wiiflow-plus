@@ -723,6 +723,8 @@ private:
 	static int _coverDownloaderAll(CMenu *m);
 	static int _coverDownloaderMissing(CMenu *m);
 	static bool _downloadProgress(void *obj, int size, int position);
+	static int _wiitdbDownloader(CMenu *m);
+	int _wiitdbDownloaderAsync();
 	int _titleDownloader(bool missingOnly);
 	int _updateDownloader(void);
 	static int _titleDownloaderAll(CMenu *m);

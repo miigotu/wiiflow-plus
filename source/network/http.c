@@ -104,9 +104,12 @@ static struct block read_message(s32 connection, struct block buffer, bool (*f)(
 		if (step * HTTP_BUFFER_GROWTH < offset)
 		{
 			++step;
-			if (f != 0 && fileSize != 0)
-				if (!f(ud, fileSize, offset <= fileSize ? offset : fileSize))
+			if (f != 0)
+			{
+				if ((fileSize != 0 && !f(ud, fileSize, offset <= fileSize ? offset : fileSize)) ||
+					(fileSize == 0 && !f(ud, buffer.size, offset)))
 					return emptyblock;
+			}
 		}
 	}
 	//At the end of above loop offset should be precisely the amount of bytes that were read from the connection

@@ -184,7 +184,7 @@ void CMenu::_hideDownload(bool instant)
 	m_btnMgr.hide(m_downloadBtnAll, instant);
 	m_btnMgr.hide(m_downloadBtnMissing, instant);
 	m_btnMgr.hide(m_downloadBtnAllTitles, instant);
-	m_btnMgr.hide(m_downloadBtnMissingTitles, instant);
+//	m_btnMgr.hide(m_downloadBtnMissingTitles, instant);
 	m_btnMgr.hide(m_downloadPBar, instant);
 	m_btnMgr.hide(m_downloadLblMessage[0], 0, 0, -2.f, 0.f, instant);
 	m_btnMgr.hide(m_downloadLblMessage[1], 0, 0, -2.f, 0.f, instant);
@@ -209,7 +209,7 @@ void CMenu::_showDownload(void)
 	{
 		m_btnMgr.show(m_downloadLblGameTitles);
 		m_btnMgr.show(m_downloadBtnAllTitles);
-		m_btnMgr.show(m_downloadBtnMissingTitles);
+//		m_btnMgr.show(m_downloadBtnMissingTitles);
 	}
 	for (u32 i = 0; i < ARRAY_SIZE(m_downloadLblUser); ++i)
 		if (m_downloadLblUser[i] != -1u)
@@ -519,6 +519,8 @@ void CMenu::_download(string gameId)
 	lwp_t thread = LWP_THREAD_NULL;
 	int msg = 0;
 	wstringEx prevMsg;
+	
+	bool _updateWiitdb = false;
 
 	SetupInput();
 	_showDownload();
@@ -546,7 +548,7 @@ void CMenu::_download(string gameId)
 				m_btnMgr.hide(m_downloadBtnAll);
 				m_btnMgr.hide(m_downloadBtnMissing);
 				m_btnMgr.hide(m_downloadBtnAllTitles);
-				m_btnMgr.hide(m_downloadBtnMissingTitles);
+//				m_btnMgr.hide(m_downloadBtnMissingTitles);
 				m_btnMgr.hide(m_downloadLblCovers);
 				m_btnMgr.hide(m_downloadLblGameTitles);
 				m_thrdStop = false;
@@ -559,21 +561,27 @@ void CMenu::_download(string gameId)
 			}
 			else if ((m_btnMgr.selected() == m_downloadBtnAllTitles || m_btnMgr.selected() == m_downloadBtnMissingTitles) && !m_thrdWorking)
 			{
-				bool dlAll = m_btnMgr.selected() == m_downloadBtnAllTitles;
+//				bool dlAll = m_btnMgr.selected() == m_downloadBtnAllTitles;
 				m_btnMgr.show(m_downloadPBar);
 				m_btnMgr.setProgress(m_downloadPBar, 0.f);
 				m_btnMgr.hide(m_downloadBtnAll);
 				m_btnMgr.hide(m_downloadBtnMissing);
 				m_btnMgr.hide(m_downloadBtnAllTitles);
-				m_btnMgr.hide(m_downloadBtnMissingTitles);
+//				m_btnMgr.hide(m_downloadBtnMissingTitles);
 				m_btnMgr.hide(m_downloadLblCovers);
 				m_btnMgr.hide(m_downloadLblGameTitles);
 				m_thrdStop = false;
 				m_thrdWorking = true;
+				
+				_updateWiitdb = true;
+
+				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_wiitdbDownloader, (void *)this, 0, 8192, 40);
+/*
 				if (dlAll)
 					LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_titleDownloaderAll, (void *)this, 0, 8192, 40);
 				else
 					LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_titleDownloaderMissing, (void *)this, 0, 8192, 40);
+*/					
 			}
 			else if (m_btnMgr.selected() == m_downloadBtnCancel)
 			{
@@ -598,7 +606,11 @@ void CMenu::_download(string gameId)
 			m_thrdMessageAdded = false;
 			m_btnMgr.setProgress(m_downloadPBar, m_thrdProgress);
 			if (m_thrdProgress == 1.f)
+			{
+				if (_updateWiitdb)
+					break;
 				m_btnMgr.setText(m_downloadBtnCancel, _t("dl2", L"Back"));
+			}
 			if (prevMsg != m_thrdMessage)
 			{
 				prevMsg = m_thrdMessage;
@@ -618,6 +630,8 @@ void CMenu::_download(string gameId)
 		thread = LWP_THREAD_NULL;
 	}
 	_hideDownload();
+
+	_updateWiiTDB();
 }
 
 void CMenu::_initDownloadMenu(CMenu::SThemeData &theme)
@@ -632,7 +646,7 @@ void CMenu::_initDownloadMenu(CMenu::SThemeData &theme)
 	m_downloadBtnMissing = _addButton(theme, "DOWNLOAD/MISSING_BTN", theme.btnFont, L"", 370, 210, 230, 56, theme.btnFontColor);
 	m_downloadLblGameTitles = _addLabel(theme, "DOWNLOAD/GAME_TITLES", theme.btnFont, L"", 40, 270, 320, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_downloadBtnAllTitles = _addButton(theme, "DOWNLOAD/ALL_TITLES_BTN", theme.btnFont, L"", 370, 270, 230, 56, theme.btnFontColor);
-	m_downloadBtnMissingTitles = _addButton(theme, "DOWNLOAD/MISSING_TITLES_BTN", theme.btnFont, L"", 370, 330, 230, 56, theme.btnFontColor);
+//	m_downloadBtnMissingTitles = _addButton(theme, "DOWNLOAD/MISSING_TITLES_BTN", theme.btnFont, L"", 370, 330, 230, 56, theme.btnFontColor);
 	m_downloadLblWiiTDB = _addLabel(theme, "DOWNLOAD/WIITDB", theme.btnFont, L"", 40, 400, 370, 60, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_downloadLblMessage[0] = _addLabel(theme, "DOWNLOAD/MESSAGE1", theme.lblFont, L"", 40, 228, 560, 100, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_downloadLblMessage[1] = _addLabel(theme, "DOWNLOAD/MESSAGE2", theme.lblFont, L"", 40, 228, 560, 100, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
@@ -645,7 +659,7 @@ void CMenu::_initDownloadMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_downloadBtnMissing, "DOWNLOAD/MISSING_BTN", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_downloadLblGameTitles, "DOWNLOAD/GAME_TITLES", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_downloadBtnAllTitles, "DOWNLOAD/ALL_TITLES_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadBtnMissingTitles, "DOWNLOAD/MISSING_TITLES_BTN", 0, 0, -2.f, 0.f);
+//	_setHideAnim(m_downloadBtnMissingTitles, "DOWNLOAD/MISSING_TITLES_BTN", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_downloadLblWiiTDB, "DOWNLOAD/WIITDB", 0, 0, -2.f, 0.f);
 	_hideDownload(true);
 	_textDownload();
@@ -657,10 +671,10 @@ void CMenu::_textDownload(void)
 	m_btnMgr.setText(m_downloadBtnAll, _t("dl3", L"All"));
 	m_btnMgr.setText(m_downloadBtnMissing, _t("dl4", L"Missing"));
 	m_btnMgr.setText(m_downloadLblTitle, _t("dl5", L"Download"));
-	m_btnMgr.setText(m_downloadBtnAllTitles, _t("dl6", L"All"));
-	m_btnMgr.setText(m_downloadBtnMissingTitles, _t("dl7", L"Missing"));
+	m_btnMgr.setText(m_downloadBtnAllTitles, _t("dl5", L"Download"));
+//	m_btnMgr.setText(m_downloadBtnMissingTitles, _t("dl7", L"Missing"));
 	m_btnMgr.setText(m_downloadLblCovers, _t("dl8", L"Covers"));
-	m_btnMgr.setText(m_downloadLblGameTitles, _t("dl9", L"Game titles"));
+	m_btnMgr.setText(m_downloadLblGameTitles, _t("dl12", L"WiiTDB"));
 	m_btnMgr.setText(m_downloadLblWiiTDB, _t("dl10", L"Please donate\nto WiiTDB.com"));
 }
 
@@ -883,6 +897,77 @@ int CMenu::_titleDownloaderMissing(CMenu *m)
 	if (!m->m_thrdWorking)
 		return 0;
 	return m->_titleDownloader(true);
+}
+
+int CMenu::_wiitdbDownloader(CMenu *m)
+{
+	if (!m->m_thrdWorking)
+		return 0;
+	return m->_wiitdbDownloaderAsync();
+}
+
+int CMenu::_wiitdbDownloaderAsync()
+{
+	block data;
+	string langCode;
+	SmartBuf buffer;
+	u32 bufferSize = 0x800000; // 8 MB
+	
+	buffer = smartAnyAlloc(bufferSize);
+	if (!buffer)
+	{
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(L"Not enough memory", 1.f);
+		LWP_MutexUnlock(m_mutex);
+		return 0;
+	}
+	langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
+	LWP_MutexLock(m_mutex);
+	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
+	LWP_MutexUnlock(m_mutex);
+	if (_initNetwork() < 0)
+	{
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
+		LWP_MutexUnlock(m_mutex);
+	}
+	else
+	{
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg11", L"Downloading..."), 0.0f);
+		LWP_MutexUnlock(m_mutex);
+		m_thrdStep = 0.0f;
+		m_thrdStepLen = 1.0f;
+		data = downloadfile(buffer.get(), bufferSize, sfmt(WIITDB_URL, langCode.c_str()).c_str(), CMenu::_downloadProgress, this);
+		if (data.data == 0)
+		{
+			LWP_MutexLock(m_mutex);
+			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
+			LWP_MutexUnlock(m_mutex);
+		}
+		else
+		{
+			_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), "WiiTDB.zip"), 1.f);
+			FILE *fp = fopen(sfmt("%s/wiitdb.zip", m_settingsDir.c_str()).c_str(), "wb");
+			if (fp == NULL)
+			{
+				LWP_MutexLock(m_mutex);
+				_setThrdMsg(_t("dlmsg15", L"Couldn't save ZIP file"), 1.f);
+				LWP_MutexUnlock(m_mutex);
+			}
+			else
+			{
+				fwrite(data.data, data.size, 1, fp);
+				fclose(fp);
+				fp = NULL;
+			}
+		}
+	}
+	data.data = NULL;
+	buffer.release();
+	m_thrdWorking = false;
+	
+	return 0;
 }
 
 int CMenu::_titleDownloader(bool missingOnly)
