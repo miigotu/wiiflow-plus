@@ -26,6 +26,35 @@ extern int mainIOSRev;
 CMenu *mainMenu;
 extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
 
+void parse_ios_arg(char *arg, int *ios, int *min_rev)
+{
+	if(strcasestr(arg, "ios=249") != 0)
+	{
+		*ios = 249;
+		*min_rev = IOS_249_MIN_REV;
+	}
+	else if(strcasestr(arg, "ios=250") != 0)
+	{
+		*ios = 250;
+		*min_rev = IOS_250_MIN_REV;
+	}
+	else if(strcasestr(arg, "ios=222-mload") != 0)
+	{
+		*ios = 222;
+		*min_rev = IOS_222_MIN_REV;
+	}
+	else if(strcasestr(arg, "ios=223-mload") != 0)
+	{
+		*ios = 223;
+		*min_rev = IOS_223_MIN_REV;
+	}
+	else if(strcasestr(arg, "ios=224-mload") != 0)
+	{
+		*ios = 224;
+		*min_rev = IOS_224_MIN_REV;
+	}
+}
+
 int old_main(int argc, char **argv)
 {
 	geckoinit = InitGecko();
@@ -39,34 +68,18 @@ int old_main(int argc, char **argv)
 	int ret = 0;
 	bool hbc;
 	
+	char *gameid = NULL;
+	
 	// Narolez: check if ios argument is passed in argv[0] (by NForwarder) or argv[1] (by wiiload or whatever)
-	char *arg = argc > 1 ? argv[1] : argc == 1 ? argv[0] : NULL;
-	if (arg != NULL && strcasestr(arg, "ios=") != 0)
+	for (int i = 0; i < argc; i++)
 	{
-		if(strcasestr(arg, "ios=249") != 0)
+		if (argv[i] != NULL && strcasestr(argv[i], "ios=") != 0)
 		{
-			mainIOS = 249;
-			mainIOSminRev = IOS_249_MIN_REV;
+			parse_ios_arg(argv[i], &mainIOS, &mainIOSminRev);
 		}
-		else if(strcasestr(arg, "ios=250") != 0)
+		else if (strlen(argv[i]) == 6)
 		{
-			mainIOS = 250;
-			mainIOSminRev = IOS_250_MIN_REV;
-		}
-		else if(strcasestr(arg, "ios=222-mload") != 0)
-		{
-			mainIOS = 222;
-			mainIOSminRev = IOS_222_MIN_REV;
-		}
-		else if(strcasestr(arg, "ios=223-mload") != 0)
-		{
-			mainIOS = 223;
-			mainIOSminRev = IOS_223_MIN_REV;
-		}
-		else if(strcasestr(arg, "ios=224-mload") != 0)
-		{
-			mainIOS = 224;
-			mainIOSminRev = IOS_224_MIN_REV;
+			gameid = argv[i];
 		}
 	}
 	
@@ -149,7 +162,14 @@ int old_main(int argc, char **argv)
 			menu.error(L"WBFS_Init failed");
 		else
 		{
-			ret = menu.main();
+			if (gameid != NULL && strlen(gameid) == 6)
+			{
+				menu._directlaunch(gameid);
+			}
+			else
+			{
+				ret = menu.main();
+			}
 		}
 		vid.cleanup();
 		Unmount_All_Devices();

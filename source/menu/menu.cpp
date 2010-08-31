@@ -27,7 +27,6 @@ extern const u8 camera_wav[];
 extern const u32 camera_wav_size;
 // Pics
 extern const u8 wait_png[];
-extern const u8 fbi_png[];
 extern const u8 btnplus_png[];
 extern const u8 btnpluss_png[];
 extern const u8 btnminus_png[];
@@ -84,6 +83,7 @@ CMenu::CMenu(CVideo &vid) :
 	m_bgCrossFade = 0;
 	m_bnrSndVol = 0;
 	m_gameSettingsPage = 0;
+	m_directLaunch = false;
 }
 
 void CMenu::init(bool fromHBC)
@@ -247,8 +247,6 @@ void CMenu::init(bool fromHBC)
 	//m_alphaSearch = m_cfg.getBool("GENERAL", "alphabetic_search_on_plus_minus", false);
 	if (m_cfg.getBool("GENERAL", "favorites_on_startup", false))
 		m_favorites = m_cfg.getBool("GENERAL", "favorites", false);
-	if (m_cfg.getBool("GENERAL", "fbi", false))
-		m_waitMessage.fromPNG(fbi_png);
 	m_category = m_cat.getInt("GENERAL", "category", 0);//currently selected category
 	m_max_categories = m_cat.getInt("GENERAL", "numcategories", 12);//configured amount of categories to use
 	//m_current_view = m_cfg.getInt("GENERAL", "currentview", COVERFLOW_USB);
@@ -615,6 +613,9 @@ void CMenu::_buildMenus(void)
 	theme.bg.fromPNG(background_png, GX_TF_RGBA8, ALLOC_MEM2);
 	m_mainBgLQ.fromPNG(background_png, GX_TF_CMPR, ALLOC_MEM2, 64, 64);
 	m_gameBgLQ = m_mainBgLQ;
+	
+	m_waitMessage = _texture(theme.texSet, "GENERAL", "waitmessage", m_waitMessage); 
+
 	// Build menus
 	_initMainMenu(theme);
 	_initErrorMenu(theme);

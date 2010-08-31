@@ -668,7 +668,7 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 		fwrite(gameinfo.id, 6, 1, idx);
 		fwrite(&gameinfo, sizeof(struct gameXMLinfo), 1, db);
 		
-		fwrite(gameinfo.id, 6, 1, titles);
+		fwrite(gameinfo.id, strlen(gameinfo.id), 1, titles);
 		fwrite("=", 1, 1, titles);
 		fwrite(gameinfo.title, strlen(gameinfo.title), 1, titles);
 		fwrite("\n", 1, 1, titles);

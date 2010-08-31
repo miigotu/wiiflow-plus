@@ -66,6 +66,7 @@ private:
 	SmartBuf m_music;
 	u8 m_aa;
 	bool m_noHBC;
+	bool m_directLaunch;
 	bool m_gamelistdump;
 	bool m_locked;
 	bool m_titles_loaded;
@@ -687,6 +688,9 @@ private:
 	//
 	void _mainLoopCommon(bool withCF = false, bool blockReboot = false, bool adjusting = false);
 	// 
+public:
+	void _directlaunch(const std::string &id);
+private:
 	void _launch(const u64 chanTitle, const std::string &id);
 	void _launchGame(std::string &id, bool dvd);
 	void _launchChannel(const u64 chanTitle, const string &id);

@@ -421,13 +421,39 @@ static SmartBuf extractDOL(const char *dolName, u32 &size, const char *gameId, s
 	return SmartBuf((u8 *) dol);
 }
 
+void CMenu::_directlaunch(const string &id)
+{
+	m_directLaunch = true;
+
+	int partitions = WBFS_GetPartitionCount();
+	for (int i = 0; i < partitions; i++)
+	{
+		char part[6];
+		WBFS_GetPartitionName(i, (char *) &part);
+		
+		s32 ret = WBFS_OpenNamed(part);
+		if (ret == 0)
+		{
+			// Let's find the game here...
+			if (WBFS_CheckGame((u8 *) id.c_str()))
+			{
+				// Game found
+				gprintf("Game found on partition %s\n", part);
+				_launch(0, id); // Launch will exit wiiflow
+			}
+		}
+	}
+	
+	error(sfmt("Cannot find the game"));
+}
+
 void CMenu::_launch(const u64 chantitle, const string &id)
 {
 	m_gcfg2.load(sfmt("%s/gameconfig2.ini", m_settingsDir.c_str()).c_str());
 	string id2 = id;
 	if (m_current_view == COVERFLOW_CHANNEL) {
 		_launchChannel(chantitle, id);
-	} else if (m_current_view == COVERFLOW_USB) {
+	} else {
 		_launchGame(id2, false);
 	}
 }
@@ -530,6 +556,11 @@ void CMenu::_launchGame(string &id, bool dvd)
 	if (rtrn != NULL && strlen(rtrn) == 4)
 	{
 		rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
+	}
+	
+	if (m_directLaunch)
+	{
+		rtrnID = 0;
 	}
 
 	SmartBuf cheatFile;
