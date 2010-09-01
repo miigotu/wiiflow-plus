@@ -94,25 +94,19 @@ bool Mount_Devices(void)
 			break;
 		}
 	}
-	if (!fat_found)
+	for (i=0; i<plist.num; i++) 
 	{
-		gprintf("plist.num = %i\n", plist.num);
-		gprintf("plist.ntfs_n = %i\n", plist.ntfs_n);
-		gprintf("plist.fat_n = %i\n", plist.fat_n);
-		for (i=0; i<plist.num; i++) 
+		gprintf("plist.pentry[%i].type = %d\n", i, plist.pentry[i].type);
+		if (i > plist.ntfs_n) break;
+		if (plist.pentry[i].type == 0x07)
 		{
-			gprintf("plist.pentry[%i].type = %d\n", i, plist.pentry[i].type);
-			if (i > plist.ntfs_n) break;
-			if (plist.pentry[i].type == 0x07)
-			{
-				gprintf("plist.pentry[%i].sector = %i\n", i, plist.pentry[i].sector);
-				ntfs_sector = plist.pentry[i].sector;
-				ntfs_found = true;
-				break;
-			}
+			gprintf("plist.pentry[%i].sector = %i\n", i, plist.pentry[i].sector);
+			ntfs_sector = plist.pentry[i].sector;
+			ntfs_found = true;
+			break;
 		}
 	}
- 	if (!ntfs_found)
+ 	if (!ntfs_found && !fat_found)
 	{
 		for (i=0; i<plist.num; i++) 
 		{
@@ -125,8 +119,6 @@ bool Mount_Devices(void)
 			}
 		}
 	}
-	if (fat_found) gprintf("FAT FOUND!\n");
-	if (ntfs_found) gprintf("NTFS FOUND!\n");
 	if (fat_found)
 	{
 		Fat_Mount(fat_sector);
@@ -134,6 +126,7 @@ bool Mount_Devices(void)
 	}
 	if (ntfs_found)
 	{
+		Fat_MountSDOnly();
 		NTFS_Mount(ntfs_sector);
 		return true;
 	}
@@ -204,7 +197,7 @@ bool Fat_Mount(u32 sector)
 		if (g_fat_usbOK)
 		{
 			fs_usb_mount = 1;
-			fs_usb_sec = _FAT_startSector;
+			fs_usb_sec = sector;
 		}
 	}
 		
@@ -243,15 +236,15 @@ void ntfsInit();
 bool NTFS_Mount(u32 sector) 
 {
 	NTFS_Unmount();
-	if (!g_ntfs_usbOK && wbfsDev == WBFS_DEVICE_USB) 
+	if (!g_ntfs_usbOK) 
 	{
 		__io_usbstorage.startup();
-
+		ntfsInit();
 		setlocale(LC_CTYPE, "C-UTF-8");
 		setlocale(LC_MESSAGES, "C-UTF-8");
 		g_ntfs_usbOK = ntfsMount("ntfs", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
 	} 
-	else if (!g_ntfs_sdOK && wbfsDev == WBFS_DEVICE_SDHC)
+	else if (!g_fat_sdOK && !g_ntfs_sdOK && wbfsDev == WBFS_DEVICE_SDHC)
 	{
 		__io_sdhc.startup();
 		ntfsInit();
