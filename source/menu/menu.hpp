@@ -97,6 +97,7 @@ private:
 	std::string m_screenshotDir;
 	std::string m_settingsDir;
 	std::string m_languagesDir;
+	std::string m_wdmDir;
 	const char* m_update_url;
 	std::string m_dol;
 	std::string m_ver;
@@ -270,6 +271,10 @@ private:
 	u32 m_gameBtnSettings;
 	u32 m_gameBtnBack;
 	u32 m_gameLblUser[4];
+	u32 m_gameLblWdm;
+	u32 m_gameBtnWdmM;
+	u32 m_gameBtnWdmP;
+// Parental code menu	
 	u32 m_codeLblTitle;
 	u32 m_codeBtnKey[10];
 	u32 m_codeBtnBack;
@@ -432,6 +437,7 @@ private:
 	SZone m_mainButtonsZone;
 	SZone m_mainButtonsZone2;
 	SZone m_mainButtonsZone3;
+	SZone m_gameButtonsZone;
 	bool m_reload;
 	
 	WPADData *wd[4];
@@ -476,16 +482,19 @@ private:
 	bool WPadIR_Valid(int i);
 	bool WPadIR_ANY();
 	
+	void ShowZone(SZone zone, bool &showZone);
 	void ShowMainZone();
 	void ShowMainZone2();
 	void ShowMainZone3();
 	void ShowPrevZone();
 	void ShowNextZone();
+	void ShowGameZone();
 	bool m_show_zone_main;
 	bool m_show_zone_main2;
 	bool m_show_zone_main3;
 	bool m_show_zone_prev;
 	bool m_show_zone_next;
+	bool m_show_zone_game;
 
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;

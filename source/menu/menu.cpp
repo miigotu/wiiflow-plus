@@ -135,6 +135,7 @@ void CMenu::init(bool fromHBC)
 	m_screenshotDir = m_cfg.getString("GENERAL", "dir_screenshot", sfmt("%s/screenshots", m_dataDir.c_str()));
 	m_settingsDir = m_cfg.getString("GENERAL", "dir_settings", sfmt("%s/settings", m_dataDir.c_str()));
 	m_languagesDir = m_cfg.getString("GENERAL", "dir_languages", sfmt("%s/languages", m_dataDir.c_str()));
+	m_wdmDir = m_cfg.getString("GENERAL", "dir_wdm", sfmt("%s/codes/wdm", m_dataDir.c_str()));
 	m_cf.init();
 	// 
 	struct stat dummy;
@@ -156,6 +157,7 @@ void CMenu::init(bool fromHBC)
 		mkdir(m_screenshotDir.c_str(), 0777);
 		mkdir(m_settingsDir.c_str(), 0777);
 		mkdir(m_languagesDir.c_str(), 0777);
+		mkdir(m_wdmDir.c_str(), 0777);
 	}
 	if (stat(sfmt("%s:/", wfdrv).c_str(), &dummy) == 0)
 		mkdir(m_appDir.c_str(), 0777);

@@ -8,6 +8,7 @@
 #include "patchcode.h"
 #include "disc.h"
 #include "videopatch.h"
+#include "wdm.h"
 #include "wip.h"
 #include "wbfs.h"
 #include "sys.h"
@@ -48,7 +49,6 @@ static bool PrinceOfPersiaPatch();
 static void __noprint(const char *fmt, ...)
 {
 }
-
 
 s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck, char *altDolDir)
 {

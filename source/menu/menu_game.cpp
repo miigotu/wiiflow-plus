@@ -19,6 +19,7 @@
 #include "libwbfs/wiidisc.h"
 #include "loader/frag.h"
 #include "loader/fst.h"
+#include "loader/wdm.h"
 #include "loader/wip.h"
 
 #include "gui/WiiMovie.hpp"
@@ -123,6 +124,9 @@ const CMenu::SOption CMenu::_hooktype[8] = {
 
 const int CMenu::_ios[6] = {0, 249, 250, 222, 223, 224};
 
+wdm_entry_t *wdm_entry = NULL;
+u32 current_wdm = 0;
+
 static inline int loopNum(int i, int s)
 {
 	return i < 0 ? (s - (-i % s)) % s : i % s;
@@ -141,6 +145,9 @@ void CMenu::_hideGame(bool instant)
 	m_btnMgr.hide(m_gameBtnFavoriteOff, instant);
 	m_btnMgr.hide(m_gameBtnAdultOn, instant);
 	m_btnMgr.hide(m_gameBtnAdultOff, instant);
+	m_btnMgr.hide(m_gameLblWdm, instant);
+	m_btnMgr.hide(m_gameBtnWdmM, instant);
+	m_btnMgr.hide(m_gameBtnWdmP, instant);
 	for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
 		if (m_gameLblUser[i] != -1u)
 			m_btnMgr.hide(m_gameLblUser[i], instant);
@@ -162,6 +169,27 @@ void CMenu::_showGame(void)
 	}
 	else
 		_setBg(m_mainBg, m_mainBgLQ);
+
+	// Load WDM file
+	if (m_current_view == COVERFLOW_USB && load_wdm(m_wdmDir.c_str(), m_cf.getId().c_str()) == 0 && wdm_count > 1)
+	{
+		m_btnMgr.show(m_gameLblWdm);
+		m_btnMgr.show(m_gameBtnWdmM);
+		m_btnMgr.show(m_gameBtnWdmP);
+		
+		m_gcfg1.getInt("WDM", m_cf.getId(), (int *) &current_wdm);
+		
+		if (current_wdm > wdm_count - 1) current_wdm = 0;
+		wdm_entry = &wdm_entries[current_wdm];
+		
+		m_btnMgr.setText(m_gameLblWdm, wstringEx(wdm_entry->name));
+	}
+	else
+	{
+		m_btnMgr.hide(m_gameLblWdm, true);
+		m_btnMgr.hide(m_gameBtnWdmM, true);
+		m_btnMgr.hide(m_gameBtnWdmP, true);
+	}
 
 	m_btnMgr.show(m_gameBtnPlay);
 	m_btnMgr.show(m_gameBtnBack);
@@ -192,11 +220,13 @@ void CMenu::_game(bool launch)
 		_playGameSound();
 		_showGame();
 	}
+
 	while (true)
 	{
 		string id(m_cf.getId());
 		string title(m_cf.getTitle());
 		u64 chantitle = m_cf.getChanTitle();
+
 		_mainLoopCommon(true);
 		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
 		{
@@ -297,6 +327,11 @@ void CMenu::_game(bool launch)
 				m_cf.clear();
 				m_vid.waitMessage(m_waitMessage);
 
+				if (wdm_count > 1)
+				{
+					m_gcfg1.setInt("WDM", id, current_wdm);
+				}
+
 				if (Playlog_Update(id.c_str(), title.c_str())<0)
 					Playlog_Delete();
 
@@ -309,6 +344,18 @@ void CMenu::_game(bool launch)
 				_showGame();
 				_initCF();
 				m_cf.select();
+			}
+			else if (m_btnMgr.selected() == m_gameBtnWdmM)
+			{
+				current_wdm = (current_wdm == 0) ? wdm_count - 1 : current_wdm - 1;
+				wdm_entry = &wdm_entries[current_wdm];
+				m_btnMgr.setText(m_gameLblWdm, wstringEx(wdm_entry->name));
+			}
+			else if (m_btnMgr.selected() == m_gameBtnWdmP)
+			{
+				current_wdm = (current_wdm == wdm_count - 1) ? 0 : current_wdm + 1;
+				wdm_entry = &wdm_entries[current_wdm];
+				m_btnMgr.setText(m_gameLblWdm, wstringEx(wdm_entry->name));
 			}
 			else if ((m_cf.mouseOver(m_vid, m_cursor1.x(), m_cursor1.y()))
 			|| (m_cf.mouseOver(m_vid, m_cursor2.x(), m_cursor2.y()))
@@ -347,41 +394,38 @@ void CMenu::_game(bool launch)
 				m_gameSound.stop();
 				_playGameSound();
 			}
-			if (WPadIR_ANY() || pointerhidedelay[0] > 0 || pointerhidedelay[1] > 0 || pointerhidedelay[2] > 0 || pointerhidedelay[3] > 0)
+			if (m_show_zone_game)
 			{
+				b = m_gcfg1.getBool("FAVORITES", id, false);
+				m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
+				m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
+				m_btnMgr.show(m_gameLblUser[1]);
+				m_btnMgr.show(m_gameLblUser[2]);
+				m_btnMgr.show(m_gameLblUser[3]);
+				m_btnMgr.show(m_gameBtnPlay);
+				m_btnMgr.show(m_gameBtnBack);
+
+				if (!m_locked)
+				{
+					b = m_gcfg1.getBool("ADULTONLY", id, false);
+					m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
+					m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
+				}
+
 				if (m_current_view == COVERFLOW_USB)
 				{
-					b = m_gcfg1.getBool("FAVORITES", id, false);
-					m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
-					m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
-					m_btnMgr.show(m_gameLblUser[1]);
-					m_btnMgr.show(m_gameLblUser[2]);
-					m_btnMgr.show(m_gameLblUser[3]);
 		
 					if (!m_locked)
 					{
-						b = m_gcfg1.getBool("ADULTONLY", id, false);
-						m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
-						m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
 						m_btnMgr.show(m_gameBtnDelete);
 						m_btnMgr.show(m_gameBtnSettings);
 					}
-				}
-				else if (m_current_view == COVERFLOW_CHANNEL)
-				{
-					b = m_gcfg1.getBool("FAVORITES", id, false);
-					m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
-					m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
-					m_btnMgr.show(m_gameLblUser[1]);
-					m_btnMgr.show(m_gameLblUser[2]);
-					m_btnMgr.show(m_gameLblUser[3]);
-		
-					if (!m_locked)
+					if (wdm_count > 1)
 					{
-						b = m_gcfg1.getBool("ADULTONLY", id, false);
-						m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
-						m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
-					}
+						m_btnMgr.show(m_gameLblWdm);
+						m_btnMgr.show(m_gameBtnWdmM);
+						m_btnMgr.show(m_gameBtnWdmP);
+					}					
 				}
 			}
 			else
@@ -392,16 +436,41 @@ void CMenu::_game(bool launch)
 				m_btnMgr.hide(m_gameBtnAdultOff);
 				m_btnMgr.hide(m_gameBtnDelete);
 				m_btnMgr.hide(m_gameBtnSettings);
+				m_btnMgr.hide(m_gameBtnPlay);
+				m_btnMgr.hide(m_gameBtnBack);
 				m_btnMgr.hide(m_gameLblUser[1]);
 				m_btnMgr.hide(m_gameLblUser[2]);
 				m_btnMgr.hide(m_gameLblUser[3]);
+				m_btnMgr.hide(m_gameLblWdm);
+				m_btnMgr.hide(m_gameBtnWdmM);
+				m_btnMgr.hide(m_gameBtnWdmP);					
 			}
 		}
 	}
 	m_gcfg1.save();
 	m_gcfg1.unload();
+	
+	free_wdm();
+	
 	_waitForGameSoundExtract();
 	_hideGame();
+}
+
+static u32 stringcompare(const string &s1, const string &s2)
+{
+	u32 index = 0;
+	while (true)
+	{
+		if (s1[index] == 0 || s2[index] == 0)
+		{
+				return 0;
+		}
+		if (s1[index] != '?' && s2[index] != '?' && toupper((u8)s1[index]) != toupper((u8)s2[index]))
+		{
+				return -1;
+		}
+		index++;
+	}
 }
 
 static SmartBuf extractDOL(const char *dolName, u32 &size, const char *gameId, s32 source, bool dvd)
@@ -413,12 +482,36 @@ static SmartBuf extractDOL(const char *dolName, u32 &size, const char *gameId, s
 		size = wbfs_extract_file(disc, (char *) dolName, &dol);
 		WBFS_CloseDisc(disc);
 	}
-
-//	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
-//	dolFile = SmartBuf(wbfs_extract_file(wdisc, &size, ALL_PARTITIONS, dolName, ALLOC_COVER), SmartBuf::SRCALL_COVER);
-//	wd_close_disc(wdisc);
-	
 	return SmartBuf((u8 *) dol);
+}
+
+static void addDolToList(void *o, const char *fileName)
+{
+	vector<string> &v = *(vector<string> *)o;
+	v.push_back(fileName);
+}
+
+static bool findDOL(const char *dolNameToMatch, string &altdol, const char *gameId)
+{
+	vector<string> dols;
+	dols.push_back("main.dol");
+
+	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId);
+	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
+	wd_list_dols(wdisc, ALL_PARTITIONS, addDolToList, (void *)&dols);
+	wd_close_disc(wdisc);
+	WBFS_CloseDisc(disc);
+	
+	// Now loop through the dols, and find the correct name
+	for (vector<string>::iterator itr = dols.begin(); itr != dols.end(); itr++)
+	{
+		if (stringcompare(dolNameToMatch, (*itr)) == 0)
+		{
+			altdol = (*itr);
+			return true;
+		}
+	}
+	return false;
 }
 
 void CMenu::_directlaunch(const string &id)
@@ -584,7 +677,11 @@ void CMenu::_launchGame(string &id, bool dvd)
 	{
 		add_game_to_card(id.c_str());
 	}
-	
+
+	s32 current_wdm = -1;
+	m_gcfg1.getInt("WDM", id, (int *) &current_wdm);
+	wdm_entry_t *wdm_entry = current_wdm == -1 || current_wdm > (s32) wdm_count - 1 ? NULL : &wdm_entries[current_wdm];
+
 	m_gcfg1.save();
 	m_gcfg2.save();
 	m_cfg.save();
@@ -624,6 +721,13 @@ void CMenu::_launchGame(string &id, bool dvd)
 	bool blockIOSReload = m_gcfg2.getBool(id, "block_ios_reload", false);
 	if (mload && blockIOSReload)
 		disableIOSReload();
+	
+	if (wdm_entry != NULL)
+	{
+		gprintf("WDM Entry found, searching for dol with name '%s'\n", wdm_entry->dolname);
+		findDOL(wdm_entry->dolname, altdol, id.c_str());
+	}
+	
 	if (!altdol.empty())
 		dolFile = extractDOL(altdol.c_str(), dolSize, id.c_str(), m_locDol, dvd);
 	if (!dvd)
@@ -663,7 +767,7 @@ void CMenu::_launchGame(string &id, bool dvd)
 	else 
 	{
 		char *altDolDir = (char *)&m_altDolDir;
-		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir) < 0)
+		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir, wdm_entry == NULL ? 1 : wdm_entry->parameter) < 0)
 			Sys_LoadMenu();
 	}
 }
@@ -727,6 +831,15 @@ void CMenu::_initGameMenu(CMenu::SThemeData &theme)
 	m_gameBtnAdultOff = _addPicButton(theme, "GAME/ADULTONLY_OFF", texAdultOff, texAdultOffSel, 532, 170, 48, 48);
 	m_gameBtnSettings = _addPicButton(theme, "GAME/SETTINGS_BTN", texSettings, texSettingsSel, 460, 242, 48, 48);
 	m_gameBtnDelete = _addPicButton(theme, "GAME/DELETE_BTN", texDelete, texDeleteSel, 532, 242, 48, 48);
+	m_gameLblWdm = _addLabel(theme, "GAME/WDM_NAME", theme.btnFont, L"", 68, 410, 200, 48, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);;
+	m_gameBtnWdmM = _addPicButton(theme, "GAME/WDM_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 20, 410, 48, 48);
+	m_gameBtnWdmP = _addPicButton(theme, "GAME/WDM_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 268, 410, 48, 48);
+
+	m_gameButtonsZone.x = m_theme.getInt("GAME/ZONES", "buttons_x", 0);
+	m_gameButtonsZone.y = m_theme.getInt("GAME/ZONES", "buttons_y", 0);
+	m_gameButtonsZone.w = m_theme.getInt("GAME/ZONES", "buttons_w", 640);
+	m_gameButtonsZone.h = m_theme.getInt("GAME/ZONES", "buttons_h", 480);
+
 	// 
 	_setHideAnim(m_gameBtnPlay, "GAME/PLAY_BTN", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameBtnBack, "GAME/BACK_BTN", 200, 0, 1.f, 0.f);
@@ -736,6 +849,9 @@ void CMenu::_initGameMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_gameBtnAdultOff, "GAME/ADULTONLY_OFF", 0, 0, -1.5f, -1.5f);
 	_setHideAnim(m_gameBtnSettings, "GAME/SETTINGS_BTN", 0, 0, -1.5f, -1.5f);
 	_setHideAnim(m_gameBtnDelete, "GAME/DELETE_BTN", 0, 0, -1.5f, -1.5f);
+	_setHideAnim(m_gameLblWdm, "GAME/WDM_NAME", 0, 0, 1.f, -1.f);
+	_setHideAnim(m_gameBtnWdmM, "GAME/WDM_MINUS", 0, 0, 1.f, -1.f);
+	_setHideAnim(m_gameBtnWdmP, "GAME/WDM_PLUS", 0, 0, 1.f, -1.f);
 	_hideGame(true);
 	_textGame();
 }

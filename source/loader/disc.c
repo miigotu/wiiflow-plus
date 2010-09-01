@@ -372,7 +372,7 @@ s32 Disc_IsGC(void)
 	return Disc_Type(1);
 }
 
-s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode, u32 rtrn, u8 patchDiscCheck, bool dvd, char *altDolDir)
+s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode, u32 rtrn, u8 patchDiscCheck, bool dvd, char *altDolDir, u32 wdm_parameter)
 {
 	entry_point p_entry;
 
@@ -438,6 +438,8 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	// fix for PeppaPig
 	memcpy((void*)0x800000F4,(char *) &temp_data, 4);
 
+	*(u32*)0xCC003024 = wdm_parameter; /* Originally from tueidj */
+
 	appentrypoint = (u32) p_entry;
 	
 	if (cheat != 0)
@@ -482,7 +484,7 @@ s32 Disc_OpenPartition(u8 *id)
 	return 0;
 }
 
-s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck, char *altDolDir)
+s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck, char *altDolDir, u32 wdm_parameter)
 {
 	u64 offset;
 	s32 ret;
@@ -493,5 +495,5 @@ s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipa
 		return ret;
 
 	/* Boot partition */
-	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes, rtrn, patchDiscCheck, dvd, altDolDir);
+	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes, rtrn, patchDiscCheck, dvd, altDolDir, wdm_parameter);
 }

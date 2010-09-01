@@ -39,6 +39,7 @@ public:
 	int getOptBool(const std::string &domain, const std::string &key, int defVal = 2);
 	bool testOptBool(const std::string &domain, const std::string &key, bool defVal);
 	int getInt(const std::string &domain, const std::string &key, int defVal = 0);
+	bool getInt(const std::string &domain, const std::string &key, int *value);
 	unsigned int getUInt(const std::string &domain, const std::string &key, unsigned int defVal = 0);
 	float getFloat(const std::string &domain, const std::string &key, float defVal = 0.f);
 	Vector3D getVector3D(const std::string &domain, const std::string &key, const Vector3D &defVal = Vector3D());
