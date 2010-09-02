@@ -20,16 +20,15 @@ extern const u8		wiimote3_png[];
 extern const u8		wiimote4_png[];
 extern const u8		wiimote8_png[];
 
-//extern const u8		guitar_png[];
+extern const u8		guitar_png[];
 extern const u8		guitarR_png[];
 extern const u8		microphone_png[];
 extern const u8		gcncontroller_png[];
-//extern const u8		gcncontrollerR_png[];
 extern const u8		classiccontroller_png[];
 extern const u8		nunchuk_png[];
 extern const u8		nunchukR_png[];
-extern const u8		dancepadR_png[];
 extern const u8		dancepad_png[];
+extern const u8		dancepadR_png[];
 extern const u8		balanceboard_png[];
 extern const u8		balanceboardR_png[];
 extern const u8		drums_png[];
@@ -128,12 +127,13 @@ void CMenu::_gameinfo(void)
 		else if (BTN_LEFT_PRESSED && !(m_thrdWorking && m_thrdStop))
 		{
 			page = 0;
-			m_btnMgr.show(m_gameinfoLblRating);
-			m_btnMgr.show(m_gameinfoLblRegion);	
+			m_btnMgr.show(m_gameinfoLblID);
 			m_btnMgr.show(m_gameinfoLblDev);
+			m_btnMgr.show(m_gameinfoLblRegion);	
 			m_btnMgr.show(m_gameinfoLblPublisher);
 			m_btnMgr.show(m_gameinfoLblRlsdate);
 			m_btnMgr.show(m_gameinfoLblGenre);
+			m_btnMgr.show(m_gameinfoLblRating);
 			m_btnMgr.show(m_gameinfoLblWifiplayers);
 
 			for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControlsReq); ++i)
@@ -268,8 +268,22 @@ void CMenu::_textGameInfo(void)
 		m_btnMgr.setText(m_gameinfoLblDev, wfmt(_fmt("gameinfo1",L"Developer: %s"), gameinfo.developer), true);
 		m_btnMgr.setText(m_gameinfoLblPublisher, wfmt(_fmt("gameinfo2",L"Publisher: %s"), gameinfo.publisher), true);
 		m_btnMgr.setText(m_gameinfoLblRegion, wfmt(_fmt("gameinfo3",L"Region: %s"), gameinfo.region), true);
-		m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), gameinfo.day,gameinfo.month,gameinfo.year), true);
 		m_btnMgr.setText(m_gameinfoLblGenre, wfmt(_fmt("gameinfo5",L"Genre: %s"), gameinfo.genre), true);
+		
+		switch(CONF_GetRegion())
+		{
+		case 0:
+		case 4:
+		case 5:
+			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), gameinfo.year,gameinfo.month,gameinfo.day), true);
+			break;
+		case 1:
+			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), gameinfo.month,gameinfo.day,gameinfo.year), true);
+			break;
+		case 2:
+			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), gameinfo.day,gameinfo.month,gameinfo.year), true);
+			break;
+		}
 		
 		//Ratings
 		switch(ConvertRatingToIndex(gameinfo.ratingtype)) {
@@ -360,7 +374,7 @@ void CMenu::_textGameInfo(void)
 			microphone=0,
 			wheel=0;
 		
-		//Required controlls
+		//check required controlls
 		for (u8 i=0;i<16;i++) {
 			if (strcmp(gameinfo.accessoriesReq[i],"wiimote")==0)
                 wiimote=1;
@@ -433,7 +447,7 @@ void CMenu::_textGameInfo(void)
 		for(unsigned int i = 0;i<ARRAY_SIZE(m_gameinfoLblControlsReq);i++)
 			m_btnMgr.setTexture(m_gameinfoLblControlsReq[i] ,m_controlsreq[i]);
 
-		//optional controlls
+		//check optional controlls
 		wiimote=0,
 		nunchuk=0,
         classiccontroller=0,

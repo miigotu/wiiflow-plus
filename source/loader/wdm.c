@@ -53,6 +53,7 @@ bool getnextnumber(FILE *fp, u32 *value)
 
 int load_wdm(const char *wdmpath, const char *gameid)
 {
+	wdm_count = 0;
 	char filepath[150];
 	snprintf(filepath, sizeof(filepath), "%s/%.6s.wdm", wdmpath, gameid);
 
