@@ -34,8 +34,8 @@ u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length);
 
 extern int   fs_sd_mount;
 extern sec_t fs_sd_sec;
-extern int   fs_usb_mount;
-extern sec_t fs_usb_sec;
+extern int   fs_fat_mount;
+extern sec_t fs_fat_sec;
 extern int   fs_wbfs_mount;
 extern sec_t fs_wbfs_sec;
 extern int   fs_ntfs_mount;

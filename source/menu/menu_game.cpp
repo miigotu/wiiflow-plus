@@ -294,7 +294,7 @@ void CMenu::_game(bool launch)
 				break;
 			else if (m_btnMgr.selected() == m_gameBtnDelete)
 			{
-				if (!WBFS_IsReadOnly())
+				if (!m_locked)
 				{
 					_hideGame();
 					_waitForGameSoundExtract();
@@ -302,8 +302,6 @@ void CMenu::_game(bool launch)
 						break;
 					_showGame();
 				}
-				else
-					error(_t("wbfsop11", L"The currently selected filesystem is read-only. You cannot install games or remove them."));
 			}
 			else if (m_btnMgr.selected() == m_gameBtnFavoriteOn || m_btnMgr.selected() == m_gameBtnFavoriteOff)
 				m_gcfg1.setBool("FAVORITES", id, !m_gcfg1.getBool("FAVORITES", id, false));

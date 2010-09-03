@@ -9,7 +9,7 @@
 #include "fs.h"
 #include "libwbfs/libwbfs.h"
 #include "wbfs.h"
-#include "wbfs_fat.h"
+#include "wbfs_ext.h"
 #include "usbstorage.h"
 #include "frag.h"
 #include "utils.h"
@@ -255,7 +255,7 @@ int get_frag_list(u8 *id)
 
 	if (wbfs_part_fs == PART_FS_WBFS) return 0;
 
-	if (!WBFS_FAT_find_fname(id, fname, sizeof(fname))) return -2;
+	if (!WBFS_Ext_find_fname(id, fname, sizeof(fname))) return -2;
 	
 	return get_frag_list_for_file((char *) fname, id, &frag_list);
 }

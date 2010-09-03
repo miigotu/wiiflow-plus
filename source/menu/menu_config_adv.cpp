@@ -159,15 +159,11 @@ int CMenu::_configAdv(void)
 				break;
 			else if (m_btnMgr.selected() == m_configAdvBtnInstall)
 			{
-				if (!WBFS_IsReadOnly())
+				if (!m_locked)
 				{
 					_hideConfigAdv();
 					_wbfsOp(CMenu::WO_ADD_GAME);
 					_showConfigAdv();
-				}
-				else
-				{
-					error(_t("wbfsop11", L"The currently selected filesystem is read-only. You cannot install games or remove them."));
 				}
 			}
 			else if (m_btnMgr.selected() == m_configAdvBtnCurThemeP)

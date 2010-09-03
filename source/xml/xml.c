@@ -10,7 +10,7 @@ Load game information from XML - Lustar
 #include <sys/stat.h>
 #include <ogc/lwp.h>
 #include "../loader/utils.h"
-#include "../loader/wbfs_fat.h"
+#include "../loader/wbfs_ext.h"
 #include "xml.h"
 
 #include "unzip/unzip.h"

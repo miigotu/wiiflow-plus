@@ -22,7 +22,7 @@
 #include "splits.h"
 #include "fs.h"
 #include "partition.h"
-#include "wbfs_fat.h"
+#include "wbfs_ext.h"
 #include "sys.h"
 
 /* Constants */
@@ -328,8 +328,8 @@ s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *
 
 	if (part_fs == PART_FS_FAT || part_fs == PART_FS_NTFS) {
 		//if (wbfsDev != WBFS_DEVICE_USB) return -1;
-		if (wbfsDev == WBFS_DEVICE_USB && part_lba == fs_usb_sec) {
-			strcpy(wbfs_fs_drive, "usb:");
+		if (wbfsDev == WBFS_DEVICE_USB && part_lba == fs_fat_sec) {
+			strcpy(wbfs_fs_drive, "fat:");
 		} else if (wbfsDev == WBFS_DEVICE_USB && part_lba == fs_ntfs_sec) {
 			strcpy(wbfs_fs_drive, "ntfs:");
 		} else if (wbfsDev == WBFS_DEVICE_SDHC && part_lba == fs_sd_sec) {
@@ -461,7 +461,7 @@ s32 WBFS_Format(u32 lba, u32 size)
 
 s32 WBFS_GetCount(u32 *count)
 {
-	if (wbfs_part_fs) return WBFS_FAT_GetCount(count);
+	if (wbfs_part_fs) return WBFS_Ext_GetCount(count);
 
 	/* No device open */
 	if (!hdd)
@@ -475,7 +475,7 @@ s32 WBFS_GetCount(u32 *count)
 
 s32 WBFS_GetHeaders(void *outbuf, u32 cnt, u32 len)
 {
-	if (wbfs_part_fs) return WBFS_FAT_GetHeaders(outbuf, cnt, len);
+	if (wbfs_part_fs) return WBFS_Ext_GetHeaders(outbuf, cnt, len);
 
 	u32 idx, size;
 	s32 ret;
@@ -513,7 +513,7 @@ s32 WBFS_CheckGame(u8 *discid)
 
 s32 WBFS_AddGame(progress_callback_t spinner, void *spinner_data)
 {
-	if (wbfs_part_fs) return WBFS_FAT_AddGame(spinner, spinner_data);
+	if (wbfs_part_fs) return WBFS_Ext_AddGame(spinner, spinner_data);
 	s32 ret;
 
 	/* No device open */
@@ -523,20 +523,7 @@ s32 WBFS_AddGame(progress_callback_t spinner, void *spinner_data)
 	/* Add game to device */
 	partition_selector_t part_sel = ONLY_GAME_PARTITION;
 	int copy_1_1 = 0;
-/*
-	switch (CFG.install_partitions) {
-		case CFG_INSTALL_GAME:
-			part_sel = ONLY_GAME_PARTITION;
-			break;
-		case CFG_INSTALL_ALL:
-			part_sel = ALL_PARTITIONS;
-			break;
-		case CFG_INSTALL_1_1:
-			part_sel = ALL_PARTITIONS;
-			copy_1_1 = 1;
-			break;
-	}
-*/
+
 	ret = wbfs_add_disc(hdd, __WBFS_ReadDVD, NULL, spinner, spinner_data, part_sel, copy_1_1);
 	if (ret < 0)
 		return ret;
@@ -546,7 +533,7 @@ s32 WBFS_AddGame(progress_callback_t spinner, void *spinner_data)
 
 s32 WBFS_RemoveGame(u8 *discid)
 {
-	if (wbfs_part_fs) return WBFS_FAT_RemoveGame(discid);
+	if (wbfs_part_fs) return WBFS_Ext_RemoveGame(discid);
 	s32 ret;
 
 	/* No device open */
@@ -610,7 +597,7 @@ s32 WBFS_GameSize2(u8 *discid, u64 *comp_size, u64 *real_size)
 
 s32 WBFS_DVD_Size(u64 *comp_size, u64 *real_size)
 {
-	if (wbfs_part_fs) return WBFS_FAT_DVD_Size(comp_size, real_size);
+	if (wbfs_part_fs) return WBFS_Ext_DVD_Size(comp_size, real_size);
 	s32 ret;
 	u32 comp_sec = 0, last_sec = 0;
 
@@ -619,14 +606,8 @@ s32 WBFS_DVD_Size(u64 *comp_size, u64 *real_size)
 		return -1;
 
 	/* Add game to device */
-	partition_selector_t part_sel = ALL_PARTITIONS;
-/*
-	if (CFG.install_partitions) {
-		part_sel = ALL_PARTITIONS;
-	} else {
-		part_sel = ONLY_GAME_PARTITION;
-	}
-*/
+	partition_selector_t part_sel = ONLY_GAME_PARTITION;
+
 	ret = wbfs_size_disc(hdd, __WBFS_ReadDVD, NULL, part_sel, &comp_sec, &last_sec);
 	if (ret < 0)
 		return ret;
@@ -640,7 +621,7 @@ s32 WBFS_DVD_Size(u64 *comp_size, u64 *real_size)
 
 s32 WBFS_DiskSpace(f32 *used, f32 *free)
 {
-	if (wbfs_part_fs) return WBFS_FAT_DiskSpace(used, free);
+	if (wbfs_part_fs) return WBFS_Ext_DiskSpace(used, free);
 	f32 ssize;
 	u32 cnt;
 
@@ -664,7 +645,7 @@ s32 WBFS_DiskSpace(f32 *used, f32 *free)
 
 wbfs_disc_t* WBFS_OpenDisc(u8 *discid)
 {
-	if (wbfs_part_fs) return WBFS_FAT_OpenDisc(discid);
+	if (wbfs_part_fs) return WBFS_Ext_OpenDisc(discid);
 
 	/* No device open */
 	if (!hdd)
@@ -677,7 +658,7 @@ wbfs_disc_t* WBFS_OpenDisc(u8 *discid)
 void WBFS_CloseDisc(wbfs_disc_t *disc)
 {
 	if (wbfs_part_fs) {
-		WBFS_FAT_CloseDisc(disc);
+		WBFS_Ext_CloseDisc(disc);
 		return;
 	}
 
@@ -737,13 +718,6 @@ s32 WBFS_GetPartitionName(u32 index, char *buf) {
 		snprintf(buf, 6, "WBFS%d", index + 1);
 	}
 	return 0;
-}
-
-bool WBFS_IsReadOnly(void) {
-	if (wbfs_part_fs) {
-		return WBFS_FAT_IsReadOnly();
-	}
-	return false;
 }
 
 f32 WBFS_EstimeGameSize(void) {

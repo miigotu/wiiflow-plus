@@ -299,20 +299,10 @@ int CMenu::main(void)
 			}
 			else if (m_btnMgr.selected() == m_mainBtnInit)
 			{
-				if (!WBFS_IsReadOnly())
+				if (!m_locked)
 				{
 					_hideMain();
 					_wbfsOp(CMenu::WO_ADD_GAME);
-					if (prevTheme != m_cfg.getString("GENERAL", "theme"))
-					{
-						m_reload = true;
-						break;
-					}
-					_showMain();
-				}
-				else
-				{
-					error(_t("wbfsop11", L"The currently selected filesystem is read-only. You cannot install games or remove them."));
 					if (prevTheme != m_cfg.getString("GENERAL", "theme"))
 					{
 						m_reload = true;
@@ -324,7 +314,6 @@ int CMenu::main(void)
 			else if (m_btnMgr.selected() == m_mainBtnInit2)
 			{
 				_hideMain();
-				//_config(2);
 				_config(7);
 				if (prevTheme != m_cfg.getString("GENERAL", "theme"))
 				{

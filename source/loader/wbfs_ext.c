@@ -21,7 +21,7 @@
 #include "splits.h"
 #include "fs.h"
 #include "partition.h"
-#include "wbfs_fat.h"
+#include "wbfs_ext.h"
 #include "utils.h"
 #include "disc.h"
 #include "frag.h"
@@ -31,12 +31,12 @@
 #define TITLE_LEN 64
 
 char wbfs_fs_drive[16];
-char wbfs_fat_dir[16] = "/wbfs";
+char wbfs_ext_dir[16] = "/wbfs";
 char invalid_path[] = "/\\:|<>?*\"'";
 
-int  wbfs_fat_vfs_have = 0;
-int  wbfs_fat_vfs_lba = 0;
-int  wbfs_fat_vfs_dev = 0;
+int  wbfs_ext_vfs_have = 0;
+int  wbfs_ext_vfs_lba = 0;
+int  wbfs_ext_vfs_dev = 0;
 
 split_info_t split;
 
@@ -44,7 +44,7 @@ static int fat_hdr_count = 0;
 static u32 fat_sector_size = 512;
 static struct discHdr *fat_hdr_list = NULL;
 
-struct statvfs wbfs_fat_vfs;
+struct statvfs wbfs_ext_vfs;
 
 s32 __WBFS_ReadDVD(void *fp, u32 lba, u32 len, void *iobuf);
 
@@ -91,7 +91,7 @@ bool check_layout_b(char *fname, int len, u8* id, char *fname_title)
 }
 
 
-s32 _WBFS_FAT_GetHeadersCount()
+s32 _WBFS_Ext_GetHeadersCount()
 {
 	DIR_ITER *dir_iter;
 	char path[MAX_FAT_PATH];
@@ -115,7 +115,7 @@ s32 _WBFS_FAT_GetHeadersCount()
 	fat_hdr_count = 0;
 
 	strcpy(path, wbfs_fs_drive);
-	strcat(path, wbfs_fat_dir);
+	strcat(path, wbfs_ext_dir);
 	dir_iter = diropen(path);
 	if (!dir_iter) return 0;
 
@@ -220,13 +220,13 @@ s32 _WBFS_FAT_GetHeadersCount()
 			// no title found, read it from wbfs file
 			// but this is a little bit slower 
 			// open 'partition' file
-			part = WBFS_FAT_OpenPart(fpath);
+			part = WBFS_Ext_OpenPart(fpath);
 			if (!part) continue;
 
 			/* Get header */
 			ret = wbfs_get_disc_info(part, 0, (u8*)&tmpHdr,
 					sizeof(struct discHdr), &size);
-			WBFS_FAT_ClosePart(part);
+			WBFS_Ext_ClosePart(part);
 			if (ret == 0) {
 				goto add_hdr;
 			}
@@ -266,20 +266,20 @@ s32 _WBFS_FAT_GetHeadersCount()
 	return 0;
 }
 
-void WBFS_FAT_fname(u8 *id, char *fname, int len, char *path)
+void WBFS_Ext_fname(u8 *id, char *fname, int len, char *path)
 {
 	if (path == NULL) {
-		snprintf(fname, len, "%s%s/%.6s.wbfs", wbfs_fs_drive, wbfs_fat_dir, id);
+		snprintf(fname, len, "%s%s/%.6s.wbfs", wbfs_fs_drive, wbfs_ext_dir, id);
 	} else {
 		snprintf(fname, len, "%s/%.6s.wbfs", path, id);
 	}
 }
 
-int WBFS_FAT_find_fname(u8 *id, char *fname, int len)
+int WBFS_Ext_find_fname(u8 *id, char *fname, int len)
 {
 	struct stat st;
 	// look for direct .wbfs file
-	WBFS_FAT_fname(id, fname, len, NULL);
+	WBFS_Ext_fname(id, fname, len, NULL);
 	if (stat(fname, &st) == 0) return 1;
 	// look for direct .iso file
 	strcpy(strrchr(fname, '.'), ".iso"); // replace .wbfs with .iso
@@ -290,7 +290,7 @@ int WBFS_FAT_find_fname(u8 *id, char *fname, int len)
 	char path[MAX_FAT_PATH];
 	char name[MAX_FAT_PATH];
 	strcpy(path, wbfs_fs_drive);
-	strcat(path, wbfs_fat_dir);
+	strcat(path, wbfs_ext_dir);
 	dir_iter = diropen(path);
 	//dbg_printf("dir: %s %p\n", path, dir); Wpad_WaitButtons();
 	if (!dir_iter) {
@@ -343,10 +343,10 @@ int WBFS_FAT_find_fname(u8 *id, char *fname, int len)
 }
 
 
-s32 WBFS_FAT_GetCount(u32 *count)
+s32 WBFS_Ext_GetCount(u32 *count)
 {
 	*count = 0;
-	_WBFS_FAT_GetHeadersCount();
+	_WBFS_Ext_GetHeadersCount();
 	if (fat_hdr_count && fat_hdr_list) {
 		// for compacter mem - move up as it will be freed later
 		int size = fat_hdr_count * sizeof(struct discHdr);
@@ -361,7 +361,7 @@ s32 WBFS_FAT_GetCount(u32 *count)
 	return 0;
 }
 
-s32 WBFS_FAT_GetHeaders(void *outbuf, u32 cnt, u32 len)
+s32 WBFS_Ext_GetHeaders(void *outbuf, u32 cnt, u32 len)
 {
 	int i;
 	int slen = len;
@@ -376,12 +376,12 @@ s32 WBFS_FAT_GetHeaders(void *outbuf, u32 cnt, u32 len)
 	return 0;
 }
 
-wbfs_disc_t* WBFS_FAT_OpenDisc(u8 *discid)
+wbfs_disc_t* WBFS_Ext_OpenDisc(u8 *discid)
 {
 	char fname[MAX_FAT_PATH];
 
 	// wbfs 'partition' file
-	if ( !WBFS_FAT_find_fname(discid, fname, sizeof(fname)) ) return NULL;
+	if ( !WBFS_Ext_find_fname(discid, fname, sizeof(fname)) ) return NULL;
 
 	if (strcasecmp(strrchr(fname,'.'), ".iso") == 0) {
 		// .iso file
@@ -398,12 +398,12 @@ wbfs_disc_t* WBFS_FAT_OpenDisc(u8 *discid)
 		return iso_file;
 	}
 
-	wbfs_t *part = WBFS_FAT_OpenPart(fname);
+	wbfs_t *part = WBFS_Ext_OpenPart(fname);
 	if (!part) return NULL;
 	return wbfs_open_disc(part, discid);
 }
 
-void WBFS_FAT_CloseDisc(wbfs_disc_t* disc)
+void WBFS_Ext_CloseDisc(wbfs_disc_t* disc)
 {
 	if (!disc) return;
 	wbfs_t *part = disc->p;
@@ -416,11 +416,11 @@ void WBFS_FAT_CloseDisc(wbfs_disc_t* disc)
 	}
 
 	wbfs_close_disc(disc);
-	WBFS_FAT_ClosePart(part);
+	WBFS_Ext_ClosePart(part);
 	return;
 }
 
-s32 WBFS_FAT_DiskSpace(f32 *used, f32 *free)
+s32 WBFS_Ext_DiskSpace(f32 *used, f32 *free)
 {
 	f32 size;
 	int ret;
@@ -428,24 +428,20 @@ s32 WBFS_FAT_DiskSpace(f32 *used, f32 *free)
 	*used = 0;
 	*free = 0;
 	// statvfs is slow, so cache values
-	if (!wbfs_fat_vfs_have
-		|| wbfs_fat_vfs_lba != wbfs_part_lba
-		|| wbfs_fat_vfs_dev != wbfsDev )
+	if (!wbfs_ext_vfs_have || wbfs_ext_vfs_lba != wbfs_part_lba || wbfs_ext_vfs_dev != wbfsDev )
 	{
-		//dbg_time1();
-		//dbg_printf_("\nstatvfs(%s)\n", wbfs_fs_drive);
-		ret = statvfs(wbfs_fs_drive, &wbfs_fat_vfs);
-		//dbg_printf("statvfs=%d\n", ret); Wpad_WaitButtonsCommon();
-		//dbg_time2("S:"); //Wpad_WaitButtons();
+		ret = statvfs(wbfs_fs_drive, &wbfs_ext_vfs);
+
 		if (ret) return 0;
-		wbfs_fat_vfs_have = 1;
-		wbfs_fat_vfs_lba = wbfs_part_lba;
-		wbfs_fat_vfs_dev = wbfsDev;
+
+		wbfs_ext_vfs_have = 1;
+		wbfs_ext_vfs_lba = wbfs_part_lba;
+		wbfs_ext_vfs_dev = wbfsDev;
 	}
 
 	/* FS size in GB */
-	size = (f32)wbfs_fat_vfs.f_frsize * (f32)wbfs_fat_vfs.f_blocks / GB_SIZE;
-	*free = (f32)wbfs_fat_vfs.f_frsize * (f32)wbfs_fat_vfs.f_bfree / GB_SIZE;
+	size = (f32)wbfs_ext_vfs.f_frsize * (f32)wbfs_ext_vfs.f_blocks / GB_SIZE;
+	*free = (f32)wbfs_ext_vfs.f_frsize * (f32)wbfs_ext_vfs.f_bfree / GB_SIZE;
 	*used = size - *free;
 
 
@@ -519,45 +515,22 @@ void mk_gameid_title(struct discHdr *header, char *name, int re_space, int layou
 }
 
 
-void WBFS_FAT_get_dir(struct discHdr *header, char *path, char *fname)
+void WBFS_Ext_get_dir(struct discHdr *header, char *path, char *fname)
 {
     // base usb:/wbfs
 	strcpy(path, wbfs_fs_drive);
-	strcat(path, wbfs_fat_dir);
+	strcat(path, wbfs_ext_dir);
 	mkdir(path, 0777);
 
 	strcat(path, "/");
-/*
-	if (CFG.fat_install_dir == 1) {
-		// subdir usb:/wbfs/ID_TITLE
-		strcat(path, "/");
-		mk_gameid_title(header, path + strlen(path), 0, 0);
-		mkdir(path, 0777);
-	}
-	if (CFG.fat_install_dir == 2) {
-		// subdir usb:/wbfs/TITLE [ID]
-		strcat(path, "/");
-		mk_gameid_title(header, path + strlen(path), 0, 1);
-		mkdir(path, 0777);
-	}
-*/
-	// file name:
-//	if (CFG.fat_install_dir == 3) {
-		// name usb:/wbfs/TITLE [ID].wbfs
-		strcpy(fname, path);
-		mk_gameid_title(header, fname + strlen(fname), 0, 1);
-		strcat(fname, ".wbfs");
-/*
-	} else {
-		// case: 0, 1, 2
-		// name .../ID.wbfs
-		WBFS_FAT_fname(header->id, fname, MAX_FAT_PATH, path);
-	}
-*/
+
+	strcpy(fname, path);
+	mk_gameid_title(header, fname + strlen(fname), 0, 1);
+	strcat(fname, ".wbfs");
 }
 
 
-wbfs_t* WBFS_FAT_OpenPart(char *fname)
+wbfs_t* WBFS_Ext_OpenPart(char *fname)
 {
 	wbfs_t *part = NULL;
 	int ret;
@@ -575,14 +548,13 @@ wbfs_t* WBFS_FAT_OpenPart(char *fname)
 	return part;
 }
 
-wbfs_t* WBFS_FAT_CreatePart(u8 *id, char *fname)
+wbfs_t* WBFS_Ext_CreatePart(u8 *id, char *fname)
 {
 	wbfs_t *part = NULL;
 	u64 size = (u64)143432*2*0x8000ULL;
 	u32 n_sector = size / 512;
 	int ret;
 
-	//dbg_printf("CREATE PART %s %lld %d\n", id, size, n_sector);
 	ret = split_create(&split, fname, OPT_split_size, size, true);
 	if (ret) return NULL;
 
@@ -604,7 +576,7 @@ wbfs_t* WBFS_FAT_CreatePart(u8 *id, char *fname)
 	return part;
 }
 
-void WBFS_FAT_ClosePart(wbfs_t* part)
+void WBFS_Ext_ClosePart(wbfs_t* part)
 {
 	if (!part) return;
 	split_info_t *s = (split_info_t*)part->callback_data;
@@ -612,12 +584,12 @@ void WBFS_FAT_ClosePart(wbfs_t* part)
 	if (s) split_close(s);
 }
 
-s32 WBFS_FAT_RemoveGame(u8 *discid)
+s32 WBFS_Ext_RemoveGame(u8 *discid)
 {
 	char fname[MAX_FAT_PATH];
 	int loc;
 	// wbfs 'partition' file
-	loc = WBFS_FAT_find_fname(discid, fname, sizeof(fname));
+	loc = WBFS_Ext_find_fname(discid, fname, sizeof(fname));
 	if ( !loc ) return -1;
 	split_create(&split, fname, 0, 0, true);
 	split_close(&split);
@@ -653,7 +625,7 @@ s32 WBFS_FAT_RemoveGame(u8 *discid)
 }
 
 
-s32 WBFS_FAT_AddGame(progress_callback_t spinner, void *spinner_data)
+s32 WBFS_Ext_AddGame(progress_callback_t spinner, void *spinner_data)
 {
 	static struct discHdr header ATTRIBUTE_ALIGN(32);
 	char path[MAX_FAT_PATH];
@@ -667,41 +639,28 @@ s32 WBFS_FAT_AddGame(progress_callback_t spinner, void *spinner_data)
 	memset(path, 0, MAX_FAT_PATH);
 	memset(fname, 0, MAX_FAT_PATH);
 	// path & fname
-	WBFS_FAT_get_dir(&header, path, fname);
+	WBFS_Ext_get_dir(&header, path, fname);
 	// create wbfs 'partition' file
-	part = WBFS_FAT_CreatePart(header.id, fname);
+	part = WBFS_Ext_CreatePart(header.id, fname);
 	if (!part) return -1;
 
 	/* Add game to device */
 	partition_selector_t part_sel = ONLY_GAME_PARTITION;
 	int copy_1_1 = 0;
-/*
-	switch (CFG.install_partitions) {
-		case CFG_INSTALL_GAME:
-			part_sel = ONLY_GAME_PARTITION;
-			break;
-		case CFG_INSTALL_ALL:
-			part_sel = ALL_PARTITIONS;
-			break;
-		case CFG_INSTALL_1_1:
-			part_sel = ALL_PARTITIONS;
-			copy_1_1 = 1;
-			break;
-	}
-*/
+
 	extern wbfs_t *hdd;
 	wbfs_t *old_hdd = hdd;
 	hdd = part; // used by spinner
 	ret = wbfs_add_disc(part, __WBFS_ReadDVD, NULL, spinner, spinner_data, part_sel, copy_1_1);
 	hdd = old_hdd;
 	wbfs_trim(part);
-	WBFS_FAT_ClosePart(part);
+	WBFS_Ext_ClosePart(part);
 	if (ret < 0) return ret;
 
 	return 0;
 }
 
-s32 WBFS_FAT_DVD_Size(u64 *comp_size, u64 *real_size)
+s32 WBFS_Ext_DVD_Size(u64 *comp_size, u64 *real_size)
 {
 	s32 ret;
 	u32 comp_sec = 0, last_sec = 0;
@@ -721,13 +680,7 @@ s32 WBFS_FAT_DVD_Size(u64 *comp_size, u64 *real_size)
 
 	/* Add game to device */
 	partition_selector_t part_sel = ONLY_GAME_PARTITION;
-/*
-	if (CFG.install_partitions) {
-		part_sel = ALL_PARTITIONS;
-	} else {
-		part_sel = ONLY_GAME_PARTITION;
-	}
-*/
+
 	ret = wbfs_size_disc(part, __WBFS_ReadDVD, NULL, part_sel, &comp_sec, &last_sec);
 	wbfs_close(part);
 	if (ret < 0)
@@ -737,9 +690,4 @@ s32 WBFS_FAT_DVD_Size(u64 *comp_size, u64 *real_size)
 	*real_size = (u64)wii_sec_sz * last_sec;
 
 	return 0;
-}
-
-bool WBFS_FAT_IsReadOnly(void) {
-	//return wbfs_part_fs == PART_FS_NTFS;
-	return false;
 }

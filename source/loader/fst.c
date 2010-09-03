@@ -104,9 +104,14 @@ void app_loadgameconfig(char *discid)
 		snprintf(filepath, sizeof(filepath), "sd:/gameconfig.txt");
 		fp = fopen(filepath, "rb");
 	}
-	if(!fp && FS_USBAvailable())
+	if(!fp && FS_USBAvailable() && !FS_USB_isNTFS())
 	{
-		snprintf(filepath, sizeof(filepath), "usb:/gameconfig.txt");
+		snprintf(filepath, sizeof(filepath), "fat:/gameconfig.txt");
+		fp = fopen(filepath, "rb");
+	}
+	else
+	{
+		snprintf(filepath, sizeof(filepath), "ntfs:/gameconfig.txt");
 		fp = fopen(filepath, "rb");
 	}
 	if (fp) {
