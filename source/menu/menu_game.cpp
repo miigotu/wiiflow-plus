@@ -423,7 +423,7 @@ void CMenu::_game(bool launch)
 						m_btnMgr.show(m_gameLblWdm);
 						m_btnMgr.show(m_gameBtnWdmM);
 						m_btnMgr.show(m_gameBtnWdmP);
-					}					
+					}
 				}
 			}
 			else
@@ -551,7 +551,7 @@ void CMenu::_launch(const u64 chantitle, const string &id)
 
 void CMenu::_launchChannel(const u64 chantitle, const string &id)
 {
-	m_cfg.setString("GENERAL", "current_game", id);
+	m_cfg.setString("GENERAL", "current_channel", id);
 	m_gcfg2.setInt("PLAYCOUNT", id, m_gcfg2.getInt("PLAYCOUNT", id, 0) + 1);
 	m_gcfg2.setUInt("LASTPLAYED", id, time(NULL));
 	m_gcfg2.save();
@@ -877,14 +877,6 @@ static void _extractBnr(SmartBuf &bnr, u32 &size, const string &gameId)
 	{
 		size = wbfs_extract_file(disc, (char *) "opening.bnr", &banner);
 		bnr = SmartBuf((u8 *) banner);
-	/*
-		wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
-		if (wdisc != NULL)
-		{
-			bnr = SmartBuf(wd_extract_file(wdisc, &size, ALL_PARTITIONS, "opening.bnr", ALLOC_MEM2), SmartBuf::SRCALL_MEM2);
-			wd_close_disc(wdisc);
-		}
-	*/
 		WBFS_CloseDisc(disc);
 	}
 }

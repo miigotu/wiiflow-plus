@@ -308,8 +308,8 @@ void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_cheatBtnPageP, "CHEAT/PAGE_PLUS", 0, 200, 1.f, 0.f);
 	
 	for (int i=0;i<CHEATSPERPAGE;++i) {
+		_setHideAnim(m_cheatLblItem[i], sfmt("CHEAT/ITEM_%i", i).c_str(), -200, 0, 1.f, 0.f);
 		_setHideAnim(m_cheatBtnItem[i], sfmt("CHEAT/ITEM_%i_BTN", i).c_str(), 200, 0, 1.f, 0.f);
-		_setHideAnim(m_cheatLblItem[i], sfmt("CHEAT/ITEM_%i_BTN", i).c_str(), -200, 0, 1.f, 0.f);
 	}
 	
 	_hideCheatSettings(true);

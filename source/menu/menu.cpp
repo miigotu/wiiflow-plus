@@ -945,7 +945,7 @@ void CMenu::_initCF(void)
 	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
 	if (m_cf.setSorting((Sorting)m_cfg.getInt("GENERAL", "sort", 0)))
 		if (m_curGameId.empty() || !m_cf.findId(m_curGameId.c_str(), true))
-			m_cf.findId(m_cfg.getString("GENERAL", "current_game").c_str(), true);
+			m_cf.findId(m_cfg.getString("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "current_channel" : "current_game").c_str(), true);
 }
 
 void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)

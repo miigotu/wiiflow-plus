@@ -292,28 +292,24 @@ static bool checkPNGFile(const char *filename)
 void CMenu::_initAsyncNetwork()
 {
 	m_thrdNetwork = true;
-	
+	net_init_async(_networkComplete, this);
+/*	
 	lwp_t thread = LWP_THREAD_NULL;
 	LWP_CreateThread(&thread, (void *(*)(void *)) CMenu::_initStaticNetwork, this, 0, 8192, 40);
+*/	
 }
 
-int CMenu::_initStaticNetwork(CMenu *m)
+s32 CMenu::_networkComplete(s32 result, void *usrData)
 {
-	LockMutex lock(m->m_networkMutex);
-	net_init();
-
-	char ip[16];
-	int val = if_config(ip, NULL, NULL, true);
-	m->m_networkInit = !val;
-	return val;
-	
+	CMenu *m = (CMenu *) usrData;
+	m->m_networkInit = true;
 	m->m_thrdNetwork = false;
+	
 	return 0;
 }
 
 int CMenu::_initNetwork()
 {
-	LockMutex lock(m_networkMutex);
 	if (m_networkInit) return 0;
 
 	net_init();

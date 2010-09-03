@@ -182,23 +182,23 @@ bool FS_Mount_SD(void)
 {
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
 	{
-		__io_sdhc.startup();
-		g_fat_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SDHC_SECTOR_SIZE);
+		__io_wiisd.startup();
+		g_fat_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SDHC_SECTOR_SIZE);
 	}
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
-		g_ntfs_sdOK = ntfsMount("sd", &__io_sdhc, 0, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
+		g_ntfs_sdOK = ntfsMount("sd", &__io_wiisd, 0, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
 
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
 	{
-		__io_sdhc.shutdown();
-		__io_wiisd.startup();
-		g_fat_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SECTORS);
+		__io_wiisd.shutdown();
+		__io_sdhc.startup();
+		g_fat_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SECTORS);
 	}
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
-		g_ntfs_sdOK = ntfsMount("sd", &__io_wiisd, 0, CACHE, SECTORS_SD, NTFS_DEFAULT);
+		g_ntfs_sdOK = ntfsMount("sd", &__io_sdhc, 0, CACHE, SECTORS_SD, NTFS_DEFAULT);
 
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
-		__io_wiisd.shutdown();
+		__io_sdhc.shutdown();
 	
 	if (g_fat_sdOK)
 	{
@@ -283,6 +283,7 @@ u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length)
 	return buf;
 }
 
+/*
 static void *fat_pool = NULL;
 static size_t fat_size;
 #define FAT_SLOTS (CACHE * 3)
@@ -336,3 +337,4 @@ void _FAT_mem_free(void *mem)
         }
         // FATAL
 }
+*/
