@@ -15,17 +15,14 @@ extern "C" {
 void Unmount_All_Devices(void);
 bool Mount_Devices(void);
 
-bool Fat_SDAvailable(void);
-bool Fat_USBAvailable(void);
-bool Ntfs_SDAvailable(void);
-bool Ntfs_USBAvailable(void);
+bool FS_SDAvailable(void);
+bool FS_USBAvailable(void);
 
-bool Fat_Mount(u32);
-void Fat_Unmount(void);
-bool Fat_MountSDOnly(void);
+bool FS_Mount_USB(u32, bool);
+void FS_Unmount_USB(void);
 
-bool NTFS_Mount(u32);
-void NTFS_Unmount(void);
+bool FS_Mount_SD(void);
+void FS_Unmount_SD(void);
 
 bool WBFS_Mount(u32);
 void WBFS_Unmount(void);

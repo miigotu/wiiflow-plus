@@ -99,30 +99,16 @@ void app_loadgameconfig(char *discid)
 	//tempgameconfsize = defaultgameconfig_size + 1;
 
 	char filepath[200];
-	if (Fat_SDAvailable())
+	if (FS_SDAvailable())
 	{
 		snprintf(filepath, sizeof(filepath), "sd:/gameconfig.txt");
 		fp = fopen(filepath, "rb");
 	}
-	
-	if (Ntfs_SDAvailable())
-	{
-		snprintf(filepath, sizeof(filepath), "ntfs:/gameconfig.txt");
-		fp = fopen(filepath, "rb");
-	}
-	
-	if(!fp && Fat_USBAvailable())
+	if(!fp && FS_USBAvailable())
 	{
 		snprintf(filepath, sizeof(filepath), "usb:/gameconfig.txt");
 		fp = fopen(filepath, "rb");
 	}
-
-	if(!fp && Ntfs_USBAvailable())
-	{
-		snprintf(filepath, sizeof(filepath), "ntfs:/gameconfig.txt");
-		fp = fopen(filepath, "rb");
-	}
-
 	if (fp) {
 		fseek(fp, 0, SEEK_END);
 		filesize = ftell(fp);

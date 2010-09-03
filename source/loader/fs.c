@@ -16,16 +16,14 @@ extern const DISC_INTERFACE __io_wiisd;
 extern DISC_INTERFACE __io_usbstorage;
 extern const DISC_INTERFACE __io_sdhc;
 
-// read-only
-extern const DISC_INTERFACE __io_sdhc_ro;
-extern DISC_INTERFACE __io_usbstorage_ro;
-
 //void _FAT_mem_init();
 extern sec_t _FAT_startSector;
 
 extern s32 wbfsDev;
 extern s32 InitPartitionList();
 extern PartList plist;
+
+void ntfsInit();
 
 bool g_fat_sdOK = false;
 bool g_fat_usbOK = false;
@@ -49,52 +47,50 @@ sec_t fs_wbfs_sec = 0;
 int   fs_ntfs_mount = 0;
 sec_t fs_ntfs_sec = 0;
 
-bool Fat_SDAvailable(void)
+bool FS_SDAvailable(void)
 {
-	return g_fat_sdOK;
+	return g_fat_sdOK || g_ntfs_sdOK;
 }
 
-bool Fat_USBAvailable(void)
+bool FS_USBAvailable(void)
 {
-	return g_fat_usbOK;
-}
-
-bool Ntfs_SDAvailable(void)
-{
-	return g_ntfs_sdOK;
-}
-
-bool Ntfs_USBAvailable(void)
-{
-	return g_ntfs_usbOK;
+	return g_fat_usbOK || g_ntfs_usbOK;
 }
 
 void Unmount_All_Devices(void)
 {
-	Fat_Unmount();
-	NTFS_Unmount();
+	FS_Unmount_USB();
+	FS_Unmount_SD();
 	WBFS_Unmount();
 }
 
 bool Mount_Devices(void)
 {
-	u8 i;
-	u32 fat_sector = 0, ntfs_sector = 0;
-	bool fat_found = false;
-	bool ntfs_found = false;
+	FS_Unmount_SD();
+	FS_Unmount_USB();
+
+	u8 i, fat_partnum = 0, ntfs_partnum = 0, fat16_partnum = 0;
+	u32 fat_sector = 0, ntfs_sector = 0, fat16_sector = 0;
+	bool fat_found = false, ntfs_found = false, fat16_found = false;
+
+	FS_Mount_SD();
+
 	s32 ret = InitPartitionList();
+	
 	if (ret || plist.num == 0) return false;
-	for (i=0; i<plist.num; i++) 
+	
+ 	for (i=0; i<plist.num; i++) // Find first fat32 partition
 	{
 		if (i > plist.fat_n) break;
 		if (plist.pentry[i].type == 0x0b || plist.pentry[i].type == 0x0c)
 		{
 			fat_sector = plist.pentry[i].sector;
 			fat_found = true;
+			fat_partnum = i;
 			break;
 		}
 	}
-	for (i=0; i<plist.num; i++) 
+	for (i=0; i<plist.num; i++) // Find first ntfs partition
 	{
 		gprintf("plist.pentry[%i].type = %d\n", i, plist.pentry[i].type);
 		if (i > plist.ntfs_n) break;
@@ -103,48 +99,53 @@ bool Mount_Devices(void)
 			gprintf("plist.pentry[%i].sector = %i\n", i, plist.pentry[i].sector);
 			ntfs_sector = plist.pentry[i].sector;
 			ntfs_found = true;
+			ntfs_partnum = i;
 			break;
 		}
 	}
- 	if (!ntfs_found && !fat_found)
+ 	for (i=0; i<plist.num; i++) // Find first fat16 partition
 	{
-		for (i=0; i<plist.num; i++) 
+		if (i > plist.fat_n) break;
+		if (plist.pentry[i].type == 0x04 || plist.pentry[i].type == 0x06 || plist.pentry[i].type == 0x0e)
 		{
-			if (i > plist.fat_n) break;
-			if (plist.pentry[i].type == 0x04 || plist.pentry[i].type == 0x06 || plist.pentry[i].type == 0x0e)
-			{
-				fat_sector = plist.pentry[i].sector;
-				fat_found = true;
-				break;
-			}
+			fat16_sector = plist.pentry[i].sector;
+			fat16_found = true;
+			fat16_partnum = i;
+			break;
 		}
 	}
-	if (fat_found)
-	{
-		Fat_Mount(fat_sector);
-		return true;
-	}
 	if (ntfs_found)
-	{
-		Fat_MountSDOnly();
-		NTFS_Mount(ntfs_sector);
-		return true;
-	}
-	return false;
+		g_ntfs_usbOK = FS_Mount_USB(ntfs_sector, true);
+	if (fat_found)
+		g_fat_usbOK = FS_Mount_USB(fat_sector, false);
+	else if (fat16_found)
+		g_fat_usbOK = FS_Mount_USB(fat16_sector, false);
+
+	return g_ntfs_usbOK || g_fat_usbOK;
+
 }
 
-void Fat_Unmount(void)
+void FS_Unmount_SD(void)
 {
 	if (g_fat_sdOK)
 	{
 		fatUnmount("sd:");
-		__io_wiisd.shutdown();
-		__io_sdhc.shutdown();	
 		g_fat_sdOK = false;
-		
-		fs_sd_mount = 0;
-		fs_sd_sec = 0;
 	}
+	if (g_ntfs_sdOK)
+	{
+		ntfsUnmount("sd:", true);
+		g_ntfs_sdOK = false;
+	}
+	__io_wiisd.shutdown();
+	__io_sdhc.shutdown();	
+
+	fs_sd_mount = 0;
+	fs_sd_sec = 0;
+}
+
+void FS_Unmount_USB(void)
+{
 	if (g_fat_usbOK)
 	{
 		fatUnmount("usb:");
@@ -153,146 +154,79 @@ void Fat_Unmount(void)
 		fs_usb_mount = 0;
 		fs_usb_sec = 0;
 	}
-	if (!(g_fat_usbOK || g_ntfs_usbOK || g_wbfsOK))
-	{
-		__io_usbstorage.shutdown();
-	}
-	if (!(g_fat_sdOK || g_ntfs_sdOK))
-	{
-		__io_wiisd.shutdown();
-		__io_sdhc.shutdown();
-	}
-}
-
-bool Fat_Mount(u32 sector)
-{
-	Fat_Unmount();
-	if (!g_fat_sdOK) 
-	{
-		__io_wiisd.startup();
-		g_fat_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SECTORS);
-				
-		if (g_fat_sdOK)
-		{
-			fs_sd_mount = 1;
-			fs_sd_sec = _FAT_startSector;
-		}
-	}
-	if (!g_fat_sdOK) 
-	{
-		__io_sdhc.startup();
-		g_fat_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SDHC_SECTOR_SIZE);
-		
-		if (g_fat_sdOK)
-		{
-			fs_sd_mount = 1;
-			fs_sd_sec = _FAT_startSector;
-		}
-	}
-	if (!g_fat_usbOK)
-	{
-		__io_usbstorage.startup();
-		g_fat_usbOK = fatMount("usb", &__io_usbstorage, sector, CACHE, SECTORS);
-
-		if (g_fat_usbOK)
-		{
-			fs_usb_mount = 1;
-			fs_usb_sec = sector;
-		}
-	}
-		
-	return g_fat_sdOK || g_fat_usbOK;
-}
-
-bool Fat_MountSDOnly(void)
-{
-	if (g_fat_sdOK)
-	{
-		fatUnmount("sd:");
-		__io_wiisd.shutdown();
-		__io_sdhc.shutdown();
-		g_fat_sdOK = false;
-	}
-	if (!g_fat_sdOK)
-	{
-		__io_wiisd.startup();
-		g_fat_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SECTORS);
-	}
-	if (!g_fat_sdOK)
-	{
-		__io_sdhc.startup();
-		g_fat_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SDHC_SECTOR_SIZE);
-	}
-	if (g_fat_sdOK)
-	{
-		fs_sd_mount = 1;
-		fs_sd_sec = _FAT_startSector;
-	}
-	return g_fat_sdOK;
-}
-
-void ntfsInit();
-
-bool NTFS_Mount(u32 sector) 
-{
-	NTFS_Unmount();
-	if (!g_ntfs_usbOK) 
-	{
-		__io_usbstorage.startup();
-		ntfsInit();
-		setlocale(LC_CTYPE, "C-UTF-8");
-		setlocale(LC_MESSAGES, "C-UTF-8");
-		g_ntfs_usbOK = ntfsMount("ntfs", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
-	} 
-	else if (!g_fat_sdOK && !g_ntfs_sdOK && wbfsDev == WBFS_DEVICE_SDHC)
-	{
-		__io_sdhc.startup();
-		ntfsInit();
-		setlocale(LC_CTYPE, "C-UTF-8");
-		setlocale(LC_MESSAGES, "C-UTF-8");
-		ntfsInit();
-		g_ntfs_sdOK = ntfsMount("ntfs", &__io_sdhc, 0, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
-		if (!g_ntfs_sdOK)
-		{
-			__io_wiisd.startup();
-			g_ntfs_sdOK = ntfsMount("ntfs", &__io_wiisd, 0, CACHE, SECTORS_SD, NTFS_DEFAULT);
-		}
-	}
 	if (g_ntfs_usbOK)
 	{
-		fs_ntfs_mount = 1;
-		fs_ntfs_sec = sector;
-		return g_ntfs_usbOK;
-	}
-	else if (g_ntfs_sdOK)
-	{
-		fs_ntfs_mount = 1;
-		fs_ntfs_sec = 0;
-		return g_ntfs_sdOK;
-	}
-
-	return false;	
-}
-
-void NTFS_Unmount()
-{
-	if (g_ntfs_usbOK)
-	{
-		/* Unmount device */
 		ntfsUnmount("ntfs:", true);
 		g_ntfs_usbOK = false;
-		g_ntfs_sdOK = false;
-		
+
 		fs_ntfs_mount = 0;
 		fs_ntfs_sec = 0;
 	}
 	if (!(g_fat_usbOK || g_ntfs_usbOK || g_wbfsOK))
 		__io_usbstorage.shutdown();
-	if (!(g_fat_sdOK || g_ntfs_sdOK))
+}
+
+bool FS_Mount_USB(u32 sector, bool ntfs)
+{
+	if (!g_fat_usbOK && !ntfs)
 	{
-		__io_wiisd.shutdown();
-		__io_sdhc.shutdown();
+		__io_usbstorage.startup();
+		g_fat_usbOK = fatMount("usb", &__io_usbstorage, sector, CACHE, SECTORS);
 	}
+	if (!g_ntfs_usbOK && ntfs)
+	{
+		ntfsInit();
+		setlocale(LC_CTYPE, "C-UTF-8");
+		setlocale(LC_MESSAGES, "C-UTF-8");
+		__io_usbstorage.startup();
+		g_ntfs_usbOK = ntfsMount("ntfs", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
+	} 
+	if (g_fat_usbOK && !ntfs)
+	{
+		fs_usb_mount = 1;
+		fs_usb_sec = sector;
+	}
+	else if (g_ntfs_usbOK && ntfs)
+	{
+		fs_ntfs_mount = 1;
+		fs_ntfs_sec = sector;
+	}
+		
+	return g_ntfs_usbOK || g_fat_usbOK;
+}
+
+bool FS_Mount_SD(void)
+{
+	if (!g_fat_sdOK)
+	{
+		__io_sdhc.startup();
+		g_fat_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SDHC_SECTOR_SIZE);
+	}
+	if (!g_fat_sdOK)
+	{
+		__io_wiisd.startup();
+		g_fat_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SECTORS);
+	}
+	if (!g_fat_sdOK)
+	{
+		ntfsInit();
+		setlocale(LC_CTYPE, "C-UTF-8");
+		setlocale(LC_MESSAGES, "C-UTF-8");
+		
+		__io_sdhc.startup();
+		g_ntfs_sdOK = ntfsMount("sd", &__io_sdhc, 0, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
+	}
+	if (!g_ntfs_sdOK && !g_fat_sdOK)
+	{
+		__io_wiisd.startup();
+		g_ntfs_sdOK = ntfsMount("sd", &__io_wiisd, 0, CACHE, SECTORS_SD, NTFS_DEFAULT);
+	}
+	if (g_fat_sdOK || g_ntfs_sdOK)
+	{
+		fs_sd_mount = 1;
+		fs_sd_sec = 0;
+	}
+	return g_fat_sdOK || g_ntfs_sdOK;
 }
 
 bool WBFS_Mount(u32 sector) 

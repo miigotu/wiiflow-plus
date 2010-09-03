@@ -229,7 +229,7 @@ void Config::unload(void)
 void Config::save(void)
 {
 	if (strncasecmp(m_filename.c_str(), "sd:", 3) == 0)
-		Fat_MountSDOnly();
+		FS_Mount_SD();
 	ofstream file(m_filename.c_str(), ios::out | ios::binary);
 	for (Config::DomainMap::iterator k = m_domains.begin(); k != m_domains.end(); ++k)
 	{

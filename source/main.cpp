@@ -116,10 +116,8 @@ int old_main(int argc, char **argv)
 	{
 		Mount_Devices(); // this will power up the drive if it is not ready
 		
-		gprintf("SD Available: %d\n", Fat_SDAvailable());
-		gprintf("USB Available: %d\n", Fat_USBAvailable());
-		gprintf("NTFS_SD Available: %d\n", Ntfs_SDAvailable());
-		gprintf("NTFS_USB Available: %d\n", Ntfs_USBAvailable());
+		gprintf("SD Available: %d\n", FS_SDAvailable());
+		gprintf("USB Available: %d\n", FS_USBAvailable());
 				
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		if (!wbfsOK)

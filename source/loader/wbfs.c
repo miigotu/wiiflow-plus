@@ -281,7 +281,7 @@ bool WBFS_Close()
 		hdd = NULL;
 	}
 	WBFS_Unmount();
-	NTFS_Unmount();
+
 	wbfs_part_fs = 0;
 	wbfs_part_idx = 0;
 	wbfs_part_lba = 0;
@@ -326,19 +326,21 @@ s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *
 	// close
 	WBFS_Close();
 
-	if (part_fs == PART_FS_FAT) {
+	if (part_fs == PART_FS_FAT || part_fs == PART_FS_NTFS) {
 		//if (wbfsDev != WBFS_DEVICE_USB) return -1;
 		if (wbfsDev == WBFS_DEVICE_USB && part_lba == fs_usb_sec) {
 			strcpy(wbfs_fs_drive, "usb:");
+		} else if (wbfsDev == WBFS_DEVICE_USB && part_lba == fs_ntfs_sec) {
+			strcpy(wbfs_fs_drive, "ntfs:");
 		} else if (wbfsDev == WBFS_DEVICE_SDHC && part_lba == fs_sd_sec) {
 			strcpy(wbfs_fs_drive, "sd:");
 		} else {
 			if (!WBFS_Mount(part_lba)) return -1; // WBFS_Mount returns a boolean instead of an u32
 			strcpy(wbfs_fs_drive, "wbfs:");
 		}
-	} else if (part_fs == PART_FS_NTFS) {
-		if (!NTFS_Mount(part_lba)) return -1; // NTFS_Mount returns a boolean instead of an u32
-		strcpy(wbfs_fs_drive, "ntfs:");
+
+
+
 	} else {
 		if (WBFS_OpenLBA(part_lba, part_size)) return -1;
 	}
