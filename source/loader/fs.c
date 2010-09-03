@@ -105,23 +105,6 @@ bool Mount_Devices(void)
 			default: 
 				continue;
 		}
-/*  		switch(plist.pentry[i].type)
-		{
-			case 0x07: 
-				ntfs_found = true;
-				sector = plist.pentry[i].sector;
-				break;
-			case 0x0b: 
-			case 0x0c: 
-			case 0x04:
-			case 0x06:
-			case 0x0e:
-				fat_found = true;
-				sector = plist.pentry[i].sector;
-				break;
-			default: 
-				continue;
-		} */
 		if (fat_found || ntfs_found)
 			break;
 	}
@@ -151,7 +134,7 @@ void FS_Unmount_USB(void)
 {
 	if (g_fat_usbOK)
 	{
-		fatUnmount("fat:");
+		fatUnmount("usb:");
 		g_fat_usbOK = false;
 
 		fs_fat_mount = 0;
@@ -159,7 +142,7 @@ void FS_Unmount_USB(void)
 	}
 	if (g_ntfs_usbOK)
 	{
-		ntfsUnmount("ntfs:", true);
+		ntfsUnmount("usb:", true);
 		g_ntfs_usbOK = false;
 
 		fs_ntfs_mount = 0;
@@ -171,15 +154,15 @@ void FS_Unmount_USB(void)
 
 bool FS_Mount_USB(u32 sector, bool ntfs)
 {
-	if (!g_fat_usbOK && !ntfs)
+	if (!g_fat_usbOK && !g_ntfs_usbOK && !ntfs)
 	{
 		__io_usbstorage.startup();
-		g_fat_usbOK = fatMount("fat", &__io_usbstorage, sector, CACHE, SECTORS);
+		g_fat_usbOK = fatMount("usb", &__io_usbstorage, sector, CACHE, SECTORS);
 	}
-	if (!g_ntfs_usbOK && ntfs)
+	if (!g_ntfs_usbOK && !g_fat_usbOK && ntfs)
 	{
 		__io_usbstorage.startup();
-		g_ntfs_usbOK = ntfsMount("ntfs", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
+		g_ntfs_usbOK = ntfsMount("usb", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
 	} 
 	if (g_fat_usbOK && !ntfs)
 	{
