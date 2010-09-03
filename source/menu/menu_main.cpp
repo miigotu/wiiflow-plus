@@ -96,7 +96,7 @@ int CMenu::main(void)
 	int done = 0;
 
 	// Start network asynchronious, if configured and required
-	if (m_cfg.getBool("GENERAL", "async_network", true) || has_enabled_providers())
+	if (m_cfg.getBool("GENERAL", "async_network", false) || has_enabled_providers())
 	{
 		_initAsyncNetwork();
 	}

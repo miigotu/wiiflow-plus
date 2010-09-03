@@ -18,6 +18,8 @@ bool Mount_Devices(void);
 bool FS_SDAvailable(void);
 bool FS_USBAvailable(void);
 
+bool FS_USB_isNTFS(void);
+
 bool FS_Mount_USB(u32, bool);
 void FS_Unmount_USB(void);
 

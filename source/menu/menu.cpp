@@ -101,6 +101,8 @@ void CMenu::init(bool fromHBC)
 	{
 		if (stat(sfmt("sd:/%s/boot.dol", APPDATA_DIR2).c_str(), &bootdol) == 0)
 			wfdrv = "sd";
+		else if (stat(sfmt("ntfs:/%s/boot.dol", APPDATA_DIR2).c_str(), &bootdol) == 0)
+			wfdrv = "ntfs";
 		else if (stat(sfmt("usb:/%s/boot.dol", APPDATA_DIR2).c_str(), &bootdol) == 0)
 			wfdrv = "usb";
 	}
@@ -111,7 +113,7 @@ void CMenu::init(bool fromHBC)
 	gprintf("Wiiflow boot.dol Location: %s\n", m_appDir.c_str());
 	m_cfg.load(sfmt("%s/" CFG_FILENAME, m_appDir.c_str()).c_str());
 
-	drive = m_cfg.getBool("GENERAL", "data_on_usb", strcmp(wfdrv, "usb") == 0) ? "usb" : "sd";
+	drive = m_cfg.getBool("GENERAL", "data_on_usb", strcmp(wfdrv, "usb") == 0 || strcmp(wfdrv, "ntfs") == 0) ? FS_USB_isNTFS() ? "ntfs" : "usb" : "sd";
 	m_dataDir = sfmt("%s:/%s", drive, APPDATA_DIR);
 	gprintf("Data Directory: %s\n", m_dataDir.c_str());
 	

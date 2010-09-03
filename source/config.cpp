@@ -418,29 +418,24 @@ int Config::getOptBool(const string &domain, const string &key, int defVal)
 
 int Config::getInt(const string &domain, const string &key, int defVal)
 {
-	int value;
-	if (!getInt(domain, key, &value))
-	{ 
-		if (domain.empty() || key.empty())
-			return defVal;
-			
-		string &data = m_domains[upperCase(domain)][lowerCase(key)];
+	if (domain.empty() || key.empty())
+		return defVal;
+	string &data = m_domains[upperCase(domain)][lowerCase(key)];
+	if (data.empty())
+	{
 		data = sfmt("%i", defVal);
 		return defVal;
 	}
-	return value;
+	return strtol(data.c_str(), 0, 10);
 }
 
 bool Config::getInt(const std::string &domain, const std::string &key, int *value)
 {
 	if (domain.empty() || key.empty())
 		return false;
-	
 	string &data = m_domains[upperCase(domain)][lowerCase(key)];
 	if (data.empty())
-	{
 		return false;
-	}
 	*value = strtol(data.c_str(), 0, 10);
 	return true;
 }

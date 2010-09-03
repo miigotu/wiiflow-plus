@@ -57,6 +57,11 @@ bool FS_USBAvailable(void)
 	return g_fat_usbOK || g_ntfs_usbOK;
 }
 
+bool FS_USB_isNTFS(void)
+{
+	return g_ntfs_usbOK;
+}
+
 void Unmount_All_Devices(void)
 {
 	FS_Unmount_USB();
@@ -69,6 +74,10 @@ bool Mount_Devices(void)
 	FS_Unmount_SD();
 	FS_Unmount_USB();
 
+	ntfsInit();
+	setlocale(LC_CTYPE, "C-UTF-8");
+	setlocale(LC_MESSAGES, "C-UTF-8");
+		
 	u8 i, fat_partnum = 0, ntfs_partnum = 0, fat16_partnum = 0;
 	u32 fat_sector = 0, ntfs_sector = 0, fat16_sector = 0;
 	bool fat_found = false, ntfs_found = false, fat16_found = false;
@@ -79,7 +88,7 @@ bool Mount_Devices(void)
 	
 	if (ret || plist.num == 0) return false;
 	
- 	for (i=0; i<plist.num; i++) // Find first fat32 partition
+  	for (i=0; i<plist.num; i++) // Find first fat32 partition
 	{
 		if (i > plist.fat_n) break;
 		if (plist.pentry[i].type == 0x0b || plist.pentry[i].type == 0x0c)
@@ -103,7 +112,7 @@ bool Mount_Devices(void)
 			break;
 		}
 	}
- 	for (i=0; i<plist.num; i++) // Find first fat16 partition
+  	for (i=0; i<plist.num; i++) // Find first fat16 partition
 	{
 		if (i > plist.fat_n) break;
 		if (plist.pentry[i].type == 0x04 || plist.pentry[i].type == 0x06 || plist.pentry[i].type == 0x0e)
@@ -209,10 +218,7 @@ bool FS_Mount_SD(void)
 	}
 	if (!g_fat_sdOK)
 	{
-		ntfsInit();
-		setlocale(LC_CTYPE, "C-UTF-8");
-		setlocale(LC_MESSAGES, "C-UTF-8");
-		
+		FS_Unmount_SD();
 		__io_sdhc.startup();
 		g_ntfs_sdOK = ntfsMount("sd", &__io_sdhc, 0, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
 	}
