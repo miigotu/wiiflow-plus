@@ -117,6 +117,7 @@ static void listThemes(const char * path, vector<string> &themes)
 
 int CMenu::_configAdv(void)
 {
+	struct stat langs;
 	int nextPage = 0;
 	vector<string> themes;
 	int curTheme;
@@ -184,6 +185,19 @@ int CMenu::_configAdv(void)
 				m_curLanguage = CMenu::_translations[lang];
 				if (m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str()))
 					m_cfg.setInt("GENERAL", "language", lang);
+				else
+				{
+					while (lang !=0)
+					{
+						lang = (int)loopNum((u32)lang + 1, ARRAY_SIZE(CMenu::_translations));
+						m_curLanguage = CMenu::_translations[lang];
+						if (stat(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str(), &langs) == 0)
+							break;
+					}
+					m_cfg.setInt("GENERAL", "language", lang);
+					m_curLanguage = CMenu::_translations[lang];
+					m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str());
+				}
 				_updateText();
 				_showConfigAdv();
 			}
@@ -193,6 +207,19 @@ int CMenu::_configAdv(void)
 				m_curLanguage = CMenu::_translations[lang];
 				if (m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str()))
 					m_cfg.setInt("GENERAL", "language", lang);
+				else
+				{
+					while (lang !=0)
+					{
+						lang = (int)loopNum((u32)lang - 1, ARRAY_SIZE(CMenu::_translations));
+						m_curLanguage = CMenu::_translations[lang];
+						if (stat(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str(), &langs) == 0)
+							break;
+					}
+					m_cfg.setInt("GENERAL", "language", lang);
+					m_curLanguage = CMenu::_translations[lang];
+					m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str());
+				}
 				_updateText();
 				_showConfigAdv();
 			}

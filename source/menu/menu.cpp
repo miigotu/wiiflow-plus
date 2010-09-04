@@ -91,7 +91,7 @@ void CMenu::init(bool fromHBC)
 	string themeName;
 	const char *drive = "sd";
 	const char *wfdrv = "sd";
-	const char *defaultLanguage;
+	u8 defaultMenuLanguage;
 	struct stat bootdol;
 	
 	m_noHBC = !fromHBC;
@@ -166,42 +166,48 @@ void CMenu::init(bool fromHBC)
 	m_themeDataDir = sfmt("%s/%s", m_themeDir.c_str(), themeName.c_str());
 	m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), themeName.c_str()).c_str());
 	// 
-	defaultLanguage = "ENGLISH";
+	defaultMenuLanguage = 7; //English
 	switch (CONF_GetLanguage())
 	{
 		case CONF_LANG_JAPANESE:
-			defaultLanguage = "JAPANESE";
+			defaultMenuLanguage = 14; //Japanese
 			break;
 		case CONF_LANG_GERMAN:
-			defaultLanguage = "GERMAN";
+			defaultMenuLanguage = 11; //German
 			break;
 		case CONF_LANG_FRENCH:
-			defaultLanguage = "FRENCH";
+			defaultMenuLanguage = 9; //French
 			break;
 		case CONF_LANG_SPANISH:
-			defaultLanguage = "SPANISH";
+			defaultMenuLanguage = 19; //Spanish
 			break;
 		case CONF_LANG_ITALIAN:
-			defaultLanguage = "ITALIAN";
+			defaultMenuLanguage = 13; //Italian
 			break;
 		case CONF_LANG_DUTCH:
-			defaultLanguage = "DUTCH";
+			defaultMenuLanguage = 6; //Dutch
 			break;
 		case CONF_LANG_SIMP_CHINESE:
-			defaultLanguage = "CHINESE S";
+			defaultMenuLanguage = 3; //Chinese_S
 			break;
 		case CONF_LANG_TRAD_CHINESE:
-			defaultLanguage = "CHINESE T";
+			defaultMenuLanguage = 4; //Chinese_T
 			break;
 		case CONF_LANG_KOREAN:
-			defaultLanguage = "KOREAN";
+			defaultMenuLanguage = 7; // No Korean translation has been done for wiiflow, so the menu will use english in this case.
 			break;
 	}
 	if (CONF_GetArea() == CONF_AREA_BRA)
-		defaultLanguage = "BRAZILIAN";
-	int lang = m_cfg.getInt("GENERAL", "language", 0);
+		defaultMenuLanguage = 2; //Brazilian
+
+	int lang = m_cfg.getInt("GENERAL", "language", defaultMenuLanguage);
 	m_curLanguage = CMenu::_translations[lang];
-	m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str());
+	if (!m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str()))
+	{
+		m_cfg.setInt("GENERAL", "language", 0);
+		m_curLanguage = CMenu::_translations[0];
+		m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str());
+	}
 	// 
 	m_aa = 3;
 	
