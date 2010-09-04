@@ -162,7 +162,10 @@ void CMenu::init(bool fromHBC)
 
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
-	themeName = m_cfg.getString("GENERAL", "theme", "DEFAULT");
+/* 	if (stat(sfmt("%s/candy.ini", m_themeDir.c_str(), &dummy) == 0)
+		themeName = m_cfg.getString("GENERAL", "theme", "CANDY");
+	else */
+		themeName = m_cfg.getString("GENERAL", "theme", "DEFAULT");
 	m_themeDataDir = sfmt("%s/%s", m_themeDir.c_str(), themeName.c_str());
 	m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), themeName.c_str()).c_str());
 	// 

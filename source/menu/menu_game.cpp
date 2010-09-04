@@ -127,6 +127,7 @@ const int CMenu::_ios[6] = {0, 249, 250, 222, 223, 224};
 wdm_entry_t *wdm_entry = NULL;
 u32 current_wdm = 0;
 u8 banner_title[84];
+bool wdm_loaded;
 
 static inline int loopNum(int i, int s)
 {
@@ -219,12 +220,12 @@ void CMenu::_showGame(void)
 		_setBg(m_mainBg, m_mainBgLQ);
 
 	// Load WDM file
-	if (m_current_view == COVERFLOW_USB && load_wdm(m_wdmDir.c_str(), m_cf.getId().c_str()) == 0 && wdm_count > 1)
+	if (m_current_view == COVERFLOW_USB && wdm_loaded && wdm_count > 1)
 	{
 		m_btnMgr.show(m_gameLblWdm);
 		m_btnMgr.show(m_gameBtnWdmM);
 		m_btnMgr.show(m_gameBtnWdmP);
-		
+	
 		m_gcfg1.getInt("WDM", m_cf.getId(), (int *) &current_wdm);
 		
 		if (current_wdm > wdm_count - 1) current_wdm = 0;
@@ -262,6 +263,7 @@ void CMenu::_game(bool launch)
 {
 	bool b;
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
+	wdm_loaded = load_wdm(m_wdmDir.c_str(), m_cf.getId().c_str()) == 0;
 	if (!launch)
 	{
 		SetupInput();
@@ -742,7 +744,11 @@ void CMenu::_launchGame(string &id, bool dvd)
 
 	s32 current_wdm = -1;
 	m_gcfg1.getInt("WDM", id, (int *) &current_wdm);
-	wdm_entry_t *wdm_entry = current_wdm == -1 || current_wdm > (s32) wdm_count - 1 ? NULL : &wdm_entries[current_wdm];
+	wdm_entry_t *wdm_entry;
+	if (wdm_count == 1)
+		wdm_entry = &wdm_entries[wdm_count-1];
+	else
+		wdm_entry = current_wdm == -1 || current_wdm > (s32) wdm_count - 1 ? NULL : &wdm_entries[current_wdm];
 
 	m_gcfg1.save();
 	m_gcfg2.save();
