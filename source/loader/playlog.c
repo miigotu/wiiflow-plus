@@ -51,19 +51,25 @@ int Playlog_Update(const char ID[6], const u8 title[84])
 	u32 sum = 0;
 	u8 i;
 	u64 stime;
-	
+	playrec_struct playrec_buf;
 	//Open play_rec.dat
 	playrec_fd = IOS_Open(PLAYRECPATH, IPC_OPEN_RW);
-	if(playrec_fd < 0)
+	if(playrec_fd == -106)
+		{
+		gprintf("IOS_Open error ret: %i\n",playrec_fd);
+		IOS_Close(playrec_fd);
+		
+		//In case the play_rec.dat wasn´t found create one and try again
+		int ret = ISFS_CreateFile(PLAYRECPATH,0,3,3,3);
+		if( ret < 0 )
+			goto error_1;
+			
+		playrec_fd = IOS_Open(PLAYRECPATH, IPC_OPEN_RW);
+		if(playrec_fd < 0)
+			goto error_1;
+		}
+	else if(playrec_fd < 0)
 		goto error_1;
-
-	//Read play_rec.dat
-	ret = IOS_Read(playrec_fd, &playrec_buf, sizeof(playrec_buf));
-	if(ret != sizeof(playrec_buf))
-		goto error_2;
-
-	if(IOS_Seek(playrec_fd, 0, 0)<0)
-		goto error_2;
 
     stime = getWiiTime();
 	playrec_buf.ticks_boot = stime;
@@ -89,9 +95,11 @@ int Playlog_Update(const char ID[6], const u8 title[84])
 	return 0;
 
 error_1:
+	gprintf("error_1\n");
 	IOS_Close(playrec_fd);
 
 error_2:
+	gprintf("error_2\n");
 	return -1;
 }
 
