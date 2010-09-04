@@ -1,6 +1,6 @@
 /***************************************************************************
  * Copyright (C) 2010
- * by dude
+ * by r-win
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any
@@ -26,57 +26,60 @@
  * for WiiXplorer 2010
  ***************************************************************************/
 
-#ifndef _CHANNELS_H_
-#define _CHANNELS_H_
+#ifndef _BANNER_H_
+#define _BANNER_H_
 
 #include <vector>
 #include <string>
 
-#include "smartptr.hpp"
-#include "banner.h"
-
 #define IMET_MAX_NAME_LEN 0x2a
-
-using namespace std;
 
 typedef struct
 {
-	u64  title;
-	char id[4];
-	wchar_t name[IMET_MAX_NAME_LEN+1];
-} Channel;
+	u8  zeroes1[0x40];
+	u32 sig;	// "IMET"
+	u32 unk1;
+	u32 unk2;
+	u32 filesizes[3];
+	u32 unk3;
+	u16 name_japanese[IMET_MAX_NAME_LEN];
+	u16 name_english[IMET_MAX_NAME_LEN];
+	u16 name_german[IMET_MAX_NAME_LEN];
+	u16 name_french[IMET_MAX_NAME_LEN];
+	u16 name_spanish[IMET_MAX_NAME_LEN];
+	u16 name_italian[IMET_MAX_NAME_LEN];
+	u16 name_dutch[IMET_MAX_NAME_LEN];
+	u16 name_simp_chinese[IMET_MAX_NAME_LEN];
+	u16 name_trad_chinese[IMET_MAX_NAME_LEN];
+	u16 name_korean[IMET_MAX_NAME_LEN];
+	u8  zeroes2[0x24c];
+	u8  md5[0x10];
+} IMET;
 
-class Channels
+using namespace std;
+
+class Banner
 {
 	public:
-		Channels();
-		~Channels();
+		Banner(u8 *bnr, u64 title = 0);
+		~Banner();
+		
+		bool IsValid();
 
-		void Init(u32 channelType, string lang);
-		bool CanIdentify();
+		bool GetName(u8 *name, int language);
+		bool GetName(wchar_t *name, int language);
+		const u8 *GetFile(char *name, u32 *size);
 		
-		void Launch(int index);
-		int Count();
-		wchar_t *GetName(int index);
-		char *GetId(int index);
-		u64 GetTitle(int index);
-		Channel *GetChannel(int index);
+		static Banner *GetBanner(u64 title, char *appname, bool isfs, bool imetOnly = false);
 		
-		static Banner * GetBanner(u64 title, bool imetOnly = false);
 	private:
-		bool init;
-		u32 channelType;
-		string langCode;
-		bool isIdentified;
+		u8 *opening;
+		u64 title;
+		IMET *imet;
 		
-		std::vector<Channel> channels;
-		
-		static int GetLanguage(const char *lang);
-		u64* GetChannelList(u32* count);
-		static bool GetAppNameFromTmd(u64 title, char* app);
-		static bool GetBnr(SmartBuf &bnr, u32 &size, u64 title, s32 length);
+		u16 *GetName(int language);
+
 		static bool GetChannelNameFromApp(u64 title, wchar_t* name, int language);
-		void Search(u32 channelType, string lang);
 };
 
-#endif
+#endif //_BANNER_H_

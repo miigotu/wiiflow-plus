@@ -299,9 +299,8 @@ void CMenu::_initAsyncNetwork()
 */	
 }
 
-s32 CMenu::_networkComplete(s32 result, void *usrData)
+s32 CMenu::_networkComplete(s32, void *usrData)
 {
-	if (result == 0) result = 0; //remove compiler warning.. is this needed for something sometime in the future?
 	CMenu *m = (CMenu *) usrData;
 	m->m_networkInit = true;
 	m->m_thrdNetwork = false;

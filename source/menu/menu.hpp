@@ -15,8 +15,9 @@
 #include "coverflow.hpp"
 #include "fanart.hpp"
 #include "loader/disc.h"
-#include "channels.h"
 #include "btnmap.h"
+#include "banner.h"
+#include "channels.h"
 
 #include "gct.h"
 

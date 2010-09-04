@@ -126,11 +126,59 @@ const int CMenu::_ios[6] = {0, 249, 250, 222, 223, 224};
 
 wdm_entry_t *wdm_entry = NULL;
 u32 current_wdm = 0;
+u8 banner_title[84];
 
 static inline int loopNum(int i, int s)
 {
 	return i < 0 ? (s - (-i % s)) % s : i % s;
 }
+
+static void _extractBannerTitle(Banner *bnr, int language)
+{
+	if (bnr != NULL)
+	{
+		memset(banner_title, 0, 84);
+		bnr->GetName(banner_title, language);
+	}
+}
+
+static Banner *_extractChannelBnr(const u64 chantitle)
+{
+	return Channels::GetBanner(chantitle);
+}
+
+static Banner *_extractBnr(const string &gameId)
+{
+	Banner *banner = NULL;
+	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str());
+	if (disc != NULL)
+	{
+		void *bnr = NULL;
+		if (wbfs_extract_file(disc, (char *) "opening.bnr", &bnr) > 0)
+		{
+			banner = new Banner((u8 *) bnr);
+		}
+		WBFS_CloseDisc(disc);
+	}
+	return banner;
+}
+
+static int GetLanguage(const char *lang)
+{
+	if (strncmp(lang, "JP", 2) == 0) return CONF_LANG_JAPANESE;
+	else if (strncmp(lang, "EN", 2) == 0) return CONF_LANG_ENGLISH;
+	else if (strncmp(lang, "DE", 2) == 0) return CONF_LANG_GERMAN;
+	else if (strncmp(lang, "FR", 2) == 0) return CONF_LANG_FRENCH;
+	else if (strncmp(lang, "ES", 2) == 0) return CONF_LANG_SPANISH;
+	else if (strncmp(lang, "IT", 2) == 0) return CONF_LANG_ITALIAN;
+	else if (strncmp(lang, "NL", 2) == 0) return CONF_LANG_DUTCH;
+	else if (strncmp(lang, "ZHTW", 4) == 0) return CONF_LANG_TRAD_CHINESE;
+	else if (strncmp(lang, "ZH", 2) == 0) return CONF_LANG_SIMP_CHINESE;
+	else if (strncmp(lang, "KO", 2) == 0) return CONF_LANG_KOREAN;
+	
+	return CONF_LANG_ENGLISH; // Default to EN
+}
+
 
 void CMenu::_hideGame(bool instant)
 {
@@ -330,9 +378,25 @@ void CMenu::_game(bool launch)
 					m_gcfg1.setInt("WDM", id, current_wdm);
 				}
 
-				if (Playlog_Update(id.c_str(), title.c_str())<0)
+				if (banner_title[0] == 0) // No title set?
+				{
+					// Get banner_title
+					Banner * banner = (m_current_view == COVERFLOW_CHANNEL) ? _extractChannelBnr(chantitle) : _extractBnr(id);
+					if (banner != NULL)
+					{						
+						if (banner->IsValid())
+						{
+							_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str()));
+						}
+						delete banner;
+					}
+					banner = NULL;
+				}
+
+				if (Playlog_Update(id.c_str(), banner_title)<0)
 					Playlog_Delete();
 
+				gprintf("Launching game\n");
 				_launch(chantitle, id);
 				launch = false;
 				WPAD_SetVRes(WPAD_CHAN_0, m_vid.width() + m_cursor1.width(), m_vid.height() + m_cursor1.height());	// b/c IOS reload
@@ -860,26 +924,7 @@ void CMenu::_textGame(void)
 	m_btnMgr.setText(m_gameBtnBack, _t("gm2", L"Back"));
 }
 
-// 
-
-static void _extractChannelBnr(const u64 chantitle, SmartBuf &bnr, u32 &size)
-{
-	bnr.release();
-	Channels::GetBanner(bnr, size, chantitle);
-}
-
-static void _extractBnr(SmartBuf &bnr, u32 &size, const string &gameId)
-{
-	bnr.release();
-	void *banner = NULL;
-	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str());
-	if (disc != NULL)
-	{
-		size = wbfs_extract_file(disc, (char *) "opening.bnr", &banner);
-		bnr = SmartBuf((u8 *) banner);
-		WBFS_CloseDisc(disc);
-	}
-}
+//
 
 struct IMD5Header
 {
@@ -889,54 +934,11 @@ struct IMD5Header
 	u8 crypto[16];
 } __attribute__((packed));
 
-struct IMETHeader
-{
-	u8 zeroes[64];
-	u32 fcc;
-	u8 unk[8];
-	u32 iconSize;
-	u32 bannerSize;
-	u32 soundSize;
-	u32 flag1;
-	u8 names[7][84];
-	u8 zeroes_2[0x348];
-	u8 crypto[16];
-} __attribute__((packed));
-
-struct U8Header
-{
-	u32 fcc;
-	u32 rootNodeOffset;
-	u32 headerSize;
-	u32 dataOffset;
-	u8 zeroes[16];
-} __attribute__((packed));
-
-struct U8Entry
-{
-	struct
-	{
-		u32 fileType : 8;
-		u32 nameOffset : 24;
-	};
-	u32 fileOffset;
-	union
-	{
-		u32 fileLength;
-		u32 numEntries;
-	};
-} __attribute__((packed));
-
 struct LZ77Info
 {
 	u16 length : 4;
 	u16 offset : 12;
 } __attribute__((packed));
-
-static char *u8Filename(const U8Entry *fst, int i)
-{
-	return (char *)(fst + fst[0].numEntries) + fst[i].nameOffset;
-}
 
 inline u32 le32(u32 i)
 {
@@ -987,45 +989,35 @@ SmartBuf uncompressLZ77(u32 &size, const u8 *inputBuf, u32 inputLength)
 
 void CMenu::_loadGameSound(const u64 chantitle, const std::string &id)
 {
-	SmartBuf bnr;
+	Banner *banner = NULL;
 	const u8 *soundBin;
-	const u8 *bnrArc;
-	u32 bnrSize;
 	u32 sndType;
-	const U8Entry *fst;
-	u32 i;
+	u32 sndSize = 0;
 	const u8 *soundChunk;
 	u32 soundChunkSize;
 	SmartBuf uncompressed;
 	
-	u32 imet_offset = 0;
-
 	if (m_current_view == COVERFLOW_CHANNEL) {
-		_extractChannelBnr(chantitle, bnr, bnrSize);
-		imet_offset = 0x40;
+		banner = _extractChannelBnr(chantitle);
 	}
 	else if (m_current_view == COVERFLOW_USB)
-		_extractBnr(bnr, bnrSize, id);
+		banner = _extractBnr(id);
 
-	if (!bnr)
+	if (banner == NULL || !banner->IsValid())
+	{
+		gprintf("no valid banner found\n");
 		return;
-	const IMETHeader &imetHdr = *(IMETHeader *)(bnr.get() + imet_offset);
-	if (imetHdr.fcc != 'IMET')
-		return;
-	bnrArc = (const u8 *)(&imetHdr + 1);
-	const U8Header &bnrArcHdr = *(U8Header *)bnrArc;
-	fst = (const U8Entry *)(bnrArc + bnrArcHdr.rootNodeOffset);
-	for (i = 1; i < fst[0].numEntries; ++i)
-		if (fst[i].fileType == 0 && strcasecmp(u8Filename(fst, i), "sound.bin") == 0)
-			break;
-	if (i >= fst[0].numEntries)
-		return;
-	soundBin = bnrArc + fst[i].fileOffset;
-	if (((IMD5Header *)soundBin)->fcc != 'IMD5')
+	}
+	
+	_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str()));
+	
+	soundBin = banner->GetFile((char *) "sound.bin", &sndSize);
+
+	if (soundBin == NULL || ((IMD5Header *)soundBin)->fcc != 'IMD5')
 		return;
 	soundChunk = soundBin + sizeof (IMD5Header);
 	sndType = *(u32 *)soundChunk;
-	soundChunkSize = fst[i].fileLength - sizeof (IMD5Header);
+	soundChunkSize = sndSize - sizeof (IMD5Header);
 	if (sndType == 'LZ77')
 	{
 		u32 uncSize;
@@ -1054,6 +1046,7 @@ void CMenu::_loadGameSound(const u64 chantitle, const std::string &id)
 			LWP_MutexUnlock(m_gameSndMutex);
 			break;
 	}
+	delete banner;
 }
 
 int CMenu::_loadGameSoundThrd(CMenu *m)

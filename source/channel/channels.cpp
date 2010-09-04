@@ -31,21 +31,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ogc/conf.h>
-#include <ogc/isfs.h>
 #include <ogc/wiilaunch.h>
 #include <ogc/es.h>
 
 #include "certs.h"
 #include "channels.h"
-#include "MD5.h"
+#include "banner.h"
 #include "wstringEx.hpp"
 #include "gecko.h"
 #include "fs.h"
 #include "config.hpp"
 #include "text.hpp"
 
-#define IMET_OFFSET			0x40
-#define IMET_SIGNATURE		0x494d4554
 #define DOWNLOADED_CHANNELS	0x00010001
 #define SYSTEM_CHANNELS		0x00010002
 #define RF_NEWS_CHANNEL		0x48414741
@@ -53,28 +50,6 @@
 
 extern "C" void ShowError(const wstringEx &error);
 #define error(x) //ShowError(x)
-
-typedef struct
-{
-	u8  zeroes1[0x40];
-	u32 sig;	// "IMET"
-	u32 unk1;
-	u32 unk2;
-	u32 filesizes[3];
-	u32 unk3;
-	u16 name_japanese[IMET_MAX_NAME_LEN];
-	u16 name_english[IMET_MAX_NAME_LEN];
-	u16 name_german[IMET_MAX_NAME_LEN];
-	u16 name_french[IMET_MAX_NAME_LEN];
-	u16 name_spanish[IMET_MAX_NAME_LEN];
-	u16 name_italian[IMET_MAX_NAME_LEN];
-	u16 name_dutch[IMET_MAX_NAME_LEN];
-	u16 name_simp_chinese[IMET_MAX_NAME_LEN];
-	u16 name_trad_chinese[IMET_MAX_NAME_LEN];
-	u16 name_korean[IMET_MAX_NAME_LEN];
-	u8  zeroes2[0x24c];
-	u8  md5[0x10];
-} IMET;
 
 Channels::Channels()
 {
@@ -170,23 +145,17 @@ bool Channels::GetAppNameFromTmd(u64 title, char* app)
 	return ret;
 }
 
-void Channels::GetBanner(SmartBuf &bnr, u32 &size, u64 title, s32 length)
-{
-	ISFS_Initialize();
-	GetBnr(bnr, size, title, length);
-	ISFS_Deinitialize();
-}
-
-bool Channels::GetBnr(SmartBuf &bnr, u32 &size, u64 title, s32 length)
+Banner * Channels::GetBanner(u64 title, bool imetOnly)
 {
 	char app[ISFS_MAXPATH];
 
+	gprintf("Finding title %ld\n", title);
 	if (!GetAppNameFromTmd(title, app)) {
-		return false;
+		gprintf("No title found\n");
+		return NULL;
 	}
-	
-	bnr = SmartBuf(ISFS_GetFile((u8 *) &app, &size, length), SmartBuf::SRCALL_MALLOC);
-	return size != 0;
+
+	return Banner::GetBanner(title, app, true, imetOnly);
 }
 
 bool Channels::GetChannelNameFromApp(u64 title, wchar_t* name, int language)
@@ -196,67 +165,17 @@ bool Channels::GetChannelNameFromApp(u64 title, wchar_t* name, int language)
 	if (language > CONF_LANG_KOREAN)
 		language = CONF_LANG_ENGLISH;
 
-	SmartBuf bnr;
-	u32 size;
-	if (GetBnr(bnr, size, title, sizeof(IMET) + IMET_OFFSET))
+	Banner *banner = GetBanner(title, true);
+	if (banner != NULL)
 	{
-		IMET *imet = (IMET *) (bnr.get() + IMET_OFFSET);
-		if (imet->sig == IMET_SIGNATURE)
-		{
-			unsigned char md5[16];
-			unsigned char imetmd5[16];
-
-			memcpy(imetmd5, imet->md5, 16);
-			memset(imet->md5, 0, 16);
-			
-			MD5(md5, (unsigned char*)(imet), sizeof(IMET));
-			if (memcmp(imetmd5, md5, 16) == 0)
-			{
-				//now we can be pretty sure that we have a valid imet :)
-				if (imet->name_japanese[language*IMET_MAX_NAME_LEN] == 0)
-				{
-					// channel name is not available in system language
-					if (imet->name_english[0] != 0)
-					{
-						language = CONF_LANG_ENGLISH;
-					}
-					else
-					{
-						// channel name is also not available on english, get ascii name
-						language = -1;
-						for (int i = 0; i < 4; i++)
-						{
-							name[i] = ((title&0xFFFFFFFF) >> (24-i*8)) & 0xFF;
-						}
-						name[4] = 0;
-					}
-				}
-
-				if (language >= 0)
-				{
-					// retrieve channel name in system language or on english
-					for (int i = 0; i < IMET_MAX_NAME_LEN; i++)
-					{
-						name[i] = imet->name_japanese[i+(language*IMET_MAX_NAME_LEN)];
-					}						
-				}
-				ret = true;
-			}
-			else
-				gprintf("Invalid md5\n");
-		}
-		else
-			gprintf("Invalid sig\n");
+		ret = banner->GetName(name, language);
+		delete banner;
+		banner = NULL;
 	}
-
+	
 	return ret;
 }
-/*
-void Channels::Launch(int index)
-{
-	WII_LaunchTitle(channels.at(index).title);
-}
-*/
+
 int Channels::GetLanguage(const char *lang)
 {
 	if (strncmp(lang, "JP", 2) == 0) return CONF_LANG_JAPANESE;
@@ -282,7 +201,6 @@ void Channels::Search(u32 channelType, string lang)
 		return;
 
 	ES_Identify((u32*)Certificates, sizeof(Certificates), (u32*)Tmd, sizeof(Tmd), (u32*)Ticket, sizeof(Ticket), 0);
-	ISFS_Initialize();
 
 	int language = lang.size() == 0 ? CONF_GetLanguage() : GetLanguage(lang.c_str());
 
@@ -303,8 +221,6 @@ void Channels::Search(u32 channelType, string lang)
 			}
 		}
 	}
-
-	ISFS_Deinitialize();
 
 	free(list);
 }
