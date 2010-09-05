@@ -23,7 +23,7 @@
 
 static int mymkdir(const char* dirname) {
     int ret=0;
-    ret = mkdir (dirname,0775);
+    ret = mkdir (dirname,0777);
     return ret;
 }
 

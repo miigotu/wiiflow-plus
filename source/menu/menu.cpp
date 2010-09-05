@@ -18,6 +18,7 @@
 
 #include "gecko.h"
 #include "channels.h"
+
 // Sounds
 extern const u8 click_wav[];
 extern const u32 click_wav_size;
@@ -86,22 +87,24 @@ CMenu::CMenu(CVideo &vid) :
 	m_directLaunch = false;
 }
 
+extern "C" { int makedir(char *newdir); }
+
 void CMenu::init(bool fromHBC)
 {
 	string themeName;
 	const char *drive = "sd";
 	const char *wfdrv = "sd";
 	u8 defaultMenuLanguage;
-	struct stat bootdol;
+	struct stat dummy;
 	
 	m_noHBC = !fromHBC;
 	m_waitMessage.fromPNG(wait_png);
 	// Data path
 	if (FS_SDAvailable() && FS_USBAvailable())
 	{
-		if (stat(sfmt("sd:/%s/boot.dol", APPDATA_DIR2).c_str(), &bootdol) == 0)
+		if (stat(sfmt("sd:/%s/boot.dol", APPDATA_DIR2).c_str(), &dummy) == 0)
 			wfdrv = "sd";
-		else if (stat(sfmt("usb:/%s/boot.dol", APPDATA_DIR2).c_str(), &bootdol) == 0)
+		else if (stat(sfmt("usb:/%s/boot.dol", APPDATA_DIR2).c_str(), &dummy) == 0)
 			wfdrv = "usb";
 	}
 	else
@@ -118,48 +121,44 @@ void CMenu::init(bool fromHBC)
 	m_dol = sfmt("%s/boot.dol", m_appDir.c_str());
 	m_ver = sfmt("%s/versions", m_appDir.c_str());
 	//
-	m_picDir = m_cfg.getString("GENERAL", "dir_flat_covers", sfmt("%s/covers", m_dataDir.c_str()));
-	m_boxPicDir = m_cfg.getString("GENERAL", "dir_box_covers", sfmt("%s/boxcovers", m_dataDir.c_str()));
 	m_cacheDir = m_cfg.getString("GENERAL", "dir_cache", sfmt("%s/cache", m_dataDir.c_str()));
+	m_settingsDir = m_cfg.getString("GENERAL", "dir_settings", sfmt("%s/settings", m_dataDir.c_str()));
+	m_languagesDir = m_cfg.getString("GENERAL", "dir_languages", sfmt("%s/languages", m_dataDir.c_str()));
+	m_boxPicDir = m_cfg.getString("GENERAL", "dir_box_covers", sfmt("%s/boxcovers", m_dataDir.c_str()));
+	m_picDir = m_cfg.getString("GENERAL", "dir_flat_covers", sfmt("%s/covers", m_dataDir.c_str()));
 	m_themeDir = m_cfg.getString("GENERAL", "dir_themes", sfmt("%s/themes", m_dataDir.c_str()));
 	m_musicDir = m_cfg.getString("GENERAL", "dir_music", sfmt("%s/music", m_dataDir.c_str())); 
-	m_txtCheatDir = m_cfg.getString("GENERAL", "dir_txtcheat", sfmt("%s/codes", m_dataDir.c_str()));
-	m_cheatDir = m_cfg.getString("GENERAL", "dir_cheat", sfmt("%s/codes/gct", m_dataDir.c_str()));
-	m_bcaDir = m_cfg.getString("GENERAL", "dir_bca", sfmt("%s/codes/bca", m_dataDir.c_str()));
-	m_wipDir = m_cfg.getString("GENERAL", "dir_wip", sfmt("%s/codes/wip", m_dataDir.c_str()));
-	m_altDolDir = m_cfg.getString("GENERAL", "dir_altdol", sfmt("%s/codes/alt_dols", m_dataDir.c_str()));
 	m_videoDir = m_cfg.getString("GENERAL", "dir_trailers", sfmt("%s/trailers", m_dataDir.c_str()));
 	m_fanartDir = m_cfg.getString("GENERAL", "dir_fanart", sfmt("%s/fanart", m_dataDir.c_str()));
 	m_screenshotDir = m_cfg.getString("GENERAL", "dir_screenshot", sfmt("%s/screenshots", m_dataDir.c_str()));
-	m_settingsDir = m_cfg.getString("GENERAL", "dir_settings", sfmt("%s/settings", m_dataDir.c_str()));
-	m_languagesDir = m_cfg.getString("GENERAL", "dir_languages", sfmt("%s/languages", m_dataDir.c_str()));
-	m_wdmDir = m_cfg.getString("GENERAL", "dir_wdm", sfmt("%s/codes/wdm", m_dataDir.c_str()));
+	m_txtCheatDir = m_cfg.getString("GENERAL", "dir_txtcheat", sfmt("%s/codes", m_dataDir.c_str()));
+	m_altDolDir = m_cfg.getString("GENERAL", "dir_altdol", sfmt("%s/alt_dols", m_txtCheatDir.c_str()));
+	m_bcaDir = m_cfg.getString("GENERAL", "dir_bca", sfmt("%s/bca", m_txtCheatDir.c_str()));
+	m_cheatDir = m_cfg.getString("GENERAL", "dir_cheat", sfmt("%s/gct", m_txtCheatDir.c_str()));
+	m_wdmDir = m_cfg.getString("GENERAL", "dir_wdm", sfmt("%s/wdm", m_txtCheatDir.c_str()));
+	m_wipDir = m_cfg.getString("GENERAL", "dir_wip", sfmt("%s/wip", m_txtCheatDir.c_str()));
+	//
 	m_cf.init();
-	// 
-	struct stat dummy;
+	//Make important folders first.
 	if (stat(sfmt("%s:/", drive).c_str(), &dummy) == 0)
 	{
-		mkdir(m_dataDir.c_str(), 0777);
-		mkdir(m_picDir.c_str(), 0777);
-		mkdir(m_boxPicDir.c_str(), 0777);
-		mkdir(m_cacheDir.c_str(), 0777);
-		mkdir(m_themeDir.c_str(), 0777);
-		mkdir(m_musicDir.c_str(), 0777);
-		mkdir(m_txtCheatDir.c_str(), 0777);
-		mkdir(m_cheatDir.c_str(), 0777);
-		mkdir(m_bcaDir.c_str(), 0777);
-		mkdir(m_wipDir.c_str(), 0777);
-		mkdir(m_altDolDir.c_str(), 0777);
-		mkdir(m_videoDir.c_str(), 0777);
-		mkdir(m_fanartDir.c_str(), 0777);
-		mkdir(m_screenshotDir.c_str(), 0777);
-		mkdir(m_settingsDir.c_str(), 0777);
-		mkdir(m_languagesDir.c_str(), 0777);
-		mkdir(m_wdmDir.c_str(), 0777);
+		makedir((char *)m_cacheDir.c_str());
+		makedir((char *)m_settingsDir.c_str());
+		makedir((char *)m_languagesDir.c_str());
+		makedir((char *)m_boxPicDir.c_str());
+		makedir((char *)m_picDir.c_str());
+		makedir((char *)m_themeDir.c_str());
+		makedir((char *)m_musicDir.c_str());
+		makedir((char *)m_videoDir.c_str());
+		makedir((char *)m_fanartDir.c_str());
+		makedir((char *)m_screenshotDir.c_str());
+		makedir((char *)m_txtCheatDir.c_str());
+		makedir((char *)m_altDolDir.c_str());
+		makedir((char *)m_bcaDir.c_str());
+		makedir((char *)m_cheatDir.c_str());
+		makedir((char *)m_wdmDir.c_str());
+		makedir((char *)m_wipDir.c_str());
 	}
-	if (stat(sfmt("%s:/", wfdrv).c_str(), &dummy) == 0)
-		mkdir(m_appDir.c_str(), 0777);
-
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
 	themeName = m_cfg.getString("GENERAL", "theme", "DEFAULT");
