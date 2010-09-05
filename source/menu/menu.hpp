@@ -399,10 +399,10 @@ private:
 	u32 m_cheatLblPage;
 	u32 m_cheatBtnPageM;
 	u32 m_cheatBtnPageP;
-	u32 m_cheatLblItem[6];
-	u32 m_cheatBtnItem[6];
+	u32 m_cheatLblItem[4];
+	u32 m_cheatBtnItem[4];
 	u32 m_cheatSettingsPage;
-	u32 m_cheatLblUser[5];
+	u32 m_cheatLblUser[4];
 	STexture m_cheatBg;
 	GCTCheats m_cheatfile;
 // Gameinfo menu
@@ -602,6 +602,7 @@ private:
 	void _initCFThemeMenu(SThemeData &theme);
 	void _initGameSettingsMenu(SThemeData &theme);
 	void _initCheatSettingsMenu(SThemeData &theme);
+	void _initCheatButtons();
 	void _initCategorySettingsMenu(SThemeData &theme);
 	void _initSystemMenu(SThemeData &theme);
 	void _initGameInfoMenu(SThemeData &theme);

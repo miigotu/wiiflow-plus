@@ -44,7 +44,7 @@ public:
 	void setProgress(u32 id, float f, bool instant = false);
 	void hide(u32 id, int dx, int dy, float scaleX, float scaleY, bool instant = false);
 	void hide(u32 id, bool instant = false);
-	void show(u32 id);
+	void show(u32 id, bool instant = false);
 	void mouse(int wmote, int x, int y);
 	void up(void);
 	void down(void);

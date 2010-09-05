@@ -70,20 +70,26 @@ void CMenu::_CheatSettings()
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if (BTN_MINUS_PRESSED || BTN_LEFT_REPEAT)
+		if (BTN_MINUS_PRESSED || BTN_LEFT_PRESSED)
 		{
 			if (m_cheatSettingsPage > 1)
+			{
 				--m_cheatSettingsPage;
-			_hideCheatSettings();
-			_showCheatSettings();
+
+				_hideCheatSettings();
+				_showCheatSettings();
+			}
 			m_btnMgr.click(m_cheatBtnPageM);
 		}
-		else if (BTN_PLUS_PRESSED || BTN_RIGHT_REPEAT)
+		else if (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED)
 		{
-			_hideCheatSettings();
 			if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
+			{
 				++m_cheatSettingsPage;
-			_showCheatSettings();
+
+				_hideCheatSettings();
+				_showCheatSettings();
+			}
 			m_btnMgr.click(m_cheatBtnPageP);
 		}
 		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1)!=0)
@@ -175,6 +181,8 @@ void CMenu::_CheatSettings()
 					{
 						fwrite(cheatfile.data, 1, cheatfile.size, file);
 						fclose(file);
+						
+						_CheatSettings();
 						break;
 					}
 				}
@@ -193,7 +201,6 @@ void CMenu::_CheatSettings()
 
 void CMenu::_hideCheatSettings(bool instant)
 {
-
 	m_btnMgr.hide(m_cheatBtnBack, instant);
 	m_btnMgr.hide(m_cheatBtnApply, instant);
 	m_btnMgr.hide(m_cheatBtnDownload, instant);
@@ -210,7 +217,7 @@ void CMenu::_hideCheatSettings(bool instant)
 	
 	for (u32 i = 0; i < ARRAY_SIZE(m_cheatLblUser); ++i)
 		if (m_cheatLblUser[i] != -1u)
-			m_btnMgr.hide(m_cheatLblUser[i]);
+			m_btnMgr.hide(m_cheatLblUser[i], instant);
 }
 
 // CheatMenu
@@ -251,14 +258,14 @@ void CMenu::_showCheatSettings(void)
 				//m_btnMgr.setText(m_cheatLblItem[i], m_cheatfile.getCheseleatName((m_cheatSettingsPage-1)*CHEATSPERPAGE + i));
 				m_btnMgr.setText(m_cheatBtnItem[i], _optBoolToString(m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*CHEATSPERPAGE + i]));
 				
-				m_btnMgr.show(m_cheatLblItem[i]);
-				m_btnMgr.show(m_cheatBtnItem[i]);
+				m_btnMgr.show(m_cheatLblItem[i], true);
+				m_btnMgr.show(m_cheatBtnItem[i], true);
 			}
 			else
 			{
 				// cheat out of range, hide elements
-				m_btnMgr.hide(m_cheatLblItem[i]);
-				m_btnMgr.hide(m_cheatBtnItem[i]);
+				m_btnMgr.hide(m_cheatLblItem[i], true);
+				m_btnMgr.hide(m_cheatBtnItem[i], true);
 			}
 		}
 
@@ -296,8 +303,8 @@ void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 	m_cheatBtnItem[2] = _addButton(theme, "CHEAT/ITEM_2_BTN", theme.btnFont, L"", 500, 220, 120, 56, theme.btnFontColor);
 	m_cheatLblItem[3] = _addLabel(theme, "CHEAT/ITEM_3", theme.lblFont, L"", 40, 280, 460, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnItem[3] = _addButton(theme, "CHEAT/ITEM_3_BTN", theme.btnFont, L"", 500, 280, 120, 56, theme.btnFontColor);
-	m_cheatLblItem[4] = _addLabel(theme, "CHEAT/ITEM_4", theme.lblFont, L"", 40, 340, 460, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_cheatBtnItem[4] = _addButton(theme, "CHEAT/ITEM_4_BTN", theme.btnFont, L"", 500, 340, 120, 56, theme.btnFontColor);
+//	m_cheatLblItem[4] = _addLabel(theme, "CHEAT/ITEM_4", theme.lblFont, L"", 40, 340, 460, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+//	m_cheatBtnItem[4] = _addButton(theme, "CHEAT/ITEM_4_BTN", theme.btnFont, L"", 500, 340, 120, 56, theme.btnFontColor);
 
 	_setHideAnim(m_systemLblTitle, "CHEAT/TITLE", 0, 100, 0.f, 0.f);
 	_setHideAnim(m_cheatBtnApply, "CHEAT/APPLY_BTN", 0, 0, -2.f, 0.f);
