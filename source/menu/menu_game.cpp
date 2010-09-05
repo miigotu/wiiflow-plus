@@ -380,23 +380,26 @@ void CMenu::_game(bool launch)
 					m_gcfg1.setInt("WDM", id, current_wdm);
 				}
 
-				if (banner_title[0] == 0) // No title set?
+				if (m_cfg.getBool("GENERAL", "write_playlog", true))
 				{
-					// Get banner_title
-					Banner * banner = (m_current_view == COVERFLOW_CHANNEL) ? _extractChannelBnr(chantitle) : _extractBnr(id);
-					if (banner != NULL)
-					{						
-						if (banner->IsValid())
-						{
-							_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str()));
+					if (banner_title[0] == 0) // No title set?
+					{
+						// Get banner_title
+						Banner * banner = (m_current_view == COVERFLOW_CHANNEL) ? _extractChannelBnr(chantitle) : _extractBnr(id);
+						if (banner != NULL)
+						{						
+							if (banner->IsValid())
+							{
+								_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str()));
+							}
+							delete banner;
 						}
-						delete banner;
+						banner = NULL;
 					}
-					banner = NULL;
-				}
 
-				if (Playlog_Update(id.c_str(), banner_title)<0)
-					Playlog_Delete();
+					if (Playlog_Update(id.c_str(), banner_title)<0)
+						Playlog_Delete();
+				}
 
 				gprintf("Launching game\n");
 				_launch(chantitle, id);

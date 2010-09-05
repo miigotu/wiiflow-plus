@@ -47,14 +47,25 @@ u8 has_enabled_providers()
 
 extern bool str_replace(char *str, char *olds, char *news, int size); // In xml.c
 
+bool registering;
+
+int register_game(void *u)
+{
+	u8 data[1024];
+	memset(&data, 0, 1024);
+	downloadfile((u8 *) &data, 1024, (char *) u, NULL, NULL);
+	registering = false;
+	return 0;
+}
+
 void add_game_to_card(const char *gameid)
 {
-	int i;
+	int i, j;
 	
 	char *url = (char *) malloc(MAX_URL_SIZE); // Too much memory, but only like 10 bytes
 	memset(url, 0, sizeof(url));
 	
-	u8 *data = malloc(1024);
+	lwp_t thread = LWP_THREAD_NULL;
 	
 	for (i = 0; i < amount_of_providers && providers != NULL; i++)
 	{
@@ -63,10 +74,22 @@ void add_game_to_card(const char *gameid)
 			strcpy(url, (char *) &providers[i].url);
 			str_replace(url, (char *) "{KEY}", (char *) &providers[i].key, MAX_URL_SIZE);		
 			str_replace(url, (char *) "{ID6}", (char *) gameid, MAX_URL_SIZE);
-			memset(data, 0, 1024);
-			downloadfile(data, 1024, url, NULL, NULL);
+
+			registering = true;
+			LWP_CreateThread(&thread, (void *(*)(void *)) register_game, url, 0, 8192, 40);
+			// Wait for the thread to finish
+			for (j = 0; j < 30 && registering; ++j)	// 3 s
+				usleep(100000);
+				
+			// Don't kill the thread, leave it running for now...
+/*
+			if (registering)
+			{
+				LWP_JoinThread(thread, NULL);
+			}
+*/			
+			thread = LWP_THREAD_NULL;
 		}
 	}
-	free(data);
 	free(url);
 }
