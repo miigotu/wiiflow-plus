@@ -57,7 +57,6 @@ const u32 lblfont_ttf_size = cffont_ttf_size;
 const u8 *thxfont_ttf = cffont_ttf;
 const u32 thxfont_ttf_size = cffont_ttf_size;
 
-#define NCARD_URL "http://www.messageboardchampion.com/ncard/API/?cmd=tdbupdate&key={KEY}&game={ID6}"
 #define WIINNERTAG_URL "http://www.wiinnertag.com/wiinnertag_scripts/update_sign.php?key={KEY}&game_id={ID6}"
 
 using namespace std;
@@ -260,9 +259,6 @@ void CMenu::init(bool fromHBC)
 	m_loaded_ios_base = get_ios_base();
 	m_disable_scaa = m_cfg.getBool("GENERAL", "disable_fa_scaa", false);
 	
-	register_card_provider(m_cfg.getString("GAMERCARD", "ncard_url", NCARD_URL).c_str(),
-						   m_cfg.getString("GAMERCARD", "ncard_key", "").c_str(),
-						   m_cfg.getBool("GAMERCARD", "ncard_enable", false) ? 1 : 0);
 	register_card_provider(m_cfg.getString("GAMERCARD", "wiinnertag_url", WIINNERTAG_URL).c_str(),
 						   m_cfg.getString("GAMERCARD", "wiinnertag_key", "").c_str(),
 						   m_cfg.getBool("GAMERCARD", "wiinnertag_enable", false) ? 1 : 0);

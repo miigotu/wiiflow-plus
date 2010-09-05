@@ -82,12 +82,12 @@ void add_game_to_card(const char *gameid)
 				usleep(100000);
 				
 			// Don't kill the thread, leave it running for now...
-/*
+
 			if (registering)
 			{
-				LWP_JoinThread(thread, NULL);
+				LWP_SuspendThread(thread);
 			}
-*/			
+
 			thread = LWP_THREAD_NULL;
 		}
 	}

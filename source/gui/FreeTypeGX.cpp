@@ -378,6 +378,8 @@ uint16_t FreeTypeGX::drawText(uint16_t x, uint16_t y, wchar_t *text, GXColor col
 		y_offset = this->getStyleOffsetHeight(this->getOffset(text), textStyle);
 	}
 	
+	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+	
 	for (uint16_t i = 0; i < strLength; i++) {
 		
 		ftgxCharData* glyphData = NULL;
