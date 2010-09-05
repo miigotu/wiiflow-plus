@@ -26,7 +26,7 @@ void FS_Unmount_USB(void);
 bool FS_Mount_SD(void);
 void FS_Unmount_SD(void);
 
-bool WBFS_Mount(u32);
+bool WBFS_Mount(u32, bool);
 void WBFS_Unmount(void);
 
 

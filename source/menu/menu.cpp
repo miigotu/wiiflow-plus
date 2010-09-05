@@ -162,10 +162,7 @@ void CMenu::init(bool fromHBC)
 
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
-/* 	if (stat(sfmt("%s/candy.ini", m_themeDir.c_str(), &dummy) == 0)
-		themeName = m_cfg.getString("GENERAL", "theme", "CANDY");
-	else */
-		themeName = m_cfg.getString("GENERAL", "theme", "DEFAULT");
+	themeName = m_cfg.getString("GENERAL", "theme", "DEFAULT");
 	m_themeDataDir = sfmt("%s/%s", m_themeDir.c_str(), themeName.c_str());
 	m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), themeName.c_str()).c_str());
 	// 
@@ -1262,7 +1259,7 @@ bool CMenu::_loadGameList(void)
 	WBFS_GetPartitionName(0, (char *) &part);
 	
 	ret = WBFS_OpenNamed((char *) m_cfg.getString("GENERAL", "partition", part).c_str());
-	if (ret < 0)
+ 	if (ret < 0)
 	{
 		gprintf("Open partition failed : %i\n", ret);
 		return false;

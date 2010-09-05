@@ -24,6 +24,7 @@
 #include "partition.h"
 #include "wbfs_ext.h"
 #include "sys.h"
+#include "gecko.h"
 
 /* Constants */
 #define MAX_NB_SECTORS	32
@@ -328,12 +329,12 @@ s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *
 
 	if (part_fs == PART_FS_FAT || part_fs == PART_FS_NTFS) {
 		//if (wbfsDev != WBFS_DEVICE_USB) return -1;
-		if (wbfsDev == WBFS_DEVICE_USB && (part_lba == fs_fat_sec || part_lba == fs_ntfs_sec)) {
+		if (wbfsDev == WBFS_DEVICE_USB && (part_lba == fs_fat_sec || part_lba == fs_ntfs_sec) && (fs_fat_mount == 1 || fs_ntfs_mount == 1)) {
 			strcpy(wbfs_fs_drive, "usb:");
-		} else if (wbfsDev == WBFS_DEVICE_SDHC && part_lba == fs_sd_sec) {
+		} else if (wbfsDev == WBFS_DEVICE_SDHC && part_lba == fs_sd_sec && fs_sd_mount == 1) {
 			strcpy(wbfs_fs_drive, "sd:");
 		} else {
-			if (!WBFS_Mount(part_lba)) return -1; // WBFS_Mount returns a boolean instead of an u32
+			if (!WBFS_Mount(part_lba, part_fs == PART_FS_NTFS)) return -1; // WBFS_Mount returns a boolean instead of an u32
 			strcpy(wbfs_fs_drive, "wbfs:");
 		}
 	} else {

@@ -216,19 +216,25 @@ bool FS_Mount_SD(void)
 	return g_fat_sdOK || g_ntfs_sdOK;
 }
 
-bool WBFS_Mount(u32 sector) 
+bool WBFS_Mount(u32 sector, bool ntfs) 
 {
     WBFS_Unmount();
 
 	if (!g_wbfsOK)
 	{
 		__io_usbstorage.startup();
-		g_wbfsOK = fatMount("wbfs", &__io_usbstorage, sector, CACHE, SECTORS);
+		if (!ntfs)
+			g_wbfsOK = fatMount("wbfs", &__io_usbstorage, sector, CACHE, SECTORS);
+		else
+			g_wbfsOK = ntfsMount("wbfs", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
 
 		if (g_wbfsOK)
 		{
 			fs_wbfs_mount = 1;
-			fs_wbfs_sec = _FAT_startSector;
+			if (!ntfs)
+				fs_wbfs_sec = _FAT_startSector;
+			else
+				fs_wbfs_sec = sector;
 		}
 	}
 	
@@ -239,7 +245,8 @@ void WBFS_Unmount()
 {
 	if (g_wbfsOK)
 	{
-		fatUnmount("wbfs:/");
+		fatUnmount("wbfs:");
+		ntfsUnmount("wbfs:", true);
 		g_wbfsOK = false;
 
 		fs_wbfs_mount = 0;
