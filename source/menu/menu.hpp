@@ -78,7 +78,6 @@ private:
 	std::string m_curChanId;
 	STexture m_waitMessage;
 	u8 m_numCFVersions;
-	//bool m_alphaSearch;
 	// 
 	std::string m_themeDataDir;
 	std::string m_appDir;
@@ -216,8 +215,6 @@ private:
 	u32 m_config4BtnHome;
 	u32 m_config4LblSaveFavMode;
 	u32 m_config4BtnSaveFavMode;
-	//u32 m_config4LblSearchMode;
-	//u32 m_config4BtnSearchMode;
 	u32 m_config4LblUser[4];
 	u32 m_config5LblPartitionName;
 	u32 m_config5LblPartition;
@@ -770,6 +767,7 @@ private:
 	static const SOption _videoModes[7];
 	static const SOption _vidModePatch[4];
 	static const SOption _hooktype[8];
+	static const SOption _exitTo[3];
 	static const int _ios[6];
 	static int _version[9];
 	static const SCFParamDesc _cfParams[];

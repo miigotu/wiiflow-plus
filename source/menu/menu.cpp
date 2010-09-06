@@ -241,7 +241,7 @@ void CMenu::init(bool fromHBC)
 	m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble", true));
 	m_vid.set2DViewport(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480),
 	m_cfg.getInt("GENERAL", "tv_x", 0), m_cfg.getInt("GENERAL", "tv_y", 0));
-	Sys_ExitToWiiMenu(m_noHBC || m_cfg.getBool("GENERAL", "exit_to_wii_menu", false));
+	Sys_ExitTo(m_cfg.getInt("GENERAL", "exit_to", 0), m_noHBC);
 	LWP_MutexInit(&m_mutex, 0);
 	LWP_MutexInit(&m_gameSndMutex, 0);
 	soundInit();

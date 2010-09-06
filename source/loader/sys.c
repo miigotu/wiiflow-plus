@@ -9,11 +9,18 @@
 /* Constants */
 #define CERTS_LEN	0x280
 
+#define EXIT_TO_MENU 0
+#define EXIT_TO_HBC 1
+#define EXIT_TO_PRIILOADER 2
+
 /* Variables */
 static const char certs_fs[] ATTRIBUTE_ALIGN(32) = "/sys/cert.sys";
 static bool reset = false;
 static bool shutdown = false;
+
+static bool return_to_hbc = false;
 static bool return_to_menu = false;
+static bool return_to_priiloader = false;
 
 bool Sys_Exiting(void)
 {
@@ -28,41 +35,47 @@ void Sys_Test(void)
 		Sys_Shutdown();
 }
 
-void Sys_ExitToWiiMenu(bool b)
+void Sys_ExitTo(int option, bool noHBC)
 {
-	return_to_menu = b;
+	return_to_hbc = option == EXIT_TO_HBC && !noHBC;
+	return_to_menu = option == EXIT_TO_MENU;
+	return_to_priiloader = option == EXIT_TO_PRIILOADER;
+	
 	//magic word to force wii menu in priiloader.
-	if (b)
+	if (return_to_hbc)
+	{
+		DCFlushRange((void*)0x8132fffb,4);
+		*(vu32*)0x80001804 = 0x53545542;
+		*(vu32*)0x80001808 = 0x48415858;
+	}
+	else if (return_to_menu)
 	{
 		DCFlushRange((void*)0x8132fffb,4);
 		*(vu32*)0x8132fffb = 0x50756e65;
 	}
-	else
+	else if (return_to_priiloader)
+	{
 		DCFlushRange((void*)0x8132fffb,4);
-	
+		*(vu32*)0x8132fffb = 0x4461636f;
+	}
 }
 
 void Sys_Exit(int ret)
 {
-	WPAD_Flush(0);
-	WPAD_Disconnect(0);
-	WPAD_Flush(1);
-	WPAD_Disconnect(1);
-	WPAD_Flush(2);
-	WPAD_Disconnect(2);
-	WPAD_Flush(3);
-	WPAD_Disconnect(3);
+	int i;
+	for (i=0; i<4; i++)
+	{
+		WPAD_Flush(i);
+		WPAD_Disconnect(i);
+	}
     WPAD_Shutdown();
-	if (return_to_menu)
-	{
-		Playlog_Delete();
+
+	Playlog_Delete();
+
+	if (return_to_menu || return_to_priiloader)
 		Sys_LoadMenu();
-	}
 	else
-	{
-		Playlog_Delete();
 		exit(ret);
-	}
 }
 
 void __Sys_ResetCallback(void)
@@ -92,15 +105,13 @@ void Sys_Init(void)
 
 void Sys_Reboot(void)
 {
-	WPAD_Flush(0);
-	WPAD_Disconnect(0);
-	WPAD_Flush(1);
-	WPAD_Disconnect(1);
-	WPAD_Flush(2);
-	WPAD_Disconnect(2);
-	WPAD_Flush(3);
-	WPAD_Disconnect(3);
-    WPAD_Shutdown();
+	int i;
+	for (i=0; i<4; i++)
+	{
+		WPAD_Flush(i);
+		WPAD_Disconnect(i);
+	}
+	WPAD_Shutdown();
 
 	/* Restart console */
 	STM_RebootSystem();
@@ -108,15 +119,13 @@ void Sys_Reboot(void)
 
 void Sys_Shutdown(void)
 {
-	WPAD_Flush(0);
-	WPAD_Disconnect(0);
-	WPAD_Flush(1);
-	WPAD_Disconnect(1);
-	WPAD_Flush(2);
-	WPAD_Disconnect(2);
-	WPAD_Flush(3);
-	WPAD_Disconnect(3);
-    WPAD_Shutdown();
+	int i;
+	for (i=0; i<4; i++)
+	{
+		WPAD_Flush(i);
+		WPAD_Disconnect(i);
+	}
+	WPAD_Shutdown();
 
 	/* Poweroff console */
 	if(CONF_GetShutdownMode() == CONF_SHUTDOWN_IDLE)

@@ -110,7 +110,7 @@ int old_main(int argc, char **argv)
 	vid.waitMessage(texWait);
 	texWaitHDD.fromPNG(wait_hdd_png, GX_TF_RGB565, ALLOC_MALLOC);
 	Sys_Init();
-	Sys_ExitToWiiMenu(true);
+	Sys_ExitTo(0, hbc);
 
 	if (iosOK)
 	{

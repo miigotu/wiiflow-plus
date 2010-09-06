@@ -105,14 +105,12 @@ bool loadIOS(int n, bool init)
 
 	if (init)
 	{
-		WPAD_Flush(0);
-		WPAD_Disconnect(0);
-		WPAD_Flush(1);
-		WPAD_Disconnect(1);
-		WPAD_Flush(2);
-		WPAD_Disconnect(2);
-		WPAD_Flush(3);
-		WPAD_Disconnect(3);
+		int i;
+		for (i=0; i<4; i++)
+		{
+			WPAD_Flush(i);
+			WPAD_Disconnect(i);
+		}
 		WPAD_Shutdown();
 		Unmount_All_Devices();
 
