@@ -13,7 +13,7 @@ static const int g_floatPrecision = 10;
 const string Config::emptyString;
 
 Config::Config(void) :
-	m_loaded(false), m_domains(), m_filename(), m_iter()
+	m_loaded(false), m_changed(false), m_domains(), m_filename(), m_iter() 
 {
 }
 
@@ -222,21 +222,25 @@ bool Config::load(const char *filename)
 void Config::unload(void)
 {
 	m_loaded = false;
+	m_changed = false;
 	m_filename = emptyString;
 	m_domains.clear();
 }
 
 void Config::save(void)
 {
-	if (strncasecmp(m_filename.c_str(), "sd:", 3) == 0)
-		FS_Mount_SD();
-	ofstream file(m_filename.c_str(), ios::out | ios::binary);
-	for (Config::DomainMap::iterator k = m_domains.begin(); k != m_domains.end(); ++k)
+	if (m_changed && m_loaded)
 	{
-		Config::KeyMap *m = &k->second;
-		file << '\n' << '[' << k->first << ']' << '\n';
-		for (Config::KeyMap::iterator l = m->begin(); l != m->end(); ++l)
-			file << l->first << '=' << escNewlines(l->second) << '\n';
+		if (strncasecmp(m_filename.c_str(), "sd:", 3) == 0)
+			FS_Mount_SD();
+		ofstream file(m_filename.c_str(), ios::out | ios::binary);
+		for (Config::DomainMap::iterator k = m_domains.begin(); k != m_domains.end(); ++k)
+		{
+			Config::KeyMap *m = &k->second;
+			file << '\n' << '[' << k->first << ']' << '\n';
+			for (Config::KeyMap::iterator l = m->begin(); l != m->end(); ++l)
+				file << l->first << '=' << escNewlines(l->second) << '\n';
+		}
 	}
 }
 
@@ -254,6 +258,7 @@ void Config::setWString(const string &domain, const string &key, const wstringEx
 {
 	if (domain.empty() || key.empty())
 		return;
+	m_changed = true;
 	m_domains[upperCase(domain)][lowerCase(key)] = val.toUTF8();
 }
 
@@ -261,6 +266,7 @@ void Config::setString(const string &domain, const string &key, const string &va
 {
 	if (domain.empty() || key.empty())
 		return;
+	m_changed = true;
 	m_domains[upperCase(domain)][lowerCase(key)] = val;
 }
 
@@ -268,6 +274,7 @@ void Config::setBool(const string &domain, const string &key, bool val)
 {
 	if (domain.empty() || key.empty())
 		return;
+	m_changed = true;
 	m_domains[upperCase(domain)][lowerCase(key)] = val ? "yes" : "no";
 }
 
@@ -275,6 +282,7 @@ void Config::remove(const string &domain, const string &key)
 {
 	if (domain.empty() || key.empty())
 		return;
+	m_changed = true;
 	m_domains[upperCase(domain)].erase(lowerCase(key));
 }
 
@@ -282,6 +290,7 @@ void Config::setOptBool(const string &domain, const string &key, int val)
 {
 	if (domain.empty() || key.empty())
 		return;
+	m_changed = true;
 	switch (val)
 	{
 		case 0:
@@ -299,6 +308,7 @@ void Config::setInt(const string &domain, const string &key, int val)
 {
 	if (domain.empty() || key.empty())
 		return;
+	m_changed = true;
 	m_domains[upperCase(domain)][lowerCase(key)] = sfmt("%i", val);
 }
 
@@ -306,6 +316,7 @@ void Config::setUInt(const std::string &domain, const std::string &key, unsigned
 {
 	if (domain.empty() || key.empty())
 		return;
+	m_changed = true;
 	m_domains[upperCase(domain)][lowerCase(key)] = sfmt("%u", val);
 }
 
@@ -313,6 +324,7 @@ void Config::setFloat(const string &domain, const string &key, float val)
 {
 	if (domain.empty() || key.empty())
 		return;
+	m_changed = true;
 	m_domains[upperCase(domain)][lowerCase(key)] = sfmt("%.*g", g_floatPrecision, val);
 }
 
@@ -320,6 +332,7 @@ void Config::setVector3D(const std::string &domain, const std::string &key, cons
 {
 	if (domain.empty() || key.empty())
 		return;
+	m_changed = true;
 	m_domains[upperCase(domain)][lowerCase(key)] = sfmt("%.*g, %.*g, %.*g", g_floatPrecision, val.x, g_floatPrecision, val.y, g_floatPrecision, val.z);
 }
 
@@ -327,6 +340,7 @@ void Config::setColor(const std::string &domain, const std::string &key, const C
 {
 	if (domain.empty() || key.empty())
 		return;
+	m_changed = true;
 	m_domains[upperCase(domain)][lowerCase(key)] = sfmt("#%.2X%.2X%.2X%.2X", val.r, val.g, val.b, val.a);
 }
 
@@ -338,6 +352,7 @@ wstringEx Config::getWString(const string &domain, const string &key, const wstr
 	if (data.empty())
 	{
 		data = defVal.toUTF8();
+		m_changed = true;
 		return defVal;
 	}
 	wstringEx ws;
@@ -353,6 +368,7 @@ string Config::getString(const string &domain, const string &key, const string &
 	if (data.empty())
 	{
 		data = defVal;
+		m_changed = true;
 		return defVal;
 	}
 	return data;
@@ -366,6 +382,7 @@ bool Config::getBool(const string &domain, const string &key, bool defVal)
 	if (data.empty())
 	{
 		data = defVal ? "yes" : "no";
+		m_changed = true;
 		return defVal;
 	}
 	string s(lowerCase(trim(data)));
@@ -381,11 +398,15 @@ bool Config::testOptBool(const string &domain, const string &key, bool defVal)
 	KeyMap &km = m_domains[upperCase(domain)];
 	KeyMap::iterator i = km.find(lowerCase(key));
 	if (i == km.end())
+	{
+		m_changed = true;
 		return defVal;
+	}
 	if (lowerCase(trim(i->second)) == "yes")
 		return true;
 	if (lowerCase(trim(i->second)) == "no")
 		return false;
+	m_changed = true;
 	return defVal;
 }
 
@@ -407,6 +428,7 @@ int Config::getOptBool(const string &domain, const string &key, int defVal)
 			default:
 				data = "default";
 		}
+		m_changed = true;
 		return defVal;
 	}
 	if (lowerCase(trim(data)) == "yes")
@@ -424,6 +446,7 @@ int Config::getInt(const string &domain, const string &key, int defVal)
 	if (data.empty())
 	{
 		data = sfmt("%i", defVal);
+		m_changed = true;
 		return defVal;
 	}
 	return strtol(data.c_str(), 0, 10);
@@ -448,6 +471,7 @@ unsigned int Config::getUInt(const string &domain, const string &key, unsigned i
 	if (data.empty())
 	{
 		data = sfmt("%u", defVal);
+		m_changed = true;
 		return defVal;
 	}
 	return strtoul(data.c_str(), 0, 10);
@@ -461,6 +485,7 @@ float Config::getFloat(const string &domain, const string &key, float defVal)
 	if (data.empty())
 	{
 		data = sfmt("%.*g", g_floatPrecision, defVal);
+		m_changed = true;
 		return defVal;
 	}
 	return strtod(data.c_str(), 0);
@@ -479,6 +504,7 @@ Vector3D Config::getVector3D(const std::string &domain, const std::string &key, 
 	if (j == string::npos)
 	{
 		data = sfmt("%.*g, %.*g, %.*g", g_floatPrecision, defVal.x, g_floatPrecision, defVal.y, g_floatPrecision, defVal.z);
+		m_changed = true;
 		return defVal;
 	}
 	return Vector3D(strtod(data.substr(0, i).c_str(), 0), strtod(data.substr(i + 1, j - i - 1).c_str(), 0), strtod(data.substr(j + 1).c_str(), 0));
@@ -510,5 +536,6 @@ CColor Config::getColor(const std::string &domain, const std::string &key, const
 		}
 	}
 	data = sfmt("#%.2X%.2X%.2X%.2X", defVal.r, defVal.g, defVal.b, defVal.a);
+	m_changed = true;
 	return defVal;
 }

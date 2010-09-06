@@ -58,6 +58,7 @@ private:
 	typedef std::map<std::string, KeyMap> DomainMap;
 private:
 	bool m_loaded;
+	bool m_changed;
 	DomainMap m_domains;
 	std::string m_filename;
 	DomainMap::iterator m_iter;
