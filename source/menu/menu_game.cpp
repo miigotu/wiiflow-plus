@@ -220,6 +220,7 @@ void CMenu::_showGame(void)
 		_setBg(m_mainBg, m_mainBgLQ);
 
 	// Load WDM file
+	wdm_loaded = load_wdm(m_wdmDir.c_str(), m_cf.getId().c_str()) == 0;
 	if (m_current_view == COVERFLOW_USB && wdm_loaded && wdm_count > 1)
 	{
 		m_btnMgr.show(m_gameLblWdm);

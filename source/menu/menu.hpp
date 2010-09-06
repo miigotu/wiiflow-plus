@@ -249,11 +249,10 @@ private:
 	u32 m_downloadBtnCancel;
 	u32 m_downloadBtnAll;
 	u32 m_downloadBtnMissing;
-	u32 m_downloadBtnAllTitles;
-	u32 m_downloadBtnMissingTitles;
+	u32 m_downloadBtnWiiTDBDownload;
+	u32 m_downloadLblWiiTDBDownload;
 	u32 m_downloadLblMessage[2];
 	u32 m_downloadLblCovers;
-	u32 m_downloadLblGameTitles;
 	u32 m_downloadLblWiiTDB;
 	u32 m_downloadLblUser[4];
 	u32 m_downloadBtnVersion;
@@ -424,8 +423,6 @@ private:
 	STexture m_wifi;
 	STexture m_controlsreq[4];
 	STexture m_controls[4];
-	//STexture *m_controlsreq;
-	//STexture *m_controls;
 // Category menu
 	u32 m_categoryBtn[12];
 	u32 m_categoryBtnBack;

@@ -88,7 +88,7 @@ void CMenu::_gameinfo(void)
 			if(line < count-2 && count != 1)
 			{
 				line+=2;
-				m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.synopsis ), line, false);
+				m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.synopsis ), line, true);
 			}
 		}
 		else if (BTN_UP_PRESSED && !(m_thrdWorking && m_thrdStop) && page == 1)
@@ -393,7 +393,9 @@ void CMenu::_textGameInfo(void)
         }
 
 		u8 x = 0;
-		if(wiimote && x < 4)
+		u8 max_controlsReq = ARRAY_SIZE(m_gameinfoLblControlsReq);
+		
+		if(wiimote && x < max_controlsReq)
 		{
 			u8 players = gameinfo.players;
 			if ( gameinfo.players >= 10)
@@ -413,39 +415,47 @@ void CMenu::_textGameInfo(void)
 			m_btnMgr.setTexture(m_gameinfoLblControlsReq[x] ,m_controlsreq[x], 20, 60);
 			x++;
 		}
-		if(nunchuk && x < 4)
+		if(nunchuk && x < max_controlsReq)
 		{
 			m_controlsreq[x].fromPNG(nunchukR_png);
 			m_btnMgr.setTexture(m_gameinfoLblControlsReq[x] ,m_controlsreq[x], 52, 60);
 			x++;
 		}
-		if(guitar && x < 4)
+		if(guitar && x < max_controlsReq)
 		{
 			m_controlsreq[x].fromPNG(guitarR_png);
 			m_btnMgr.setTexture(m_gameinfoLblControlsReq[x] ,m_controlsreq[x], 60, 60);
 			x++;
 		}
-		if(drums && x < 4)
+		if(drums && x < max_controlsReq)
 		{
 			m_controlsreq[x].fromPNG(drumsR_png);
+			m_btnMgr.setTexture(m_gameinfoLblControlsReq[x] ,m_controlsreq[x], 60, 60);
 			x++;
 		}
-		if(motionplus && x < 4)
+		if(motionplus && x < max_controlsReq)
 		{
 			m_controlsreq[x].fromPNG(motionplusR_png);
 			m_btnMgr.setTexture(m_gameinfoLblControlsReq[x] ,m_controlsreq[x], 20, 60);
 			x++;
 		}
-		if(dancepad && x < 4)
+		if(dancepad && x < max_controlsReq)
 		{
 			m_controlsreq[x].fromPNG(dancepadR_png);
+			m_btnMgr.setTexture(m_gameinfoLblControlsReq[x] ,m_controlsreq[x], 60, 60);
+			x++;
+		}
+		if(balanceboard && x < max_controlsReq)
+		{
+			m_controlsreq[x].fromPNG(balanceboardR_png);
+			m_btnMgr.setTexture(m_gameinfoLblControlsReq[x] ,m_controlsreq[x], 60, 60);
 			x++;
 		}
 
 		cnt_controlsreq = x;
 
-		for(unsigned int i = 0;i<ARRAY_SIZE(m_gameinfoLblControlsReq);i++)
-			m_btnMgr.setTexture(m_gameinfoLblControlsReq[i] ,m_controlsreq[i]);
+		/*for(unsigned int i = 0;i<ARRAY_SIZE(m_gameinfoLblControlsReq);i++)
+			m_btnMgr.setTexture(m_gameinfoLblControlsReq[i] ,m_controlsreq[i]);*/
 
 		//check optional controlls
 		wiimote=0,
@@ -484,57 +494,59 @@ void CMenu::_textGameInfo(void)
         }
 		
 		x = 0;
-		if(classiccontroller && x < 4)
+		u8 max_controls = ARRAY_SIZE(m_gameinfoLblControls);
+		
+		if(classiccontroller && x < max_controls)
 		{
 			m_controls[x].fromPNG(classiccontroller_png);
 			m_btnMgr.setTexture(m_gameinfoLblControls[x] ,m_controls[x], 60, 60);
 			x++;
 		}
-		if(nunchuk && x < 4)
+		if(nunchuk && x < max_controls)
 		{
 			m_controls[x].fromPNG(nunchuk_png);
 			m_btnMgr.setTexture(m_gameinfoLblControls[x] ,m_controls[x], 52, 60);
 			x++;
 		}
-		if(guitar && x < 4)
+		if(guitar && x < max_controls)
 		{
 			m_controls[x].fromPNG(guitarR_png);
 			m_btnMgr.setTexture(m_gameinfoLblControls[x] ,m_controls[x], 60, 60);
 			x++;
 		}
-		if(drums && x < 4)
+		if(drums && x < max_controls)
 		{
 			m_controls[x].fromPNG(drums_png);
 			x++;
 		}
-		if(dancepad && x < 4)
+		if(dancepad && x < max_controls)
 		{
 			m_controls[x].fromPNG(dancepad_png);
 			x++;
 		}
-		if(motionplus && x < 4)
+		if(motionplus && x < max_controls)
 		{
 			m_controls[x].fromPNG(motionplus_png);
 			m_btnMgr.setTexture(m_gameinfoLblControls[x] ,m_controls[x], 20, 60);
 			x++;
 		}
-		if(balanceboard && x < 4)
+		if(balanceboard && x < max_controls)
 		{
 			m_controls[x].fromPNG(balanceboard_png);
 			x++;
 		}
-		if(microphone && x < 4)
+		if(microphone && x < max_controls)
 		{
 			m_controls[x].fromPNG(microphone_png);
 			m_btnMgr.setTexture(m_gameinfoLblControls[x] ,m_controls[x], 48, 60);
 			x++;
 		}
-		if(gamecube && x < 4)
+		if(gamecube && x < max_controls)
 		{
 			m_controls[x].fromPNG(gcncontroller_png);
 			x++;
 		}
-		if(wheel && x < 4)
+		if(wheel && x < max_controls)
 		{
 			m_controls[x].fromPNG(wheel_png);
 			x++;
