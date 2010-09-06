@@ -624,6 +624,10 @@ void CMenu::_launchChannel(const u64 chantitle, const string &id)
 	m_cfg.setString("GENERAL", "current_channel", id);
 	m_gcfg2.setInt("PLAYCOUNT", id, m_gcfg2.getInt("PLAYCOUNT", id, 0) + 1);
 	m_gcfg2.setUInt("LASTPLAYED", id, time(NULL));
+	
+	if (has_enabled_providers() && !_initNetwork())
+		add_game_to_card(id.c_str());
+	
 	m_gcfg1.save();
 	m_gcfg2.save();
 	m_cat.save();
@@ -744,9 +748,7 @@ void CMenu::_launchGame(string &id, bool dvd)
 	m_gcfg1.setUInt("LASTPLAYED", id, time(NULL));
 	
 	if (has_enabled_providers() && !_initNetwork())
-	{
 		add_game_to_card(id.c_str());
-	}
 
 	s32 current_wdm = -1;
 	m_gcfg1.getInt("WDM", id, (int *) &current_wdm);

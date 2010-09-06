@@ -180,6 +180,7 @@ bool Config::load(const char *filename)
 	u32 n;
 	string domain("");
 
+	m_changed = false;
 	m_loaded = false;
 	m_filename = filename;
 	n = 0;
@@ -229,7 +230,7 @@ void Config::unload(void)
 
 void Config::save(void)
 {
-	if (m_changed && m_loaded)
+	if (m_changed)
 	{
 		if (strncasecmp(m_filename.c_str(), "sd:", 3) == 0)
 			FS_Mount_SD();
@@ -241,6 +242,7 @@ void Config::save(void)
 			for (Config::KeyMap::iterator l = m->begin(); l != m->end(); ++l)
 				file << l->first << '=' << escNewlines(l->second) << '\n';
 		}
+		m_changed = false;
 	}
 }
 
