@@ -163,7 +163,6 @@ void CMenu::_CheatSettings()
 				SmartBuf buffer;
 				block cheatfile;
 				FILE *file;
-//				char ip[16];
 				
 				if (_initNetwork() < 0) {
 					m_btnMgr.hide(m_cheatLblTitle);
@@ -182,6 +181,7 @@ void CMenu::_CheatSettings()
 						fwrite(cheatfile.data, 1, cheatfile.size, file);
 						fclose(file);
 						
+						m_btnMgr.hide(m_cheatBtnDownload);
 						_CheatSettings();
 						break;
 					}
@@ -255,7 +255,6 @@ void CMenu::_showCheatSettings(void)
 				
 				// cheat avaiable, show elements and text
 				m_btnMgr.setText(m_cheatLblItem[i], wstringEx(tempcheatname));
-				//m_btnMgr.setText(m_cheatLblItem[i], m_cheatfile.getCheseleatName((m_cheatSettingsPage-1)*CHEATSPERPAGE + i));
 				m_btnMgr.setText(m_cheatBtnItem[i], _optBoolToString(m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*CHEATSPERPAGE + i]));
 				
 				m_btnMgr.show(m_cheatLblItem[i], true);
@@ -303,8 +302,6 @@ void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 	m_cheatBtnItem[2] = _addButton(theme, "CHEAT/ITEM_2_BTN", theme.btnFont, L"", 500, 220, 120, 56, theme.btnFontColor);
 	m_cheatLblItem[3] = _addLabel(theme, "CHEAT/ITEM_3", theme.lblFont, L"", 40, 280, 460, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnItem[3] = _addButton(theme, "CHEAT/ITEM_3_BTN", theme.btnFont, L"", 500, 280, 120, 56, theme.btnFontColor);
-//	m_cheatLblItem[4] = _addLabel(theme, "CHEAT/ITEM_4", theme.lblFont, L"", 40, 340, 460, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-//	m_cheatBtnItem[4] = _addButton(theme, "CHEAT/ITEM_4_BTN", theme.btnFont, L"", 500, 340, 120, 56, theme.btnFontColor);
 
 	_setHideAnim(m_systemLblTitle, "CHEAT/TITLE", 0, 100, 0.f, 0.f);
 	_setHideAnim(m_cheatBtnApply, "CHEAT/APPLY_BTN", 0, 0, -2.f, 0.f);
@@ -319,7 +316,7 @@ void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 		_setHideAnim(m_cheatBtnItem[i], sfmt("CHEAT/ITEM_%i_BTN", i).c_str(), 200, 0, 1.f, 0.f);
 	}
 	
-	_hideCheatSettings(true);
+	_hideCheatSettings();
 	_textCheatSettings();
 }
 
