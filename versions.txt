@@ -1,23 +1,8 @@
 [GENERAL]
 update_url=http://update.wiiflow.org
-num_versions=8
-latestversion=118
-changes=Fix mis-mapped update button.\nStop Updater from showing a different selected version each time you enter.
+num_versions=3
+latestversion=166
+changes=Full ntfs support with writing.\nAlt-Dol+ and WiiTDB.zip support with game informations.\nWinnertag and gamercard added.\nScreenshot feature added (gcpad z)\n Multiple bug fixes (more to come).
 [VERSION1]
-version=117
-changes=GC/Wii Disc Launching Added\nFixes in memory releasing and threading\nButton mapping fixes\nLeft sticks on gc/classic/guitars work as a mouse\n Much more and bugfixes.
-[VERSION2]
-version=104
-changes=Complete controls rewrite: 4 Wiimotes, Nunchucks, Guitars,\nClassic Controllers, and GC pads working in wiiflow.\nChange trailers button to MINUS instead of UP\nParental lock updates without reload.
-[VERSION3]
-version=95
-changes=Add playlog writing. Shows proper name and time,\nbut requires returnto to be off in wiiflow,\nand autoboot/return to in priiloader set to wii menu.
-[VERSION4]
-version=92
-changes=Force wiiflow.ini,language.ini and titles.ini to be in apps/wiiflow\nand all other folders in drive:/wiiflow.\n*Will use the drive containing boot.dol as default data drive\nrather than auto usb. More info on forum.
-[VERSION5]
-version=90
-changes=**BETA**\n*Fixed downloader bug sometimes DL wrong version.\n*Wiiflow now exits after successful update\nto boot new version.
-[VERSION6]
-version=88
-changes=**BETA**\nAbility to delete cheat txt files by holding 1+2 in cheat menu\nAdd option to set Debugger type in game settings\nNew lang string "gecko"\nRemoved some game settings from ini if they are default\nChange System Button to say Update
+version=170
+changes=Some more tweaks.
