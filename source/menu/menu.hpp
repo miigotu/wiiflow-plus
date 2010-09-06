@@ -468,6 +468,9 @@ private:
 	float left_stick_mag[4];
 	float right_stick_angle[4];
 	float right_stick_mag[4];
+	float wmote_roll[4];
+	s32   right_stick_skip[4];
+	s32	  wmote_roll_skip[4];
 
 	u32 wii_btnRepeat();
 	u32 gc_btnRepeat();

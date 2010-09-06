@@ -30,6 +30,34 @@ void CMenu::SetupInput()
 		right_stick_angle[wmote] = 0;
 		right_stick_mag[wmote] = 0;
 		pointerhidedelay[wmote] = 0;
+		right_stick_skip[wmote] = 0;
+		wmote_roll[wmote] = 0;
+		wmote_roll_skip[wmote] = 0;
+	}
+}
+
+static int CalculateRepeatSpeed(float magnitude, int current_value)
+{
+	if (magnitude < 0) magnitude *= -1;
+
+	// Calculate frameskips based on magnitude
+	// Max frameskips is 50 (1 sec, or slightly less)
+	if (magnitude < 0.15f)
+	{
+		return -1; // Force a direct start
+	}
+	else if (current_value > 0)
+	{
+		return current_value - 1; // Wait another frame
+	}
+	else if (current_value == -1)
+	{
+		return 0; // Process the input
+	}
+	else
+	{
+		s32 frames = 50 - ((u32) (50.f * magnitude)); // Calculate the amount of frames to wait
+		return (frames < 0) ? 0 : frames;
 	}
 }
 
@@ -76,6 +104,10 @@ void CMenu::ScanInput()
 			default:
 				break;
 		}
+		wmote_roll[wmote] = wd[wmote]->orient.roll; // Use wd[wmote]->ir.angle if you only want this to work when pointing at the screen
+
+		right_stick_skip[wmote] = CalculateRepeatSpeed(right_stick_mag[wmote], right_stick_skip[wmote]);
+		wmote_roll_skip[wmote] = CalculateRepeatSpeed(wmote_roll[wmote] / 90.f, wmote_roll_skip[wmote]);
 	}
 	if (WPadIR_Valid(0))
 	{
