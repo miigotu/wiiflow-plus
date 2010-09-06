@@ -215,13 +215,15 @@ private:
 	u32 m_config4BtnHome;
 	u32 m_config4LblSaveFavMode;
 	u32 m_config4BtnSaveFavMode;
+	u32 m_config4LblCategoryOnBoot;
+	u32 m_config4BtnCategoryOnBoot;
 	u32 m_config4LblUser[4];
 	u32 m_config5LblPartitionName;
 	u32 m_config5LblPartition;
 	u32 m_config5BtnPartitionP;
 	u32 m_config5BtnPartitionM;
-	u32 m_config5LblInstallDirectory;
-	u32 m_config5BtnInstallDirectory;
+	u32 m_config5LblAsyncNet;
+	u32 m_config5BtnAsyncNet;
 	u32 m_config5LblUser[2];
 	u32 m_configSndLblBnrVol;
 	u32 m_configSndLblBnrVolVal;

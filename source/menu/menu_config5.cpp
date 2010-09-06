@@ -26,18 +26,9 @@ void CMenu::_hideConfig5(bool instant)
 	m_btnMgr.hide(m_config5LblPartition, instant);
 	m_btnMgr.hide(m_config5BtnPartitionP, instant);
 	m_btnMgr.hide(m_config5BtnPartitionM, instant);
-	m_btnMgr.hide(m_config5LblInstallDirectory, instant);
-	m_btnMgr.hide(m_config5BtnInstallDirectory, instant);
-/*
-	m_btnMgr.hide(m_config2LblGameVideo, instant);
-	m_btnMgr.hide(m_config2LblVideo, instant);
-	m_btnMgr.hide(m_config2BtnVideoP, instant);
-	m_btnMgr.hide(m_config2BtnVideoM, instant);
-	m_btnMgr.hide(m_config2LblErr2Fix, instant);
-	m_btnMgr.hide(m_config2BtnErr2Fix, instant);
-	m_btnMgr.hide(m_config2LblOcarina, instant);
-	m_btnMgr.hide(m_config2BtnOcarina, instant);
-*/
+	m_btnMgr.hide(m_config5LblAsyncNet, instant);
+	m_btnMgr.hide(m_config5BtnAsyncNet, instant);
+
 	for (u32 i = 0; i < ARRAY_SIZE(m_config5LblUser); ++i)
 		if (m_config5LblUser[i] != -1u)
 			m_btnMgr.hide(m_config5LblUser[i], instant);
@@ -56,8 +47,8 @@ void CMenu::_showConfig5(void)
 	m_btnMgr.show(m_config5LblPartition);
 	m_btnMgr.show(m_config5BtnPartitionP);
 	m_btnMgr.show(m_config5BtnPartitionM);
-	//m_btnMgr.show(m_config5LblInstallDirectory);
-	//m_btnMgr.show(m_config5BtnInstallDirectory);
+	m_btnMgr.show(m_config5LblAsyncNet);
+	m_btnMgr.show(m_config5BtnAsyncNet);
 	
 	for (u32 i = 0; i < ARRAY_SIZE(m_config5LblUser); ++i)
 		if (m_config5LblUser[i] != -1u)
@@ -65,11 +56,7 @@ void CMenu::_showConfig5(void)
 	// 
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
 	m_btnMgr.setText(m_config5LblPartition, m_cfg.getString("GENERAL", "partition", "WBFS1"));
-	m_btnMgr.setText(m_config5BtnInstallDirectory, m_cfg.getBool("GENERAL", "install_directory", true) ? _t("on", L"On") : _t("off", L"Off"));
-	
-//	i = min(max(0, m_cfg.getInt("GENERAL", "game_language", 0)), (int)ARRAY_SIZE(CMenu::_languages) - 1);
-//	m_btnMgr.setText(m_config2LblLanguage, _t(CMenu::_languages[i].id, CMenu::_languages[i].text));
-//	m_btnMgr.setText(m_config2BtnOcarina, m_cfg.getBool("GENERAL", "cheat") ? _t("on", L"On") : _t("off", L"Off"));
+	m_btnMgr.setText(m_config5BtnAsyncNet, m_cfg.getBool("GENERAL", "async_network", false) ? _t("on", L"On") : _t("off", L"Off"));
 }
 
 int CMenu::_config5(void)
@@ -136,9 +123,9 @@ int CMenu::_config5(void)
 				m_cfg.setString("GENERAL", "partition", buf);
 				_showConfig5();
 			}
-			else if (m_btnMgr.selected() == m_config5BtnInstallDirectory)
+			else if (m_btnMgr.selected() == m_config5BtnAsyncNet)
 			{
-				m_cfg.setBool("GENERAL", "install_directory", !m_cfg.getBool("GENERAL", "install_directory", true));
+				m_cfg.setBool("GENERAL", "async_network", !m_cfg.getBool("GENERAL", "async_network", false));
 				_showConfig5();
 			}
 		}
@@ -161,15 +148,15 @@ void CMenu::_initConfig5Menu(CMenu::SThemeData &theme)
 	m_config5LblPartition = _addLabel(theme, "CONFIG5/PARTITION_BTN", theme.lblFont, L"", 386, 130, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_config5BtnPartitionM = _addPicButton(theme, "CONFIG5/PARTITION_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 130, 56, 56);
 	m_config5BtnPartitionP = _addPicButton(theme, "CONFIG5/PARTITION_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 130, 56, 56);
-	m_config5LblInstallDirectory = _addLabel(theme, "CONFIG5/INSTALLDIRECTORY", theme.lblFont, L"", 40, 250, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_config5BtnInstallDirectory = _addButton(theme, "CONFIG5/INSTALLDIRECTORY_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
+	m_config5LblAsyncNet = _addLabel(theme, "CONFIG5/ASYNCNET", theme.lblFont, L"", 40, 250, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_config5BtnAsyncNet = _addButton(theme, "CONFIG5/ASYNCNET_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
 	// 
 	_setHideAnim(m_config5LblPartitionName, "CONFIG5/PARTITION", 100, 0, -2.f, 0.f);
 	_setHideAnim(m_config5LblPartition, "CONFIG5/PARTITION_BTN", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_config5BtnPartitionM, "CONFIG5/PARTITION_MINUS", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_config5BtnPartitionP, "CONFIG5/PARTITION_PLUS", 0, 0, 1.f, -1.f);
-	_setHideAnim(m_config5LblInstallDirectory, "CONFIG5/INSTALLDIRECTORY", 100, 0, -2.f, 0.f);
-	_setHideAnim(m_config5BtnInstallDirectory, "CONFIG5/INSTALLDIRECTORY_BTN", 0, 0, 1.f, -1.f);
+	_setHideAnim(m_config5LblAsyncNet, "CONFIG5/ASYNCNET", 100, 0, -2.f, 0.f);
+	_setHideAnim(m_config5BtnAsyncNet, "CONFIG5/ASYNCNET_BTN", 0, 0, 1.f, -1.f);
 	_hideConfig5(true);
 	_textConfig5();
 }
@@ -177,5 +164,5 @@ void CMenu::_initConfig5Menu(CMenu::SThemeData &theme)
 void CMenu::_textConfig5(void)
 {
 	m_btnMgr.setText(m_config5LblPartitionName, _t("cfgp1", L"Game Partition"));
-	m_btnMgr.setText(m_config5LblInstallDirectory, _t("cfgp2", L"Install to directory"));
+	m_btnMgr.setText(m_config5LblAsyncNet, _t("cfgp3", L"Init network on boot"));
 }
