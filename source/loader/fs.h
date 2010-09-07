@@ -11,6 +11,9 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#define ALIGN(x) (((x) + 3) & ~3)
+#define ALIGN32(x) (((x) + 31) & ~31)
+
 /* Prototypes */
 void Unmount_All_Devices(void);
 bool Mount_Devices(void);

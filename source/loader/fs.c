@@ -261,7 +261,7 @@ void WBFS_Unmount()
 	}
 }
 
-#define ALIGN(x) ((x % 32 != 0) ? (x / 32) * 32 + 32 : x)
+//#define ALIGN(x) ((x % 32 != 0) ? (x / 32) * 32 + 32 : x)
 
 u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length)
 {

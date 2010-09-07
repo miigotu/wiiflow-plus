@@ -88,7 +88,7 @@ u64* Channels::GetChannelList(u32* count)
 	if (ret || !countall)
 		return NULL;
 
-	u64* titles = (u64*)memalign(32, countall * sizeof(u64));
+	u64* titles = (u64*)memalign(32, ALIGN32(countall * sizeof(u64)));
 	if (!titles)
 		return NULL;
 
@@ -123,23 +123,43 @@ u64* Channels::GetChannelList(u32* count)
 
 bool Channels::GetAppNameFromTmd(u64 title, char* app)
 {
-	char tmdpath[ISFS_MAXPATH];
+	char tmd[ISFS_MAXPATH];
+	static fstats stats ATTRIBUTE_ALIGN(32);
 
 	u32 high = (u32)(title >> 32);
 	u32 low  = (u32)(title & 0xFFFFFFFF);
 
 	bool ret = false;
 
-	sprintf(tmdpath, "/title/%08x/%08x/content/title.tmd", high, low);
+	sprintf(tmd, "/title/%08x/%08x/content/title.tmd", high, low);
 
-	u32 size;
-	SmartBuf data = SmartBuf(ISFS_GetFile((u8 *) &tmdpath, &size, -1));
-	if (size > 0)
+	s32 fd = ISFS_Open(tmd, ISFS_OPEN_READ);
+	if (fd >= 0)
 	{
-		u32 appName;
-		memcpy(&appName, &data.get()[0x1E4], 4);
-		sprintf(app, "/title/%08x/%08x/content/%08x.app\n", high, low, appName);
-		ret = true;
+		if (ISFS_GetFileStats(fd, &stats) >= 0)
+		{
+			u32* data = NULL;
+
+			if (stats.file_length > 0)
+				data = (u32*)memalign(32, ALIGN32(stats.file_length));
+
+			if (data)
+			{
+				if (ISFS_Read(fd, (char*)data, stats.file_length) > 0x208)
+				{
+				    u16 i;
+				    struct _tmd * tmd_file = (struct _tmd *) SIGNATURE_PAYLOAD(data);
+				    for(i = 0; i < tmd_file->num_contents; ++i)
+                        if(tmd_file->contents[i].index == 0)
+                            break;
+
+				    sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, tmd_file->contents[i].cid);
+					ret = true;
+				}
+				free(data);
+			}
+		}
+		ISFS_Close(fd);
 	}
 
 	return ret;
