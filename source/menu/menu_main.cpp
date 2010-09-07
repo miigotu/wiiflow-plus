@@ -415,7 +415,7 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainBtnFavoritesOff);
 		}
 		bool hideChannels, showDVD;
-		hideChannels = (m_cfg.getBool("GENERAL", "hidechannelsbutton", false);
+		hideChannels = m_cfg.getBool("GENERAL", "hidechannelsbutton", false);
 		if (!hideChannels && (m_gameList.empty() || m_show_zone_main2))
 		{
 			if (m_current_view == COVERFLOW_USB)
