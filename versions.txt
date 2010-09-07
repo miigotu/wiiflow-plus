@@ -1,8 +1,11 @@
 [GENERAL]
 update_url=http://update.wiiflow.org
-num_versions=3
-latestversion=166
-changes=Full ntfs support with writing.\nAlt-Dol+ and WiiTDB.zip support with game informations.\nWinnertag and gamercard added.\nScreenshot feature added (gcpad z)\n Multiple bug fixes (more to come).
-[VERSION1]
-version=170
+num_versions=4
+latestversion=170
 changes=Some more tweaks.
+[VERSION1]
+version=166
+changes=Full ntfs support with writing.\nAlt-Dol+ and WiiTDB.zip support with game informations.\nWinnertag and gamercard added.\nScreenshot feature added (gcpad z)\n Multiple bug fixes (more to come).
+[VERSION2]
+version=180
+changes=Fix channels on base 57.\nAdd wiimote gestures and extenstions' stick sensitivity.\nOnly save ini's when they have changed.\nAdd ncard to channel launching.

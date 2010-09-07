@@ -68,13 +68,10 @@ void CMenu::_showMain(void)
 	m_btnMgr.show(m_mainBtnInfo);
 	m_btnMgr.show(m_mainBtnQuit);
 
-	//if (/*m_channels.CanIdentify() && */m_loaded_ios_base !=57 || m_gameList.empty())
-	//{
-		if (m_current_view == COVERFLOW_USB)
-			m_btnMgr.show(m_mainBtnChannel);
-		else if (m_current_view == COVERFLOW_CHANNEL)
-			m_btnMgr.show(m_mainBtnUsb);
-	//}
+	if (m_current_view == COVERFLOW_USB)
+		m_btnMgr.show(m_mainBtnChannel);
+	else if (m_current_view == COVERFLOW_CHANNEL)
+		m_btnMgr.show(m_mainBtnUsb);
 
 	for (u32 i = 1; i < ARRAY_SIZE(m_mainLblUser); ++i)
 		if (m_mainLblUser[i] != -1u)
@@ -418,8 +415,7 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainBtnFavoritesOff);
 		}
 		bool hideChannels, showDVD;
-		//hideChannels = (m_cfg.getBool("GENERAL", "hidechannelsbutton", false) || m_loaded_ios_base == 57);
-		hideChannels = false;
+		hideChannels = (m_cfg.getBool("GENERAL", "hidechannelsbutton", false);
 		if (!hideChannels && (m_gameList.empty() || m_show_zone_main2))
 		{
 			if (m_current_view == COVERFLOW_USB)
