@@ -25,6 +25,7 @@ s32  Sys_GetCerts(signed_blob **, u32 *);
 
 int get_ios_type();
 int is_ios_type(int type);
+bool shadow_mload();
 
 #ifdef __cplusplus
 }

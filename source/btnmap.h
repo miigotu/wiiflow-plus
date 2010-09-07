@@ -34,6 +34,18 @@
 #define BTN_1_PRESSED ((wii_btnsPressed & WBTN_1)||(gc_btnsPressed & BTN_1)!=0)
 #define BTN_2_PRESSED ((wii_btnsPressed & WBTN_2)||(gc_btnsPressed & BTN_2)!=0)
 
+#define WBTN_UP_HELD (wii_btnsHeld & WBTN_UP)
+#define WBTN_RIGHT_HELD (wii_btnsHeld & WBTN_RIGHT)
+#define WBTN_DOWN_HELD (wii_btnsHeld & WBTN_DOWN)
+#define WBTN_LEFT_HELD (wii_btnsHeld & WBTN_LEFT)
+#define WBTN_A_HELD (wii_btnsHeld & WBTN_A)
+#define WBTN_B_HELD (wii_btnsHeld & WBTN_B)
+#define WBTN_MINUS_HELD (wii_btnsHeld & WBTN_MINUS)
+#define WBTN_PLUS_HELD (wii_btnsHeld & WBTN_PLUS)
+#define WBTN_HOME_HELD (wii_btnsHeld & WBTN_HOME)
+#define WBTN_1_HELD (wii_btnsHeld & WBTN_1)
+#define WBTN_2_HELD (wii_btnsHeld & WBTN_2)
+
 #define BTN_UP_HELD ((wii_btnsHeld & WBTN_UP)||(gc_btnsHeld & BTN_UP)!=0)
 #define BTN_RIGHT_HELD ((wii_btnsHeld & WBTN_RIGHT)||(gc_btnsHeld & BTN_RIGHT)!=0)
 #define BTN_DOWN_HELD ((wii_btnsHeld & WBTN_DOWN)||(gc_btnsHeld & BTN_DOWN))
@@ -70,9 +82,9 @@
 #define LEFT_STICK_ANG_LEFT (left_stick_angle[wmote] >= 210 && left_stick_angle[wmote] <= 330)
 
 #define RIGHT_STICK_UP ((RIGHT_STICK_ANG_UP && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || PAD_SubStickY(wmote) > 20)
-#define RIGHT_STICK_RIGHT ((RIGHT_STICK_ANG_RIGHT && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || ((wmote_roll[wmote] > 15) && wmote_roll_skip[wmote] == 0) || PAD_SubStickX(wmote) > 20)
+#define RIGHT_STICK_RIGHT ((RIGHT_STICK_ANG_RIGHT && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || (WBTN_B_HELD && (wmote_roll[wmote] > 15) && wmote_roll_skip[wmote] == 0) || PAD_SubStickX(wmote) > 20)
 #define RIGHT_STICK_DOWN ((RIGHT_STICK_ANG_DOWN && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || PAD_SubStickY(wmote) < -20)
-#define RIGHT_STICK_LEFT ((RIGHT_STICK_ANG_LEFT && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || ((wmote_roll[wmote] < -15) && wmote_roll_skip[wmote] == 0) || PAD_SubStickX(wmote) < -20)
+#define RIGHT_STICK_LEFT ((RIGHT_STICK_ANG_LEFT && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || (WBTN_B_HELD && (wmote_roll[wmote] < -15) && wmote_roll_skip[wmote] == 0) || PAD_SubStickX(wmote) < -20)
 
 #define RIGHT_STICK_ANG_UP ((right_stick_angle[wmote] >= 300 && right_stick_angle[wmote] <= 360) \
 		|| (right_stick_angle[wmote] >= 0 && right_stick_angle[wmote] <= 60))

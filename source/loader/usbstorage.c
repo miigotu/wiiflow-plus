@@ -54,8 +54,9 @@ distribution.
 #define USB_MEM2_SIZE           0x10000
 
 /* Variables */
-static char fs[] ATTRIBUTE_ALIGN(32) = "/dev/usb/ehc";
-static char fs2[] ATTRIBUTE_ALIGN(32) = "/dev/usb2";
+static char fs[] ATTRIBUTE_ALIGN(32) = "/dev/usb2";
+static char fs2[] ATTRIBUTE_ALIGN(32) = "/dev/usb123";
+static char fs3[] ATTRIBUTE_ALIGN(32) = "/dev/usb/ehc";
  
 static s32 hid = -1, fd = -1;
 static u32 sector_size;
@@ -116,6 +117,7 @@ s32 USBStorage_OpenDev()
 	/* Open USB device */
 	fd = IOS_Open(fs, 0);
 	if (fd < 0) fd = IOS_Open(fs2, 0);
+	if (fd < 0) fd = IOS_Open(fs3, 0);
 	return fd;
 }
 
@@ -252,7 +254,7 @@ bool __io_usb_ReadSectors(u32 sector, u32 count, void *buffer)
 		printf("usb-r: %x [%d] = %d\n", sector, count, ret);
 		//sleep(1);
 	}
-	return ret > 0;
+	return ret >= 0;
 }
 
 bool __io_usb_WriteSectors(u32 sector, u32 count, void *buffer)
@@ -263,7 +265,7 @@ bool __io_usb_WriteSectors(u32 sector, u32 count, void *buffer)
 	}*/
 	s32 ret = USBStorage_WriteSectors(sector, count, buffer);
 	//printf("usb-w: %d %d %d\n", sector, count, ret); sleep(1);
-	return ret > 0;
+	return ret >= 0;
 }
 
 static bool __io_usb_ClearStatus(void)
@@ -369,7 +371,7 @@ s32 USBStorage_WBFS_Read(u32 woffset, u32 len, void *buffer)
 	return ret;
 }
 
-
+/*
 s32 USBStorage_WBFS_ReadDebug(u32 off, u32 size, void *buffer)
 {
 	void *buf = (void *)buffer;
@@ -377,23 +379,23 @@ s32 USBStorage_WBFS_ReadDebug(u32 off, u32 size, void *buffer)
 	s32 ret;
 
 	USBStorage_OpenDev();
-	/* Device not opened */
+	// Device not opened
 	if (fd < 0)
 		return fd;
 
-	/* MEM1 buffer */
+	// MEM1 buffer
 	if (!__USBStorage_isMEM2Buffer(buffer)) {
-		/* Allocate memory */
+		// Allocate memory
 		//buf = iosAlloc(hid, len);
 		buf = usb_buf2;
 		if (!buf)
 			return IPC_ENOMEM;
 	}
 
-	/* Read data */
+	// Read data
 	ret = IOS_IoctlvFormat(hid, fd, USB_IOCTL_WBFS_READ_DEBUG, "ii:d", off, size, buf, size);
 
-	/* Copy data */
+	// Copy data
 	if (buf != buffer) {
 		memcpy(buffer, buf, size);
 		//iosFree(hid, buf);
@@ -438,3 +440,4 @@ void usb_debug_dump(int arg)
 	int r = USBStorage_WBFS_ReadDebug(arg, sizeof(buf), buf);
 	printf("\n: %d %.2000s\n", r, buf);
 }
+*/

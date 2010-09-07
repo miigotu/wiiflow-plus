@@ -14,6 +14,7 @@
 #include "network/http.h"
 #include "network/gcard.h"
 
+#include "loader/mload_modules.h"
 #include "loader/wbfs.h"
 #include "loader/usbstorage.h"
 #include "libwbfs/wiidisc.h"
@@ -843,6 +844,11 @@ void CMenu::_launchGame(string &id, bool dvd)
 	} 
 	else 
 	{
+		// hide cios devices
+ 		if (shadow_mload())
+		{
+			disable_ffs_patch();
+		}
 		char *altDolDir = (char *)&m_altDolDir;
 		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir, wdm_entry == NULL ? 1 : wdm_entry->parameter) < 0)
 			Sys_LoadMenu();

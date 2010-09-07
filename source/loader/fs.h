@@ -35,6 +35,10 @@ void WBFS_Unmount(void);
 
 u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length);
 
+extern int 	 global_mount; // 1   -> sd_ok SD was mounted
+						   // 2   -> ud_ok  USB was mounted
+						   // 128 -> Use NAND Emulation. Used for load_fat_module()
+
 extern int   fs_sd_mount;
 extern sec_t fs_sd_sec;
 extern int   fs_fat_mount;

@@ -2,9 +2,18 @@
 #include <ogcsys.h>
 #include <stdlib.h>
 #include <wiiuse/wpad.h>
+#include <malloc.h>
+#include <string.h>
 #include "sys.h"
 #include "gecko.h"
 #include "loader/playlog.h"
+#include "sha1.h"
+#include "ios_base.h"
+#include "mload.h"
+
+#define TITLE_ID(x,y)       (((u64)(x) << 32) | (y))
+#define TITLE_HIGH(x)       ((u32)((x) >> 32))
+#define TITLE_LOW(x)        ((u32)(x))
 
 /* Constants */
 #define CERTS_LEN	0x280
@@ -212,3 +221,182 @@ int is_ios_type(int type)
 	return (get_ios_type() == type);
 }
 
+s32 GetTMD(u64 TicketID, signed_blob **Output, u32 *Length)
+{
+    signed_blob* TMD = NULL;
+
+    u32 TMD_Length;
+    s32 ret;
+
+    /* Retrieve TMD length */
+    ret = ES_GetStoredTMDSize(TicketID, &TMD_Length);
+    if (ret < 0)
+        return ret;
+
+    /* Allocate memory */
+    TMD = (signed_blob*)memalign(32, (TMD_Length+31)&(~31));
+    if (!TMD)
+        return IPC_ENOMEM;
+
+    /* Retrieve TMD */
+    ret = ES_GetStoredTMD(TicketID, TMD, TMD_Length);
+    if (ret < 0)
+    {
+        free(TMD);
+        return ret;
+    }
+
+    /* Set values */
+    *Output = TMD;
+    *Length = TMD_Length;
+
+    return 0;
+}
+
+s32 checkIOS(u32 IOS)
+{
+	signed_blob *TMD = NULL;
+    tmd *t = NULL;
+    u32 TMD_size = 0;
+    u64 title_id = 0;
+    s32 ret = 0;
+
+    // Get tmd to determine the version of the IOS
+    title_id = (((u64)(1) << 32) | (IOS));
+    ret = GetTMD(title_id, &TMD, &TMD_size);
+
+    if (ret == 0) {
+        t = (tmd*)SIGNATURE_PAYLOAD(TMD);
+		if (t->title_version == 65280) {
+			ret = -1;
+		}
+    } else {
+		ret = -2;
+	}
+    free(TMD);
+    return ret;
+}
+
+s32 brute_tmd(tmd *p_tmd)
+{
+	u16 fill;
+	for(fill=0; fill<65535; fill++)
+	{
+		p_tmd->fill3 = fill;
+		sha1 hash;
+		SHA1((u8 *)p_tmd, TMD_SIZE(p_tmd), hash);;
+		if (hash[0]==0)
+		{
+			return 0;
+		}
+	}
+	return -1;
+}
+
+char* get_ios_info_from_tmd()
+{
+	signed_blob *TMD = NULL;
+	tmd *t = NULL;
+	u32 TMD_size = 0;
+	int try_ver = 0;
+	u32 i;
+
+	int ret = GetTMD((((u64)(1) << 32) | (IOS_GetVersion())), &TMD, &TMD_size);
+
+	char *info = NULL;
+	//static char default_info[32];
+	//sprintf(default_info, "IOS%u (Rev %u)", IOS_GetVersion(), IOS_GetRevision());
+	//info = (char *)default_info;
+
+	if (ret != 0) goto out;
+
+	t = (tmd*)SIGNATURE_PAYLOAD(TMD);
+
+	// safety check
+	if (t->title_id != TITLE_ID(1, IOS_GetVersion())) goto out;
+
+	// patch title id, so hash matches
+	if (t->title_id != TITLE_ID(1, 249)) {
+		t->title_id = TITLE_ID(1,249);
+		if (t->title_version >= 65530) { // for 250
+			try_ver = t->title_version = 20;
+		}
+		retry_ver:
+		// fake sign it
+		brute_tmd(t);
+	}
+
+	sha1 hash;
+	SHA1((u8 *)TMD, TMD_size, hash);
+
+	for (i = 0; i < info_number; i++)
+	{
+		if (memcmp((void *)hash, (u32 *)&hashes[i], sizeof(sha1)) == 0)
+		{
+			info = (char *)&infos[i];
+			break;
+		}
+	}
+	if (info == NULL) {
+		// not found, retry lower rev.
+		if (try_ver > 13) {
+			try_ver--;
+			t->title_version = try_ver;
+			goto retry_ver;
+		}
+	}
+
+out:
+	if(TMD != NULL)
+	{
+		free(TMD);
+		TMD = NULL;
+	}
+    return info;
+}
+
+static char mload_ver_str[40];
+static int mload_ver = 0;
+
+void mk_mload_version()
+{
+	mload_ver_str[0] = 0;
+	mload_ver = 0;
+	if (is_ios_type(IOS_TYPE_HERMES) || (is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 18) )
+	{
+		if (IOS_GetRevision() >= 4) {
+			if (is_ios_type(IOS_TYPE_WANIN)) {
+				char *info = get_ios_info_from_tmd();
+				if (info) {
+						sprintf(mload_ver_str, "Base: IOS%s ", info);
+				} else {
+						sprintf(mload_ver_str, "Base: IOS?? DI:%d ", wanin_mload_get_IOS_base());
+				}
+			} else {
+				sprintf(mload_ver_str, "Base: IOS%d ", mload_get_IOS_base());
+			}
+		}
+		if (IOS_GetRevision() > 4) {
+			int v, s;
+			v = mload_ver = mload_get_version();
+			s = v & 0x0F;
+			v = v >> 4;
+			sprintf(mload_ver_str + strlen(mload_ver_str), "mload v%d.%d ", v, s);
+		} else {
+			sprintf(mload_ver_str + strlen(mload_ver_str), "mload v%d ", IOS_GetRevision());
+		}
+	}
+}
+
+bool shadow_mload()
+{
+        if (!is_ios_type(IOS_TYPE_HERMES)) return false;
+        int v51 = (5 << 4) & 1;
+        if (mload_ver >= v51) {
+                // shadow /dev/mload supported in hermes cios v5.1
+                //IOS_Open("/dev/usb123/OFF",0);// this disables ehc completely
+                IOS_Open("/dev/mload/OFF",0);
+                return true;
+        }
+        return false;
+}

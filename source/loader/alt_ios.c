@@ -5,9 +5,9 @@
 #include "dip_plugin_2.h"
 #include "ehcmodule_3.h"
 #include "dip_plugin_3.h"
-#include "ehcmodule_frag.h"
-#include "dip_plugin_4.h"
+#include "ehcmodule_5.h"
 #include "dip_plugin_249.h"
+#include "odip_frag.h"
 #include "fs.h"
 #include "wdvd.h"
 #include "disc.h"
@@ -45,13 +45,22 @@ static int load_ehc_module_ex(void)
 			size_dip_plugin = size_dip_plugin_3;
 			break;
 		case 4:
-		default:
-			ehcmodule = ehcmodule_frag;
-			size_ehcmodule = size_ehcmodule_frag;
-			dip_plugin = dip_plugin_4;
-			size_dip_plugin = size_dip_plugin_4;
+		case 5:
+			ehcmodule = ehcmodule_5;
+			size_ehcmodule = size_ehcmodule_5;
+			dip_plugin = odip_frag;
+			size_dip_plugin = size_odip_frag;
 			break;
+		default:
+			return -1;
 	}
+	u8 *ehc_cfg = search_for_ehcmodule_cfg(ehcmodule, size_ehcmodule);
+	if (ehc_cfg)
+	{
+		ehc_cfg += 12;
+		ehc_cfg[0] = 0; // USB Port 0
+	}
+	
 	load_ehc_module();
 	return 0;
 }

@@ -35,6 +35,8 @@ bool g_wbfsOK = false;
 #define SECTORS 64
 #define SECTORS_SD 32
 
+int global_mount = 0;
+
 int   fs_sd_mount = 0;
 sec_t fs_sd_sec = 0; // u32
 

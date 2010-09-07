@@ -311,28 +311,7 @@ s32 WDVD_GetCoverStatus(u32 *status)
 	return -ret;
 }
 
-s32 WDVD_SetWBFSMode(u32 mode, u8 *discid)
-{
-	s32 ret;
-
-	memset(inbuf, 0, sizeof(inbuf));
-
-	/* Set USB mode */
-	inbuf[0] = IOCTL_DI_SETWBFSMODE << 24;
-	inbuf[1] = mode;
-
-	/* Copy disc ID */
-	if (discid)
-		memcpy(&inbuf[2], discid, 6);
-
-	ret = IOS_Ioctl(di_fd, IOCTL_DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
-	if (ret < 0)
-		return ret;
-
-	return (ret == 1) ? 0 : -ret;
-}
-
-s32 WDVD_SetUSBMode(const u8 *id, s32 partition) 
+s32 WDVD_SetUSBMode(u32 mode, const u8 *id, s32 partition) 
 {
     s32 ret;
 
@@ -340,12 +319,14 @@ s32 WDVD_SetUSBMode(const u8 *id, s32 partition)
 
     /* Set USB mode */
     inbuf[0] = IOCTL_DI_SETWBFSMODE << 24;
-    inbuf[1] = (id) ? 1 : 0;
+    inbuf[1] = (id) ? mode : 0;
 
     /* Copy ID */
     if (id) {
         memcpy(&inbuf[2], id, 6);
-		inbuf[5] = partition;
+		if(partition >= 0) {
+			inbuf[5] = partition;
+		}
     }
 
     ret = IOS_Ioctl(di_fd, IOCTL_DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));

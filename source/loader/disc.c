@@ -287,39 +287,19 @@ s32 Disc_Wait(void)
 }
 
 s32 Disc_SetUSB(const u8 *id) {
-	if (is_ios_type(IOS_TYPE_HERMES)) {
-		u32 part = 0;
-		if (wbfs_part_fs) {
-			part = wbfs_part_lba;
-		} else {
-			part = wbfs_part_idx ? wbfs_part_idx - 1 : 0;
-		}
-		
-		int ret;
-		if (id && *id) {
-			gprintf("set_frag_list Hermes\n");
-			ret = set_frag_list((u8 *) id);
-		} else {
-			gprintf("USBStorage_WBFS_SetFragList Hermes\n");
-			ret = USBStorage_WBFS_SetFragList(NULL, 0);
-		}
-		
-		if (ret) {
-			return ret;
-		}
-		
-		/* Set USB mode */
-		gprintf("WDVD_SetUSBMode Hermes\n");
-		return WDVD_SetUSBMode(id, part);
-	}
-	//int mode = (id && *id) ? WBFS_DEVICE_USB : 0;
 	if (WBFS_DEVICE_USB && wbfs_part_fs) {
 		gprintf("Setting frag list for wanin\n");
 		return set_frag_list((u8 *) id);
 	}
 
+	u32 part = -1;
+	if (is_ios_type(IOS_TYPE_HERMES)) {
+		part = wbfs_part_idx ? wbfs_part_idx - 1 : 0;
+	}
+
+
 	gprintf("Setting disc usb thing for wanin\n");
-	return WDVD_SetWBFSMode((id && *id) ? WBFS_DEVICE_USB : 0, (u8 *) id);
+	return WDVD_SetUSBMode(WBFS_DEVICE_USB, (u8 *) id, part);
 }
 
 s32 Disc_ReadHeader(void *outbuf)
@@ -439,6 +419,8 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	*(u32*)0xCC003024 = wdm_parameter; /* Originally from tueidj */
 
 	appentrypoint = (u32) p_entry;
+	
+	gprintf("Jumping to entrypoint\n");
 	
 	if (cheat != 0)
 	{
