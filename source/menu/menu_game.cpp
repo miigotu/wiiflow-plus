@@ -605,7 +605,7 @@ void CMenu::_directlaunch(const string &id)
 		}
 	}
 	
-	error(sfmt("Cannot find the game"));
+	error(sfmt("Cannot find the game with ID: %s", id.c_str()));
 }
 
 void CMenu::_launch(const u64 chantitle, const string &id)

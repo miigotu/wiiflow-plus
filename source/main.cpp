@@ -70,7 +70,6 @@ int old_main(int argc, char **argv)
 	
 	char *gameid = NULL;
 	
-	// Narolez: check if ios argument is passed in argv[0] (by NForwarder) or argv[1] (by wiiload or whatever)
 	for (int i = 0; i < argc; i++)
 	{
 		if (argv[i] != NULL && strcasestr(argv[i], "ios=") != 0)
@@ -80,6 +79,9 @@ int old_main(int argc, char **argv)
 		else if (strlen(argv[i]) == 6)
 		{
 			gameid = argv[i];
+			for (int i=0; i<5; i++)
+				if (!isalnum(gameid[i]))
+					gameid = NULL;
 		}
 	}
 	
