@@ -536,12 +536,12 @@ int OpenDbFiles(const char *xmlfilepath, bool writing)
 		fclose(idx);
 		idx = NULL;
 	}
-	
+/*	
 	if (!writing && wiitdb_requires_update(xmlfilepath))
 	{
 		return 0;
 	}
-	
+*/	
 	char pathname[200];
 	sprintf(pathname, "%s/wiitdb.db", xmlfilepath);
 	db = fopen(pathname, writing ? "wb" : "rb");

@@ -44,15 +44,12 @@ static int load_ehc_module_ex(void)
 			dip_plugin = dip_plugin_3;
 			size_dip_plugin = size_dip_plugin_3;
 			break;
-		case 4:
-		case 5:
+		default:
 			ehcmodule = ehcmodule_5;
 			size_ehcmodule = size_ehcmodule_5;
 			dip_plugin = odip_frag;
 			size_dip_plugin = size_odip_frag;
 			break;
-		default:
-			return -1;
 	}
 	u8 *ehc_cfg = search_for_ehcmodule_cfg(ehcmodule, size_ehcmodule);
 	if (ehc_cfg)
