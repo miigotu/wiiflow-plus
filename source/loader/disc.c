@@ -288,7 +288,6 @@ s32 Disc_Wait(void)
 
 s32 Disc_SetUSB(const u8 *id) {
 	if (WBFS_DEVICE_USB && wbfs_part_fs) {
-		gprintf("Setting frag list for wanin\n");
 		return set_frag_list((u8 *) id);
 	}
 
@@ -296,7 +295,6 @@ s32 Disc_SetUSB(const u8 *id) {
 	if (is_ios_type(IOS_TYPE_HERMES)) {
 		part = wbfs_part_idx ? wbfs_part_idx - 1 : 0;
 	}
-	gprintf("Setting disc usb thing for wanin\n");
 	return WDVD_SetUSBMode(WBFS_DEVICE_USB, (u8 *) id, part);
 }
 

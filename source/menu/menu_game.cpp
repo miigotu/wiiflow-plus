@@ -711,6 +711,47 @@ void CMenu::_launchGame(string &id, bool dvd)
 	debuggerselect = m_gcfg2.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
 	m_locDol = ALT_DOL_DISC;
 
+	/* enable_ffs:
+	bit 0   -> 0 SD 1-> USB
+	bit 1-2 -> 0-> /nand, 1-> /nand2, 2-> /nand3, 3-> /nand4
+	bit 3   -> led on in save operations
+	bit 4-5 -> verbose level: 0-> disabled, 1-> logs from FAT operations, 2 -> logs FFS operations
+	bit 6   -> 0: diary to NAND 1: diary to device (used to block the diary for now)
+	bit 7   -> FFS emulation enabled/disabled
+
+	bit 8-9 -> Emulation mode: 0->default 1-> DLC redirected to device:/nand, 2-> Full Mode  3-> Full Mode with DLC redirected to device:/nand
+	*/
+
+	// NAND emulation settings
+	int nand_device = 1;
+	int nand_dir = 0;
+	int led_on_save = 1;
+	int verbose = 3;
+	int playlog = m_cfg.getBool("GENERAL", "write_playlog", true) ? 0 : 1;
+	int ffs_emulation = 0;
+	int emulation_mode = 3;
+	
+	m_gcfg2.getInt(id, "nand_emulation", &ffs_emulation);
+	m_gcfg2.getInt(id, "nand_emulation_device", &nand_device);
+	m_gcfg2.getInt(id, "nand_dir", &nand_dir);
+
+	ffs_emulation = 1;
+	nand_device = 1;
+	nand_dir = 0;
+
+	global_mount |= 2; // USB Device (2 for SD)
+	global_mount |= 128; // Enable emulation
+
+	int nand_mode = (nand_device & 1) | 
+					(nand_dir << 1) | 
+					(led_on_save << 3) | 
+					(verbose << 4) | 
+					(playlog << 6) | 
+					(ffs_emulation << 7) |
+					(emulation_mode << 8);
+
+	ghexdump(&nand_mode, 4);
+
 	if (id == "RPWE41" || id == "RPWZ41" || id == "SPXP41") // Prince of Persia, Rival Swords
 	{
 		//cheat = false;
@@ -781,6 +822,7 @@ void CMenu::_launchGame(string &id, bool dvd)
 	// Reload IOS, if requested
 	if (iosNum != mainIOS || !_networkFix())
 	{
+		gprintf("Reloading IOS into %d\n", iosNum);
 		if (!loadIOS(iosNum, true))
 		{
 			error(sfmt("Couldn't load IOS %i", iosNum));
@@ -849,6 +891,13 @@ void CMenu::_launchGame(string &id, bool dvd)
 		{
 			disable_ffs_patch();
 		}
+		if (ffs_emulation)
+		{
+//			load_fatffs_module();
+//			enable_ffs(nand_mode);
+		}
+		
+		gprintf("Booting game\n");
 		char *altDolDir = (char *)&m_altDolDir;
 		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir, wdm_entry == NULL ? 1 : wdm_entry->parameter) < 0)
 			Sys_LoadMenu();
