@@ -86,8 +86,6 @@ CMenu::CMenu(CVideo &vid) :
 	m_directLaunch = false;
 }
 
-extern "C" { int makedir(char *newdir); }
-
 void CMenu::init(bool fromHBC)
 {
 	string themeName;
@@ -141,28 +139,29 @@ void CMenu::init(bool fromHBC)
 	//Make important folders first.
 	if (stat(sfmt("%s:/", drive).c_str(), &dummy) == 0)
 	{
-		makedir((char *)m_cacheDir.c_str());
-		makedir((char *)m_settingsDir.c_str());
-		makedir((char *)m_languagesDir.c_str());
-		makedir((char *)m_boxPicDir.c_str());
-		makedir((char *)m_picDir.c_str());
-		makedir((char *)m_themeDir.c_str());
-		makedir((char *)m_musicDir.c_str());
-		makedir((char *)m_videoDir.c_str());
-		makedir((char *)m_fanartDir.c_str());
-		makedir((char *)m_screenshotDir.c_str());
-		makedir((char *)m_txtCheatDir.c_str());
-		makedir((char *)m_altDolDir.c_str());
-		makedir((char *)m_bcaDir.c_str());
-		makedir((char *)m_cheatDir.c_str());
-		makedir((char *)m_wdmDir.c_str());
-		makedir((char *)m_wipDir.c_str());
+		mkdir(m_dataDir.c_str(), 0777);
+		mkdir(m_cacheDir.c_str(), 0777);
+		mkdir(m_settingsDir.c_str(), 0777);
+		mkdir(m_languagesDir.c_str(), 0777);
+		mkdir(m_boxPicDir.c_str(), 0777);
+		mkdir(m_picDir.c_str(), 0777);
+		mkdir(m_themeDir.c_str(), 0777);
+		mkdir(m_musicDir.c_str(), 0777);
+		mkdir(m_videoDir.c_str(), 0777);
+		mkdir(m_fanartDir.c_str(), 0777);
+		mkdir(m_screenshotDir.c_str(), 0777);
+		mkdir(m_txtCheatDir.c_str(), 0777);
+		mkdir(m_altDolDir.c_str(), 0777);
+		mkdir(m_bcaDir.c_str(), 0777);
+		mkdir(m_cheatDir.c_str(), 0777);
+		mkdir(m_wdmDir.c_str(), 0777);
+		mkdir(m_wipDir.c_str(), 0777);
 	}
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
 	themeName = m_cfg.getString("GENERAL", "theme", "DEFAULT");
 	m_themeDataDir = sfmt("%s/%s", m_themeDir.c_str(), themeName.c_str());
-	m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), themeName.c_str()).c_str());
+	m_theme.load(sfmt("%s.ini", m_themeDataDir.c_str()).c_str());
 	// 
 	defaultMenuLanguage = 7; //English
 	switch (CONF_GetLanguage())

@@ -19,7 +19,8 @@
 #define IOCTL_DI_DISC_BCA	0xDA
 #define IOCTL_DI_STOPMOTOR	0xE3
 #define IOCTL_DI_SETWBFSMODE	0xF4
-#define IOCTL_DI_DISABLERESET	0xF6
+#define IOCTL_DI_GETWBFSMODE	0xF5 // odip
+#define IOCTL_DI_DISABLERESET   0xF6 // odip
 
 /** Hermes IOS222 **/
 #define DI_SETWBFSMODE	0xfe
@@ -121,7 +122,8 @@ s32 WDVD_Seek(u64 offset)
 
 }
 
-s32 WDVD_Offset(u64 offset) {
+s32 WDVD_Offset(u64 offset) 
+{
     //u32 *off = (u32 *)((void *)&offset);
 	union { u64 off64; u32 off32[2]; } off;off.off64 = offset;
     s32 ret;

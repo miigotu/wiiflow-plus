@@ -175,6 +175,8 @@ const string &Config::prevDomain(const string &start) const
 
 bool Config::load(const char *filename)
 {
+	if (m_loaded && m_changed) save();
+	
 	ifstream file(filename, ios::in | ios::binary);
 	string line;
 	u32 n;

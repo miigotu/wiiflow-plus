@@ -292,12 +292,10 @@ s32 Disc_SetUSB(const u8 *id) {
 		return set_frag_list((u8 *) id);
 	}
 
-	u32 part = -1;
+	s32 part = -1;
 	if (is_ios_type(IOS_TYPE_HERMES)) {
 		part = wbfs_part_idx ? wbfs_part_idx - 1 : 0;
 	}
-
-
 	gprintf("Setting disc usb thing for wanin\n");
 	return WDVD_SetUSBMode(WBFS_DEVICE_USB, (u8 *) id, part);
 }
