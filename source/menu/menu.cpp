@@ -245,7 +245,6 @@ void CMenu::init(bool fromHBC)
 	m_cf.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255));
 	m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
 	m_bnrSndVol = m_cfg.getInt("GENERAL", "sound_volume_bnr", 255);
-	//m_alphaSearch = m_cfg.getBool("GENERAL", "alphabetic_search_on_plus_minus", false);
 	if (m_cfg.getBool("GENERAL", "favorites_on_startup", false))
 		m_favorites = m_cfg.getBool("GENERAL", "favorites", false);
 	m_category = m_cat.getInt("GENERAL", "category", 0);//currently selected category
@@ -254,7 +253,7 @@ void CMenu::init(bool fromHBC)
 	//if (m_current_view > COVERFLOW_MAX) m_current_view = COVERFLOW_USB;
 	m_current_view = COVERFLOW_USB;
 	m_loaded_ios_base = get_ios_base();
-	m_disable_scaa = m_cfg.getBool("GENERAL", "disable_fa_scaa", false);
+	m_disable_scaa = m_cfg.getBool("FANART", "disable_fa_scaa", false);
 	
 	register_card_provider(m_cfg.getString("GAMERCARD", "wiinnertag_url", WIINNERTAG_URL).c_str(),
 						   m_cfg.getString("GAMERCARD", "wiinnertag_key", "").c_str(),
@@ -612,7 +611,7 @@ void CMenu::_buildMenus(void)
 	m_mainBgLQ.fromPNG(background_png, GX_TF_CMPR, ALLOC_MEM2, 64, 64);
 	m_gameBgLQ = m_mainBgLQ;
 	
-	m_waitMessage = _texture(theme.texSet, "GENERAL", "waitmessage", m_waitMessage); 
+	//m_waitMessage = _texture(theme.texSet, "GENERAL", "waitmessage", m_waitMessage); 
 
 	// Build menus
 	_initMainMenu(theme);
@@ -953,7 +952,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	m_fa.tick();
 	_updateBg();
 	
-	if (m_fa.hideCover(m_disable_scaa))
+	if (!m_cfg.getBool("FANART", "disable_fa_hidecovers", false) && m_fa.hideCover(m_disable_scaa))
 		m_cf.hideCover();
 	else
 		m_cf.showCover();
@@ -993,12 +992,8 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		}
 	}
 	
-	//m_vid.setup2DProjection();
-
-	// Call m_fa.draw() here, it should draw over the box and background, but below the buttons
 	m_fa.draw();
 	
-	//m_vid.setup2DProjection();
 	m_btnMgr.draw();
 	ScanInput();
 	m_vid.render();

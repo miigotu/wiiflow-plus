@@ -206,7 +206,7 @@ void CMenu::_hideGame(bool instant)
 void CMenu::_showGame(void)
 {
 	m_cf.showCover();
-	if (!m_cfg.getBool("GENERAL", "disable_fa", false) && m_fa.load(m_fanartDir.c_str(), m_cf.getId().c_str()))
+	if (!m_cfg.getBool("FANART", "disable_fa", false) && m_fa.load(m_fanartDir.c_str(), m_cf.getId().c_str()))
 	{
 		STexture bg, bglq;
 		m_fa.getBackground(bg, bglq);
@@ -214,11 +214,14 @@ void CMenu::_showGame(void)
 		
 		m_cf.setSelectedTextColor(m_fa.getTextColor());
 
-		if (!m_cfg.getBool("GENERAL", "disable_fa_hidecovers", false) && m_fa.hideCover(m_disable_scaa))
+		if (!m_cfg.getBool("FANART", "disable_fa_hidecovers", false) && m_fa.hideCover(m_disable_scaa))
 			m_cf.hideCover();
 	}
 	else
+	{
 		_setBg(m_mainBg, m_mainBgLQ);
+		m_cf.setSelectedTextColor(0xFFFFFFFF);
+	}
 
 	// Load WDM file
 	wdm_loaded = load_wdm(m_wdmDir.c_str(), m_cf.getId().c_str()) == 0;

@@ -852,6 +852,7 @@ s8 CMenu::_versionDownloader() // code to download new dol
 				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg21", L"WiiFlow will now exit to allow the update to take effect."), 1.f);
 				LWP_MutexUnlock(m_mutex);
+				m_exit = true;
 			}
 			else
 			{

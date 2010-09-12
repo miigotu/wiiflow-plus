@@ -86,13 +86,13 @@ void CFanart::getBackground(STexture &hq, STexture &lq)
 
 u32 CFanart::getTextColor(void)
 {
-	return m_cfg.getInt("general", "textcolor", 0xFFFFFFFF);
+	return m_cfg.getInt("GENERAL", "textcolor", 0xFFFFFFFF);
 }
 
 bool CFanart::hideCover(bool disable_scaa)
 {
-	bool retval = m_cfg.getBool("general", "hidecover", false);
-	if (!retval && !disable_scaa && m_cfg.getBool("general", "show_cover_after_animation", false)) // Show the cover after the animation is finished
+	bool retval = m_cfg.getBool("GENERAL", "hidecover", false);
+	if (!retval && !disable_scaa && m_cfg.getBool("GENERAL", "show_cover_after_animation", false)) // Show the cover after the animation is finished
 	{
 		for (u32 i = 0; i < m_elms.size(); ++i)
 		{
