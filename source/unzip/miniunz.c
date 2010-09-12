@@ -21,13 +21,16 @@
 #define WRITEBUFFERSIZE (8192)
 #define MAXFILENAME (256)
 
-static int mymkdir(const char* dirname) {
-    int ret=0;
-    ret = mkdir (dirname,0777);
-    return ret;
+static int mymkdir(const char* dirname) 
+{
+	struct stat exist;
+    if (stat(dirname, &exist) == 0)
+		return 0;
+    return mkdir(dirname,0777);
 }
 
-int makedir (char *newdir) {
+int makedir (char *newdir)
+{
     char *buffer ;
     char *p;
     int  len = (int)strlen(newdir);

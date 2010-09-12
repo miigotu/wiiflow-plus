@@ -891,11 +891,9 @@ void CMenu::_launchGame(string &id, bool dvd)
 		{
 			disable_ffs_patch();
 		}
-		if (ffs_emulation)
-		{
-//			load_fatffs_module();
-//			enable_ffs(nand_mode);
-		}
+		/*if (ffs_emulation)
+			 if (load_fatffs_module((u8 *)id.c_str()) != -1)
+				enable_ffs(nand_mode); */
 		
 		gprintf("Booting game\n");
 		char *altDolDir = (char *)&m_altDolDir;

@@ -13,11 +13,8 @@ extern int size_ehcmodule;
 extern void *dip_plugin;
 extern int size_dip_plugin;
 
-// extern void *external_ehcmodule;
-// extern int size_external_ehcmodule;
-
 int load_ehc_module();
-int load_fatffs_module();
+int load_fatffs_module(u8 *discid);
 
 void enable_ES_ioctlv_vector(void);
 void Set_DIP_BCA_Datas(u8 *bca_data);

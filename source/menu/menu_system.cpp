@@ -68,7 +68,7 @@ void CMenu::_system()
 				_showSystem();
 			}
 		}
-		if ((BTN_HOME_PRESSED || BTN_B_PRESSED) && !m_thrdWorking)
+		if ((BTN_HOME_PRESSED || BTN_B_PRESSED || m_exit) && !m_thrdWorking)
 			break;
 		else if (BTN_UP_PRESSED)
 			m_btnMgr.up();
@@ -89,6 +89,11 @@ void CMenu::_system()
 				m_update_url = fmt("%s/r%i/%i_boot.dol", m_version.getString("GENERAL", "update_url", "http://update.wiiflow.org").c_str(), newVer, newIOS);
 				m_showtimer = 120;
 				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_versionDownloaderInit, (void *)this, 0, 8192, 40);
+				if (m_exit && !m_thrdWorking) 
+				{
+					m_thrdStop = true;
+					break;
+				}
 			}
 			else if (m_btnMgr.selected() == m_systemBtnBack)
 			{

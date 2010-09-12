@@ -1,4 +1,6 @@
 #include "mload_modules.h"
+#include "fatffs_module.h"
+#include "fs.h"
 
 
 static u32 ios_36[16] ATTRIBUTE_ALIGN(32)=
@@ -77,9 +79,6 @@ u32 patch_datas[8] ATTRIBUTE_ALIGN(32);
 
 data_elf my_data_elf;
 
-// void *external_ehcmodule= NULL;
-// int size_external_ehcmodule=0;
-
 void *dip_plugin = 0;
 int size_dip_plugin;
 void *ehcmodule = 0;
@@ -97,14 +96,12 @@ int is_ios=0;
 	if(my_thread_id<0) return -2;
 	usleep(350*1000);
 	
-
 	// Test for IOS
 	is_ios=mload_get_IOS_base();
-
 	u32 dip_address = 0x1377C000;
 	
 	switch(is_ios)
-		{
+	{
 
 		case 36:
 	
@@ -171,8 +168,7 @@ int is_ios=0;
 			mload_write(ios_60, 4);
 			break;
 
-		}
-
+	}
 	mload_close();
 	return 0;
 }
@@ -184,31 +180,80 @@ int is_ios=0;
 
 #define IOCTL_FFS_MODE		0x80
 
-#include "fatffs_module.h"
-#include "fs.h"
-
-int load_fatffs_module()
+void disable_ffs_patch(void)
 {
-	if (!(global_mount & 128)) return 0; // No NAND emulation selected
-	if((global_mount & 3)==0) return 0; // No sd or usb available
+	u8 * ffs_data=search_for_ehcmodule_cfg(fatffs_module, size_fatffs_module);
+
+	if(ffs_data)
+	{
+		ffs_data+=12;
+		ffs_data[0]=1;
+		DCFlushRange((void *) (((u32)ffs_data[0]) & ~31), 32);
+	}
+}
+
+int load_fatffs_module(u8 *discid)
+{
+	//if discid is NULL emu must be in full mode (global_mount & 3)
+	//otherwise the full path and filename of the game
+	//must be passed and copied to the ffs mem.
+	
+	if (!(global_mount & 128)) return -1; // No NAND emulation selected
 
 	static char fs[] ATTRIBUTE_ALIGN(32) = "fat";
-	s32 hid = -1, fd = -1;
+	static char fname[256] = "usb:";
+	s32 hid = -1, fd = -1, ret;
 	int n;
-	s32 ret;
-	
+
+
+
 	if(mload_init()<0) return -1;
 
 	mload_elf((void *) fatffs_module, &my_data_elf);
 	my_thread_id= mload_run_thread(my_data_elf.start, my_data_elf.stack, my_data_elf.size_stack, my_data_elf.prio);
 	if(my_thread_id<0) return -1;
 	
-	mload_close();
-	
     global_mount &=~0xc;
 
+/* 	if(discid)
+	{
+		if (!WBFS_Ext_find_fname(discid, fname, sizeof(fname)))
+			return -1;
+		global_mount &=~0xc;
+
+		if(fname[0]=='u')
+			global_mount|=2;
+		else if(fname[0]=='s')
+			global_mount|=1;
+		else
+			return -1;
+			
+		// copy filename to dip_plugin filename area
+		mload_seek(*((u32 *) (dip_plugin+14*4)), SEEK_SET);	// offset 14 (filename Address - 256 bytes)
+		mload_write(fname, sizeof(fname));
+		mload_close();
+	}
+	else
+	{ */
+		if((global_mount & 3)==0) return 0;
+		if(global_mount & 1) 
+		{
+			fname[0]='s';
+			fname[1]='d';
+			fname[2]=':';
+		}
+		if(global_mount & 2) 
+		{
+			fname[0]='u';
+			fname[1]='s';
+			fname[2]='b';
+			fname[3]=':';
+		}
+	//}
+	usleep(350*1000);
 	/* Create heap */
-	if (hid < 0) {
+	if (hid < 0)
+	{
 		hid = iosCreateHeap(0x100);
 		if (hid < 0)
 			return -1; 
@@ -230,24 +275,28 @@ int load_fatffs_module()
 	n=30; // try 20 times
 	while(n>0)
 	{
-		if((global_mount & 10)==2) {
+		if((global_mount & 10)==2) 
+		{
 			ret=IOS_IoctlvFormat(hid, fd, IOCTL_FAT_MOUNTUSB, ":");
 			if(ret==0) 
 				global_mount|=8;
 		}
-		else {
+		else 
+		{
 			ret=IOS_IoctlvFormat(hid, fd, IOCTL_FAT_MOUNTSD, ":");
 			if(ret==0) 
 				global_mount|=4;
 		}
 		
-		if ((global_mount & 7)==3 && ret==0) {
+		if ((global_mount & 7)==3 && ret==0) 
+		{
 			ret=IOS_IoctlvFormat(hid, fd, IOCTL_FAT_MOUNTSD, ":");
 			if(ret==0) 
 			global_mount|=4;
 		}
 
-		if ((global_mount & 3)==((global_mount>>2) & 3) && (global_mount & 3)) {
+		if ((global_mount & 3)==((global_mount>>2) & 3) && (global_mount & 3)) 
+		{
 			ret=0;
 			break;
 		}
@@ -260,7 +309,8 @@ int load_fatffs_module()
 		n--;
 	}
 
-    if (fd >= 0) {
+    if (fd >= 0) 
+	{
 		IOS_Close(fd);
 		fd = -1;
 	}
@@ -274,32 +324,6 @@ int load_fatffs_module()
 	return (n==0) ? -1 : 0;
 }
 
-u8 *search_for_ehcmodule_cfg(u8 *p, int size)
-{
-	int n;
-
-	for(n=0;n<size;n++)
-	{
-		if(!memcmp((void *) &p[n],"EHC_CFG",8) && p[n+8]==0x12 && p[n+9]==0x34 && p[n+10]==0x00 && p[n+11]==0x01)
-		{
-			return &p[n];
-		}
-	}
-
-	return NULL;
-}
-
-void disable_ffs_patch(void)
-{
-	u8 * ffs_data=search_for_ehcmodule_cfg(fatffs_module, size_fatffs_module);
-
-	if(ffs_data)
-	{
-		ffs_data+=12;
-		ffs_data[0]=1;
-		DCFlushRange((void *) (((u32)ffs_data[0]) & ~31), 32);
-	}
-}
 
 int enable_ffs(int mode)
 {
@@ -308,7 +332,8 @@ int enable_ffs(int mode)
 	s32 ret;
 
 	/* Create heap */
-	if (hid < 0) {
+	if (hid < 0)
+	{
 		hid = iosCreateHeap(0x100);
 		if (hid < 0)
 			return -1; 
@@ -326,10 +351,10 @@ int enable_ffs(int mode)
 		}
 		return -1;
 	}
-
 	ret=IOS_IoctlvFormat(hid, fd, IOCTL_FFS_MODE, "i:", mode);
 	
-    if (fd >= 0) {
+    if (fd >= 0) 
+	{
 		IOS_Close(fd);
 		fd = -1;
 	}
@@ -339,7 +364,6 @@ int enable_ffs(int mode)
 		iosDestroyHeap(hid);
 		hid=-1;
 	}
-	
 	return ret;
 }
 
@@ -360,6 +384,21 @@ void Set_DIP_BCA_Datas(u8 *bca_data)
 	mload_close();
 }
 
+
+u8 *search_for_ehcmodule_cfg(u8 *p, int size)
+{
+	int n;
+
+	for(n=0;n<size;n++)
+	{
+		if(!memcmp((void *) &p[n],"EHC_CFG",8) && p[n+8]==0x12 && p[n+9]==0x34 && p[n+10]==0x00 && p[n+11]==0x01)
+		{
+			return &p[n];
+		}
+	}
+	return NULL;
+}
+
 void disableIOSReload(void)
 {
 	if (mload_init() < 0 || IOS_GetRevision() == 2)
@@ -369,5 +408,3 @@ void disableIOSReload(void)
 	mload_set_ES_ioctlv_vector((void *)patch_datas[0]);
 	mload_close();
 }
-
-

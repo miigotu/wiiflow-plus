@@ -118,7 +118,7 @@ int CMenu::main(void)
 		WDVD_GetCoverStatus(&disc_check);
 
 		//Check for exit or reload request
-		if (BTN_HOME_PRESSED)
+		if (BTN_HOME_PRESSED || m_exit)
 		{
 			m_reload = BTN_B_HELD;
 			break;

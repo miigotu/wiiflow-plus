@@ -497,6 +497,8 @@ private:
 	bool m_show_zone_next;
 	bool m_show_zone_game;
 
+	volatile bool m_exit;
+	
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;
 	volatile bool m_thrdWorking;

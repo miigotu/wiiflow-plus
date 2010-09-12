@@ -48,6 +48,15 @@
 .EQU	ios36_doReadHashEncryptedState, 0x20202b4c
 .EQU	ios36_printf, 0x20203934
 
+.EQU	ios37_dvd_read_controlling_data, 0x2022dd60
+.EQU	ios37_handle_di_cmd_reentry, 0x20200f04
+.EQU	ios37_shared_alloc_aligned, 0x2020096c
+.EQU	ios37_shared_free, 0x2020093c
+.EQU	ios37_memcpy, 0x20205e54
+.EQU	ios37_fatal_di_error, 0x20200048
+.EQU	ios37_doReadHashEncryptedState, 0x20202a70
+.EQU	ios37_printf, 0x2020387c
+
 .EQU	ios38_dvd_read_controlling_data, 0x2022cdac
 .EQU	ios38_handle_di_cmd_reentry, 0x20200d38
 .EQU	ios38_shared_alloc_aligned, 0x202008c4
@@ -56,6 +65,24 @@
 .EQU	ios38_fatal_di_error, 0x20200048
 .EQU	ios38_doReadHashEncryptedState, 0x20202874
 .EQU	ios38_printf, 0x2020365c
+
+.EQU	ios57_dvd_read_controlling_data, 0x2022cd60
+.EQU	ios57_handle_di_cmd_reentry, 0x20200f04
+.EQU	ios57_shared_alloc_aligned, 0x2020096c
+.EQU	ios57_shared_free, 0x2020093C
+.EQU	ios57_memcpy, 0x20205EF0
+.EQU	ios57_fatal_di_error, 0x20200048
+.EQU	ios57_doReadHashEncryptedState, 0x20202944
+.EQU	ios57_printf, 0x20203750
+
+.EQU	ios60_dvd_read_controlling_data, 0x2022cd60
+.EQU	ios60_handle_di_cmd_reentry, 0x20200f04
+.EQU	ios60_shared_alloc_aligned, 0x2020096c
+.EQU	ios60_shared_free, 0x2020093C
+.EQU	ios60_memcpy, 0x20205e00
+.EQU	ios60_fatal_di_error, 0x20200048
+.EQU	ios60_doReadHashEncryptedState, 0x20202944
+.EQU	ios60_printf, 0x20203750
 
 	.global addr_dvd_read_controlling_data
 	.global addr_di_cmd_reentry

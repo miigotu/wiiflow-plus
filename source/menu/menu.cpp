@@ -84,6 +84,7 @@ CMenu::CMenu(CVideo &vid) :
 	m_bnrSndVol = 0;
 	m_gameSettingsPage = 0;
 	m_directLaunch = false;
+	m_exit = false;
 }
 
 extern "C" { int makedir(char *newdir); }
@@ -91,8 +92,8 @@ extern "C" { int makedir(char *newdir); }
 void CMenu::init(bool fromHBC)
 {
 	string themeName;
-	const char *drive = "sd";
-	const char *wfdrv = "sd";
+	const char *drive = "usb";
+	const char *wfdrv = "usb";
 	u8 defaultMenuLanguage;
 	struct stat dummy;
 	
@@ -103,8 +104,6 @@ void CMenu::init(bool fromHBC)
 	{
 		if (stat(sfmt("sd:/%s/boot.dol", APPDATA_DIR2).c_str(), &dummy) == 0)
 			wfdrv = "sd";
-		else if (stat(sfmt("usb:/%s/boot.dol", APPDATA_DIR2).c_str(), &dummy) == 0)
-			wfdrv = "usb";
 	}
 	else
 		wfdrv = FS_USBAvailable() ? "usb" : "sd";
@@ -113,7 +112,7 @@ void CMenu::init(bool fromHBC)
 	gprintf("Wiiflow boot.dol Location: %s\n", m_appDir.c_str());
 	m_cfg.load(sfmt("%s/" CFG_FILENAME, m_appDir.c_str()).c_str());
 
-	drive = m_cfg.getBool("GENERAL", "data_on_usb", strcmp(wfdrv, "usb") == 0) ? "usb" : "sd";
+	drive = m_cfg.getBool("GENERAL", "data_on_usb", strcmp(wfdrv, "usb") == 0) ? FS_USBAvailable() ? "usb" : "sd" : FS_SDAvailable() ? "sd" : "usb";
 	m_dataDir = sfmt("%s:/%s", drive, APPDATA_DIR);
 	gprintf("Data Directory: %s\n", m_dataDir.c_str());
 	
@@ -139,31 +138,29 @@ void CMenu::init(bool fromHBC)
 	//
 	m_cf.init();
 	//Make important folders first.
-	if (stat(sfmt("%s:/", drive).c_str(), &dummy) == 0)
-	{
-		makedir((char *)m_cacheDir.c_str());
-		makedir((char *)m_settingsDir.c_str());
-		makedir((char *)m_languagesDir.c_str());
-		makedir((char *)m_boxPicDir.c_str());
-		makedir((char *)m_picDir.c_str());
-		makedir((char *)m_themeDir.c_str());
-		makedir((char *)m_musicDir.c_str());
-		makedir((char *)m_videoDir.c_str());
-		makedir((char *)m_fanartDir.c_str());
-		makedir((char *)m_screenshotDir.c_str());
-		makedir((char *)m_txtCheatDir.c_str());
-		makedir((char *)m_altDolDir.c_str());
-		makedir((char *)m_bcaDir.c_str());
-		makedir((char *)m_cheatDir.c_str());
-		makedir((char *)m_wdmDir.c_str());
-		makedir((char *)m_wipDir.c_str());
-	}
+	makedir((char *)m_cacheDir.c_str());
+	makedir((char *)m_settingsDir.c_str());
+	makedir((char *)m_languagesDir.c_str());
+	makedir((char *)m_boxPicDir.c_str());
+	makedir((char *)m_picDir.c_str());
+	makedir((char *)m_themeDir.c_str());
+	makedir((char *)m_musicDir.c_str());
+	makedir((char *)m_videoDir.c_str());
+	makedir((char *)m_fanartDir.c_str());
+	makedir((char *)m_screenshotDir.c_str());
+	makedir((char *)m_txtCheatDir.c_str());
+	makedir((char *)m_altDolDir.c_str());
+	makedir((char *)m_bcaDir.c_str());
+	makedir((char *)m_cheatDir.c_str());
+	makedir((char *)m_wdmDir.c_str());
+	makedir((char *)m_wipDir.c_str());
+
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
 	themeName = m_cfg.getString("GENERAL", "theme", "DEFAULT");
 	m_themeDataDir = sfmt("%s/%s", m_themeDir.c_str(), themeName.c_str());
 	m_theme.load(sfmt("%s.ini", m_themeDataDir.c_str()).c_str());
-	// 
+	//
 	defaultMenuLanguage = 7; //English
 	switch (CONF_GetLanguage())
 	{
