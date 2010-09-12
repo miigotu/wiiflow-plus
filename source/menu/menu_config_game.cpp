@@ -564,6 +564,18 @@ void CMenu::_gameSettings(void)
 					break;
 				}
 		}
+		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1)!=0)
+		{	
+			if (m_btnMgr.selected() == m_gameSettingsBtnCover)
+			{
+					m_cf.stopPicLoader(true);	// Empty cover cache
+					remove(fmt("%s/%s.png", m_picDir.c_str(), m_cf.getId().c_str()));
+					remove(fmt("%s/%s.png", m_boxPicDir.c_str(), m_cf.getId().c_str()));
+					remove(fmt("%s/%s.wfc", m_cacheDir.c_str(), m_cf.getId().c_str()));
+					m_cf.startPicLoader();
+			}
+		}
+
 	}
 	m_gcfg2.save();
 	m_gcfg2.unload();
