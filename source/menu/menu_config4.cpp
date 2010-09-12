@@ -60,13 +60,11 @@ void CMenu::_showConfig4(void)
 	m_btnMgr.show(m_config4BtnSaveFavMode);
 	m_btnMgr.show(m_config4LblCategoryOnBoot);
 	m_btnMgr.show(m_config4BtnCategoryOnBoot);
-	if (/*m_channels.CanIdentify() && */m_loaded_ios_base !=57)
-	{
-		m_btnMgr.show(m_config4LblReturnTo);
-		m_btnMgr.show(m_config4LblReturnToVal);
-		m_btnMgr.show(m_config4BtnReturnToM);
-		m_btnMgr.show(m_config4BtnReturnToP);
-	}
+	m_btnMgr.show(m_config4LblReturnTo);
+	m_btnMgr.show(m_config4LblReturnToVal);
+	m_btnMgr.show(m_config4BtnReturnToM);
+	m_btnMgr.show(m_config4BtnReturnToP);
+
 	for (u32 i = 0; i < ARRAY_SIZE(m_config4LblUser); ++i)
 		if (m_config4LblUser[i] != -1u)
 			m_btnMgr.show(m_config4LblUser[i]);
