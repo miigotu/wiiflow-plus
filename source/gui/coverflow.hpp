@@ -87,7 +87,7 @@ public:
 	void setTitleWidth(bool selected, float side, float center);
 	void setTitleStyle(bool selected, u16 side, u16 center);
 	void setColors(bool selected, const CColor &begColor, const CColor &endColor, const CColor &offColor);
-	void setSelectedTextColor(const u32 color);
+	void setSelectedTextAlpha(const u8 color);
 	void setShadowColors(bool selected, const CColor &centerColor, const CColor &begColor, const CColor &endColor, const CColor &offColor);
 	void setShadowPos(float scale, float x, float y);
 	void setMirrorAlpha(float cover, float title);
@@ -238,7 +238,7 @@ private:
 	u32 m_numBufCovers;
 	SFont m_font;
 	CColor m_fontColor;
-	u32 m_fontSelectedColor;
+	u8 m_fontSelectedColor;
 	bool m_box;
 	u32 m_range;
 	u32 m_rows;

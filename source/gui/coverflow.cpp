@@ -230,7 +230,7 @@ bool CCoverFlow::init(void)
 	// Load font
 	m_font.fromBuffer(cffont_ttf, cffont_ttf_size, 32, 32);
 	m_fontColor = CColor(0xFFFFFFFF);
-	m_fontSelectedColor = 0xFFFFFFFF;
+	m_fontSelectedColor = 0xFF;
 	// 
 	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
 		guPerspective(m_projMtx, 45, 16.f / 9.f, .1f, 300.f);
@@ -468,7 +468,7 @@ void CCoverFlow::setColors(bool selected, const CColor &begColor, const CColor &
 	lo.mouseOffColor = offColor;
 }
 
-void CCoverFlow::setSelectedTextColor(const u32 color)
+void CCoverFlow::setSelectedTextAlpha(const u8 color)
 {
 	m_fontSelectedColor = color;
 }

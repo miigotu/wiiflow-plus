@@ -34,6 +34,8 @@ bool CMenu::_code(char code[4], bool erase)
 	u32 n = 0;
 	wchar_t codeLbl[] = L"_ _ _ _";
 
+	erase = true;
+
 	SetupInput();
 	memset(code, 0, sizeof code);
 	m_btnMgr.setText(m_codeLblTitle, codeLbl);
@@ -43,33 +45,62 @@ bool CMenu::_code(char code[4], bool erase)
 	while (true)
 	{
 		_mainLoopCommon(wd);
-		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
-			break;
-		else if (BTN_UP_PRESSED)
-			m_btnMgr.up();
-		else if (BTN_DOWN_PRESSED)
-			m_btnMgr.down();
-		if (BTN_A_PRESSED)
+		if (BTN_HOME_PRESSED)
 		{
-			m_btnMgr.click();
-			if (m_btnMgr.selected() == m_codeBtnErase)
-			{
-				memset(code, 0, sizeof code);
-				m_cfg.remove("GENERAL", "parent_code");
-				n = 0;
-				m_locked = false;
-			}
-			if (m_btnMgr.selected() == m_codeBtnBack)
+			break;
+		}
+		else if (WPadIR_ANY())
+		{
+			if (BTN_B_PRESSED)
 				break;
-			else
-				for (int i = 0; i < 10; ++i)
-					if (m_btnMgr.selected() == m_codeBtnKey[i])
-					{
-						codeLbl[n * 2] = 'X';
-						code[n++] = '0' + i;
-						m_btnMgr.setText(m_codeLblTitle, codeLbl);
-						break;
-					}
+			else if (BTN_UP_PRESSED)
+				m_btnMgr.up();
+			else if (BTN_DOWN_PRESSED)
+				m_btnMgr.down();
+			if (BTN_A_PRESSED)
+			{
+				m_btnMgr.click();
+				if (m_btnMgr.selected() == m_codeBtnErase)
+				{
+					memset(code, 0, sizeof code);
+					m_cfg.remove("GENERAL", "parent_code");
+					n = 0;
+					m_locked = false;
+				}
+				if (m_btnMgr.selected() == m_codeBtnBack)
+					break;
+				else
+					for (int i = 0; i < 10; ++i)
+						if (m_btnMgr.selected() == m_codeBtnKey[i])
+						{
+							codeLbl[n * 2] = 'X';
+							code[n++] = '0' + i;
+							m_btnMgr.setText(m_codeLblTitle, codeLbl);
+							break;
+						}
+			}
+		}
+		else
+		{
+			// Map buttons to numbers
+			int c = -1;
+			if (BTN_UP_PRESSED) c = 0;
+			else if (BTN_LEFT_PRESSED) c = 1;
+			else if (BTN_RIGHT_PRESSED) c = 2;
+			else if (BTN_DOWN_PRESSED) c = 3;
+			else if (BTN_MINUS_PRESSED) c = 4;
+			else if (BTN_PLUS_PRESSED) c = 5;
+			else if (BTN_A_PRESSED) c = 6;
+			else if (BTN_B_PRESSED) c = 7;
+			else if (BTN_1_PRESSED) c = 8;
+			else if (BTN_2_PRESSED) c = 9;
+
+			if (c != -1)
+			{
+				codeLbl[n * 2] = 'X';
+				code[n++] = '0' + c;
+				m_btnMgr.setText(m_codeLblTitle, codeLbl);
+			}
 		}
 		if (n >= sizeof code)
 			break;
