@@ -12,7 +12,9 @@ struct SSoundEffect
 	u32 freq;
 	u8 format;
 	int voice;
-	SSoundEffect(void) : data(), length(0), freq(48000), format(-1), voice(-1) { }
+	u8 loopFlag;
+	u32 loopStart;
+	SSoundEffect(void) : data(), length(0), freq(48000), format(-1), voice(-1), loopFlag(0), loopStart(0) { }
 	bool play(u8 volume);
 	void stop(void);
 	bool fromWAVFile(const char *filename);

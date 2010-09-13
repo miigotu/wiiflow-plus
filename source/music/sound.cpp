@@ -9,6 +9,7 @@ using namespace std;
 
 bool SSoundEffect::play(u8 volume)
 {
+	bool ret;
 	if (!data || length == 0)
 		return false;
 	if (volume == 0)
@@ -16,7 +17,18 @@ bool SSoundEffect::play(u8 volume)
 	voice = ASND_GetFirstUnusedVoice();
 	if (voice < 0)
 		return false;
-	return ASND_SetVoice(voice, format, freq, 0, data.get(), length, volume, volume, 0) == SND_OK;
+	ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length, volume, volume, 0) == SND_OK;
+  	if (ret && loopFlag)
+	{
+		int sampleSize = (((length-8)/8) * 14) * sizeof (s16);
+		while(/* !ASND_TestVoiceBufferReady(voice) */ 1)
+		{
+			if (ASND_GetTickCounterVoice(voice) * ASND_GetSamplesPerTick() * sampleSize >= length)
+				break;
+		}
+		ret = ASND_SetInfiniteVoice(voice, format, freq, 0, data.get()+(loopStart*sampleSize), length-(loopStart*sampleSize), volume, volume) == SND_OK;
+	}
+	return ret;
 }
 
 void SSoundEffect::stop(void)
@@ -432,6 +444,7 @@ bool SSoundEffect::fromBNS(const u8 *buffer, u32 size)
 	BNSInfo infoChunk;
 	loadBNSInfo(infoChunk, buffer + hdr.infoOffset);
 	const BNSData &dataChunk = *(const BNSData *)(buffer + hdr.dataOffset);
+
 	// Check sizes
 	if (size < hdr.size || size < hdr.infoOffset + hdr.infoSize || size < hdr.dataOffset + hdr.dataSize
 		|| hdr.infoSize < 0x60 || hdr.dataSize < sizeof dataChunk
@@ -448,6 +461,10 @@ bool SSoundEffect::fromBNS(const u8 *buffer, u32 size)
 	if (format == (u8)-1)
 		return false;
 	freq = infoChunk.freq;
+	
+	loopFlag = infoChunk.loopFlag;
+	loopStart = infoChunk.loopStart;
+	
 	// Copy data
 	if (infoChunk.codecNum == 0)
 	{
