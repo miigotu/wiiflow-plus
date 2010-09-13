@@ -2,6 +2,7 @@
 #include <gccore.h>
 #include "cheat.hpp"
 #include "loader/fs.h"
+#include "gecko.h"
 #include "text.hpp"
 
 #include "menu.hpp"
@@ -70,7 +71,7 @@ void CMenu::_CheatSettings()
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if (BTN_MINUS_PRESSED || BTN_LEFT_PRESSED)
+		else if (BTN_MINUS_PRESSED || BTN_LEFT_PRESSED)
 		{
 			if (m_cheatSettingsPage > 1)
 			{
@@ -96,11 +97,11 @@ void CMenu::_CheatSettings()
 		{
 			remove(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str()));
 			remove(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));
-			m_cfg.remove(m_cf.getId(), "cheat");
-			m_cfg.remove(m_cf.getId(), "hooktype");
+			m_gcfg2.remove(m_cf.getId(), "cheat");
+			m_gcfg2.remove(m_cf.getId(), "hooktype");
 			break;
 		}
-		if (BTN_A_PRESSED)
+		else if (BTN_A_PRESSED)
 		{
 			m_btnMgr.click();
 			if (m_btnMgr.selected() == m_cheatBtnBack)
@@ -127,7 +128,7 @@ void CMenu::_CheatSettings()
 					_showCheatSettings();
 				}
 			
-			if (m_btnMgr.selected() == m_cheatBtnApply)
+ 			if (m_btnMgr.selected() == m_cheatBtnApply)
 			{
 				bool selected = false;
 				//checks if at least one cheat is selected
@@ -142,19 +143,19 @@ void CMenu::_CheatSettings()
 				if (selected)
 				{
 					m_cheatfile.createGCT(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str())); 
-					m_cfg.setOptBool(m_cf.getId(), "cheat", 1);
-					m_cfg.setInt(m_cf.getId(), "hooktype", m_cfg.getInt(m_cf.getId(), "hooktype", 1));
+					m_gcfg2.setOptBool(m_cf.getId(), "cheat", 1);
+					m_gcfg2.setInt(m_cf.getId(), "hooktype", m_cfg.getInt(m_cf.getId(), "hooktype", 1));
 				}
 				else
 				{
 					remove(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str()));
-					m_cfg.remove(m_cf.getId(), "cheat");
-					m_cfg.remove(m_cf.getId(), "hooktype");
+					m_gcfg2.remove(m_cf.getId(), "cheat");
+					m_gcfg2.remove(m_cf.getId(), "hooktype");
 				}
 				m_cheatfile.createTXT(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));
 				break;
 			}
-			if (m_btnMgr.selected() == m_cheatBtnDownload)
+			else if (m_btnMgr.selected() == m_cheatBtnDownload)
 			{
 				// Download cheat code
 				m_btnMgr.hide(m_cheatLblTitle);
@@ -168,7 +169,7 @@ void CMenu::_CheatSettings()
 					m_btnMgr.hide(m_cheatLblTitle);
 					break;
 				}
-
+				
 				buffer = smartCoverAlloc(bufferSize);
 				cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, this);
 

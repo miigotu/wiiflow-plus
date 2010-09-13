@@ -611,7 +611,7 @@ void CMenu::_buildMenus(void)
 	m_mainBgLQ.fromPNG(background_png, GX_TF_CMPR, ALLOC_MEM2, 64, 64);
 	m_gameBgLQ = m_mainBgLQ;
 	
-	//m_waitMessage = _texture(theme.texSet, "GENERAL", "waitmessage", m_waitMessage); 
+	m_waitMessage = _texture(theme.texSet, "GENERAL", "waitmessage", m_waitMessage); 
 
 	// Build menus
 	_initMainMenu(theme);
