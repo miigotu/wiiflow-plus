@@ -10,6 +10,7 @@
 
 #include "config.hpp"
 #include "texture.hpp"
+#include "gui.hpp"
 
 class CFanartElement
 {
@@ -63,9 +64,11 @@ public:
 	
 	void unload();
 	bool load(const char *path, const char *id);
+	bool isAnimationComplete();
+	bool isLoaded();
 	
 	void getBackground(STexture &hq, STexture &lq);
-	u32 getTextColor(void);
+	CColor getTextColor(void);
 	bool hideCover(bool disable_scaa);
 	void draw(bool front = true);
 	void tick();
@@ -73,6 +76,7 @@ public:
 private:
 	std::vector<CFanartElement> m_elms;
 
+	bool m_animationComplete;
 	bool m_loaded;
 	Config m_cfg;
 

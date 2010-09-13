@@ -13,7 +13,7 @@ static  guVector  _GRRaxisy = (guVector){0, 1, 0}; // Even at runtime
 static  guVector  _GRRaxisz = (guVector){0, 0, 1}; // NOT ever!
 
 CFanart::CFanart(void)
-	: m_loaded(false), m_cfg(), m_bg(), m_bglq()
+	: m_animationComplete(false), m_loaded(false), m_cfg(), m_bg(), m_bglq()
 {
 }
 
@@ -84,9 +84,9 @@ void CFanart::getBackground(STexture &hq, STexture &lq)
 	}
 }
 
-u32 CFanart::getTextColor(void)
+CColor CFanart::getTextColor(void)
 {
-	return m_cfg.getInt("GENERAL", "textcolor", 0xFFFFFFFF);
+	return m_cfg.getColor("GENERAL", "textcolor", CColor(0xFFFFFFFF));
 }
 
 bool CFanart::hideCover(bool disable_scaa)
@@ -106,10 +106,27 @@ bool CFanart::hideCover(bool disable_scaa)
 	return retval;
 }
 
+bool CFanart::isLoaded()
+{
+	return m_loaded;
+}
+
+bool CFanart::isAnimationComplete()
+{
+	return m_animationComplete;
+}
+
 void CFanart::tick()
 {
+	m_animationComplete = true;
 	for (u32 i = 0; i < m_elms.size(); ++i)
+	{
 		m_elms[i].tick();
+		if (!m_elms[i].IsAnimationComplete())
+		{
+			m_animationComplete = false;
+		}
+	}
 }
 
 void CFanart::draw(bool front)
