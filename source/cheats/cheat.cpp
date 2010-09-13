@@ -171,6 +171,11 @@ void CMenu::_CheatSettings()
 				}
 				
 				buffer = smartCoverAlloc(bufferSize);
+				if (!buffer)
+				{
+					error(L"Out of memory!");
+					break;
+				}
 				cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, this);
 
 				if (cheatfile.data != NULL && cheatfile.size > 65 && cheatfile.data[0] != '<') {

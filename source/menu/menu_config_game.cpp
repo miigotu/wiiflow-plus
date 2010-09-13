@@ -493,7 +493,7 @@ void CMenu::_gameSettings(void)
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnCover)
 			{
-				m_cf.stopPicLoader(true);	// Empty cover cache
+				m_cf.stopPicLoader(true);
 				_hideGameSettings();
 				_download(id);
 				_showGameSettings();
@@ -501,8 +501,6 @@ void CMenu::_gameSettings(void)
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnCheat)
 			{
-				//Handler for Cheat Button
-				Mount_Devices();
 				_hideGameSettings();
 				_CheatSettings();
 				_showGameSettings();

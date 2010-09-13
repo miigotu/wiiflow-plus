@@ -399,9 +399,9 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 	else
 		_setAA(min(m_theme.getInt(domain, "max_fsaa", 3), m_cfg.getInt("GENERAL", "max_fsaa", 5)));
 	m_cf.setTextureQuality(
-		m_theme.getFloat(domain, "tex_lod_bias", -0.3f),
-		m_theme.getInt(domain, "tex_aniso", 0),
-		m_theme.getBool(domain, "tex_edge_lod", false));
+		m_theme.getFloat(domain, "tex_lod_bias", -3.f),
+		m_theme.getInt(domain, "tex_aniso", 2),
+		m_theme.getBool(domain, "tex_edge_lod", true));
 	m_cf.setRange(_getCFInt(domain, "rows", 1, sf), _getCFInt(domain, "columns", 9, sf));
 	m_cf.setCameraPos(false,
 		_getCFV3D(domain, "camera_pos", Vector3D(0.f, 1.5f, 5.f), sf),

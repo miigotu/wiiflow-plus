@@ -331,6 +331,7 @@ void CMenu::_cfTheme(void)
 		if (BTN_HOME_PRESSED)
 		{
 			m_theme.clear();
+			m_theme.unload();
 			m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), m_cfg.getString("GENERAL", "theme", "defaut").c_str()).c_str());
 			break;
 		}
@@ -425,6 +426,7 @@ void CMenu::_cfTheme(void)
 				else if (m_btnMgr.selected() == m_cfThemeBtnCancel)
 				{
 					m_theme.clear();
+					m_theme.unload();
 					m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), m_cfg.getString("GENERAL", "theme", "defaut").c_str()).c_str());
 					break;
 				}

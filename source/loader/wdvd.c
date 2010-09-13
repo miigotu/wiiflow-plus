@@ -321,7 +321,7 @@ s32 WDVD_SetUSBMode(u32 mode, const u8 *id, s32 partition)
 
     /* Set USB mode */
     inbuf[0] = IOCTL_DI_SETWBFSMODE << 24;
-    inbuf[1] = (id) ? 1 : 0;
+    inbuf[1] = (id) ? mode : 0;
 
     /* Copy ID */
     if (id) {
