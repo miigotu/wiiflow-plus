@@ -8,6 +8,8 @@
 
 using namespace std;
 
+lwp_t thread = LWP_THREAD_NULL;
+
 bool SSoundEffect::play(u8 vol, bool in_thread)
 {
 	bool ret;
@@ -17,60 +19,32 @@ bool SSoundEffect::play(u8 vol, bool in_thread)
 		return true;
 	
 	volume = vol;
-	if (!in_thread) // If running in a thread, reuse the voice
-	{
+	if (!in_thread)
 		voice = ASND_GetFirstUnusedVoice();
-	}
 	
 	if (voice < 0 || voice >= 16)
 		return false;
-
-	if (loopFlag && !in_thread)
-	{
-		//convert samples to offset
-		if (format == VOICE_STEREO_16BIT)
-		{
-			loopStart *= 4;
-			loopEnd *= 4;
-		}
-		else if (format == VOICE_MONO_16BIT)
-		{ 
-			loopStart *= 2;
-			loopEnd *= 2;
-		}
-		// Make sure 0 isnt sent as data length to the voice processor incase loopEnd is not present.
-		if (loopEnd == 0 || loopEnd > length)
-			loopEnd = length;
-			
-		if (loopStart >= length)
-		{
-			loopStart = 0;
-		}
-	}
 
 	if (!loopFlag)
 		ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length, volume, volume, 0) == SND_OK;
 	else
 	{
+		if (loopEnd == 0 || loopEnd > length)
+			loopEnd = length;
+		if (loopStart >= length)
+			loopStart = 0;
+
 		if (!in_thread)
-		{
-			lwp_t thread = LWP_THREAD_NULL;
-			LWP_CreateThread(&thread, (void *(*)(void *)) SSoundEffect::playLoop, (void *)this, 0, 8192, 40);
-			ret = 0;
-		}
+			ret = LWP_CreateThread(&thread, (void *(*)(void *)) SSoundEffect::playLoop, (void *)this, 0, 8192, 40) == 0;
 		else
 		{
 			ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length-(length-loopEnd), volume, volume, 0) == SND_OK;
 			if (ret)
 			{
 				//Wait until the loop is needed
-				while(voice != -1 && ASND_StatusVoice(voice) != 0)	{;;}
+				while(ASND_StatusVoice(voice) != 0)	{;;}
 				//Play the loop infinitely
-				
-				if (voice != -1)
-				{
-					ret = ASND_SetInfiniteVoice(voice, format, freq, 0, data.get()+(loopStart), length-loopStart-(length-loopEnd), volume, volume) == SND_OK;
-				}
+				ret = ASND_SetInfiniteVoice(voice, format, freq, 0, data.get()+loopStart, length-(length-loopEnd)-loopStart, volume, volume) == SND_OK;
 			}
 		}
 	} 
@@ -201,6 +175,7 @@ bool SSoundEffect::fromWAV(const u8 *buffer, u32 size)
 	if (format == (u8)-1)
 		return false;
 	freq = le32(fmtChunk.freq);
+	loopFlag = 0;
 	// Find data
 	chunk = (const SWaveChunk *)(&chunk->data + le32(chunk->size));
 	while (&chunk->data < bufEnd && chunk->fcc != 'data')
@@ -298,6 +273,7 @@ bool SSoundEffect::fromAIFF(const u8 *buffer, u32 size)
 	if (format == (u8)-1)
 		return false;
 	freq = (u32)ConvertFromIeeeExtended(fmtChunk.freq);
+	loopFlag = 0;
 	// Find data
 	chunk = (const SWaveChunk *)(&chunk->data + chunk->size);
 	while (&chunk->data < bufEnd && chunk->fcc != 'SSND')
@@ -514,8 +490,8 @@ bool SSoundEffect::fromBNS(const u8 *buffer, u32 size)
 
 	freq = infoChunk.freq;
 	loopFlag = infoChunk.loopFlag;
-	loopStart = infoChunk.loopStart;
-	loopEnd = infoChunk.loopEnd;
+	loopStart = infoChunk.loopStart*infoChunk.chanCount*2;
+	loopEnd = infoChunk.loopEnd*infoChunk.chanCount*2;
 	
 	// Copy data
 	if (infoChunk.codecNum == 0)
