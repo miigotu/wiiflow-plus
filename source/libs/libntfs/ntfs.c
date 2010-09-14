@@ -519,7 +519,7 @@ bool ntfsMount (const char *name, const DISC_INTERFACE *interface, sec_t startSe
         return false;
     }
 	
-	ntfs_set_ignore_case(vd->vol);
+	//ntfs_set_ignore_case(vd->vol);
 
     // Add the device to the devoptab table
     if (ntfsAddDevice(name, vd)) {

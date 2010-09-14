@@ -1,5 +1,6 @@
 
 #include "sound.hpp"
+#include "gecko.h"
 #include <math.h>
 #include <asndlib.h>
 #include <fstream>
@@ -9,26 +10,44 @@ using namespace std;
 
 bool SSoundEffect::play(u8 volume)
 {
-	bool ret;
+		bool ret;
 	if (!data || length == 0)
 		return false;
 	if (volume == 0)
 		return true;
 	voice = ASND_GetFirstUnusedVoice();
-	if (voice < 0)
+	if (voice < 0 || voice >= 16)
 		return false;
-	ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length, volume, volume, 0) == SND_OK;
-  	if (ret && loopFlag)
+
+	//if (!loopFlag)
+		ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length, volume, volume, 0) == SND_OK;
+/*  else
 	{
-		int sampleSize = (((length-8)/8) * 14) * sizeof (s16);
-		while(/* !ASND_TestVoiceBufferReady(voice) */ 1)
+		//convert samples to offset
+		if (format == VOICE_STEREO_16BIT)
 		{
-			if (ASND_GetTickCounterVoice(voice) * ASND_GetSamplesPerTick() * sampleSize >= length)
-				break;
+			loopStart *= 4;
+			loopEnd *= 4;
 		}
-		ret = ASND_SetInfiniteVoice(voice, format, freq, 0, data.get()+(loopStart*sampleSize), length-(loopStart*sampleSize), volume, volume) == SND_OK;
-	}
-	return ret;
+		else if (format == VOICE_MONO_16BIT)
+		{ 
+			loopStart *= 2;
+			loopEnd *= 2;
+		}
+		// Make sure 0 isnt sent as data length to the voice processor incase loopEnd is not present.
+		if (loopEnd == 0)
+			loopEnd = length;
+		
+		ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length-(length-loopEnd), volume, volume, 0) == SND_OK;
+		if (ret)
+		{
+			//Wait until the loop is needed
+			while(ASND_StatusVoice(voice) != 0)	{;;}
+			//Play the loop infinitely
+			ret = ASND_SetInfiniteVoice(voice, format, freq, 0, data.get()+(loopStart), length-loopStart-(length-loopEnd), volume, volume) == SND_OK;
+		}
+	} 
+*/	return ret;
 }
 
 void SSoundEffect::stop(void)
@@ -460,10 +479,11 @@ bool SSoundEffect::fromBNS(const u8 *buffer, u32 size)
 		format = VOICE_STEREO_16BIT;
 	if (format == (u8)-1)
 		return false;
+
 	freq = infoChunk.freq;
-	
 	loopFlag = infoChunk.loopFlag;
 	loopStart = infoChunk.loopStart;
+	loopEnd = infoChunk.loopEnd;
 	
 	// Copy data
 	if (infoChunk.codecNum == 0)
