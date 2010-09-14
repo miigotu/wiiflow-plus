@@ -109,7 +109,7 @@ void CMenu::ScanInput()
 		if (enable_wmote_roll)
 		{
 			wmote_roll[wmote] = wd[wmote]->orient.roll; // Use wd[wmote]->ir.angle if you only want this to work when pointing at the screen
-			wmote_roll_skip[wmote] = CalculateRepeatSpeed(wmote_roll[wmote] / 90.f, wmote_roll_skip[wmote]);
+			wmote_roll_skip[wmote] = CalculateRepeatSpeed(wmote_roll[wmote] / 45.f, wmote_roll_skip[wmote]);
 		}
 		right_stick_skip[wmote] = CalculateRepeatSpeed(right_stick_mag[wmote], right_stick_skip[wmote]);
 	}

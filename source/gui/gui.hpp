@@ -26,7 +26,7 @@ struct SButtonTextureSet
 class CButtonsMgr
 {
 public:
-	bool init(void);
+	bool init(CVideo &vid);
 	void setRumble(bool enabled) { m_rumbleEnabled = enabled; }
 	void reserve(u32 capacity) { m_elts.reserve(capacity); }
 	u32 addButton(SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color,
@@ -42,6 +42,9 @@ public:
 	void setTexture(u32 id ,STexture &bg);
 	void setTexture(u32 id, STexture &bg, int width, int height);
 	void setProgress(u32 id, float f, bool instant = false);
+	void reset(u32 id, bool instant = false);
+	void moveBy(u32 id, int x, int y, bool instant = false);
+	void getDimensions(u32 id, int &x, int &y, u32 &width, u32 &height);
 	void hide(u32 id, int dx, int dy, float scaleX, float scaleY, bool instant = false);
 	void hide(u32 id, bool instant = false);
 	void show(u32 id, bool instant = false);
@@ -87,6 +90,8 @@ private:
 		float scaleY;
 		float targetScaleX;
 		float targetScaleY;
+		int moveByX;
+		int moveByY;
 	public:
 		virtual ~SElement(void) { }
 		virtual void tick(void);
@@ -134,6 +139,7 @@ private:
 	SSoundEffect m_sndHover;
 	SSoundEffect m_sndClick;
 	u8 m_soundVolume;
+	CVideo m_vid;
 private:
 	void _drawBtn(const SButton &b, bool selected, bool click);
 	void _drawLbl(SLabel &b);

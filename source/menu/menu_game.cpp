@@ -727,7 +727,7 @@ void CMenu::_launchGame(string &id, bool dvd)
 
 	bit 8-9 -> Emulation mode: 0->default 1-> DLC redirected to device:/nand, 2-> Full Mode  3-> Full Mode with DLC redirected to device:/nand
 	*/
-
+/*
 	// NAND emulation settings
 	int nand_device = 1;
 	int nand_dir = 0;
@@ -755,9 +755,7 @@ void CMenu::_launchGame(string &id, bool dvd)
 					(playlog << 6) | 
 					(ffs_emulation << 7) |
 					(emulation_mode << 8);
-
-	ghexdump(&nand_mode, 4);
-
+*/
 	if (id == "RPWE41" || id == "RPWZ41" || id == "SPXP41") // Prince of Persia, Rival Swords
 	{
 		//cheat = false;

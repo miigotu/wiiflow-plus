@@ -133,11 +133,11 @@ int CMenu::main(void)
 		{
 			if ((BTN_UP_REPEAT || RIGHT_STICK_UP) && (wii_btnsHeld & WBTN_B) == 0)
 				m_cf.up();
-			if ((BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT) && (wii_btnsHeld & WBTN_B) == 0)
+			if (((BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT) && (wii_btnsHeld & WBTN_B) == 0) || WROLL_RIGHT)
 				m_cf.right();
 			if ((BTN_DOWN_REPEAT ||  RIGHT_STICK_DOWN) && (wii_btnsHeld & WBTN_B) == 0)
 				m_cf.down();
-			if ((BTN_LEFT_REPEAT || RIGHT_STICK_LEFT) && (wii_btnsHeld & WBTN_B) == 0)
+			if (((BTN_LEFT_REPEAT || RIGHT_STICK_LEFT) && (wii_btnsHeld & WBTN_B) == 0) || WROLL_LEFT)
 				m_cf.left();
 		}
 		//CF Layout select

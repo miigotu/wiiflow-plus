@@ -62,7 +62,7 @@ bool is_gameid(char *id)
 	int i;
 	for (i=0; i<6; i++) {
 		if (!isalnum(id[i])) return false;
-		if (isalpha(id[i]) && islower(id[i])) return false;
+//		if (isalpha(id[i]) && islower(id[i])) return false;
 	}
 	return true;
 }
@@ -259,6 +259,13 @@ s32 _WBFS_Ext_GetHeadersCount()
 			return -5;
 		}
 		fat_hdr_list = new_fat_hdr_list;
+		
+		int u;
+		for (u = 0; u < strlen((char *) &tmpHdr.id); u++)
+		{
+			tmpHdr.id[u] = toupper(tmpHdr.id[u]);
+		}
+		
 		memcpy(&fat_hdr_list[fat_hdr_count-1], &tmpHdr, sizeof(struct discHdr));
 	}
 	dirclose(dir_iter);
@@ -304,12 +311,12 @@ int WBFS_Ext_find_fname(u8 *id, char *fname, int len)
 		if (S_ISDIR(st.st_mode)) {
 			if (name[6] == '_') {
 				// GAMEID_TITLE
-				if (strncmp(name, (char*)id, 6) != 0) goto try_alter;
+				if (strncasecmp(name, (char*)id, 6) != 0) goto try_alter;
 			} else {
 				try_alter:
 				// TITLE [GAMEID]
 				if (name[n-8] != '[' || name[n-1] != ']') continue;
-				if (strncmp(&name[n-7], (char*)id, 6) != 0) continue;
+				if (strncasecmp(&name[n-7], (char*)id, 6) != 0) continue;
 			}
 			// look for .wbfs file
 			snprintf(fname, len, "%s/%s/%.6s.wbfs", path, name, id);
@@ -326,7 +333,7 @@ int WBFS_Ext_find_fname(u8 *id, char *fname, int len)
 				&& (strcasecmp(p, ".iso") != 0) ) continue;
 			int n = p - name; // length withouth .wbfs
 			if (!check_layout_b(name, n, fn_id, fn_title)) continue;
-			if (strncmp((char*)fn_id, (char*)id, 6) != 0) continue;
+			if (strncasecmp((char*)fn_id, (char*)id, 6) != 0) continue;
 			snprintf(fname, len, "%s/%s", path, name);
 		}
 		if (stat(fname, &st) == 0) break;

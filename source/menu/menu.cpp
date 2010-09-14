@@ -226,7 +226,7 @@ void CMenu::init(bool fromHBC)
 	m_cursor4.init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", "pointer4").c_str()).c_str(),
 		pWide, pShadowColor, pShadowX, pShadowY, pShadowBlur, 3);
 		
-	m_btnMgr.init();
+	m_btnMgr.init(m_vid);
 
 	_buildMenus();
 	_loadCFCfg();

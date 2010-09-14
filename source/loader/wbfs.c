@@ -329,7 +329,7 @@ s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *
 
 	if (part_fs == PART_FS_FAT || part_fs == PART_FS_NTFS) {
 		//if (wbfsDev != WBFS_DEVICE_USB) return -1;
-		if (wbfsDev == WBFS_DEVICE_USB && (part_lba == fs_fat_sec || part_lba == fs_ntfs_sec) && (fs_fat_mount == 1 || fs_ntfs_mount == 1)) {
+		if (wbfsDev == WBFS_DEVICE_USB && ((part_lba == fs_fat_sec && fs_fat_mount == 1) || (part_lba == fs_ntfs_sec && fs_ntfs_mount == 1))) {
 			strcpy(wbfs_fs_drive, "usb:");
 		} else if (wbfsDev == WBFS_DEVICE_SDHC && part_lba == fs_sd_sec && fs_sd_mount == 1) {
 			strcpy(wbfs_fs_drive, "sd:");

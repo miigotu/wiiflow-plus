@@ -82,15 +82,18 @@
 #define LEFT_STICK_ANG_LEFT (left_stick_angle[wmote] >= 210 && left_stick_angle[wmote] <= 330)
 
 #define RIGHT_STICK_UP ((RIGHT_STICK_ANG_UP && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || PAD_SubStickY(wmote) > 20)
-#define RIGHT_STICK_RIGHT ((RIGHT_STICK_ANG_RIGHT && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || (WBTN_B_HELD && (wmote_roll[wmote] > 15) && wmote_roll_skip[wmote] == 0) || PAD_SubStickX(wmote) > 20)
+#define RIGHT_STICK_RIGHT ((RIGHT_STICK_ANG_RIGHT && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || PAD_SubStickX(wmote) > 20)
 #define RIGHT_STICK_DOWN ((RIGHT_STICK_ANG_DOWN && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || PAD_SubStickY(wmote) < -20)
-#define RIGHT_STICK_LEFT ((RIGHT_STICK_ANG_LEFT && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || (WBTN_B_HELD && (wmote_roll[wmote] < -15) && wmote_roll_skip[wmote] == 0) || PAD_SubStickX(wmote) < -20)
+#define RIGHT_STICK_LEFT ((RIGHT_STICK_ANG_LEFT && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || PAD_SubStickX(wmote) < -20)
 
 #define RIGHT_STICK_ANG_UP ((right_stick_angle[wmote] >= 300 && right_stick_angle[wmote] <= 360) \
 		|| (right_stick_angle[wmote] >= 0 && right_stick_angle[wmote] <= 60))
 #define RIGHT_STICK_ANG_RIGHT (right_stick_angle[wmote] >= 30 && right_stick_angle[wmote] <= 150)
 #define RIGHT_STICK_ANG_DOWN (right_stick_angle[wmote] >= 120 && right_stick_angle[wmote] <= 240)
 #define RIGHT_STICK_ANG_LEFT (right_stick_angle[wmote] >= 210 && right_stick_angle[wmote] <= 330)
+
+#define WROLL_LEFT  (WBTN_B_HELD && (wmote_roll[wmote] < -5) && wmote_roll_skip[wmote] == 0)
+#define WROLL_RIGHT (WBTN_B_HELD && (wmote_roll[wmote] > 5)  && wmote_roll_skip[wmote] == 0)
 
 /*
 //Button values reference//

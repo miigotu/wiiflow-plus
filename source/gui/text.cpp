@@ -256,6 +256,8 @@ void CText::setText(SFont font, const wstringEx &t)
 	CText::SWord w;
 	vector<wstringEx> lines;
 
+	totalHeight = 0;
+
 	m_lines.clear();
 	m_font = font;
 	if (!m_font.font)
@@ -289,6 +291,8 @@ void CText::setText(SFont font, const wstringEx &t)
 				i = wstringEx::npos;
 			}
 		}
+		
+		totalHeight += font.font->getHeight(lines[k].c_str());
 	}
 }
 
@@ -296,6 +300,8 @@ void CText::setText(SFont font, const wstringEx &t, u32 startline)
 {
 	CText::SWord w;
 	vector<wstringEx> lines;
+
+	totalHeight = 0;
 
 	m_lines.clear();
 	m_font = font;
@@ -330,6 +336,8 @@ void CText::setText(SFont font, const wstringEx &t, u32 startline)
 				i = wstringEx::npos;
 			}
 		}
+		
+		totalHeight += m_font.font->getHeight(lines[k].c_str());
 	}
 }
 
@@ -431,4 +439,39 @@ void CText::draw(void)
 			m_font.font->setY(m_lines[k][i].pos.y);
 			m_font.font->drawText(0, m_font.lineSpacing, m_lines[k][i].text.c_str(), m_color);
 		}
+}
+
+int CText::getTotalHeight(void)
+{
+	CLine line = m_lines[m_lines.size() - 1];
+	
+	int height = line[line.size() - 1].targetPos.y;
+	return height + totalHeight;
+}
+
+string upperCase(string text)
+{
+	char c;
+
+	for (string::size_type i = 0; i < text.size(); ++i)
+	{
+		c = text[i];
+		if (c >= 'a' && c <= 'z')
+			text[i] = c & 0xDF;
+	}
+	return text;
+}
+
+
+string lowerCase(string text)
+{
+	char c;
+
+	for (string::size_type i = 0; i < text.size(); ++i)
+	{
+		c = text[i];
+		if (c >= 'A' && c <= 'Z')
+			text[i] = c | 0x20;
+	}
+	return text;
 }

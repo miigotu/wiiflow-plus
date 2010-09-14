@@ -167,7 +167,7 @@ bool FS_Mount_USB(u32 sector, bool ntfs)
 	if (!g_ntfs_usbOK && !g_fat_usbOK && ntfs)
 	{
 		__io_usbstorage.startup();
-		g_ntfs_usbOK = ntfsMount("usb", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
+		g_ntfs_usbOK = ntfsMount("usb", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER | NTFS_IGNORE_CASE);
 	} 
 	if (g_fat_usbOK && !ntfs)
 	{
@@ -178,6 +178,8 @@ bool FS_Mount_USB(u32 sector, bool ntfs)
 	{
 		fs_ntfs_mount = 1;
 		fs_ntfs_sec = sector;
+		
+		gprintf("NTFS Mount sector: %d\n", fs_ntfs_sec);
 	}
 		
 	return g_ntfs_usbOK || g_fat_usbOK;
@@ -191,7 +193,7 @@ bool FS_Mount_SD(void)
 		g_fat_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SDHC_SECTOR_SIZE);
 	}
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
-		g_ntfs_sdOK = ntfsMount("sd", &__io_wiisd, 0, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
+		g_ntfs_sdOK = ntfsMount("sd", &__io_wiisd, 0, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER | NTFS_IGNORE_CASE);
 
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
 	{
@@ -200,7 +202,7 @@ bool FS_Mount_SD(void)
 		g_fat_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SECTORS);
 	}
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
-		g_ntfs_sdOK = ntfsMount("sd", &__io_sdhc, 0, CACHE, SECTORS_SD, NTFS_DEFAULT);
+		g_ntfs_sdOK = ntfsMount("sd", &__io_sdhc, 0, CACHE, SECTORS_SD, NTFS_DEFAULT | NTFS_IGNORE_CASE);
 
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
 		__io_sdhc.shutdown();
@@ -228,15 +230,17 @@ bool WBFS_Mount(u32 sector, bool ntfs)
 		if (!ntfs)
 			g_wbfsOK = fatMount("wbfs", &__io_usbstorage, sector, CACHE, SECTORS);
 		else
-			g_wbfsOK = ntfsMount("wbfs", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER);
+			g_wbfsOK = ntfsMount("wbfs", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER | NTFS_IGNORE_CASE);
 
 		if (g_wbfsOK)
 		{
 			fs_wbfs_mount = 1;
 			if (!ntfs)
 				fs_wbfs_sec = _FAT_startSector;
-			else
+			else {
 				fs_wbfs_sec = sector;
+				gprintf("NTFS Mount (WBFS) sector: %d\n", fs_wbfs_sec);
+			}
 		}
 	}
 	

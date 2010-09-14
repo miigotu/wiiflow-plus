@@ -210,9 +210,11 @@ int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 				ret_val = ret;
 				goto out;
 			}
+			
+			gprintf("Shifting all frags by sector: %d\n", fs_wbfs_mount ? fs_wbfs_sec : fs_ntfs_sec);
 			// offset to start of partition
 			for (j=0; j<fs->num; j++) {
-				fs->frag[j].sector += fs_ntfs_sec;
+				fs->frag[j].sector += fs_wbfs_mount ? fs_wbfs_sec : fs_ntfs_sec;
 			}
 		}
 		frag_concat(fa, fs);
@@ -272,7 +274,11 @@ int set_frag_list(u8 *id)
 	int ret;
 	DCFlushRange(frag_list, size);
 
-	gprintf("Calling WDVD_SetFragList\n");
+	gprintf("Calling WDVD_SetFragList, frag list size %d\n", size);
+	if (size > 400)
+		ghexdump(frag_list, 400);
+	else
+		ghexdump(frag_list, size);
 	ret = WDVD_SetFragList(wbfsDev, frag_list, size);
 
 	if (ret) {
@@ -284,5 +290,5 @@ int set_frag_list(u8 *id)
 	memset(discid, 0, sizeof(discid));
 	ret = WDVD_UnencryptedRead(discid, 8, 0);
 	gprintf("Reading ID after setting fraglist: %s (expected: %s)\n", discid, id);
-	return (memcmp(id, discid, 6) != 0) ? -3 : 0;
+	return (strncasecmp((char *) id, discid, 6) != 0) ? -3 : 0;
 }

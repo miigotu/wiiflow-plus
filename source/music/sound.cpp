@@ -8,20 +8,24 @@
 
 using namespace std;
 
-bool SSoundEffect::play(u8 volume)
+bool SSoundEffect::play(u8 vol, bool in_thread)
 {
-		bool ret;
+	bool ret;
 	if (!data || length == 0)
 		return false;
-	if (volume == 0)
+	if (vol == 0)
 		return true;
-	voice = ASND_GetFirstUnusedVoice();
+	
+	volume = vol;
+	if (!in_thread) // If running in a thread, reuse the voice
+	{
+		voice = ASND_GetFirstUnusedVoice();
+	}
+	
 	if (voice < 0 || voice >= 16)
 		return false;
 
-	//if (!loopFlag)
-		ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length, volume, volume, 0) == SND_OK;
-/*  else
+	if (loopFlag && !in_thread)
 	{
 		//convert samples to offset
 		if (format == VOICE_STEREO_16BIT)
@@ -35,19 +39,47 @@ bool SSoundEffect::play(u8 volume)
 			loopEnd *= 2;
 		}
 		// Make sure 0 isnt sent as data length to the voice processor incase loopEnd is not present.
-		if (loopEnd == 0)
+		if (loopEnd == 0 || loopEnd > length)
 			loopEnd = length;
-		
-		ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length-(length-loopEnd), volume, volume, 0) == SND_OK;
-		if (ret)
+			
+		if (loopStart >= length)
 		{
-			//Wait until the loop is needed
-			while(ASND_StatusVoice(voice) != 0)	{;;}
-			//Play the loop infinitely
-			ret = ASND_SetInfiniteVoice(voice, format, freq, 0, data.get()+(loopStart), length-loopStart-(length-loopEnd), volume, volume) == SND_OK;
+			loopStart = 0;
+		}
+	}
+
+	if (!loopFlag)
+		ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length, volume, volume, 0) == SND_OK;
+	else
+	{
+		if (!in_thread)
+		{
+			lwp_t thread = LWP_THREAD_NULL;
+			LWP_CreateThread(&thread, (void *(*)(void *)) SSoundEffect::playLoop, (void *)this, 0, 8192, 40);
+			ret = 0;
+		}
+		else
+		{
+			ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length-(length-loopEnd), volume, volume, 0) == SND_OK;
+			if (ret)
+			{
+				//Wait until the loop is needed
+				while(voice != -1 && ASND_StatusVoice(voice) != 0)	{;;}
+				//Play the loop infinitely
+				
+				if (voice != -1)
+				{
+					ret = ASND_SetInfiniteVoice(voice, format, freq, 0, data.get()+(loopStart), length-loopStart-(length-loopEnd), volume, volume) == SND_OK;
+				}
+			}
 		}
 	} 
-*/	return ret;
+	return ret;
+}
+
+int SSoundEffect::playLoop(SSoundEffect *snd)
+{
+	return snd->play(snd->volume, true);
 }
 
 void SSoundEffect::stop(void)

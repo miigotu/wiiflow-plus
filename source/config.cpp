@@ -43,32 +43,6 @@ static string trim(string line)
 	return line;
 }
 
-static string upperCase(string text)
-{
-	char c;
-
-	for (string::size_type i = 0; i < text.size(); ++i)
-	{
-		c = text[i];
-		if (c >= 'a' && c <= 'z')
-			text[i] = c & 0xDF;
-	}
-	return text;
-}
-
-static string lowerCase(string text)
-{
-	char c;
-
-	for (string::size_type i = 0; i < text.size(); ++i)
-	{
-		c = text[i];
-		if (c >= 'A' && c <= 'Z')
-			text[i] = c | 0x20;
-	}
-	return text;
-}
-
 static string unescNewlines(const string &text)
 {
 	string s;
@@ -214,7 +188,9 @@ bool Config::load(const char *filename)
 				{
 					string::size_type i = line.find_first_of('=');
 					if (i != string::npos && i > 0)
+					{
 						m_domains[domain][lowerCase(trim(line.substr(0, i)))] = unescNewlines(trim(line.substr(i + 1)));
+					}
 				}
 		}
 	}

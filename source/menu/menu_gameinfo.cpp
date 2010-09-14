@@ -71,39 +71,54 @@ void CMenu::_gameinfo(void)
 	SetupInput();
 	_showGameInfo();
 
-	unsigned int line = 0;
 	u8 page = 0;
-
-	unsigned int count = 1;
-	for (unsigned int i = 0; i < strlen(gameinfo.synopsis); ++i)
-		if (gameinfo.synopsis[i] == '\n')
-			++count;
+	
+	int pixels_to_skip = 10;
+	int amount_of_skips = 0;
+	
+	int x = 0, y = 0, synopsis_x = 0, synopsis_y = 0;
+	u32 synopsis_w = 0, synopsis_h = 0;
 	
 	do
 	{
 		_mainLoopCommon();
 
-		if (BTN_DOWN_PRESSED && !(m_thrdWorking && m_thrdStop) && page == 1)
+		if ((BTN_DOWN_PRESSED || BTN_DOWN_HELD) && !(m_thrdWorking && m_thrdStop) && page == 1)
 		{
-			if(line < count-2 && count != 1)
+			if (amount_of_skips == 0)
 			{
-				line+=2;
-				m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.synopsis ), line, true);
+				m_btnMgr.getDimensions(m_gameinfoLblSynopsis, synopsis_x, synopsis_y, synopsis_w, synopsis_h); // Get original dimensions
+			}
+			
+			m_btnMgr.getDimensions(m_gameinfoLblSynopsis, x, y, synopsis_w, synopsis_h); // Get current dimensions
+			
+			gprintf("Variables: synopsis_y: %d, synopsis_h: %d, m_vid.height: %d\n", synopsis_y, synopsis_h, m_vid.height());
+			gprintf("Min Y for scrolling is: %d\n", (int) (synopsis_y - (synopsis_h - (m_vid.height() - 20))));
+			gprintf("Current Y is: %d\n", y);
+			if (y > (int) (synopsis_y - (synopsis_h - (m_vid.height() - 20)))) // 20 pixels from the bottom
+			{
+				// Move the control instead
+				// Height of a single line is...what? 10 pixels?
+				m_btnMgr.moveBy(m_gameinfoLblSynopsis, 0, -pixels_to_skip);
+				amount_of_skips++;
 			}
 		}
-		else if (BTN_UP_PRESSED && !(m_thrdWorking && m_thrdStop) && page == 1)
+		else if ((BTN_UP_PRESSED || BTN_UP_HELD) && !(m_thrdWorking && m_thrdStop) && page == 1)
 		{
-			if (line > 0)
-				line-=2;
-			
-			m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.synopsis ), line, false);
+			if (amount_of_skips)
+			{
+				// Move the control instead
+				// Height of a single line is...what? 10 pixels?
+				m_btnMgr.moveBy(m_gameinfoLblSynopsis, 0, pixels_to_skip);
+				amount_of_skips--;
+			}
 		}
 		else if (BTN_RIGHT_PRESSED && !(m_thrdWorking && m_thrdStop) && page == 0)
 		{
 			page = 1;
-			line = 0;
 						
-			m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.synopsis ), line, false);
+			m_btnMgr.reset(m_gameinfoLblSynopsis);
+			m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.synopsis)); //, line, false);
 
 			m_btnMgr.hide(m_gameinfoLblID, true);
 			m_btnMgr.hide(m_gameinfoLblDev, true);

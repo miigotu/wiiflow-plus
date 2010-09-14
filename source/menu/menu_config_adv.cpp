@@ -75,19 +75,6 @@ void CMenu::_showConfigAdv(void)
 	m_btnMgr.setText(m_configAdvLblCurTheme, m_cfg.getString("GENERAL", "theme"));
 }
 
-static string upperCase(string text)
-{
-	char c;
-
-	for (string::size_type i = 0; i < text.size(); ++i)
-	{
-		c = text[i];
-		if (c >= 'a' && c <= 'z')
-			text[i] = c & 0xDF;
-	}
-	return text;
-}
-
 static void listThemes(const char * path, vector<string> &themes)
 {
 	DIR *d;

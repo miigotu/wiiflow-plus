@@ -13,13 +13,14 @@ template <class T> static inline T loopNum(T i, T s)
 STexture CButtonsMgr::_noTexture;
 SSoundEffect CButtonsMgr::_noSound;
 
-bool CButtonsMgr::init(void)
+bool CButtonsMgr::init(CVideo &vid)
 {
 	m_elts.clear();
 	m_selected = -1;
 	m_rumble = 0;
 	m_rumbleEnabled = false;
 	m_soundVolume = 0xFF;
+	m_vid = vid;
 	soundInit();
 	// 
 	return true;
@@ -49,8 +50,67 @@ u32 CButtonsMgr::addButton(SFont font, const wstringEx &text, int x, int y, u32 
 	b->tex = texSet;
 	b->clickSound = clickSound;
 	b->hoverSound = hoverSound;
+	b->moveByX = 0;
+	b->moveByY = 0;
 	m_elts.push_back(elt);
 	return m_elts.size() - 1;
+}
+
+void CButtonsMgr::reset(u32 id, bool instant)
+{
+	if (id < m_elts.size())
+	{
+		CButtonsMgr::SElement &b = *m_elts[id];
+		b.x -= b.moveByX;
+		b.y -= b.moveByY;
+		if (instant)
+		{
+			b.pos.x -= b.moveByX;
+			b.pos.y -= b.moveByY;
+		}
+		b.targetPos.x -= b.moveByX;
+		b.targetPos.y -= b.moveByY;
+		b.moveByX = 0;
+		b.moveByY = 0;
+	}
+}
+
+void CButtonsMgr::moveBy(u32 id, int x, int y, bool instant)
+{
+	if (id < m_elts.size())
+	{
+		CButtonsMgr::SElement &b = *m_elts[id];
+		b.moveByX += x;
+		b.moveByY += y;
+		b.x += x;
+		b.y += y;
+		if (instant)
+		{
+			b.pos.x += x;
+			b.pos.y += y;
+		}
+		b.targetPos.x += x;
+		b.targetPos.y += y;
+	}
+}
+
+void CButtonsMgr::getDimensions(u32 id, int &x, int &y, u32 &width, u32 &height)
+{
+	if (id < m_elts.size())
+	{
+		CButtonsMgr::SElement &b = *m_elts[id];
+		x = b.targetPos.x;
+		y = b.targetPos.y;
+		width = b.w;
+		height = b.h;
+		if (b.t == GUIELT_LABEL)
+		{
+			CButtonsMgr::SLabel *s = (CButtonsMgr::SLabel *) m_elts[id].get();
+			
+			// Calculate height
+			height = s->text.getTotalHeight();
+		}
+	}
 }
 
 void CButtonsMgr::hide(u32 id, int dx, int dy, float scaleX, float scaleY, bool instant)
@@ -304,6 +364,8 @@ u32 CButtonsMgr::addLabel(SFont font, const wstringEx &text, int x, int y, u32 w
 	b->targetScaleX = 0.f;
 	b->targetScaleY = 0.f;
 	b->texBg = bg;
+	b->moveByX = 0;
+	b->moveByY = 0;
 	m_elts.push_back(elt);
 	return m_elts.size() - 1;
 }
@@ -327,6 +389,8 @@ u32 CButtonsMgr::addProgressBar(int x, int y, u32 width, u32 height, SButtonText
 	b->tex = texSet;
 	b->val = 0.f;
 	b->targetVal = 0.f;
+	b->moveByX = 0;
+	b->moveByY = 0;
 	m_elts.push_back(elt);
 	return m_elts.size() - 1;
 }
@@ -638,7 +702,15 @@ void CButtonsMgr::_drawLbl(CButtonsMgr::SLabel &b)
 	guMtxIdentity(modelViewMtx);
 	guMtxTransApply(modelViewMtx, modelViewMtx, posX, posY, 0.f);
 	GX_LoadPosMtxImm(modelViewMtx, GX_PNMTX0);
+	if (b.moveByX != 0 || b.moveByY != 0)
+	{
+		GX_SetScissor(b.moveByX == 0 ? 0 : b.targetPos.x - b.moveByX, b.moveByY == 0 ? 0 : (b.targetPos.y - b.moveByY) - 10 - b.font.lineSpacing, m_vid.width(), m_vid.height());
+	}
 	b.text.draw();
+	if (b.moveByX != 0 || b.moveByY != 0)
+	{
+		GX_SetScissor(0, 0, m_vid.width(), m_vid.height());
+	}
 }
 
 void CButtonsMgr::_drawPBar(const CButtonsMgr::SProgressBar &b)

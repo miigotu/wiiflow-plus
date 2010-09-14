@@ -114,8 +114,6 @@ u16 *Banner::GetName(int language)
 {
 	if (imet == NULL) return NULL;
 	
-	gprintf("Getname, language %d\n", language);
-	
 	if (imet->name_japanese[language*IMET_MAX_NAME_LEN] == 0) // Requested language is not found
 	{
 		if (imet->name_english[0] == 0) // And the channel name is not available in english

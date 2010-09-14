@@ -33,6 +33,7 @@ public:
 	void setFrame(float width, u16 style, bool ignoreNewlines = false, bool instant = false);
 	void tick(void);
 	void draw(void);
+	int getTotalHeight();
 private:
 	
 	struct SWord
@@ -47,6 +48,7 @@ private:
 	SFont m_font;
 	CColor m_color;
 	u32 firstLine;
+	u32 totalHeight;
 };
 
 // Nothing to do with CText. Q&D helpers for string formating.
@@ -57,5 +59,7 @@ bool checkFmt(const wstringEx &ref, const wstringEx &format);
 wstringEx vectorToString(const std::vector<wstringEx> &vect, char sep);
 std::vector<wstringEx> stringToVector(const wstringEx &text, char sep);
 std::vector<std::string> stringToVector(const std::string &text, char sep);
+std::string upperCase(std::string text);
+std::string lowerCase(std::string text);
 
 #endif // !defined(__TEXT_HPP)
