@@ -1,14 +1,7 @@
 #include "menu.hpp"
 #include "loader/sys.h"
 #include "xml/xml.h"
-
-class LockMutex
-{
-	mutex_t &m_mutex;
-public:
-	LockMutex(mutex_t &m) : m_mutex(m) { LWP_MutexLock(m_mutex); }
-	~LockMutex(void) { LWP_MutexUnlock(m_mutex); }
-};
+#include "lockMutex.hpp"
 
 void CMenu::_hideWiiTDBUpdate(bool instant)
 {

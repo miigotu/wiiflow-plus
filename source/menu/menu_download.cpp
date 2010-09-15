@@ -14,6 +14,7 @@
 
 #include "gecko.h"
 #include <fstream>
+#include "lockMutex.hpp"
 
 #define TAG_GAME_ID		"gameid"
 #define TAG_LOC			"loc"
@@ -38,14 +39,6 @@ static const char FMT_PIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}
 "|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid6}.png";
 static const char FMT_PIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
 "|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png";
-
-class LockMutex
-{
-	mutex_t &m_mutex;
-public:
-	LockMutex(mutex_t &m) : m_mutex(m) { LWP_MutexLock(m_mutex); }
-	~LockMutex(void) { LWP_MutexUnlock(m_mutex); }
-};
 
 static string countryCode(const string &gameId)
 {
@@ -289,28 +282,39 @@ static bool checkPNGFile(const char *filename)
 
 void CMenu::_initAsyncNetwork()
 {
+	if (!_isNetworkAvailable()) return;
 	m_thrdNetwork = true;
 	net_init_async(_networkComplete, this);
-/*	
-	lwp_t thread = LWP_THREAD_NULL;
-	LWP_CreateThread(&thread, (void *(*)(void *)) CMenu::_initStaticNetwork, this, 0, 8192, 40);
-*/	
 }
 
-s32 CMenu::_networkComplete(s32, void *usrData)
+bool CMenu::_isNetworkAvailable()
+{
+	bool retval = false;
+	u32 size;
+	u32 *buf = ISFS_GetFile((u8 *) "/shared2/sys/net/02/config.dat", &size, -1);
+	if (buf && size > 4)
+	{
+		retval = buf[4] == 1; // There is a valid connection defined.
+		free(buf);
+	}
+	return retval;
+}
+
+s32 CMenu::_networkComplete(s32 ok, void *usrData)
 {
 	CMenu *m = (CMenu *) usrData;
-	m->m_networkInit = true;
+	m->m_networkInit = ok == 0;
 	m->m_thrdNetwork = false;
-	
+
 	return 0;
 }
 
 int CMenu::_initNetwork()
 {
 	if (m_networkInit) return 0;
+	if (!_isNetworkAvailable()) return -2;
 
-	net_init();
+	while (net_init() == -EBUSY) {}; // Async initialization may be busy, so try again
 
 	char ip[16];
 	int val = if_config(ip, NULL, NULL, true);

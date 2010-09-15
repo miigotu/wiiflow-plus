@@ -5,20 +5,13 @@
 #include "loader/sys.h"
 #include "loader/wbfs.h"
 #include "gecko.h"
+#include "lockMutex.hpp"
 
 extern int mainIOS;
 extern int mainIOSRev;
 
 int ios_num = 0,version_num = 0, num_versions = 0, i;
 int CMenu::_version[9] = {0, atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV), atoi(SVN_REV)};
-
-class LockMutex
-{
-	mutex_t &m_mutex;
-public:
-	LockMutex(mutex_t &m) : m_mutex(m) { LWP_MutexLock(m_mutex); }
-	~LockMutex(void) { LWP_MutexUnlock(m_mutex); }
-};
 
 void CMenu::_system()
 {

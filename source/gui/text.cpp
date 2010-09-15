@@ -443,8 +443,11 @@ void CText::draw(void)
 
 int CText::getTotalHeight(void)
 {
+	if (m_lines.size() == 0) return m_font.lineSpacing;
+
 	CLine line = m_lines[m_lines.size() - 1];
 	
+	if (line.size() == 0) return m_font.lineSpacing;
 	int height = line[line.size() - 1].targetPos.y;
 	return height + totalHeight;
 }

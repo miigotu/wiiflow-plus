@@ -12,6 +12,7 @@
 #include "pngu.h"
 #include "boxmesh.hpp"
 #include "wstringEx.hpp"
+#include "lockMutex.hpp"
 //#include "gecko.h"
 
 using namespace std;
@@ -25,14 +26,6 @@ extern const u8 flatnopic_png[];
 extern const u8 flatloading_png[];
 extern const u8 cffont_ttf[];
 extern const u32 cffont_ttf_size;
-
-class LockMutex
-{
-	mutex_t &m_mutex;
-public:
-	LockMutex(mutex_t &m) : m_mutex(m) { LWP_MutexLock(m_mutex); }
-	~LockMutex(void) { LWP_MutexUnlock(m_mutex); }
-};
 
 static inline int loopNum(int i, int s)
 {

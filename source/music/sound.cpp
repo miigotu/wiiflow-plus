@@ -1,6 +1,7 @@
 
 #include "sound.hpp"
 #include "gecko.h"
+#include "lockMutex.hpp"
 #include <math.h>
 #include <asndlib.h>
 #include <fstream>
@@ -9,9 +10,13 @@
 using namespace std;
 
 lwp_t thread = LWP_THREAD_NULL;
+mutex_t snd_mutex = 0;
 
 bool SSoundEffect::play(u8 vol, bool in_thread)
 {
+	if (snd_mutex == 0)
+		LWP_MutexInit(&snd_mutex, false);
+
 	bool ret;
 	if (!data || length == 0)
 		return false;
@@ -42,9 +47,12 @@ bool SSoundEffect::play(u8 vol, bool in_thread)
 			if (ret)
 			{
 				//Wait until the loop is needed
-				while(ASND_StatusVoice(voice) != 0)	{;;}
+				while(ASND_StatusVoice(voice) == SND_WORKING)	{;;}
 				//Play the loop infinitely
-				ret = ASND_SetInfiniteVoice(voice, format, freq, 0, data.get()+loopStart, length-(length-loopEnd)-loopStart, volume, volume) == SND_OK;
+				
+				LockMutex lock(snd_mutex);
+				if (voice != -1)
+					ret = ASND_SetInfiniteVoice(voice, format, freq, 0, data.get()+loopStart, length-(length-loopEnd)-loopStart, volume, volume) == SND_OK;
 			}
 		}
 	} 
@@ -58,8 +66,13 @@ int SSoundEffect::playLoop(SSoundEffect *snd)
 
 void SSoundEffect::stop(void)
 {
+	if (snd_mutex == 0)
+		LWP_MutexInit(&snd_mutex, false);
+
 	if (voice < 0)
 		return;
+	
+	LockMutex lock(snd_mutex);
 	ASND_StopVoice(voice);
 	voice = -1;
 }
@@ -487,16 +500,25 @@ bool SSoundEffect::fromBNS(const u8 *buffer, u32 size)
 		format = VOICE_STEREO_16BIT;
 	if (format == (u8)-1)
 		return false;
-
+	
 	freq = infoChunk.freq;
 	loopFlag = infoChunk.loopFlag;
 	loopStart = infoChunk.loopStart*infoChunk.chanCount*2;
 	loopEnd = infoChunk.loopEnd*infoChunk.chanCount*2;
-	
+
+	gprintf("\n|-------------|\n| Channels: %i |\n| loopFlag: %i |\n|-------------|\n", infoChunk.chanCount, infoChunk.loopFlag);
+	if (infoChunk.loopFlag)
+	{
+		gprintf("| LoopStart: %i converted to %i |\n", infoChunk.loopStart, loopStart);
+		gprintf("| LoopEnd: %i converted to %i |\n", infoChunk.loopEnd, loopEnd);
+	}
+
 	// Copy data
 	if (infoChunk.codecNum == 0)
 	{
 		data = decodeBNS(length, infoChunk, dataChunk);
+		if (infoChunk.loopFlag)
+			gprintf("| Length: %i |\n\n", length);
 		if (!data)
 			return false;
 	}
@@ -508,6 +530,7 @@ bool SSoundEffect::fromBNS(const u8 *buffer, u32 size)
 		memcpy(data.get(), &dataChunk.data, dataChunk.size);
 		length = dataChunk.size;
 	}
+	//gsenddata(data.get(), dataChunk.size, "sound.bin");
 	return true;
 }
 

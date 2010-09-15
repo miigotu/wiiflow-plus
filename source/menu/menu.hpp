@@ -745,6 +745,7 @@ private:
 //	static int _initStaticNetwork(CMenu *m);
 	static s32 _networkComplete(s32 result, void *usrData);
 	void _initAsyncNetwork();
+	bool _isNetworkAvailable();
 	int _initNetwork();
 	void _deinitNetwork();
 	static void _addDiscProgress(int status, int total, void *user_data);
