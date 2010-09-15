@@ -267,14 +267,12 @@ void WBFS_Unmount()
 	}
 }
 
-//#define ALIGN(x) ((x % 32 != 0) ? (x / 32) * 32 + 32 : x)
-
-u32 *ISFS_GetFile(u8 *path, u32 *size, s32 length)
+u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length)
 {
 	*size = 0;
 	
 	s32 fd = ISFS_Open((const char *) path, ISFS_OPEN_READ);
-	u32 *buf = NULL;
+	u8 *buf = NULL;
 	static fstats stats ATTRIBUTE_ALIGN(32);
 	
 	if (fd >= 0)
@@ -283,7 +281,7 @@ u32 *ISFS_GetFile(u8 *path, u32 *size, s32 length)
 		{
 			if (length <= 0) length = stats.file_length;
 			if (length > 0)
-				buf = (u32 *) memalign(32, ALIGN32(length));
+				buf = (u8 *) memalign(32, ALIGN32(length));
 
 			if (buf)
 			{

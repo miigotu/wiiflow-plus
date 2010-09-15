@@ -156,6 +156,8 @@ inline u16 le16(u16 i)
 bool SSoundEffect::fromWAV(const u8 *buffer, u32 size)
 {
 	stop();
+
+	LockMutex lock(snd_mutex);
 	const u8 *bufEnd = buffer + size;
 	const SWaveHdr &hdr = *(SWaveHdr *)buffer;
 	if (size < sizeof hdr)
@@ -256,6 +258,7 @@ double ConvertFromIeeeExtended(const unsigned char* bytes /* LCN */)
 bool SSoundEffect::fromAIFF(const u8 *buffer, u32 size)
 {
 	stop();
+	LockMutex lock(snd_mutex);
 	const u8 *bufEnd = buffer + size;
 	const SWaveHdr &hdr = *(SWaveHdr *)buffer;
 	if (size < sizeof hdr)
@@ -475,6 +478,7 @@ bool SSoundEffect::fromBNS(const u8 *buffer, u32 size)
 	SmartBuf decodedData;
 
 	stop();
+	LockMutex lock(snd_mutex);
 	const BNSHeader &hdr = *(BNSHeader *)buffer;
 	if (size < sizeof hdr)
 		return false;

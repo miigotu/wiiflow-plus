@@ -291,7 +291,7 @@ bool CMenu::_isNetworkAvailable()
 {
 	bool retval = false;
 	u32 size;
-	u32 *buf = ISFS_GetFile((u8 *) "/shared2/sys/net/02/config.dat", &size, -1);
+	u8 *buf = ISFS_GetFile((u8 *) "/shared2/sys/net/02/config.dat", &size, -1);
 	if (buf && size > 4)
 	{
 		retval = buf[4] == 1; // There is a valid connection defined.
@@ -303,6 +303,7 @@ bool CMenu::_isNetworkAvailable()
 s32 CMenu::_networkComplete(s32 ok, void *usrData)
 {
 	CMenu *m = (CMenu *) usrData;
+	
 	m->m_networkInit = ok == 0;
 	m->m_thrdNetwork = false;
 

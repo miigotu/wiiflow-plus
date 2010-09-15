@@ -124,7 +124,6 @@ u64* Channels::GetChannelList(u32* count)
 bool Channels::GetAppNameFromTmd(u64 title, char* app)
 {
 	char tmd[ISFS_MAXPATH];
-	static fstats stats ATTRIBUTE_ALIGN(32);
 
 	u32 high = (u32)(title >> 32);
 	u32 low  = (u32)(title & 0xFFFFFFFF);
@@ -133,33 +132,22 @@ bool Channels::GetAppNameFromTmd(u64 title, char* app)
 
 	sprintf(tmd, "/title/%08x/%08x/content/title.tmd", high, low);
 
-	s32 fd = ISFS_Open(tmd, ISFS_OPEN_READ);
-	if (fd >= 0)
+	u32 size;
+	u32 *data = (u32 *) ISFS_GetFile((u8 *) &tmd, &size, -1);
+	if (data != NULL)
 	{
-		if (ISFS_GetFileStats(fd, &stats) >= 0)
+		if (size > 0x208)
 		{
-			u32* data = NULL;
+			u16 i;
+			struct _tmd * tmd_file = (struct _tmd *) SIGNATURE_PAYLOAD(data);
+			for(i = 0; i < tmd_file->num_contents; ++i)
+				if(tmd_file->contents[i].index == 0)
+					break;
 
-			if (stats.file_length > 0)
-				data = (u32*)memalign(32, ALIGN32(stats.file_length));
-
-			if (data)
-			{
-				if (ISFS_Read(fd, (char*)data, stats.file_length) > 0x208)
-				{
-				    u16 i;
-				    struct _tmd * tmd_file = (struct _tmd *) SIGNATURE_PAYLOAD(data);
-				    for(i = 0; i < tmd_file->num_contents; ++i)
-                        if(tmd_file->contents[i].index == 0)
-                            break;
-
-				    sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, tmd_file->contents[i].cid);
-					ret = true;
-				}
-				free(data);
-			}
+			sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, tmd_file->contents[i].cid);
+			ret = true;
 		}
-		ISFS_Close(fd);
+		free(data);
 	}
 
 	return ret;
@@ -216,7 +204,6 @@ void Channels::Search(u32 channelType, string lang)
 {
 	u32 count;
 	u64* list = GetChannelList(&count);
-	error(wfmt(L"You have %i channels installed\n(Press A)", count).c_str());	
 	if (!list)
 		return;
 
@@ -234,7 +221,6 @@ void Channels::Search(u32 channelType, string lang)
 				channel.title = list[i];
 
 				u32 title_h = (u32)channel.title;
-				error(wfmt(L"Channel %i has ID '%c%c%c%c'\n(Press A)", i+1, title_h >> 24, title_h >> 16, title_h >> 8, title_h));
 				sprintf(channel.id, "%c%c%c%c", title_h >> 24, title_h >> 16, title_h >> 8, title_h);
 			
 				channels.push_back(channel);

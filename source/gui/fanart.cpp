@@ -55,14 +55,10 @@ bool CFanart::load(const char *path, const char *id)
 		for (int i = 1; i <= 6; i++)
 		{
 			CFanartElement elm(m_cfg, dir, i);
-			gprintf("Loading fanart %d...", i);
 			if (elm.IsValid())
 			{
 				m_elms.push_back(elm);
-				gprintf("done\n");
 			}
-			else
-				gprintf("failed\n");
 		}
 		
 		m_loaded = true;
@@ -186,9 +182,6 @@ CFanartElement::CFanartElement(Config &cfg, const char *dir, int artwork)
 	m_step_scaleY = m_event_duration == 0 ? 0 : (m_scaleY - m_event_scaleY) / m_event_duration;
 	m_step_alpha = m_event_duration == 0 ? 0 : (m_alpha - m_event_alpha) / m_event_duration;
 	m_step_angle = m_event_duration == 0 ? 0 : (m_angle - m_event_angle) / m_event_duration;
-	
-	gprintf("Loading element %d x: %d, y: %d, scale x: %f, scale y: %f, alpha: %d\n", m_artwork, m_x, m_y, m_scaleX, m_scaleY, m_alpha);
-	gprintf("             Event x: %d, y: %d, scale x: %f, scale y: %f, alpha: %d\n", m_event_x, m_event_y, m_event_scaleX, m_event_scaleY, m_event_alpha);
 }
 
 CFanartElement::~CFanartElement(void)

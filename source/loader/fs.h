@@ -33,7 +33,7 @@ bool WBFS_Mount(u32, bool);
 void WBFS_Unmount(void);
 
 
-u32 *ISFS_GetFile(u8 *path, u32 *size, s32 length);
+u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length);
 
 extern int 	 global_mount; // 1   -> sd_ok SD was mounted
 						   // 2   -> ud_ok  USB was mounted

@@ -278,6 +278,8 @@ void CMenu::_game(bool launch)
 		_playGameSound();
 		_showGame();
 	}
+	
+	bool startGameSound = false;
 
 	while (true)
 	{
@@ -445,30 +447,35 @@ void CMenu::_game(bool launch)
 			{
 				m_cf.up();
 				_showGame();
-				m_gameSound.stop();
-				_playGameSound();
+				m_gameSound.stop();				
+				startGameSound = true;
 			}
 			if (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
 			{
 				m_cf.right();
 				_showGame();
 				m_gameSound.stop();
-				_playGameSound();
+				startGameSound = true;
 			}
 			if (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN)
 			{
 				m_cf.down();
 				_showGame();
 				m_gameSound.stop();
-				_playGameSound();
+				startGameSound = true;
 			}
 			if (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
 			{
 				m_cf.left();
 				_showGame();
 				m_gameSound.stop();
-				_playGameSound();
+				startGameSound = true;
 			}
+			if (!(BTN_LEFT_REPEAT || BTN_RIGHT_REPEAT || BTN_DOWN_REPEAT || BTN_UP_REPEAT) && startGameSound)
+			{
+				startGameSound = false;
+				_playGameSound();
+			} 
 			if (m_show_zone_game)
 			{
 				b = m_gcfg1.getBool("FAVORITES", id, false);
@@ -1080,7 +1087,6 @@ void CMenu::_loadGameSound(const u64 chantitle, const std::string &id)
 		gprintf("no valid banner found\n");
 		return;
 	}
-	
 	_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str()));
 	
 	soundBin = banner->GetFile((char *) "sound.bin", &sndSize);

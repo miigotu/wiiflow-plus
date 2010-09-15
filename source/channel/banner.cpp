@@ -21,9 +21,9 @@
  * 3. This notice may not be removed or altered from any source
  * distribution.
  *
- * Channel Launcher Class
+ * Banner Handling Class
  *
- * for WiiXplorer 2010
+ * for wiiflow 2010
  ***************************************************************************/
 
 #include <malloc.h>
