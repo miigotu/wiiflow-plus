@@ -129,6 +129,7 @@ wdm_entry_t *wdm_entry = NULL;
 u32 current_wdm = 0;
 u8 banner_title[84];
 bool wdm_loaded;
+SFont dummyfont;
 
 static inline int loopNum(int i, int s)
 {
@@ -186,7 +187,8 @@ void CMenu::_hideGame(bool instant)
 {
 	m_fa.unload();
 	m_cf.showCover();
-
+	m_cf.setFont(dummyfont, m_theme.getColor("_COVERFLOW", "font_color", CColor(0xFFFFFFFF)));
+	
 	m_btnMgr.hide(m_gameBtnPlay, instant);
 	m_btnMgr.hide(m_gameBtnDelete, instant);
 	m_btnMgr.hide(m_gameBtnSettings, instant);
@@ -206,7 +208,6 @@ void CMenu::_hideGame(bool instant)
 void CMenu::_showGame(void)
 {
 	m_cf.showCover();
-	m_cf.setFanartPlaying(false);
 
 	if (!m_cfg.getBool("FANART", "disable_fa", false) && m_fa.load(m_fanartDir.c_str(), m_cf.getId().c_str()))
 	{
@@ -214,8 +215,7 @@ void CMenu::_showGame(void)
 		m_fa.getBackground(bg, bglq);
 		_setBg(bg, bglq);
 		
-		m_cf.setFanartTextColor(m_fa.getTextColor());
-//		m_cf.setSelectedTextAlpha(m_fa.getTextColor());
+		m_cf.setFont(dummyfont, m_fa.getTextColor());
 
 		if (!m_cfg.getBool("FANART", "disable_fa_hidecovers", false) && m_fa.hideCover(m_disable_scaa))
 			m_cf.hideCover();
@@ -223,7 +223,7 @@ void CMenu::_showGame(void)
 	else
 	{
 		_setBg(m_mainBg, m_mainBgLQ);
-		m_cf.setFanartTextColor(CColor(0xFFFFFFFF));
+		m_cf.setFont(dummyfont, m_theme.getColor("_COVERFLOW", "font_color", CColor(0xFFFFFFFF)));
 	}
 
 	// Load WDM file

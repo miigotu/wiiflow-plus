@@ -950,7 +950,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		m_cf.tick();
 	m_btnMgr.tick();
 	m_fa.tick();
-	m_cf.setFanartPlaying(!m_fa.isLoaded());
+
 	_updateBg();
 	
 	if (!m_cfg.getBool("FANART", "disable_fa_hidecovers", false) && m_fa.hideCover(m_disable_scaa))

@@ -223,7 +223,6 @@ bool CCoverFlow::init(void)
 	// Load font
 	m_font.fromBuffer(cffont_ttf, cffont_ttf_size, 32, 32);
 	m_fontColor = CColor(0xFFFFFFFF);
-	m_fanartFontColor = CColor(0xFFFFFFFF);
 	// 
 	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
 		guPerspective(m_projMtx, 45, 16.f / 9.f, .1f, 300.f);
@@ -459,16 +458,6 @@ void CCoverFlow::setColors(bool selected, const CColor &begColor, const CColor &
 	lo.begColor = begColor;
 	lo.endColor = endColor;
 	lo.mouseOffColor = offColor;
-}
-
-void CCoverFlow::setFanartPlaying(const bool isPlaying)
-{
-	m_fanartPlaying = isPlaying;
-}
-
-void CCoverFlow::setFanartTextColor(const CColor textColor)
-{
-	m_fanartFontColor = textColor;
 }
 
 void CCoverFlow::setMirrorAlpha(float cover, float title)
@@ -1090,7 +1079,7 @@ void CCoverFlow::_drawTitle(int i, bool mirror, bool rectangle)
 	Mtx modelMtx;
 	Mtx modelViewMtx;
 	Vector3D rotAxis(0.f, 1.f, 0.f);
-	CColor color(m_fanartPlaying ? m_fanartFontColor : m_fontColor);
+	CColor color(m_fontColor);
 
 	if (m_hideCover)
 		return;
@@ -1523,7 +1512,7 @@ void CCoverFlow::_updateTarget(int i, bool instant)
 		cvr.targetAngle = lo.centerAngle;
 		cvr.targetPos = lo.centerPos;
 		cvr.targetScale = lo.centerScale;
-		cvr.txtTargetColor = 0xFF; // 0x00; //0xFF;
+		cvr.txtTargetColor = 0xFF;
 		cvr.txtTargetAngle = lo.txtCenterAngle;
 		cvr.txtTargetPos = lo.txtCenterPos;
 		cvr.title.setFrame(lo.txtCenterWidth, lo.txtCenterStyle, false, instant);
