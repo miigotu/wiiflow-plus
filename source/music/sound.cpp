@@ -30,7 +30,7 @@ bool SSoundEffect::play(u8 vol, bool in_thread)
 	if (voice < 0 || voice >= 16)
 		return false;
 
-	if (!loopFlag)
+	if (!loopFlag && !in_thread)
 		ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length, volume, volume, 0) == SND_OK;
 	else
 	{
@@ -39,11 +39,12 @@ bool SSoundEffect::play(u8 vol, bool in_thread)
 		if (loopStart >= length)
 			loopStart = 0;
 
-		if (!in_thread)
+		if (!in_thread && loopFlag)
 			ret = LWP_CreateThread(&thread, (void *(*)(void *)) SSoundEffect::playLoop, (void *)this, 0, 8192, 40) == 0;
 		else
 		{
-			ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length-(length-loopEnd), volume, volume, 0) == SND_OK;
+			if (loopFlag)
+				ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length-(length-loopEnd), volume, volume, 0) == SND_OK;
 			if (ret)
 			{
 				//Wait until the loop is needed
@@ -51,7 +52,7 @@ bool SSoundEffect::play(u8 vol, bool in_thread)
 				//Play the loop infinitely
 				
 				LockMutex lock(snd_mutex);
-				if (voice != -1)
+				if (voice != -1 && loopFlag)
 					ret = ASND_SetInfiniteVoice(voice, format, freq, 0, data.get()+loopStart, length-(length-loopEnd)-loopStart, volume, volume) == SND_OK;
 			}
 		}
@@ -73,8 +74,10 @@ void SSoundEffect::stop(void)
 		return;
 	
 	LockMutex lock(snd_mutex);
-	ASND_StopVoice(voice);
+	s8 v = voice;
 	voice = -1;
+	loopFlag = 0;
+	ASND_StopVoice(v);
 }
 
 bool SSoundEffect::fromWAVFile(const char *filename)

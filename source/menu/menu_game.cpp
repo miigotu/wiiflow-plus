@@ -445,33 +445,33 @@ void CMenu::_game(bool launch)
 		{
 			if (BTN_UP_REPEAT || RIGHT_STICK_UP)
 			{
+				m_gameSound.stop();				
 				m_cf.up();
 				_showGame();
-				m_gameSound.stop();				
 				startGameSound = true;
 			}
-			if (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
+			else if (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
 			{
+				m_gameSound.stop();
 				m_cf.right();
 				_showGame();
-				m_gameSound.stop();
 				startGameSound = true;
 			}
-			if (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN)
+			else if (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN)
 			{
+				m_gameSound.stop();
 				m_cf.down();
 				_showGame();
-				m_gameSound.stop();
 				startGameSound = true;
 			}
-			if (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
+			else if (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
 			{
+				m_gameSound.stop();
 				m_cf.left();
 				_showGame();
-				m_gameSound.stop();
 				startGameSound = true;
 			}
-			if (!(BTN_LEFT_REPEAT || BTN_RIGHT_REPEAT || BTN_DOWN_REPEAT || BTN_UP_REPEAT) && startGameSound)
+			else if (!(BTN_LEFT_REPEAT || BTN_RIGHT_REPEAT || BTN_DOWN_REPEAT || BTN_UP_REPEAT) && startGameSound)
 			{
 				startGameSound = false;
 				_playGameSound();
