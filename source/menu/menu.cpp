@@ -862,9 +862,14 @@ void CMenu::_setHideAnim(u32 id, const char *domain, int dx, int dy, float scale
 
 void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 size, const char *domain)
 {
+	_addUserLabels(theme, ids, 0, size, domain);
+}
+
+void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 start, u32 size, const char *domain)
+{
 	STexture emptyTex;
 
-	for (u32 i = 0; i < size; ++i)
+	for (u32 i = start; i < start + size; ++i)
 	{
 		string dom(sfmt("%s/USER%i", domain, i + 1));
 		if (m_theme.hasDomain(dom))

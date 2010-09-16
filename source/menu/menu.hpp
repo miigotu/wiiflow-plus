@@ -414,7 +414,7 @@ private:
 	u32 m_gameinfoLblGenre;
 	u32 m_gameinfoLblRating;
 	u32 m_gameinfoLblWifiplayers;
-	u32 m_gameinfoLblUser[2];
+	u32 m_gameinfoLblUser[5];
 	u32 m_gameinfoLblControlsReq[4];
 	u32 m_gameinfoLblControls[4];
 	STexture m_gameinfoBg;
@@ -726,6 +726,7 @@ private:
 	u32 _addProgressBar(SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height);
 	void _setHideAnim(u32 id, const char *domain, int dx, int dy, float scaleX, float scaleY);
 	void _addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 size, const char *domain);
+	void _addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 start, u32 size, const char *domain);
 	// 
 	const wstringEx _t(const char *key, const wchar_t *def = L"") { return m_loc.getWString(m_curLanguage, key, def); }
 	const wstringEx _fmt(const char *key, const wchar_t *def);

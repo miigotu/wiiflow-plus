@@ -136,7 +136,14 @@ void CMenu::_gameinfo(void)
 			for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControls); ++i)
 				if (m_gameinfoLblControls[i] != -1u)
 					m_btnMgr.hide(m_gameinfoLblControls[i], true);
-				
+			
+			// When showing synopsis, only show user labels 2 and 3
+			for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblUser); ++i)
+				if (i < ARRAY_SIZE(m_gameinfoLblUser) / 2)
+					m_btnMgr.hide(m_gameinfoLblUser[i], true);
+				else
+					m_btnMgr.show(m_gameinfoLblUser[i]);
+			
 			m_btnMgr.show(m_gameinfoLblSynopsis);
 		}
 		else if (BTN_LEFT_PRESSED && !(m_thrdWorking && m_thrdStop))
@@ -158,6 +165,13 @@ void CMenu::_gameinfo(void)
 			for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControls); ++i)
 				if (m_gameinfoLblControls[i] != -1u && i < cnt_controls)
 					m_btnMgr.show(m_gameinfoLblControls[i]);
+				
+			// When showing synopsis, only show user labels 2 and 3
+			for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblUser); ++i)
+				if (i < ARRAY_SIZE(m_gameinfoLblUser) / 2)
+					m_btnMgr.show(m_gameinfoLblUser[i]);
+				else
+					m_btnMgr.hide(m_gameinfoLblUser[i], true);
 				
 			m_btnMgr.hide(m_gameinfoLblSynopsis,true);
 		}
@@ -185,8 +199,7 @@ void CMenu::_hideGameInfo(bool instant)
 			m_btnMgr.hide(m_gameinfoLblControlsReq[i], instant);
 
 	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblUser); ++i)
-		if (m_gameinfoLblUser[i] != -1u)
-			m_btnMgr.hide(m_gameinfoLblUser[i], instant);
+		m_btnMgr.hide(m_gameinfoLblUser[i], instant);
 
 	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControls); ++i)
 		if (m_gameinfoLblControls[i] != -1u)
@@ -210,7 +223,7 @@ void CMenu::_showGameInfo(void)
 	m_btnMgr.show(m_gameinfoLblWifiplayers);
 
 	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblUser); ++i)
-		if (m_gameinfoLblUser[i] != -1u)
+		if (i < ARRAY_SIZE(m_gameinfoLblUser) / 2)
 			m_btnMgr.show(m_gameinfoLblUser[i]);
 	
 	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControlsReq); ++i)
@@ -228,10 +241,11 @@ void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 	gprintf("_initGameInfoMenu\n");
 	
 	STexture emptyTex;
-	_addUserLabels(theme, m_gameinfoLblUser, ARRAY_SIZE(m_gameinfoLblUser), "GAMEINFO");
+	_addUserLabels(theme, m_gameinfoLblUser, 0, 1, "GAMEINFO");
+	_addUserLabels(theme, m_gameinfoLblUser, 2, 1, "GAMEINFO");
+	
 	m_gameinfoBg = _texture(theme.texSet, "GAMEINFO/BG", "texture", theme.bg);
 	m_gameinfoLblID = _addLabel(theme, "GAMEINFO/GAMEID", theme.btnFont, L"", 125, 15, 420, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
-	m_gameinfoLblTitle = _addLabel(theme, "GAMEINFO/TITLE", theme.btnFont, L"", 125, 60, 440, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 	m_gameinfoLblGenre = _addLabel(theme, "GAMEINFO/GENRE", theme.thxFont, L"", 40, 140, 460, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblDev = _addLabel(theme, "GAMEINFO/DEVELOPER", theme.thxFont, L"", 40, 170, 460, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblPublisher = _addLabel(theme, "GAMEINFO/PUBLISHER", theme.thxFont, L"", 40, 200, 460, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
@@ -240,6 +254,11 @@ void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 	m_gameinfoLblRating = _addLabel(theme, "GAMEINFO/RATING", theme.titleFont, L"", 550, 380, 48, 60, theme.titleFontColor, 0, m_rating);
 	m_gameinfoLblSynopsis = _addLabel(theme, "GAMEINFO/SYNOPSIS", theme.thxFont, L"", 40, 110, 575, 40, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblWifiplayers = _addLabel(theme, "GAMEINFO/WIFIPLAYERS", theme.thxFont, L"", 550, 110, 68, 60, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP,m_wifi);
+
+	_addUserLabels(theme, m_gameinfoLblUser, 1, 1, "GAMEINFO");
+	_addUserLabels(theme, m_gameinfoLblUser, 3, 2, "GAMEINFO");
+
+	m_gameinfoLblTitle = _addLabel(theme, "GAMEINFO/TITLE", theme.btnFont, L"", 125, 60, 440, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 
 	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControlsReq); ++i) {
 		string dom(sfmt("GAMEINFO/CONTROLSREQ%i", i + 1));
