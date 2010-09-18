@@ -102,11 +102,11 @@ bool Mount_Devices(void)
 				ntfs_found = true;
 				sector = plist.pentry[i].sector;
 				break;
-			case FS_TYPE_FAT32:
+/* 			case FS_TYPE_FAT32:
 			case FS_TYPE_FAT16:
 				fat_found = true;
 				sector = plist.pentry[i].sector;
-				break;
+				break; */
 			default: 
 				continue;
 		}
@@ -167,7 +167,7 @@ bool FS_Mount_USB(u32 sector, bool ntfs)
 	if (!g_ntfs_usbOK && !g_fat_usbOK && ntfs)
 	{
 		__io_usbstorage.startup();
-		g_ntfs_usbOK = ntfsMount("usb", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER | NTFS_IGNORE_CASE);
+		g_ntfs_usbOK = ntfsMount("usb", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE);
 	} 
 	if (g_fat_usbOK && !ntfs)
 	{
@@ -193,7 +193,7 @@ bool FS_Mount_SD(void)
 		g_fat_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SDHC_SECTOR_SIZE);
 	}
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
-		g_ntfs_sdOK = ntfsMount("sd", &__io_wiisd, 0, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER | NTFS_IGNORE_CASE);
+		g_ntfs_sdOK = ntfsMount("sd", &__io_wiisd, 0, CACHE, SECTORS, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE);
 
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
 	{
@@ -202,7 +202,7 @@ bool FS_Mount_SD(void)
 		g_fat_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SECTORS);
 	}
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
-		g_ntfs_sdOK = ntfsMount("sd", &__io_sdhc, 0, CACHE, SECTORS_SD, NTFS_DEFAULT | NTFS_IGNORE_CASE);
+		g_ntfs_sdOK = ntfsMount("sd", &__io_sdhc, 0, CACHE, SECTORS_SD, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE);
 
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
 		__io_sdhc.shutdown();
@@ -230,7 +230,7 @@ bool WBFS_Mount(u32 sector, bool ntfs)
 		if (!ntfs)
 			g_wbfsOK = fatMount("wbfs", &__io_usbstorage, sector, CACHE, SECTORS);
 		else
-			g_wbfsOK = ntfsMount("wbfs", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER | NTFS_IGNORE_CASE);
+			g_wbfsOK = ntfsMount("wbfs", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE);
 
 		if (g_wbfsOK)
 		{
