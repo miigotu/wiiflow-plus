@@ -80,9 +80,9 @@ void CFanart::getBackground(STexture &hq, STexture &lq)
 	}
 }
 
-CColor CFanart::getTextColor(void)
+CColor CFanart::getTextColor(CColor themeTxtColor)
 {
-	return m_cfg.getColor("GENERAL", "textcolor", CColor(0xFFFFFFFF));
+	return m_cfg.getColor("GENERAL", "textcolor", CColor(themeTxtColor));
 }
 
 bool CFanart::hideCover(bool disable_scaa)

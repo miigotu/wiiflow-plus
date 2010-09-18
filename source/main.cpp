@@ -10,6 +10,8 @@
 #include <ogc/system.h>
 #include "gecko.h"
 
+
+
 extern "C"
 {
     extern void __exception_setreload(int t);
@@ -117,9 +119,6 @@ int old_main(int argc, char **argv)
 	if (iosOK)
 	{
 		Mount_Devices(); // this will power up the drive if it is not ready
-		
-		gprintf("SD Available: %d\n", FS_SDAvailable());
-		gprintf("USB Available: %d\n", FS_USBAvailable());
 				
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		if (!wbfsOK)
@@ -150,6 +149,10 @@ int old_main(int argc, char **argv)
 	do
 	{
 		Mount_Devices();
+				
+		gprintf("SD Available: %d\n", FS_SDAvailable());
+		gprintf("USB Available: %d\n", FS_USBAvailable());
+
 		CMenu menu(vid);
 		menu.init(hbc);
 		mainMenu = &menu;

@@ -68,7 +68,7 @@ public:
 	bool isLoaded();
 	
 	void getBackground(STexture &hq, STexture &lq);
-	CColor getTextColor(void);
+	CColor getTextColor(CColor themeTxtColor = CColor(0xFFFFFFFF));
 	bool hideCover(bool disable_scaa);
 	void draw(bool front = true);
 	void tick();
