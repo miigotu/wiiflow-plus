@@ -17,7 +17,7 @@ bool SSoundEffect::play(u8 vol, bool in_thread)
 	if (snd_mutex == 0)
 		LWP_MutexInit(&snd_mutex, false);
 
-	bool ret;
+	bool ret = false;
 	if (!data || length == 0)
 		return false;
 	if (vol == 0)
