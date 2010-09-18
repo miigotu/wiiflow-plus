@@ -102,11 +102,11 @@ bool Mount_Devices(void)
 				ntfs_found = true;
 				sector = plist.pentry[i].sector;
 				break;
-/* 			case FS_TYPE_FAT32:
+ 			case FS_TYPE_FAT32:
 			case FS_TYPE_FAT16:
 				fat_found = true;
 				sector = plist.pentry[i].sector;
-				break; */
+				break;
 			default: 
 				continue;
 		}
