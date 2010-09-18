@@ -35,7 +35,7 @@ void CMenu::SetupInput()
 		wmote_roll_skip[wmote] = 0;
 	}
 	
-	enable_wmote_roll = true; //m_cfg.getBool("GENERAL", "wiimote_gestures", false);
+	enable_wmote_roll = m_cfg.getBool("GENERAL", "wiimote_gestures", false);
 }
 
 static int CalculateRepeatSpeed(float magnitude, int current_value)
