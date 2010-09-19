@@ -20,7 +20,7 @@ BUILD		:=	build
 SOURCES		:=	source \
 				source/images
 DATA		:=	data  
-INCLUDES	:=
+INCLUDES	:=	source
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -32,7 +32,7 @@ CXXFLAGS	=	$(CFLAGS)
 #---------------------------------------------------------------------------------
 # move loader to another location - THANKS CREDIAR - 0x81330000 for HBC
 #---------------------------------------------------------------------------------
-LDFLAGS = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x81230000
+LDFLAGS = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
@@ -43,7 +43,8 @@ LIBS	:=	-lwiiuse -lbte -logc -lfat -lntfs -lpng -lz
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(PORTLIBS)
+LIBDIRS	:=	$(CURDIR) \
+			$(PORTLIBS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -62,12 +63,12 @@ export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 #---------------------------------------------------------------------------------
 # automatically build a list of object files for our project
 #---------------------------------------------------------------------------------
+PNGFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.png)))
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
-PNGFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.png)))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -81,7 +82,7 @@ endif
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
 					$(sFILES:.s=.o) $(SFILES:.S=.o) \
-					$(PNGFILES:.png=.png.o)
+					$(PNGFILES:.png=.png.o) $(CURDIR)/source/ehcmodule.elf.o
 
 #---------------------------------------------------------------------------------
 # build a list of include paths

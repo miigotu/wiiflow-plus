@@ -4,8 +4,12 @@
  * Modified for wiiflow by Miigotu
  ***************************************************************************/
 
+#include <stdio.h>
+#include <gccore.h>
+#include <string.h>
 #include <malloc.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <ogc/machine/processor.h>
 #include <sys/iosupport.h>
 #include <wiiuse/wpad.h>
@@ -15,7 +19,10 @@
 #include "fileop.h"
 
 extern bool geckoinit;
-
+int mload_init();
+int mload_close();
+bool load_ehci_module();
+void USB2Enable(bool e);
 extern void __exception_closeall();
 typedef void (*entrypoint) (void);
 u32 load_dol_image (void *dolstart, struct __argv *argv);
@@ -64,10 +71,12 @@ int main(int argc, char **argv)
 
 	// only reload IOS if AHBPROT is not enabled
 	u32 version = IOS_GetVersion();
-	s32 preferred = IOS_GetPreferredVersion();
-
-	if(version != 58 && preferred > 0 && version != (u32)preferred && have_hw_access() != 1)
-		IOS_ReloadIOS(preferred);
+	if(version != 58 && have_hw_access() != 1)
+	{
+		IOS_ReloadIOS(202);
+		if(mload_init() >= 0 && load_ehci_module())
+		USB2Enable(true);
+	}
 
 	InitVideo();
 
@@ -90,7 +99,6 @@ int main(int argc, char **argv)
 	char filepath[34];
 	char argIOS[15];
 	u32 countdown = 5000000;
-
 	sprintf(filepath, "apps/wiiflow/boot.dol");
 
 	while(true)
@@ -98,55 +106,57 @@ int main(int argc, char **argv)
 		WPAD_ScanPads();
 		u32 buttons = WPAD_ButtonsDown(0);
 		u32 buttonsheld = WPAD_ButtonsHeld(0);
-
-		if((buttons & WPAD_BUTTON_LEFT) || (buttonsheld & WPAD_BUTTON_LEFT))
+		if (buttons & WPAD_BUTTON_B) || (buttonsheld & WPAD_BUTTON_B))
 		{
-			sprintf(argIOS, "ios=222-mload");
-			break;
-		}
-		else if((buttons & WPAD_BUTTON_UP) || (buttonsheld & WPAD_BUTTON_UP))
-		{
-			sprintf(argIOS, "ios=223-mload");
-			break;
-		}
-		else if((buttons & WPAD_BUTTON_RIGHT) || (buttonsheld & WPAD_BUTTON_RIGHT))
-		{
-			sprintf(argIOS, "ios=224-mload");
-			break;
-		}
-		else if((buttons & WPAD_BUTTON_DOWN) || (buttonsheld & WPAD_BUTTON_DOWN))
-		{
-			sprintf(argIOS, "ios=250");
-			break;
-		}
-		else if((buttons & WPAD_BUTTON_A) || (buttonsheld & WPAD_BUTTON_A))
-		{
-			sprintf(argIOS, "ios=249");
-			break;
-		}
-		else if((buttons & WPAD_BUTTON_1) || (buttonsheld & WPAD_BUTTON_1))
-		{
-			hbc = true;
-			gprintf("Booting HBC\n");
-			break;
-		}
-		else if((buttons & WPAD_BUTTON_2) || (buttonsheld & WPAD_BUTTON_2))
-		{
-			DCFlushRange((void*)0x8132FFFB,4);//Clear any magic words set.
-			*(vu32*)0x8132FFFB = 0x50756E65; //magic word set to Pune
-			gprintf("magic word changed to %x\n",*(vu32*)0x8132FFFB);
-			reboot = true;
-			gprintf("Booting System Menu\n");
-			break;
-		}
-		else if((buttons & WPAD_BUTTON_HOME) || (buttonsheld & WPAD_BUTTON_HOME))
-		{
-			DCFlushRange((void*)0x8132FFFB,4);//Clear any magic words set.
-			*(vu32*)0x8132FFFB = 0x4461636F; //magic word set to Daco
-			gprintf("magic word changed to %x\n",*(vu32*)0x8132FFFB);
-			reboot = true;
-			gprintf("Booting Priiloader menu\n");
-			break;
+	 		if((buttons & WPAD_BUTTON_LEFT) || (buttonsheld & WPAD_BUTTON_LEFT))
+			{
+				sprintf(argIOS, "ios=222-mload");
+				break;
+			}
+			else if((buttons & WPAD_BUTTON_UP) || (buttonsheld & WPAD_BUTTON_UP))
+			{
+				sprintf(argIOS, "ios=223-mload");
+				break;
+			}
+			else if((buttons & WPAD_BUTTON_RIGHT) || (buttonsheld & WPAD_BUTTON_RIGHT))
+			{
+				sprintf(argIOS, "ios=224-mload");
+				break;
+			}
+			else if((buttons & WPAD_BUTTON_DOWN) || (buttonsheld & WPAD_BUTTON_DOWN))
+			{
+				sprintf(argIOS, "ios=250");
+				break;
+			}
+			else if((buttons & WPAD_BUTTON_A) || (buttonsheld & WPAD_BUTTON_A))
+			{
+				sprintf(argIOS, "ios=249");
+				break;
+			}
+			else  if((buttons & WPAD_BUTTON_PLUS) || (buttonsheld & WPAD_BUTTON_PLUS))
+			{
+				hbc = true;
+				gprintf("Booting HBC\n");
+				break;
+			}
+			else if((buttons & WPAD_BUTTON_HOME) || (buttonsheld & WPAD_BUTTON_HOME))
+			{
+				DCFlushRange((void*)0x8132FFFB,4);//Clear any magic words set.
+				*(vu32*)0x8132FFFB = 0x50756E65; //magic word set to Pune
+				gprintf("magic word changed to %x\n",*(vu32*)0x8132FFFB);
+				reboot = true;
+				gprintf("Booting System Menu\n");
+				break;
+			}
+			else if((buttons & WPAD_BUTTON_MINUS) || (buttonsheld & WPAD_BUTTON_MINUS))
+			{
+				DCFlushRange((void*)0x8132FFFB,4);//Clear any magic words set.
+				*(vu32*)0x8132FFFB = 0x4461636F; //magic word set to Daco
+				gprintf("magic word changed to %x\n",*(vu32*)0x8132FFFB);
+				reboot = true;
+				gprintf("Booting Priiloader menu\n");
+				break;
+			}
 		}
 		else if (countdown == 0)
 			break;
@@ -155,11 +165,10 @@ int main(int argc, char **argv)
 	}
 	if (hbc || reboot) goto found;
 
-	// mount devices and look for file
+	// mount devices so we can look for file
 	MountAllDevices();
-	FILE *fp;
-
-	for(i=0; i < 4; i++)
+	FILE *fp = NULL;
+	for(i=0; i < 2; i++)
 	{
 		for(j=0; j < MAX_DEVICES; j++)
 		{
@@ -173,7 +182,6 @@ int main(int argc, char **argv)
 				goto found;
 		}
 	}
-
 	if(!fp)
 	{
 		StopGX();
@@ -197,7 +205,7 @@ found:
 		fclose (fp);
 	}
 	UnmountAllDevices();
-	USB_Deinitialize();
+	mload_close();
 
 	if (!hbc && !reboot)
 	{
@@ -211,6 +219,7 @@ found:
 		strcpy(&args.commandLine[strlen(filepath) + 1], argIOS);
 		args.commandLine[strlen(filepath)] = '\0';
 		args.commandLine[args.length - 1] = '\0';
+		args.commandLine[args.length - 2] = '\0';
 		args.argc = 2;
 		args.argv = &args.commandLine;
 		args.endARGV = args.argv + 2;
@@ -236,11 +245,7 @@ found:
 		gprintf("magic word is: %x\n",*(vu32*)0x8132FFFB);
 		SYS_ResetSystem(SYS_RETURNTOMENU,0,0);
 	}
-	else
-	{
-		gprintf("SYS_SHUTDOWN\n");
-		SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
-	}
+
 	_CPU_ISR_Disable(level);
 	__exception_closeall();
 

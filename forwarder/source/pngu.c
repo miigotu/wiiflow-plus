@@ -1,14 +1,15 @@
-/****************************************************************************
- *
- * PNGU
- * 
- * Original author: frontier (http://frontier-dev.net)
- * Modified by Tantric, 2009-2010
- *
- ***************************************************************************/
+/********************************************************************************************
+*
+* PNGU
+* 
+* Original author: frontier (http://frontier-dev.net)
+* Modified by Tantric, 2009-2010
+*
+********************************************************************************************/
 
 #include <stdio.h>
 #include <malloc.h>
+#include <gccore.h>
 #include "pngu.h"
 #include <png.h>
 
@@ -42,12 +43,12 @@ struct _IMGCTX
 	int source;
 	void *buffer;
 	char *filename;
-	u32 cursor;
+	PNGU_u32 cursor;
 
-	u32 propRead;
+	PNGU_u32 propRead;
 	PNGUPROP prop;
 
-	u32 infoRead;
+	PNGU_u32 infoRead;
 	png_structp png_ptr;
 	png_infop info_ptr;
 	FILE *fd;
@@ -293,7 +294,7 @@ static int pngu_info (IMGCTX ctx)
 	return PNGU_OK;
 }
 
-static int pngu_decode (IMGCTX ctx, u32 width, u32 height, u32 stripAlpha)
+static int pngu_decode (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, PNGU_u32 stripAlpha)
 {
 	png_uint_32 rowbytes;
 	png_uint_32 i, propImgHeight;
@@ -368,24 +369,23 @@ static int pngu_decode (IMGCTX ctx, u32 width, u32 height, u32 stripAlpha)
 	return PNGU_OK;
 }
 
-static inline u32 coordsRGBA8(u32 x, u32 y, u32 w)
+static inline PNGU_u32 coordsRGBA8(PNGU_u32 x, PNGU_u32 y, PNGU_u32 w)
 {
 	return ((((y >> 2) * (w >> 2) + (x >> 2)) << 5) + ((y & 3) << 2) + (x & 3)) << 1;
 }
 
-static u8 * PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, u32 width, u32 height)
+static PNGU_u8 * PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, PNGU_u8 default_alpha)
 {
-	u8 default_alpha = 255;
-	u8 *dst;
-	int x, y, offset;
+	PNGU_u8 *dst;
+	PNGU_u32 x, y, offset;
 	png_byte *pixel;
 
 	if (pngu_decode (ctx, width, height, 0) != PNGU_OK)
 		return NULL;
 
-	int newWidth = width;
+	PNGU_u32 newWidth = width;
 	if(newWidth%4) newWidth += (4-newWidth%4);
-	int newHeight = height;
+	PNGU_u32 newHeight = height;
 	if(newHeight%4) newHeight += (4-newHeight%4);
 
 	int len = (newWidth * newHeight) << 2;
@@ -400,7 +400,7 @@ static u8 * PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, u32 width, u32 height)
 		for (x = 0; x < newWidth; x++)
 		{
 			offset = coordsRGBA8(x, y, newWidth);
-
+			
 			if(y >= height || x >= width)
 			{
 				dst[offset] = 0;
@@ -414,7 +414,6 @@ static u8 * PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, u32 width, u32 height)
 					ctx->prop.imgColorType == PNGU_COLOR_TYPE_RGB_ALPHA)
 				{
 					pixel = &(ctx->row_pointers[y][x*4]);
-
 					dst[offset] = pixel[3]; // Alpha
 					dst[offset+1] = pixel[0]; // Red
 					dst[offset+32] = pixel[1]; // Green
@@ -423,7 +422,6 @@ static u8 * PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, u32 width, u32 height)
 				else
 				{
 					pixel = &(ctx->row_pointers[y][x*3]);
-
 					dst[offset] = default_alpha; // Alpha
 					dst[offset+1] = pixel[0]; // Red
 					dst[offset+32] = pixel[1]; // Green
@@ -492,18 +490,18 @@ int PNGU_GetImageProperties (IMGCTX ctx, PNGUPROP *imgprop)
 	return PNGU_OK;
 }
 
-u8 * DecodePNG(const u8 *src, int * width, int * height)
+PNGU_u8 * DecodePNG(const PNGU_u8 *src, int * width, int * height)
 {
 	PNGUPROP imgProp;
 	IMGCTX ctx = PNGU_SelectImageFromBuffer(src);
-	u8 *dst = NULL;
+	PNGU_u8 *dst = NULL;
 
 	if(!ctx)
 		return NULL;
 
 	if(PNGU_GetImageProperties(ctx, &imgProp) == PNGU_OK)
 	{
-		dst = PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight);
+		dst = PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, 255);
 		
 		if(dst)
 		{
@@ -511,15 +509,15 @@ u8 * DecodePNG(const u8 *src, int * width, int * height)
 			*height = imgProp.imgHeight;
 		}
 	}
-
+		
 	PNGU_ReleaseImageContext (ctx);
 	return dst;
 }
 
-int PNGU_EncodeFromRGB (IMGCTX ctx, u32 width, u32 height, void *buffer, u32 stride)
+int PNGU_EncodeFromRGB (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffer, PNGU_u32 stride)
 {
 	png_uint_32 rowbytes;
-	u32 y;
+	PNGU_u32 y;
 
 	// Erase from the context any readed info
 	pngu_free_info (ctx);
@@ -576,9 +574,10 @@ int PNGU_EncodeFromRGB (IMGCTX ctx, u32 width, u32 height, void *buffer, u32 str
 	rowbytes = width * 3;
 	if (rowbytes % 4)
 		rowbytes = ((rowbytes >>2) + 1) <<2; // Add extra padding so each row starts in a 4 byte boundary
-
+		
 	ctx->img_data = malloc(rowbytes * height);
-
+	memset(ctx->img_data, 0, rowbytes * height);
+	
 	if (!ctx->img_data)
 	{
 		png_destroy_write_struct (&(ctx->png_ptr), (png_infopp)NULL);
@@ -587,9 +586,9 @@ int PNGU_EncodeFromRGB (IMGCTX ctx, u32 width, u32 height, void *buffer, u32 str
 		return PNGU_LIB_ERROR;
 	}
 
-	memset(ctx->img_data, 0, rowbytes * height);
 	ctx->row_pointers = malloc (sizeof (png_bytep) * height);
-
+	memset(ctx->row_pointers, 0, sizeof (png_bytep) * height);
+	
 	if (!ctx->row_pointers)
 	{
 		png_destroy_write_struct (&(ctx->png_ptr), (png_infopp)NULL);
@@ -597,8 +596,6 @@ int PNGU_EncodeFromRGB (IMGCTX ctx, u32 width, u32 height, void *buffer, u32 str
 			fclose (ctx->fd);
 		return PNGU_LIB_ERROR;
 	}
-
-	memset(ctx->row_pointers, 0, sizeof (png_bytep) * height);
 
 	for (y = 0; y < height; ++y)
 	{
@@ -625,17 +622,13 @@ int PNGU_EncodeFromRGB (IMGCTX ctx, u32 width, u32 height, void *buffer, u32 str
 	return ctx->cursor;
 }
 
-int PNGU_EncodeFromGXTexture (IMGCTX ctx, u32 width, u32 height, void *buffer, u32 stride)
+int PNGU_EncodeFromGXTexture (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffer, PNGU_u32 stride)
 {
 	int res;
-	u32 x, y, tmpy1, tmpy2, tmpyWid, tmpxy;
+	PNGU_u32 x,y, tmpy1, tmpy2, tmpyWid, tmpxy;
 
 	unsigned char * ptr = (unsigned char*)buffer;
-	unsigned char * tmpbuffer = malloc(width*height*3);
-
-	if(!tmpbuffer)
-		return PNGU_LIB_ERROR;
-
+	unsigned char * tmpbuffer = (unsigned char *)malloc(width*height*3);
 	memset(tmpbuffer, 0, width*height*3);
 	png_uint_32 offset;
 	
