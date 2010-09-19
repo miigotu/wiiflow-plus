@@ -98,6 +98,8 @@ int main(int argc, char **argv)
 	WPAD_Init();
 	char filepath[34];
 	char argIOS[15];
+	FILE *fp = NULL;
+
 	u32 countdown = 5000000;
 	sprintf(filepath, "apps/wiiflow/boot.dol");
 
@@ -106,7 +108,7 @@ int main(int argc, char **argv)
 		WPAD_ScanPads();
 		u32 buttons = WPAD_ButtonsDown(0);
 		u32 buttonsheld = WPAD_ButtonsHeld(0);
-		if (buttons & WPAD_BUTTON_B) || (buttonsheld & WPAD_BUTTON_B))
+		if ((buttons & WPAD_BUTTON_B) || (buttonsheld & WPAD_BUTTON_B))
 		{
 	 		if((buttons & WPAD_BUTTON_LEFT) || (buttonsheld & WPAD_BUTTON_LEFT))
 			{
@@ -167,7 +169,7 @@ int main(int argc, char **argv)
 
 	// mount devices so we can look for file
 	MountAllDevices();
-	FILE *fp = NULL;
+
 	for(i=0; i < 2; i++)
 	{
 		for(j=0; j < MAX_DEVICES; j++)
