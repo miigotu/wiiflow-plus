@@ -113,33 +113,33 @@ int main(int argc, char **argv)
 	 		if((buttons & WPAD_BUTTON_LEFT) || (buttonsheld & WPAD_BUTTON_LEFT))
 			{
 				sprintf(argIOS, "ios=222-mload");
-				break;
+				goto out;
 			}
 			else if((buttons & WPAD_BUTTON_UP) || (buttonsheld & WPAD_BUTTON_UP))
 			{
 				sprintf(argIOS, "ios=223-mload");
-				break;
+				goto out;
 			}
 			else if((buttons & WPAD_BUTTON_RIGHT) || (buttonsheld & WPAD_BUTTON_RIGHT))
 			{
 				sprintf(argIOS, "ios=224-mload");
-				break;
+				goto out;
 			}
 			else if((buttons & WPAD_BUTTON_DOWN) || (buttonsheld & WPAD_BUTTON_DOWN))
 			{
 				sprintf(argIOS, "ios=250");
-				break;
+				goto out;
 			}
 			else if((buttons & WPAD_BUTTON_A) || (buttonsheld & WPAD_BUTTON_A))
 			{
 				sprintf(argIOS, "ios=249");
-				break;
+				goto out;
 			}
 			else  if((buttons & WPAD_BUTTON_PLUS) || (buttonsheld & WPAD_BUTTON_PLUS))
 			{
 				hbc = true;
 				gprintf("Booting HBC\n");
-				break;
+				goto out;
 			}
 			else if((buttons & WPAD_BUTTON_HOME) || (buttonsheld & WPAD_BUTTON_HOME))
 			{
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 				gprintf("magic word changed to %x\n",*(vu32*)0x8132FFFB);
 				reboot = true;
 				gprintf("Booting System Menu\n");
-				break;
+				goto out;
 			}
 			else if((buttons & WPAD_BUTTON_MINUS) || (buttonsheld & WPAD_BUTTON_MINUS))
 			{
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
 				gprintf("magic word changed to %x\n",*(vu32*)0x8132FFFB);
 				reboot = true;
 				gprintf("Booting Priiloader menu\n");
-				break;
+				goto out;
 			}
 		}
 		else if (countdown == 0)
@@ -165,6 +165,7 @@ int main(int argc, char **argv)
 
 		countdown--;
 	}
+out:
 	if (hbc || reboot) goto found;
 
 	// mount devices so we can look for file
