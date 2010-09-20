@@ -54,8 +54,18 @@ int main(int argc, char **argv)
 	WPAD_Init();
 
 	/* check devices */
-	if ((SDCard_Init() == -1) && (USBDevice_Init() == -1))
+	u8 usbOK = USBDevice_Init();
+	u8 sdOK = SDCard_Init();
+	if (!(sdOK || usbOK))
 	{
+		//Shutdown wiimotes.
+		for(i=0; i<4; i++)
+		{
+			WPAD_Flush(i);
+			WPAD_Disconnect(i);
+		}
+		WPAD_Shutdown();
+	
 		SDCard_deInit();
 		USBDevice_deInit();
 		SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);

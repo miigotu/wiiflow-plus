@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <fat.h>
 #include <sdcard/wiisd_io.h>
-#include "../../source/libs/libntfs/ntfs.h"
+#include <ntfs.h>
 #include "devicemounter.h"
 
 //these are the only stable and speed is good
@@ -37,13 +37,15 @@ int USBDevice_Init()
 {
     if(!__io_usbstorage.startup() || !__io_usbstorage.isInserted())
         return -1;
+	int s = 0;
+	while(s<1024)s++;
 
-    int i;
+    int i, ok = 0;
     MASTER_BOOT_RECORD mbr;
     char ntfsBootSector[512];
 
     __io_usbstorage.readSectors(0, 1, &mbr);
-
+	
     for(i = 0; i < 4; ++i)
     {
         switch(mbr.partitions[i].type)
@@ -55,20 +57,20 @@ int USBDevice_Init()
             case 0x0c:
             case 0x0e:
                 if(fatMount(DeviceName[USB1+i], &__io_usbstorage, le32(mbr.partitions[i].lba_start), CACHE, SECTORS))
-					return 1;
-				continue;
+					ok = 1;
+				break;
             case 0x07:
                 __io_usbstorage.readSectors(le32(mbr.partitions[i].lba_start), 1, ntfsBootSector);
                 if(strncmp(&ntfsBootSector[0x03], "NTFS", 4) == 0)
-                    if(ntfsMount(DeviceName[USB1+i], &__io_usbstorage, le32(mbr.partitions[i].lba_start), CACHE, SECTORS, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE))
-						return 1;
-				continue;
+                    if(ntfsMount(DeviceName[USB1+i], &__io_usbstorage, le32(mbr.partitions[i].lba_start), CACHE, SECTORS, NTFS_SHOW_HIDDEN_FILES | NTFS_RECOVER | NTFS_IGNORE_CASE))
+						ok = 1;
+				break;
             default:
                 break;
         }
     }
 
-	return -1;
+	return ok ? 1 : -1;
 }
 
 void USBDevice_deInit()
@@ -83,8 +85,8 @@ void USBDevice_deInit()
         ntfsUnmount(Name, true);
     }
 	//Let's not shutdown so it stays awake for the application
-	__io_usbstorage.shutdown();
-	USB_Deinitialize();
+	//__io_usbstorage.shutdown();
+	//USB_Deinitialize();
 }
 
 int SDCard_Init()
