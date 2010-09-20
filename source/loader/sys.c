@@ -44,9 +44,9 @@ void Sys_Test(void)
 		Sys_Shutdown();
 }
 
-void Sys_ExitTo(int option, bool noHBC)
+void Sys_ExitTo(int option)
 {
-	return_to_hbc = option == EXIT_TO_HBC && !noHBC;
+	return_to_hbc = option == EXIT_TO_HBC;
 	return_to_menu = option == EXIT_TO_MENU;
 	return_to_priiloader = option == EXIT_TO_PRIILOADER;
 	
@@ -83,22 +83,20 @@ void Sys_Exit(int ret)
 
 	if (return_to_menu || return_to_priiloader)
 		Sys_LoadMenu();
-	else
-		exit(ret);
+	else if(WII_LaunchTitle(0x00010001af1bf516ULL)<0)//HBC 1.0.8
+			if(WII_LaunchTitle(0x0001000148415858ULL)<0)//HAXX
+				if(WII_LaunchTitle(0x000100014a4f4449ULL)<0)//JODI
+					SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 }
 
 void __Sys_ResetCallback(void)
 {
 	reset = true;
-	/* Reboot console */
-//	Sys_Reboot();
 }
 
 void __Sys_PowerCallback(void)
 {
 	shutdown = true;
-	/* Poweroff console */
-//	Sys_Shutdown();
 }
 
 
@@ -192,7 +190,6 @@ s32 Sys_GetCerts(signed_blob **certs, u32 *len)
 
 bool Sys_SupportsExternalModule(bool part_select)
 {
-//	u32 version = IOS_GetVersion();
 	u32 revision = IOS_GetRevision();
 	
 	bool retval =  (part_select && is_ios_type(IOS_TYPE_WANIN) && revision >= 17) || (is_ios_type(IOS_TYPE_WANIN) && revision >= 18) || (is_ios_type(IOS_TYPE_HERMES) && revision >= 4);

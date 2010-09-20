@@ -479,11 +479,11 @@ void CMenu::_game(bool launch)
 				b = m_gcfg1.getBool("FAVORITES", id, false);
 				m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
 				m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
-				m_btnMgr.show(m_gameLblUser[1]);
-				m_btnMgr.show(m_gameLblUser[2]);
-				m_btnMgr.show(m_gameLblUser[3]);
 				m_btnMgr.show(m_gameBtnPlay);
 				m_btnMgr.show(m_gameBtnBack);
+				for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
+					if (m_gameLblUser[i] != -1u)
+						m_btnMgr.show(m_gameLblUser[i]);
 
 				if (!m_locked)
 				{
@@ -518,12 +518,12 @@ void CMenu::_game(bool launch)
 				m_btnMgr.hide(m_gameBtnSettings);
 				m_btnMgr.hide(m_gameBtnPlay);
 				m_btnMgr.hide(m_gameBtnBack);
-				m_btnMgr.hide(m_gameLblUser[1]);
-				m_btnMgr.hide(m_gameLblUser[2]);
-				m_btnMgr.hide(m_gameLblUser[3]);
 				m_btnMgr.hide(m_gameLblWdm);
 				m_btnMgr.hide(m_gameBtnWdmM);
 				m_btnMgr.hide(m_gameBtnWdmP);					
+				for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
+					if (m_gameLblUser[i] != -1u)
+						m_btnMgr.hide(m_gameLblUser[i]);
 			}
 		}
 	}

@@ -76,7 +76,6 @@ CMenu::CMenu(CVideo &vid) :
 	m_networkInit = false;
 	m_mutex = 0;
 	m_showtimer = 0;
-	m_noHBC = false;
 	m_gameSoundThread = 0;
 	m_gameSndMutex = 0;
 	m_numCFVersions = 0;
@@ -89,7 +88,7 @@ CMenu::CMenu(CVideo &vid) :
 
 extern "C" { int makedir(char *newdir); }
 
-void CMenu::init(bool fromHBC)
+void CMenu::init()
 {
 	string themeName;
 	const char *drive = "usb";
@@ -97,7 +96,6 @@ void CMenu::init(bool fromHBC)
 	u8 defaultMenuLanguage;
 	struct stat dummy;
 	
-	m_noHBC = !fromHBC;
 	m_waitMessage.fromPNG(wait_png);
 	// Data path
 	if (FS_SDAvailable() && FS_USBAvailable())
@@ -238,7 +236,7 @@ void CMenu::init(bool fromHBC)
 	m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble", true));
 	m_vid.set2DViewport(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480),
 	m_cfg.getInt("GENERAL", "tv_x", 0), m_cfg.getInt("GENERAL", "tv_y", 0));
-	Sys_ExitTo(m_cfg.getInt("GENERAL", "exit_to", 0), m_noHBC);
+	Sys_ExitTo(m_cfg.getInt("GENERAL", "exit_to", 0));
 	LWP_MutexInit(&m_mutex, 0);
 	LWP_MutexInit(&m_gameSndMutex, 0);
 	soundInit();

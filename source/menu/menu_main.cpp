@@ -271,9 +271,7 @@ int CMenu::main(void)
 			if (buttonHeld != m_btnMgr.selected())
 				m_btnMgr.click();
 			if (m_btnMgr.selected() == m_mainBtnQuit) {
-				bool hbc = *((u32 *) 0x80001804) == 0x53545542 && *((u32 *) 0x80001808) == 0x48415858;
-				if (!hbc)
-					Sys_ExitTo(0, !hbc);
+				Sys_ExitTo(0);
 				break;
 			}
 			else if (m_btnMgr.selected() == m_mainBtnChannel || m_btnMgr.selected() == m_mainBtnUsb)

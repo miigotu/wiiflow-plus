@@ -13,7 +13,7 @@ void Sys_LoadMenu(void);
 bool Sys_Exiting(void);
 void Sys_Test(void);
 void Sys_Exit(int);
-void Sys_ExitTo(int, bool);
+void Sys_ExitTo(int);
 bool Sys_SupportsExternalModule(bool part_select);
 
 s32  Sys_GetCerts(signed_blob **, u32 *);

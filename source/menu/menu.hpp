@@ -32,7 +32,7 @@ class CMenu
 public:
 	CMenu(CVideo &vid);
 	~CMenu(void) { cleanup(); }
-	void init(bool fromHBC);
+	void init();
 	void error(const wstringEx &msg);
 	int main(void);
 	void cleanup(void);
@@ -66,7 +66,6 @@ private:
 	Channels m_channels;
 	SmartBuf m_music;
 	u8 m_aa;
-	bool m_noHBC;
 	bool m_directLaunch;
 	bool m_gamelistdump;
 	bool m_locked;

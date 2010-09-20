@@ -17,34 +17,35 @@ include $(DEVKITPPC)/wii_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	boot
 BUILD		:=	build
-SOURCES		:=	source \
-				source/images
+SOURCES		:=	source source/images
 DATA		:=	data  
-INCLUDES	:=	source
+INCLUDES	:=
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE)
+CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE)
 CXXFLAGS	=	$(CFLAGS)
 
 #---------------------------------------------------------------------------------
 # move loader to another location - THANKS CREDIAR - 0x81330000 for HBC
 #---------------------------------------------------------------------------------
-LDFLAGS = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000
+#LDFLAGS = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x81000000
+LDFLAGS	= -g $(MACHDEP) -Wl,-Map,$(notdir $@).map
+#LDFLAGS = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003f00
+#LDFLAGS = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lwiiuse -lbte -logc -lfat -lntfs -lpng -lz
+LIBS	:=	-lfat -lntfs -lpng -lz -lwiiuse -lbte -logc -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(CURDIR) \
-			$(PORTLIBS)
+LIBDIRS	:= $(CURDIR) $(PORTLIBS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -63,12 +64,14 @@ export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 #---------------------------------------------------------------------------------
 # automatically build a list of object files for our project
 #---------------------------------------------------------------------------------
-PNGFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.png)))
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+PNGFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.png)))
+DOLFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.dol)))
+ELFFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.elf)))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -82,7 +85,8 @@ endif
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
 					$(sFILES:.s=.o) $(SFILES:.S=.o) \
-					$(PNGFILES:.png=.png.o) $(CURDIR)/source/ehcmodule.elf.o
+					$(PNGFILES:.png=.png.o) $(addsuffix .o,$(DOLFILES)) \
+					$(addsuffix .o,$(ELFFILES))
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
@@ -117,6 +121,11 @@ run:
 
 
 #---------------------------------------------------------------------------------
+pack:
+	zip -9 loadMii.zip $(TARGET).dol ../icon.png ../meta.xml ../README
+
+
+#---------------------------------------------------------------------------------
 else
 
 DEPENDS	:=	$(OFILES:.o=.d)
@@ -131,7 +140,14 @@ $(OUTPUT).elf: $(OFILES)
 # This rule links in binary data with the .png extension
 #---------------------------------------------------------------------------------
 %.png.o : %.png
-#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@bin2s -a 32 $< | $(AS) -o $(@)
+
+%.dol.o : %.dol
+	@echo $(notdir $<)
+	@bin2s -a 32 $< | $(AS) -o $(@)
+
+%.elf.o : %.elf
 	@echo $(notdir $<)
 	@bin2s -a 32 $< | $(AS) -o $(@)
 

@@ -68,7 +68,6 @@ int old_main(int argc, char **argv)
 	bool dipOK = false;
 	bool wbfsOK = false;
 	int ret = 0;
-	bool hbc;
 	
 	char *gameid = NULL;
 	
@@ -102,9 +101,6 @@ int old_main(int argc, char **argv)
 	// adds 15 MB from MEM1 to obtain 27 MB for covers (about 150 HQ covers on screen)
 	MEM2_init(36, 12);	// Max ~48
 
-	// Launched through the HBC?
-    hbc = *((u32 *) 0x80001804) == 0x53545542 && *((u32 *) 0x80001808) == 0x48415858;
-
 	// Init video
 	vid.init();
 	// Init
@@ -114,7 +110,7 @@ int old_main(int argc, char **argv)
 	vid.waitMessage(texWait);
 	texWaitHDD.fromPNG(wait_hdd_png, GX_TF_RGB565, ALLOC_MALLOC);
 	Sys_Init();
-	Sys_ExitTo(0, hbc);
+	Sys_ExitTo(0);
 
 	if (iosOK)
 	{
@@ -154,7 +150,7 @@ int old_main(int argc, char **argv)
 		gprintf("USB Available: %d\n", FS_USBAvailable());
 
 		CMenu menu(vid);
-		menu.init(hbc);
+		menu.init();
 		mainMenu = &menu;
 		//
 		if (!iosOK)
