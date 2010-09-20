@@ -207,14 +207,13 @@ void CMenu::_showGame(void)
 {
 	m_cf.showCover();
 
-	if (!m_cfg.getBool("GENERAL", "enable_fanart", true) && m_fa.load(m_fanartDir.c_str(), m_cf.getId().c_str()))
+	if (m_cfg.getBool("GENERAL", "enable_fanart", true) && m_fa.load(m_fanartDir.c_str(), m_cf.getId().c_str()))
 	{
 		STexture bg, bglq;
 		m_fa.getBackground(bg, bglq);
 		_setBg(bg, bglq);
 
-		int hideCover = m_cfg.getOptBool("FANART", "hidecover", 2);
-		if (hideCover == 1 || (hideCover == 2 && m_fa.hideCover(m_show_cover_after_animation)))
+		if (m_fa.hideCover(m_hidecover, m_show_cover_after_animation))
 			m_cf.hideCover();
 	}
 	else

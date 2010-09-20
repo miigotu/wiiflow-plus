@@ -85,16 +85,34 @@ CColor CFanart::getTextColor(CColor themeTxtColor)
 	return m_loaded ? m_cfg.getColor("GENERAL", "textcolor", CColor(themeTxtColor)) : themeTxtColor;
 }
 
-bool CFanart::hideCover(int global_show_after_animation)
+bool CFanart::hideCover(int global_hide_cover, int global_show_after_animation)
 {
-	bool retval = m_cfg.getBool("GENERAL", "hidecover", false);
-	
-	// Show the cover after the animation is finished
-	if (!retval && (global_show_after_animation == 1 || (global_show_after_animation == 2 && m_cfg.getBool("GENERAL", "show_cover_after_animation", false))))
+	if (global_hide_cover == 1)
+		return true; // If hidecover = yes, return true
+
+	// If hidecover = no
+	if (global_hide_cover == 0) 
 	{
-		retval = isAnimationComplete();
+		// If globally show after animation is set to false
+		//  then don't hide the cover
+		if (global_show_after_animation == 0)
+			return false;					  
+			
+		// If the animation is still running
+		// hiding the cover depends on global_show_after_animation
+		if (!isAnimationComplete()) 
+		{			
+			// If global show after animation is set, return false (since the animation is still running)
+			// If fanart show_cover_after_animation is set, return false
+			if (global_show_after_animation == 1 || m_cfg.getBool("GENERAL", "show_cover_after_animation", false))
+			{
+				return true;
+			}
+		}
 	}
-	return retval;
+	
+	// If all previous checks fail, then show the cover
+	return false;
 }
 
 bool CFanart::isLoaded()
@@ -120,7 +138,7 @@ void CFanart::tick()
 	}
 }
 
-void CFanart::draw(bool front)
+void CFanart::draw(bool allow_front, bool front)
 {
 	GX_SetNumChans(1);
 	GX_ClearVtxDesc();
@@ -140,7 +158,7 @@ void CFanart::draw(bool front)
 	GX_SetZMode(GX_DISABLE, GX_LEQUAL, GX_TRUE);
 	
 	for (u32 i = 0; i < m_elms.size(); ++i)
-		if ((front && m_elms[i].ShowOnTop()) || !front)
+		if (!allow_front || ((front && m_elms[i].ShowOnTop()) || !front))
 			m_elms[i].draw();
 }
 
