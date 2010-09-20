@@ -379,14 +379,12 @@ bool Config::testOptBool(const string &domain, const string &key, bool defVal)
 	KeyMap::iterator i = km.find(lowerCase(key));
 	if (i == km.end())
 	{
-		m_changed = true;
 		return defVal;
 	}
 	if (lowerCase(trim(i->second)) == "yes")
 		return true;
 	if (lowerCase(trim(i->second)) == "no")
 		return false;
-	m_changed = true;
 	return defVal;
 }
 

@@ -82,22 +82,17 @@ void CFanart::getBackground(STexture &hq, STexture &lq)
 
 CColor CFanart::getTextColor(CColor themeTxtColor)
 {
-	return m_cfg.getColor("GENERAL", "textcolor", CColor(themeTxtColor));
+	return m_loaded ? m_cfg.getColor("GENERAL", "textcolor", CColor(themeTxtColor)) : themeTxtColor;
 }
 
-bool CFanart::hideCover(bool disable_scaa)
+bool CFanart::hideCover(int global_show_after_animation)
 {
 	bool retval = m_cfg.getBool("GENERAL", "hidecover", false);
-	if (!retval && !disable_scaa && m_cfg.getBool("GENERAL", "show_cover_after_animation", false)) // Show the cover after the animation is finished
+	
+	// Show the cover after the animation is finished
+	if (!retval && (global_show_after_animation == 1 || (global_show_after_animation == 2 && m_cfg.getBool("GENERAL", "show_cover_after_animation", false))))
 	{
-		for (u32 i = 0; i < m_elms.size(); ++i)
-		{
-			if (!m_elms[i].IsAnimationComplete())
-			{
-				retval = true;
-				break;
-			}
-		}
+		retval = isAnimationComplete();
 	}
 	return retval;
 }

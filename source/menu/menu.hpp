@@ -526,7 +526,7 @@ private:
 	
 	u32 m_current_view;
 	u32 m_loaded_ios_base;
-	bool m_disable_scaa;
+	int m_show_cover_after_animation;
 	u32 m_locDol;
 private:
 	enum WBFS_OP { WO_ADD_GAME, WO_REMOVE_GAME, WO_FORMAT };

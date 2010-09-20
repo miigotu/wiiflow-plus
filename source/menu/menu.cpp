@@ -251,7 +251,7 @@ void CMenu::init()
 	//if (m_current_view > COVERFLOW_MAX) m_current_view = COVERFLOW_USB;
 	m_current_view = COVERFLOW_USB;
 	m_loaded_ios_base = get_ios_base();
-	m_disable_scaa = m_cfg.getBool("FANART", "disable_fa_scaa", false);
+	m_show_cover_after_animation = m_cfg.getOptBool("FANART", "show_cover_after_animation", 2); // 0 is false, 1 is true, 2 is default
 	
 	register_card_provider(m_cfg.getString("GAMERCARD", "wiinnertag_url", WIINNERTAG_URL).c_str(),
 						   m_cfg.getString("GAMERCARD", "wiinnertag_key", "").c_str(),
@@ -954,9 +954,11 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	m_btnMgr.tick();
 	m_fa.tick();
 	m_cf.setFanartPlaying(m_fa.isLoaded());
+	m_cf.setFanartTextColor(m_fa.getTextColor(m_theme.getColor("_COVERFLOW", "font_color", CColor(0xFFFFFFFF))));
+
 	_updateBg();
 	
-	if (!m_cfg.getBool("FANART", "disable_fa_hidecovers", false) && m_fa.hideCover(m_disable_scaa))
+	if (m_show_cover_after_animation == 0 || m_fa.hideCover(m_show_cover_after_animation))
 		m_cf.hideCover();
 	else
 		m_cf.showCover();
