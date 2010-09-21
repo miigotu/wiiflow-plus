@@ -1,4 +1,3 @@
-
 #include "menu.hpp"
 #include "loader/sys.h"
 #include "loader/wbfs.h"
@@ -15,6 +14,7 @@
 #include <dirent.h>
 #include <mp3player.h>
 #include <time.h>
+#include <wchar.h>
 
 #include "gecko.h"
 #include "channels.h"
@@ -84,6 +84,7 @@ CMenu::CMenu(CVideo &vid) :
 	m_gameSettingsPage = 0;
 	m_directLaunch = false;
 	m_exit = false;
+	m_initialCoverStatusComplete = false;
 }
 
 extern "C" { int makedir(char *newdir); }
@@ -253,7 +254,7 @@ void CMenu::init()
 	m_loaded_ios_base = get_ios_base();
 	m_show_cover_after_animation = m_cfg.getOptBool("FANART", "show_cover_after_animation", 2); // 0 is false, 1 is true, 2 is default
 	m_hidecover = m_cfg.getOptBool("FANART", "hidecover", 2);
-	m_allow_fanart_on_top = m_cfg.getBool("FANART", "allow_fanart_on_top", false);
+	m_allow_fanart_on_top = m_cfg.getBool("FANART", "allow_artwork_on_top", true);
 	
 	register_card_provider(m_cfg.getString("GAMERCARD", "wiinnertag_url", WIINNERTAG_URL).c_str(),
 						   m_cfg.getString("GAMERCARD", "wiinnertag_key", "").c_str(),
@@ -900,8 +901,8 @@ void CMenu::_initCF(void)
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
 	for (u32 i = 0; i < m_gameList.size(); ++i)
 	{
-		id = string((const char *)m_gameList[i].id, m_gameList[i].id[5] == 0 ? strlen((const char *) m_gameList[i].id) : sizeof m_gameList[0].id);
-		chantitle = m_gameList[i].chantitle;	
+		id = string((const char *)m_gameList[i].hdr.id, m_gameList[i].hdr.id[5] == 0 ? strlen((const char *) m_gameList[i].hdr.id) : sizeof m_gameList[0].hdr.id);
+		chantitle = m_gameList[i].hdr.chantitle;
 		test_id = (m_current_view == COVERFLOW_CHANNEL && chantitle == 281482209522966ULL) ? "JODI" : id;
 		
 		if ((!m_favorites || m_gcfg1.getBool("FAVORITES", test_id, false)) && (!m_locked || !m_gcfg1.getBool("ADULTONLY", test_id, false)) && !m_gcfg1.getBool("HIDDEN", test_id, false))
@@ -917,9 +918,13 @@ void CMenu::_initCF(void)
 			if (w.empty())
 			{
 				if (m_current_view == COVERFLOW_CHANNEL) // Required, since Channel titles are already in wchar_t
-					w = titles.getWString("TITLES", id.substr(0, 4), (wchar_t *) &m_gameList[i].title);
+				{
+					wchar_t channelname[IMET_MAX_NAME_LEN];
+					mbstowcs(channelname, m_gameList[i].hdr.title, IMET_MAX_NAME_LEN);
+					w = titles.getWString("TITLES", id.substr(0, 4), channelname);
+				}
 				else
-					w = titles.getWString("TITLES", id.substr(0, 4), string(m_gameList[i].title, sizeof m_gameList[0].title));
+					w = titles.getWString("TITLES", id.substr(0, 4), string(m_gameList[i].hdr.title, sizeof m_gameList[0].hdr.title));
 			}
 			int playcount = m_gcfg1.getInt("PLAYCOUNT", test_id, 0);
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", test_id, 0);
@@ -929,7 +934,7 @@ void CMenu::_initCF(void)
 			else if (m_current_view == COVERFLOW_USB && m_gamelistdump)
 				m_dump.setWString("GAMES", id, w);
 
-			m_cf.addItem(id.c_str(), w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), test_id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), test_id.c_str()).c_str(), playcount, lastPlayed);
+			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), test_id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), test_id.c_str()).c_str(), playcount, lastPlayed);
 		}
 	}
 	m_gcfg1.unload();
@@ -975,7 +980,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 			m_vid.prepareAAPass(i);
 			m_vid.setup2DProjection(false, true);
 			_drawBg();
-			m_fa.draw(false);
+			m_fa.draw(m_allow_fanart_on_top, false);
 			m_cf.draw();
 			m_vid.setup2DProjection(false, true);
 			m_cf.drawEffect();
@@ -990,7 +995,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		m_vid.prepare();
 		m_vid.setup2DProjection();
 		_drawBg();
-		m_fa.draw(false);
+		m_fa.draw(m_allow_fanart_on_top, false);
 		if (withCF)
 		{
 			m_cf.draw();
@@ -1215,18 +1220,18 @@ bool CMenu::_loadChannelList(void)
 		return false;
 	memset(buffer.get(), 0, len);
 
-	
 	m_gameList.clear();
 	m_gameList.reserve(count);
-	discHdr *b = (discHdr *)buffer.get();
+	dir_discHdr *b = (dir_discHdr *)buffer.get();
 	for (u32 i = 0; i < count; ++i) {
 		Channel *chan = m_channels.GetChannel(i);
 		
 		if (chan->id == NULL) continue; // Skip invalid channels
 
-		memcpy(&b[i].id, chan->id, 4);
-		memcpy(&b[i].title, chan->name, sizeof(b->title)); // IMET header specifies max name length 42 (wchar, so * 4!), so we copy only the first 64 bytes here...
-		b[i].chantitle = chan->title;
+		memcpy(&b[i].hdr.id, chan->id, 4);
+		wcstombs(b[i].hdr.title, chan->name, sizeof(b->hdr.title));
+//		memcpy(&b[i].hdr.title, chan->name, sizeof(b->hdr.title)); // IMET header specifies max name length 42 (wchar, so * 4!), so we copy only the first 64 bytes here...
+		b[i].hdr.chantitle = chan->title;
 	
 		m_gameList.push_back(b[i]);
 	}
@@ -1289,14 +1294,14 @@ bool CMenu::_loadGameList(void)
 	if (!buffer)
 		return false;
 	memset(buffer.get(), 0, len);
-	ret = WBFS_GetHeaders((discHdr *)buffer.get(), count, sizeof (struct discHdr));
+	ret = WBFS_GetHeaders((dir_discHdr *)buffer.get(), count, sizeof (struct dir_discHdr));
 #endif
 	if (ret < 0)
 	{
 		error(wfmt(_fmt("wbfs4", L"WBFS_GetHeaders failed : %i"), ret));
 		return false;
 	}
-#if 0	
+#if 0
 	FILE *file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "hdrdump").c_str(), "wb");
 	fwrite(buffer.get(), 1, len, file);
 	fclose(file);
@@ -1304,9 +1309,9 @@ bool CMenu::_loadGameList(void)
 
 	m_gameList.clear();
 	m_gameList.reserve(count);
-	discHdr *b = (discHdr *)buffer.get();
+	dir_discHdr *b = (dir_discHdr *)buffer.get();
 	for (u32 i = 0; i < count; ++i)
-		if (memcmp(b[i].id, "__CFG_", sizeof b[i].id) != 0)	// Because of uLoader
+		if (memcmp(b[i].hdr.id, "__CFG_", sizeof b[i].hdr.id) != 0)	// Because of uLoader
 			m_gameList.push_back(b[i]);
 	return true;
 }

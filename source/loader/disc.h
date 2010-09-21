@@ -39,6 +39,12 @@ struct discHdr
 	u8 unused3[30];
 } ATTRIBUTE_PACKED;
 
+struct dir_discHdr
+{
+	struct discHdr hdr;
+	char path[256];
+} ATTRIBUTE_PACKED;
+
 struct gc_discHdr
 {
 	/* Game ID */

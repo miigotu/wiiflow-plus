@@ -53,7 +53,7 @@ private:
 
 	CCoverFlow m_cf;
 	CFanart m_fa;
-	std::vector<discHdr> m_gameList;
+	std::vector<dir_discHdr> m_gameList;
 	Config m_cfg;
 	Config m_loc;
 	Config m_loclist;
@@ -435,6 +435,7 @@ private:
 	SZone m_mainButtonsZone3;
 	SZone m_gameButtonsZone;
 	bool m_reload;
+	bool m_initialCoverStatusComplete;
 	
 	WPADData *wd[4];
 	void LeftStick();
@@ -512,8 +513,7 @@ private:
 	SSoundEffect m_gameSound;
 	SSoundEffect m_gameSoundTmp;
 	SSoundEffect m_cameraSound;
-	std::string m_gameSoundId;
-	u64 m_gameSoundTitle;
+	dir_discHdr *m_gameSoundHdr;
 	lwp_t m_gameSoundThread;
 	mutex_t m_gameSndMutex;
 	u8 m_bnrSndVol;
@@ -704,9 +704,9 @@ private:
 public:
 	void _directlaunch(const std::string &id);
 private:
-	void _launch(const u64 chanTitle, const std::string &id);
-	void _launchGame(std::string &id, bool dvd);
-	void _launchChannel(const u64 chanTitle, const string &id);
+	void _launch(dir_discHdr *hdr);
+	void _launchGame(dir_discHdr *hdr, bool dvd);
+	void _launchChannel(dir_discHdr *hdr);
 	bool _networkFix(void);
 	void _setAA(int aa);
 	void _loadCFCfg(void);
@@ -750,6 +750,7 @@ private:
 	bool _isNetworkAvailable();
 	int _initNetwork();
 	void _deinitNetwork();
+	static int GetCoverStatusAsync(CMenu *m);
 	static void _addDiscProgress(int status, int total, void *user_data);
 	static int _gameInstaller(void *obj);
 	wstringEx _optBoolToString(int b);
@@ -767,7 +768,7 @@ private:
 	void _updateWiiTDB();
 	// 
 	void _playGameSound(void);
-	void _loadGameSound(const u64 chantitle, const std::string &id);
+	void _loadGameSound(dir_discHdr *);
 	void _waitForGameSoundExtract(void);
 	//
 	static int _loadGameSoundThrd(CMenu *m);

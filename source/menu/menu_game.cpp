@@ -16,6 +16,7 @@
 
 #include "loader/mload_modules.h"
 #include "loader/wbfs.h"
+#include "loader/wbfs_ext.h"
 #include "loader/usbstorage.h"
 #include "libwbfs/wiidisc.h"
 #include "loader/frag.h"
@@ -149,10 +150,10 @@ static Banner *_extractChannelBnr(const u64 chantitle)
 	return Channels::GetBanner(chantitle);
 }
 
-static Banner *_extractBnr(const string &gameId)
+static Banner *_extractBnr(dir_discHdr *hdr)
 {
 	Banner *banner = NULL;
-	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str());
+	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *) &hdr->hdr.id, (char *) hdr->path);
 	if (disc != NULL)
 	{
 		void *bnr = NULL;
@@ -375,6 +376,8 @@ void CMenu::_game(bool launch)
 			else if (launch || m_btnMgr.selected() == m_gameBtnPlay || (!WPadIR_Valid(0) && !WPadIR_Valid(1) && !WPadIR_Valid(2) && !WPadIR_Valid(3) && m_btnMgr.selected() == (u32)-1))
 			{
 				_hideGame();
+				dir_discHdr *hdr = m_cf.getHdr();
+
 				m_cf.clear();
 				m_vid.waitMessage(m_waitMessage);
 
@@ -386,9 +389,9 @@ void CMenu::_game(bool launch)
 				if (m_cfg.getBool("GENERAL", "write_playlog", true))
 				{
 					if (banner_title[0] == 0) // No title set?
-					{
+					{					
 						// Get banner_title
-						Banner * banner = (m_current_view == COVERFLOW_CHANNEL) ? _extractChannelBnr(chantitle) : _extractBnr(id);
+						Banner * banner = (m_current_view == COVERFLOW_CHANNEL) ? _extractChannelBnr(chantitle) : _extractBnr(hdr);
 						if (banner != NULL)
 						{						
 							if (banner->IsValid())
@@ -405,7 +408,7 @@ void CMenu::_game(bool launch)
 				}
 
 				gprintf("Launching game\n");
-				_launch(chantitle, id);
+				_launch(hdr);
 				launch = false;
 				WPAD_SetVRes(WPAD_CHAN_0, m_vid.width() + m_cursor1.width(), m_vid.height() + m_cursor1.height());	// b/c IOS reload
 				WPAD_SetVRes(WPAD_CHAN_1, m_vid.width() + m_cursor2.width(), m_vid.height() + m_cursor2.height());	// b/c IOS reload
@@ -548,12 +551,12 @@ static u32 stringcompare(const string &s1, const string &s2)
 	}
 }
 
-static SmartBuf extractDOL(const char *dolName, u32 &size, const char *gameId, s32 source, bool dvd)
+static SmartBuf extractDOL(const char *dolName, u32 &size, dir_discHdr *hdr, s32 source, bool dvd)
 {
 	void *dol = NULL;
 	if (!dvd && source == ALT_DOL_DISC)
 	{
-		wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId);
+		wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)hdr->hdr.id, (char *) hdr->path);
 		size = wbfs_extract_file(disc, (char *) dolName, &dol);
 		WBFS_CloseDisc(disc);
 	}
@@ -566,12 +569,12 @@ static void addDolToList(void *o, const char *fileName)
 	v.push_back(fileName);
 }
 
-static bool findDOL(const char *dolNameToMatch, string &altdol, const char *gameId)
+static bool findDOL(const char *dolNameToMatch, string &altdol, dir_discHdr *hdr)
 {
 	vector<string> dols;
 	dols.push_back("main.dol");
 
-	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId);
+	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)hdr->hdr.id, (char *)hdr->path);
 	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
 	wd_list_dols(wdisc, ALL_PARTITIONS, addDolToList, (void *)&dols);
 	wd_close_disc(wdisc);
@@ -603,11 +606,21 @@ void CMenu::_directlaunch(const string &id)
 		if (ret == 0)
 		{
 			// Let's find the game here...
-			if (WBFS_CheckGame((u8 *) id.c_str()))
+			if (WBFS_CheckGame((u8 *) id.c_str(), NULL))
 			{
+				// Find the game header
+				dir_discHdr hdr;
+				memset(&hdr, 0, sizeof(dir_discHdr));
+				strncpy((char *) &hdr.hdr.id, id.c_str(), 6);
+				
+				if (wbfs_part_fs == PART_FS_NTFS || wbfs_part_fs == PART_FS_FAT)
+				{
+					WBFS_Ext_find_fname((u8 *) &hdr.hdr.id, NULL, (char *) &hdr.path, sizeof(hdr.path));
+				}
+			
 				// Game found
 				gprintf("Game found on partition %s\n", part);
-				_launch(0, id); // Launch will exit wiiflow
+				_launch(&hdr); // Launch will exit wiiflow
 			}
 		}
 	}
@@ -615,19 +628,21 @@ void CMenu::_directlaunch(const string &id)
 	error(sfmt("Cannot find the game with ID: %s", id.c_str()));
 }
 
-void CMenu::_launch(const u64 chantitle, const string &id)
+void CMenu::_launch(dir_discHdr *hdr)
 {
 	m_gcfg2.load(sfmt("%s/gameconfig2.ini", m_settingsDir.c_str()).c_str());
-	string id2 = id;
+	string id2 = string((const char *) &hdr->hdr.id);
 	if (m_current_view == COVERFLOW_CHANNEL) {
-		_launchChannel(chantitle, id);
+		_launchChannel(hdr);
 	} else {
-		_launchGame(id2, false);
+		_launchGame(hdr, false);
 	}
 }
 
-void CMenu::_launchChannel(const u64 chantitle, const string &id)
+void CMenu::_launchChannel(dir_discHdr *hdr)
 {
+	string id = string((const char *) &hdr->hdr.id);
+
 	m_cfg.setString("GENERAL", "current_channel", id);
 	m_gcfg2.setInt("PLAYCOUNT", id, m_gcfg2.getInt("PLAYCOUNT", id, 0) + 1);
 	m_gcfg2.setUInt("LASTPLAYED", id, time(NULL));
@@ -650,11 +665,13 @@ void CMenu::_launchChannel(const u64 chantitle, const string &id)
 	cleanup();
 	USBStorage_Deinit();
 
-	WII_LaunchTitle(chantitle);
+	WII_LaunchTitle(hdr->hdr.chantitle);
 }
 
-void CMenu::_launchGame(string &id, bool dvd)
+void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 {
+	string id = string((const char *) &hdr->hdr.id);
+
 	bool gc = false;
 	if (dvd)
 	{
@@ -813,15 +830,15 @@ void CMenu::_launchGame(string &id, bool dvd)
 	
 	// Do every disc related action before reloading IOS
 	if (!dvd)
-		if (get_frag_list((u8 *)id.c_str()) < 0)
+		if (get_frag_list((u8 *) &hdr->hdr.id, (char *)&hdr->path) < 0)
 			return;
 
 	if (cheat)
-		loadCheatFile(cheatFile, cheatSize, m_cheatDir.c_str(), id.c_str());
+		loadCheatFile(cheatFile, cheatSize, m_cheatDir.c_str(), (const char *) hdr->hdr.id);
 	
-	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) id.c_str());
-	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) id.c_str());
-	ocarina_load_code((u8 *) id.c_str(), cheatFile.get(), cheatSize);
+	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) &hdr->hdr.id);
+	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) &hdr->hdr.id);
+	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 
 	// Reload IOS, if requested
 	if (iosNum != mainIOS || !_networkFix())
@@ -842,21 +859,21 @@ void CMenu::_launchGame(string &id, bool dvd)
 		error(sfmt("IOS %i rev %i or higher is required.\nPlease install the latest version.", iosNum, minIOSRev));
 		Sys_LoadMenu();
 	}
-	bool blockIOSReload = m_gcfg2.getBool(id, "block_ios_reload", false);
+	bool blockIOSReload = m_gcfg2.getBool((const char *) hdr->hdr.id, "block_ios_reload", false);
 	if (mload && blockIOSReload)
 		disableIOSReload();
 	
 	if (wdm_entry != NULL)
 	{
 		gprintf("WDM Entry found, searching for dol with name '%s'\n", wdm_entry->dolname);
-		findDOL(wdm_entry->dolname, altdol, id.c_str());
+		findDOL(wdm_entry->dolname, altdol, hdr);
 	}
 	
 	if (!altdol.empty())
-		dolFile = extractDOL(altdol.c_str(), dolSize, id.c_str(), m_locDol, dvd);
+		dolFile = extractDOL(altdol.c_str(), dolSize, hdr, m_locDol, dvd);
 	if (!dvd)
 	{
-		s32 ret = Disc_SetUSB((u8 *)id.c_str());
+		s32 ret = Disc_SetUSB((u8 *) &hdr->hdr.id);
 		if (ret < 0)
 		{
 			gprintf("Set USB failed: %d\n", ret);
@@ -1059,7 +1076,7 @@ SmartBuf uncompressLZ77(u32 &size, const u8 *inputBuf, u32 inputLength)
 	return buffer;
 }
 
-void CMenu::_loadGameSound(const u64 chantitle, const std::string &id)
+void CMenu::_loadGameSound(dir_discHdr *hdr)
 {
 	Banner *banner = NULL;
 	const u8 *soundBin;
@@ -1070,10 +1087,10 @@ void CMenu::_loadGameSound(const u64 chantitle, const std::string &id)
 	SmartBuf uncompressed;
 	
 	if (m_current_view == COVERFLOW_CHANNEL) {
-		banner = _extractChannelBnr(chantitle);
+		banner = _extractChannelBnr(hdr->hdr.chantitle);
 	}
 	else if (m_current_view == COVERFLOW_USB)
-		banner = _extractBnr(id);
+		banner = _extractBnr(hdr);
 
 	if (banner == NULL || !banner->IsValid())
 	{
@@ -1122,27 +1139,32 @@ void CMenu::_loadGameSound(const u64 chantitle, const std::string &id)
 
 int CMenu::_loadGameSoundThrd(CMenu *m)
 {
-	string prevId;
-	string id;
-	u64 chantitle;
+//	string prevId;
+//	string id;
+//	u64 chantitle;
+
+	dir_discHdr *hdr = m->m_gameSoundHdr;
 
 	LWP_MutexLock(m->m_gameSndMutex);
-	id = m->m_gameSoundId;
-	chantitle = m->m_gameSoundTitle;
-	m->m_gameSoundId.clear();
-	m->m_gameSoundTitle = 0;
+//	id = m->m_gameSoundId;
+//	chantitle = m->m_gameSoundTitle;
+//	m->m_gameSoundId.clear();
+//	m->m_gameSoundTitle = 0;
+	m->m_gameSoundHdr = NULL;
+	
 	LWP_MutexUnlock(m->m_gameSndMutex);
-	while (id != prevId && !id.empty())
-	{
-		prevId = id;
-		m->_loadGameSound(chantitle, id);
+//	while (id != prevId && !id.empty())
+//	{
+//		prevId = id;
+		m->_loadGameSound(hdr);
 		LWP_MutexLock(m->m_gameSndMutex);
-		id = m->m_gameSoundId;
-		chantitle = m->m_gameSoundTitle;
-		m->m_gameSoundId.clear();
-		m->m_gameSoundTitle = 0;
+//		id = m->m_gameSoundId;
+//		chantitle = m->m_gameSoundTitle;
+//		m->m_gameSoundId.clear();
+//		m->m_gameSoundTitle = 0;
+		m->m_gameSoundHdr = NULL;
 		LWP_MutexUnlock(m->m_gameSndMutex);
-	}
+//	}
 	m->m_gameSoundThread = 0;
 	return 0;
 }
@@ -1152,8 +1174,9 @@ void CMenu::_playGameSound(void)
 	if (m_bnrSndVol == 0)
 		return;
 	LWP_MutexLock(m_gameSndMutex);
-	m_gameSoundId = m_cf.getId();
-	m_gameSoundTitle = m_cf.getChanTitle();
+	m_gameSoundHdr = m_cf.getHdr();
+//	m_gameSoundId = m_cf.getId();
+//	m_gameSoundTitle = m_cf.getChanTitle();
 	LWP_MutexUnlock(m_gameSndMutex);
 	m_cf.stopPicLoader();
 	if (m_gameSoundThread == 0)

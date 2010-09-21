@@ -157,7 +157,6 @@ Banner * Channels::GetBanner(u64 title, bool imetOnly)
 {
 	char app[ISFS_MAXPATH];
 
-	gprintf("Finding title %ld\n", title);
 	if (!GetAppNameFromTmd(title, app)) {
 		gprintf("No title found\n");
 		return NULL;

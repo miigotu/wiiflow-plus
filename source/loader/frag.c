@@ -224,7 +224,7 @@ int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 	frag_init(*fl, MAX_FRAG);
 	if (is_wbfs) {
 		// if wbfs file format, remap.
-		wbfs_disc_t *d = WBFS_OpenDisc(id);
+		wbfs_disc_t *d = WBFS_OpenDisc(id, fname);
 		if (!d) { ret_val = -4; goto out; }
 		frag_init(fw, MAX_FRAG);
 		ret = wbfs_get_fragments(d, &_frag_append, fw);
@@ -251,13 +251,13 @@ out:
 	return ret_val;
 }
 
-int get_frag_list(u8 *id)
+int get_frag_list(u8 *id, char *path)
 {
 	char fname[1024];
 
 	if (wbfs_part_fs == PART_FS_WBFS) return 0;
 
-	if (!WBFS_Ext_find_fname(id, fname, sizeof(fname))) return -2;
+	if (!WBFS_Ext_find_fname(id, path, fname, sizeof(fname))) return -2;
 	
 	return get_frag_list_for_file((char *) fname, id, &frag_list);
 }

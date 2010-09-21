@@ -14,6 +14,7 @@
 #include "text.hpp"
 #include "config.hpp"
 #include "sound.hpp"
+#include "disc.h"
 
 enum Sorting
 {
@@ -33,7 +34,7 @@ public:
 	// Cover list management
 	void clear(void);
 	void reserve(u32 capacity);
-	void addItem(const char *id, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount = 0, unsigned int lastPlayed = 0);
+	void addItem(dir_discHdr *hdr, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount = 0, unsigned int lastPlayed = 0);
 	bool empty(void) const { return m_items.empty(); }
 	// 
 	bool start(const char *id = 0);
@@ -111,6 +112,8 @@ public:
 	// 
 	std::string getId(void) const;
 	std::string getNextId(void) const;
+	dir_discHdr * getHdr(void) const;
+	dir_discHdr * getNextHdr(void) const;
 	std::string getTitle(void) const;
 	u64 getChanTitle(void) const;
 private:
@@ -168,7 +171,7 @@ private:
 	enum TexState { STATE_Loading, STATE_Ready, STATE_NoCover };
 	struct CItem
 	{
-		std::string id;
+		dir_discHdr *hdr;
 		wstringEx title;
 		u64 chantitle;
 		std::string picPath;
@@ -180,7 +183,7 @@ private:
 		volatile bool boxTexture;
 		volatile enum TexState state;
 		// 
-		CItem(const char *itemId, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed);
+		CItem(dir_discHdr *itemHdr, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed);
 		bool operator<(const CItem &i) const;
 	};
 	struct CCover

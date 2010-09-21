@@ -176,7 +176,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 							break;
 						}
 						Disc_ReadHeader(&header);
-						if (WBFS_CheckGame(header.id))
+						if (WBFS_CheckGame(header.id, NULL))
 						{
 							error(_t("wbfsoperr4", L"Game already installed"));
 							out = true;
@@ -191,7 +191,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 						LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_gameInstaller, (void *)this, 0, 8 * 1024, 64);
 						break;
 					case CMenu::WO_REMOVE_GAME:
-						WBFS_RemoveGame((u8 *)m_cf.getId().c_str());
+						WBFS_RemoveGame((u8 *)m_cf.getId().c_str(), (char *) m_cf.getHdr()->path);
 						m_btnMgr.show(m_wbfsPBar);
 						m_btnMgr.setProgress(m_wbfsPBar, 0.f, true);
 						m_btnMgr.setProgress(m_wbfsPBar, 1.f);

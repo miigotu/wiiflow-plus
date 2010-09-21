@@ -393,7 +393,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 			_setThrdMsg(_t("dlmsg7", L"Listing covers to download..."), listWeight * (float)step / (float)nbSteps);
 			LWP_MutexUnlock(m_mutex);
 			++step;
-			string id((const char *)m_gameList[i].id, sizeof m_gameList[i].id);
+			string id((const char *)m_gameList[i].hdr.id, sizeof m_gameList[i].hdr.id);
 			path = sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str());
 			if (!missingOnly || (!m_cf.fullCoverCached(id.c_str()) && !checkPNGFile(path.c_str())))
 				coverList.push_back(id);

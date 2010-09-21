@@ -24,6 +24,7 @@
 #include "partition.h"
 #include "wbfs_ext.h"
 #include "sys.h"
+#include "disc.h"
 #include "gecko.h"
 
 /* Constants */
@@ -480,8 +481,13 @@ s32 WBFS_GetHeaders(void *outbuf, u32 cnt, u32 len)
 	if (!hdd)
 		return -1;
 
+	u32 slen = len;
+	if (len > sizeof(struct discHdr))
+		len = sizeof(struct discHdr);
+
 	for (idx = 0; idx < cnt; idx++) {
-		u8 *ptr = ((u8 *)outbuf) + (idx * len);
+		u8 *ptr = ((u8 *)outbuf) + (idx * slen);
+		memset(ptr, 0, slen);
 
 		/* Get header */
 		ret = wbfs_get_disc_info(hdd, idx, ptr, len, &size);
@@ -492,12 +498,12 @@ s32 WBFS_GetHeaders(void *outbuf, u32 cnt, u32 len)
 	return 0;
 }
 
-s32 WBFS_CheckGame(u8 *discid)
+s32 WBFS_CheckGame(u8 *discid, char *path)
 {
 	wbfs_disc_t *disc = NULL;
 
 	/* Try to open game disc */
-	disc = WBFS_OpenDisc(discid);
+	disc = WBFS_OpenDisc(discid, path);
 	if (disc) {
 		/* Close disc */
 		WBFS_CloseDisc(disc);
@@ -527,9 +533,9 @@ s32 WBFS_AddGame(progress_callback_t spinner, void *spinner_data)
 	return 0;
 }
 
-s32 WBFS_RemoveGame(u8 *discid)
+s32 WBFS_RemoveGame(u8 *discid, char *path)
 {
-	if (wbfs_part_fs) return WBFS_Ext_RemoveGame(discid);
+	if (wbfs_part_fs) return WBFS_Ext_RemoveGame(discid, path);
 	s32 ret;
 
 	/* No device open */
@@ -544,14 +550,14 @@ s32 WBFS_RemoveGame(u8 *discid)
 	return 0;
 }
 
-s32 WBFS_GameSize(u8 *discid, f32 *size)
+s32 WBFS_GameSize(u8 *discid, char *path, f32 *size)
 {
 	wbfs_disc_t *disc = NULL;
 
 	u32 sectors;
 
 	/* Open disc */
-	disc = WBFS_OpenDisc(discid);
+	disc = WBFS_OpenDisc(discid, path);
 	if (!disc)
 		return -2;
 
@@ -567,14 +573,14 @@ s32 WBFS_GameSize(u8 *discid, f32 *size)
 	return 0;
 }
 
-s32 WBFS_GameSize2(u8 *discid, u64 *comp_size, u64 *real_size)
+s32 WBFS_GameSize2(u8 *discid, char *path, u64 *comp_size, u64 *real_size)
 {
 	wbfs_disc_t *disc = NULL;
 
 	u32 sectors, real_sec;
 
 	/* Open disc */
-	disc = WBFS_OpenDisc(discid);
+	disc = WBFS_OpenDisc(discid, path);
 	if (!disc)
 		return -2;
 
@@ -639,9 +645,9 @@ s32 WBFS_DiskSpace(f32 *used, f32 *free)
 	return 0;
 }
 
-wbfs_disc_t* WBFS_OpenDisc(u8 *discid)
+wbfs_disc_t* WBFS_OpenDisc(u8 *discid, char *path)
 {
-	if (wbfs_part_fs) return WBFS_Ext_OpenDisc(discid);
+	if (wbfs_part_fs) return WBFS_Ext_OpenDisc(discid, path);
 
 	/* No device open */
 	if (!hdd)

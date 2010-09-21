@@ -25,6 +25,7 @@
 #include "utils.h"
 #include "disc.h"
 #include "frag.h"
+#include "gecko.h"
 
 // max fat fname = 256
 #define MAX_FAT_PATH 1024
@@ -42,7 +43,7 @@ split_info_t split;
 
 static int fat_hdr_count = 0;
 static u32 fat_sector_size = 512;
-static struct discHdr *fat_hdr_list = NULL;
+static struct dir_discHdr *fat_hdr_list = NULL;
 
 struct statvfs wbfs_ext_vfs;
 
@@ -97,7 +98,7 @@ s32 _WBFS_Ext_GetHeadersCount()
 	char path[MAX_FAT_PATH];
 	char fname[MAX_FAT_PATH];
 	char fpath[MAX_FAT_PATH];
-	struct discHdr tmpHdr;
+	struct dir_discHdr tmpHdr;
 	struct stat st;
 	wbfs_t *part = NULL;
 	u8 id[8];
@@ -119,11 +120,17 @@ s32 _WBFS_Ext_GetHeadersCount()
 	dir_iter = diropen(path);
 	if (!dir_iter) return 0;
 
+	// Pre alloc a big list
+	int fat_hdr_init = 1000;
+	fat_hdr_list = malloc(fat_hdr_init * sizeof(struct dir_discHdr));
+
 	while (dirnext(dir_iter, fname, &st) == 0) {
 		//dbg_printf("found: %s\n", fname); Wpad_WaitButtonsCommon();
 		if ((char)fname[0] == '.') continue;
 		len = strlen(fname);
 		if (len < 8) continue; // "GAMEID_x"
+		
+		memset(&tmpHdr, 0, sizeof(struct dir_discHdr));
 
 		memcpy(id, fname, 6);
 		id[6] = 0;
@@ -153,7 +160,7 @@ s32 _WBFS_Ext_GetHeadersCount()
 			//dbg_printf("path2: %s\n", fpath);
 			// if more than 50 games, skip second stat to improve speed
 			// but if ambiguous layout check anyway
-			if (fat_hdr_count < 50 || (lay_a && lay_b)) {
+			if ( /*fat_hdr_count < 50 ||*/ (lay_a && lay_b)) {
 				if (stat(fpath, &st) == -1) {
 					//dbg_printf("missing: %s\n", fpath);
 					// try .iso
@@ -199,35 +206,40 @@ s32 _WBFS_Ext_GetHeadersCount()
 		}
 		if (title) {
 			memset(&tmpHdr, 0, sizeof(tmpHdr));
-			memcpy(tmpHdr.id, id, 6);
-			strncpy(tmpHdr.title, title, sizeof(tmpHdr.title)-1);
-			tmpHdr.magic = 0x5D1C9EA3;
+			memcpy(tmpHdr.hdr.id, id, 6);
+			strncpy(tmpHdr.hdr.title, title, sizeof(tmpHdr.hdr.title)-1);
+			tmpHdr.hdr.magic = 0x5D1C9EA3;
+			strncpy((char *) &tmpHdr.path, fpath, sizeof(tmpHdr.path));
 			goto add_hdr;
 		}
 
 		// else read it from file directly
 		if (strcasecmp(strrchr(fpath,'.'), ".wbfs") == 0) {
 			// wbfs file directly
+
 			FILE *fp = fopen(fpath, "rb");
 			if (fp != NULL) {
 				fseek(fp, 512, SEEK_SET);
-				fread(&tmpHdr, sizeof(struct discHdr), 1, fp);
+				fread(&tmpHdr.hdr, sizeof(struct discHdr), 1, fp);
 				fclose(fp);
-				if ((tmpHdr.magic == 0x5D1C9EA3) && (memcmp(tmpHdr.id, id, 6) == 0)) {
+				if ((tmpHdr.hdr.magic == 0x5D1C9EA3) && (memcmp(tmpHdr.hdr.id, id, 6) == 0)) {
+					strncpy((char *) &tmpHdr.path, fpath, sizeof(tmpHdr.path));
 					goto add_hdr;
 				}
 			}
 			// no title found, read it from wbfs file
 			// but this is a little bit slower 
 			// open 'partition' file
+			
 			part = WBFS_Ext_OpenPart(fpath);
 			if (!part) continue;
 
 			/* Get header */
-			ret = wbfs_get_disc_info(part, 0, (u8*)&tmpHdr,
+			ret = wbfs_get_disc_info(part, 0, (u8*)&tmpHdr.hdr,
 					sizeof(struct discHdr), &size);
 			WBFS_Ext_ClosePart(part);
 			if (ret == 0) {
+				strncpy((char *) &tmpHdr.path, fpath, sizeof(tmpHdr.path));
 				goto add_hdr;
 			}
 		} else if (strcasecmp(strrchr(fpath,'.'), ".iso") == 0) {
@@ -235,9 +247,10 @@ s32 _WBFS_Ext_GetHeadersCount()
 			FILE *fp = fopen(fpath, "rb");
 			if (fp != NULL) {
 				fseek(fp, 0, SEEK_SET);
-				fread(&tmpHdr, sizeof(struct discHdr), 1, fp);
+				fread(&tmpHdr.hdr, sizeof(struct discHdr), 1, fp);
 				fclose(fp);
-				if ((tmpHdr.magic == 0x5D1C9EA3) && (memcmp(tmpHdr.id, id, 6) == 0)) {
+				if ((tmpHdr.hdr.magic == 0x5D1C9EA3) && (memcmp(tmpHdr.hdr.id, id, 6) == 0)) {
+					strncpy((char *) &tmpHdr.path, fpath, sizeof(tmpHdr.path));
 					goto add_hdr;
 				}
 			}
@@ -246,30 +259,46 @@ s32 _WBFS_Ext_GetHeadersCount()
 		continue;
 
 		// succes: add tmpHdr to list:
-		add_hdr:
+add_hdr:
 		memset(&st, 0, sizeof(st));
 		//dbg_printf("added: %.6s %.20s\n", tmpHdr.id, tmpHdr.title); Wpad_WaitButtons();
 		fat_hdr_count++;
-		struct discHdr *new_fat_hdr_list = realloc(fat_hdr_list, fat_hdr_count * sizeof(struct discHdr));
-		if (new_fat_hdr_list == NULL)
+		
+		if (fat_hdr_count > fat_hdr_init)
 		{
-			free(fat_hdr_list);
-			fat_hdr_list = NULL;
-			fat_hdr_count = 0;
-			return -5;
+			fat_hdr_init += 1000;
+			struct dir_discHdr *new_fat_hdr_list = realloc(fat_hdr_list, fat_hdr_init * sizeof(struct dir_discHdr));
+			if (new_fat_hdr_list == NULL)
+			{
+				free(fat_hdr_list);
+				fat_hdr_list = NULL;
+				fat_hdr_count = 0;
+				return -5;
+			}
+			fat_hdr_list = new_fat_hdr_list;
 		}
-		fat_hdr_list = new_fat_hdr_list;
 		
 		int u;
-		for (u = 0; u < strlen((char *) &tmpHdr.id); u++)
+		for (u = 0; u < strlen((char *) &tmpHdr.hdr.id); u++)
 		{
-			tmpHdr.id[u] = toupper(tmpHdr.id[u]);
+			tmpHdr.hdr.id[u] = toupper(tmpHdr.hdr.id[u]);
 		}
 		
-		memcpy(&fat_hdr_list[fat_hdr_count-1], &tmpHdr, sizeof(struct discHdr));
+		memcpy(&fat_hdr_list[fat_hdr_count-1], &tmpHdr, sizeof(struct dir_discHdr));
 	}
 	dirclose(dir_iter);
 	//dbg_time2("\nFAT_GetCount"); Wpad_WaitButtonsCommon();
+		
+	struct dir_discHdr *new_fat_hdr_list = realloc(fat_hdr_list, fat_hdr_count * sizeof(struct dir_discHdr));
+	if (new_fat_hdr_list == NULL)
+	{
+		free(fat_hdr_list);
+		fat_hdr_list = NULL;
+		fat_hdr_count = 0;
+		return -6;
+	}
+	fat_hdr_list = new_fat_hdr_list;
+	
 	return 0;
 }
 
@@ -282,9 +311,33 @@ void WBFS_Ext_fname(u8 *id, char *fname, int len, char *path)
 	}
 }
 
-int WBFS_Ext_find_fname(u8 *id, char *fname, int len)
+int WBFS_Ext_find_fname(u8 *id, char *fpath, char *fname, int len)
 {
 	struct stat st;
+
+	// wbfs 'partition' file
+	if (fpath != NULL)
+	{
+		if (stat(fpath, &st) == 0)
+		{
+			strncpy(fname, fpath, 256);
+			return 2;
+		}
+		else // Maybe a file with the other extension exists file?
+		{
+			char *ptr = strrchr(fpath, '.');
+			if (ptr != NULL)
+			{
+				strcpy(ptr, strcasecmp(ptr, ".iso") == 0 ? ".wbfs\0" : ".iso\0");
+				if (stat(fpath, &st) == 0)
+				{
+					strncpy(fname, fpath, 256);
+					return 2;
+				}
+			}
+		}
+	}
+	
 	// look for direct .wbfs file
 	WBFS_Ext_fname(id, fname, len, NULL);
 	if (stat(fname, &st) == 0) return 1;
@@ -356,8 +409,8 @@ s32 WBFS_Ext_GetCount(u32 *count)
 	_WBFS_Ext_GetHeadersCount();
 	if (fat_hdr_count && fat_hdr_list) {
 		// for compacter mem - move up as it will be freed later
-		int size = fat_hdr_count * sizeof(struct discHdr);
-		struct discHdr *buf = malloc(size);
+		int size = fat_hdr_count * sizeof(struct dir_discHdr);
+		struct dir_discHdr *buf = malloc(size);
 		if (buf) {
 			memcpy(buf, fat_hdr_list, size);
 			SAFE_FREE(fat_hdr_list);
@@ -372,8 +425,8 @@ s32 WBFS_Ext_GetHeaders(void *outbuf, u32 cnt, u32 len)
 {
 	int i;
 	int slen = len;
-	if (slen > sizeof(struct discHdr)) {
-		slen = sizeof(struct discHdr);
+	if (slen > sizeof(struct dir_discHdr)) {
+		slen = sizeof(struct dir_discHdr);
 	}
 	for (i=0; i<cnt && i<fat_hdr_count; i++) {
 		memcpy(outbuf + i * len, &fat_hdr_list[i], slen);
@@ -383,12 +436,11 @@ s32 WBFS_Ext_GetHeaders(void *outbuf, u32 cnt, u32 len)
 	return 0;
 }
 
-wbfs_disc_t* WBFS_Ext_OpenDisc(u8 *discid)
+wbfs_disc_t* WBFS_Ext_OpenDisc(u8 *discid, char *path)
 {
 	char fname[MAX_FAT_PATH];
 
-	// wbfs 'partition' file
-	if ( !WBFS_Ext_find_fname(discid, fname, sizeof(fname)) ) return NULL;
+	if (!WBFS_Ext_find_fname(discid, path, fname, sizeof(fname)) ) return NULL;
 
 	if (strcasecmp(strrchr(fname,'.'), ".iso") == 0) {
 		// .iso file
@@ -591,12 +643,12 @@ void WBFS_Ext_ClosePart(wbfs_t* part)
 	if (s) split_close(s);
 }
 
-s32 WBFS_Ext_RemoveGame(u8 *discid)
+s32 WBFS_Ext_RemoveGame(u8 *discid, char *fpath)
 {
 	char fname[MAX_FAT_PATH];
 	int loc;
 	// wbfs 'partition' file
-	loc = WBFS_Ext_find_fname(discid, fname, sizeof(fname));
+	loc = WBFS_Ext_find_fname(discid, fpath, fname, sizeof(fname));
 	if ( !loc ) return -1;
 	split_create(&split, fname, 0, 0, true);
 	split_close(&split);

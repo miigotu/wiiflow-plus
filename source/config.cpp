@@ -381,9 +381,10 @@ bool Config::testOptBool(const string &domain, const string &key, bool defVal)
 	{
 		return defVal;
 	}
-	if (lowerCase(trim(i->second)) == "yes")
+	string s(lowerCase(trim(i->second)));
+	if (s == "yes" || s == "true" || s == "y" || s == "1")
 		return true;
-	if (lowerCase(trim(i->second)) == "no")
+	if (s == "no" || s == "false" || s == "n" || s == "0")
 		return false;
 	return defVal;
 }
@@ -409,9 +410,10 @@ int Config::getOptBool(const string &domain, const string &key, int defVal)
 		m_changed = true;
 		return defVal;
 	}
-	if (lowerCase(trim(data)) == "yes")
+	string s(lowerCase(trim(data)));
+	if (s == "yes" || s == "true" || s == "y" || s == "1")
 		return 1;
-	if (lowerCase(trim(data)) == "no")
+	if (s == "no" || s == "false" || s == "n" || s == "0")
 		return 0;
 	return 2;
 }

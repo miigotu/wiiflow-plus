@@ -45,7 +45,8 @@ LIBS	:=	-lfat -lntfs -lpng -lz -lwiiuse -lbte -logc -lm
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(CURDIR) $(PORTLIBS)
+LIBDIRS	:= $(CURDIR) 
+# $(PORTLIBS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

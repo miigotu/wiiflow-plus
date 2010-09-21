@@ -87,32 +87,33 @@ CColor CFanart::getTextColor(CColor themeTxtColor)
 
 bool CFanart::hideCover(int global_hide_cover, int global_show_after_animation)
 {
-	if (global_hide_cover == 1)
-		return true; // If hidecover = yes, return true
+	if (!isLoaded())
+		return false; // If no fanart is loaded, return false
 
-	// If hidecover = no
-	if (global_hide_cover == 0) 
-	{
-		// If globally show after animation is set to false
-		//  then don't hide the cover
-		if (global_show_after_animation == 0)
-			return false;					  
-			
-		// If the animation is still running
-		// hiding the cover depends on global_show_after_animation
-		if (!isAnimationComplete()) 
-		{			
-			// If global show after animation is set, return false (since the animation is still running)
-			// If fanart show_cover_after_animation is set, return false
-			if (global_show_after_animation == 1 || m_cfg.getBool("GENERAL", "show_cover_after_animation", false))
-			{
-				return true;
-			}
+	if (global_hide_cover != 2)
+		return global_hide_cover == 1; // If hidecover = no, return false, if hidecover = yes, return true
+
+	// If globally show after animation is set to false
+	//  then don't hide the cover
+	if (global_show_after_animation == 0)
+		return false;					  
+
+	bool retval = m_cfg.getBool("GENERAL", "hidecover", false);
+		
+	// If the animation is still running
+	// hiding the cover depends on global_show_after_animation
+	if (!isAnimationComplete()) 
+	{			
+		// If global show after animation is set, return false (since the animation is still running)
+		// If fanart show_cover_after_animation is set, return false
+		if (global_show_after_animation == 1 || m_cfg.getBool("GENERAL", "show_cover_after_animation", false))
+		{
+			return true;
 		}
 	}
 	
 	// If all previous checks fail, then show the cover
-	return false;
+	return retval;
 }
 
 bool CFanart::isLoaded()
@@ -140,6 +141,9 @@ void CFanart::tick()
 
 void CFanart::draw(bool allow_front, bool front)
 {
+	if (!allow_front && front)
+		return;	// It's not allowed to draw fanart on top, it has already been drawn
+
 	GX_SetNumChans(1);
 	GX_ClearVtxDesc();
 	GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);

@@ -784,7 +784,8 @@ static void addDolToList(void *o, const char *fileName)
 
 void CMenu::_listDOL(vector<string> &v, const string &gameId)
 {
-	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str());
+	dir_discHdr *hdr = m_cf.getHdr();
+	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str(), (char *) hdr->path);
 	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
 	wd_list_dols(wdisc, ALL_PARTITIONS, addDolToList, (void *)&v);
 	wd_close_disc(wdisc);

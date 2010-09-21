@@ -45,7 +45,7 @@ int frag_get(FragList *ff, u32 offset, u32 count,
 int frag_remap(FragList *ff, FragList *log, FragList *phy);
 
 int get_frag_list_for_file(char *fname, u8 *id, FragList **fl);
-int get_frag_list(u8 *id);
+int get_frag_list(u8 *id, char *path);
 int set_frag_list(u8 *id);
 
 #ifdef __cplusplus

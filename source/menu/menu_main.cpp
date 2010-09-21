@@ -9,6 +9,7 @@
 #include "wbfs.h"
 #include "gecko.h"
 #include "sys.h"
+#include "disc.h"
 
 using namespace std;
 
@@ -84,12 +85,20 @@ void CMenu::_showMain(void)
 	}
 }
 
+int CMenu::GetCoverStatusAsync(CMenu *m)
+{
+	u32 disc_check = 0;
+	WDVD_GetCoverStatus(&disc_check);
+	m->m_initialCoverStatusComplete = true;
+	return 0;
+}
+
 int CMenu::main(void)
 {
 	wstringEx curLetter;
 	string prevTheme = m_cfg.getString("GENERAL", "theme", "default");
 	m_reload = false;
-	static u32 disc_check = 0, olddisc_check = 0;
+	static u32 disc_check = 0;
 	int done = 0;
 
 	// Start network asynchronious, if configured and required
@@ -107,16 +116,19 @@ int CMenu::main(void)
 	m_curGameId.clear();
 	_initCF();
 
-	WDVD_GetCoverStatus(&disc_check);
+	lwp_t coverStatus = LWP_THREAD_NULL;
+	LWP_CreateThread(&coverStatus, (void *(*)(void *))CMenu::GetCoverStatusAsync, (void *)this, 0, 8192, 40);
+//	WDVD_GetCoverStatus(&disc_check);
 	
 	while (true)
 	{
 		_mainLoopCommon(true);
 
-		//check if Disc was inserted
-		olddisc_check = disc_check;
-		WDVD_GetCoverStatus(&disc_check);
-
+		if (m_initialCoverStatusComplete)
+		{
+			//check if Disc was inserted
+			WDVD_GetCoverStatus(&disc_check);
+		}
 		//Check for exit or reload request
 		if (BTN_HOME_PRESSED || m_exit)
 		{
@@ -337,9 +349,11 @@ int CMenu::main(void)
 			else if (m_btnMgr.selected() == m_mainBtnDVD)
 			{
 				_hideMain();
-				string dvddvd = "dvddvd";
+				dir_discHdr hdr;
+				memset(&hdr, 0, sizeof(dir_discHdr));
+				memcpy(&hdr.hdr.id, "dvddvd", 6);
 				m_vid.waitMessage(m_waitMessage);
-				_launchGame(dvddvd, true);
+				_launchGame(&hdr, true);
 				_showMain();
 			}
 			else if (m_btnMgr.selected() == m_mainBtnNext)

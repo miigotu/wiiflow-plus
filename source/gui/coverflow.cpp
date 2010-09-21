@@ -47,8 +47,8 @@ CCoverFlow::CCover::CCover(void)
 	targetScale = Vector3D(1.f, 1.f, 1.f);
 }
 
-CCoverFlow::CItem::CItem(const char *itemId, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed) :
-	id(itemId),
+CCoverFlow::CItem::CItem(dir_discHdr *itemHdr, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed) :
+	hdr(itemHdr),
 	title(itemTitle),
 	chantitle(chantitle),
 	picPath(itemPic),
@@ -617,11 +617,11 @@ void CCoverFlow::reserve(u32 capacity)
 	m_items.reserve(capacity);
 }
 
-void CCoverFlow::addItem(const char *id, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount, unsigned int lastPlayed)
+void CCoverFlow::addItem(dir_discHdr *hdr, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount, unsigned int lastPlayed)
 {
 	if (!m_covers.empty())
 		return;
-	m_items.push_back(CCoverFlow::CItem(id, title, chantitle, picPath, boxPicPath, playcount, lastPlayed));
+	m_items.push_back(CCoverFlow::CItem(hdr, title, chantitle, picPath, boxPicPath, playcount, lastPlayed));
 }
 
 // Draws a plane in the Z-Buffer only.
@@ -1305,12 +1305,16 @@ void CCoverFlow::_drawCoverBox(int i, bool mirror, CCoverFlow::DrawMode dm)
 	if (dm == CCoverFlow::CFDR_NORMAL)
 	{ 
 		// set dvd box texture, depending on game
-		if (m_items[m_covers[i].index].id == "SMNE01" || m_items[m_covers[i].index].id == "SMNP01" || m_items[m_covers[i].index].id == "SMNJ01" ||
-			m_items[m_covers[i].index].id == "SMNK01" || m_items[m_covers[i].index].id == "SMNW01")
+		if (strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNE01", 6) == 0 || 
+			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNP01", 6) == 0 || 
+			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNJ01", 6) == 0 ||
+			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNK01", 6) == 0 || 
+			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNW01", 6) == 0)
 		{
 			GX_InitTexObj(&texObj, m_dvdSkin_Red.data.get(), m_dvdSkin_Red.width, m_dvdSkin_Red.height, m_dvdSkin_Red.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
 		} 
-		else if (m_items[m_covers[i].index].id == "RZZJEL" || m_items[m_covers[i].index].id == "RZNJ01")
+		else if (strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "RZZJEL", 6) == 0 || 
+				 strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "RZNJ01", 6) == 0)
 		{
 			GX_InitTexObj(&texObj, m_dvdSkin_Black.data.get(), m_dvdSkin_Black.width, m_dvdSkin_Black.height, m_dvdSkin_Black.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
 		}
@@ -1381,18 +1385,32 @@ void CCoverFlow::_loadCover(int i, int item)
 	m_covers[i].title.setText(m_font, m_items[item].title);
 }
 
-string CCoverFlow::getId(void) const
+std::string CCoverFlow::getId(void) const
 {
 	if (m_covers.empty() || m_items.empty())
 		return "";
-	return m_items[loopNum(m_covers[m_range / 2].index + m_jump, m_items.size())].id;
+	return std::string((char *) &m_items[loopNum(m_covers[m_range / 2].index + m_jump, m_items.size())].hdr->hdr.id);
 }
 
-string CCoverFlow::getNextId(void) const
+std::string CCoverFlow::getNextId(void) const
 {
 	if (m_covers.empty() || m_items.empty())
 		return "";
-	return m_items[loopNum(m_covers[m_range / 2].index + m_jump + 1, m_items.size())].id;
+	return std::string((char *) &m_items[loopNum(m_covers[m_range / 2].index + m_jump + 1, m_items.size())].hdr->hdr.id);
+}
+
+dir_discHdr * CCoverFlow::getHdr(void) const
+{
+	if (m_covers.empty() || m_items.empty())
+		return NULL;
+	return m_items[loopNum(m_covers[m_range / 2].index + m_jump, m_items.size())].hdr;
+}
+
+dir_discHdr * CCoverFlow::getNextHdr(void) const
+{
+	if (m_covers.empty() || m_items.empty())
+		return NULL;
+	return m_items[loopNum(m_covers[m_range / 2].index + m_jump + 1, m_items.size())].hdr;
 }
 
 string CCoverFlow::getTitle(void) const
@@ -1651,13 +1669,13 @@ bool CCoverFlow::_sortByLastPlayed(CItem item1, CItem item2)
 
 bool CCoverFlow::_sortByGameID(CItem item1, CItem item2)
 {
-	u32 s = min(item1.id.size(), item2.id.size());
+	u32 s = min(strlen((char *) &item1.hdr->hdr.id), strlen((char *) &item2.hdr->hdr.id));
 	for (u32 k = 0; k < s; ++k)
-		if (upperCaseWChar(item2.id[k]) < upperCaseWChar(item1.id[k]))
+		if (upperCaseWChar(item2.hdr->hdr.id[k]) < upperCaseWChar(item1.hdr->hdr.id[k]))
 			return false;
-		else if (upperCaseWChar(item1.id[k]) > upperCaseWChar(item2.id[k]))
+		else if (upperCaseWChar(item1.hdr->hdr.id[k]) > upperCaseWChar(item2.hdr->hdr.id[k]))
 			return true;
-	return item1.id.size() < item2.id.size();
+	return strlen((char *) &item1.hdr->hdr.id) < strlen((char *) &item2.hdr->hdr.id);
 }
 
 bool CCoverFlow::start(const char *id)
@@ -1892,7 +1910,6 @@ bool CCoverFlow::mouseOver(CVideo &vid, int x, int y)
 bool CCoverFlow::findId(const char *id, bool instant)
 {
 	LockMutex lock(m_mutex);
-	string strId(id);
 	u32 i;
 	int j;
 	u32 curPos = _currentPos();
@@ -1901,7 +1918,7 @@ bool CCoverFlow::findId(const char *id, bool instant)
 		return false;
 	// 
 	for (i = 0; i < m_items.size(); ++i)
-		if (m_items[i].id == strId)
+		if (memcmp(&m_items[i].hdr->hdr.id, id, strlen(id)) == 0)
 			break;
 	if (i >= m_items.size())
 		return false;
@@ -2303,7 +2320,7 @@ bool CCoverFlow::_loadCoverTexPNG(u32 i, bool box, bool hq)
 		zBuffer = m_compressCache ? smartMalloc(zBufferSize) : tex.data;
 		if (!!zBuffer && (!m_compressCache || compress(zBuffer.get(), &zBufferSize, tex.data.get(), bufSize) == Z_OK))
 		{
-			file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), m_items[i].id.c_str()).c_str(), "wb");
+			file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), m_items[i].hdr->hdr.id).c_str(), "wb");
 			if (file != 0)
 			{
 				SWFCHeader header(tex, box, m_compressCache);
@@ -2378,7 +2395,7 @@ CCoverFlow::CLRet CCoverFlow::_loadCoverTex(u32 i, bool box, bool hq)
 	// Try to find the texture in the cache
 	if (!m_cachePath.empty())
 	{
-		file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), m_items[i].id.c_str()).c_str(), "rb");
+		file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), m_items[i].hdr->hdr.id).c_str(), "rb");
 		if (file != 0)
 		{
 			fseek(file, 0, SEEK_END);
