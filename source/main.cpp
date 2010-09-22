@@ -10,8 +10,6 @@
 #include <ogc/system.h>
 #include "gecko.h"
 
-
-
 extern "C"
 {
     extern void __exception_setreload(int t);
@@ -68,9 +66,10 @@ int old_main(int argc, char **argv)
 	bool dipOK = false;
 	bool wbfsOK = false;
 	int ret = 0;
-	
 	char *gameid = NULL;
-	
+
+	Wakeup_USB(); //Attempt to wake up slow usb drives.	
+
 	for (int i = 0; i < argc; i++)
 	{
 		if (argv[i] != NULL && strcasestr(argv[i], "ios=") != 0)
@@ -86,8 +85,6 @@ int old_main(int argc, char **argv)
 		}
 	}
 	
-	// Mount_Devices(); // Wake up certain drives
-
 	gprintf("Loading cIOS: %d\n", mainIOS);
 
 	// Load (passed) Custom IOS
@@ -112,6 +109,9 @@ int old_main(int argc, char **argv)
 	Sys_Init();
 	Sys_ExitTo(0);
 
+	WPAD_Init();
+	PAD_Init();
+	
 	if (iosOK)
 	{
 		Mount_Devices(); // this will power up the drive if it is not ready
@@ -138,14 +138,13 @@ int old_main(int argc, char **argv)
 	vid.waitMessage(texWait);
 	texWait.data.release();
 	texWaitHDD.data.release();
-	WPAD_Init();
-	PAD_Init();
+
 	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
 	MEM2_takeBigOnes(true);
 	do
 	{
 		Mount_Devices();
-				
+
 		gprintf("SD Available: %d\n", FS_SDAvailable());
 		gprintf("USB Available: %d\n", FS_USBAvailable());
 
@@ -171,8 +170,11 @@ int old_main(int argc, char **argv)
 			}
 		}
 		vid.cleanup();
-		Unmount_All_Devices();
+		Unmount_All_Devices(false);
 	} while (ret == 1);
+
+	Unmount_All_Devices(true);
+
 	return ret;
 };
 

@@ -118,7 +118,7 @@ bool loadIOS(int n, bool init)
 			WPAD_Disconnect(i);
 		}
 		WPAD_Shutdown();
-		Unmount_All_Devices();
+		Unmount_All_Devices(true);
 
 		int curIndex = WBFS_GetCurrentPartition();
 		WBFS_GetPartitionName(curIndex, (char *) &partition);
@@ -144,7 +144,7 @@ bool loadIOS(int n, bool init)
 	iosOK = v >= 0;
 	gprintf("ret: %d, current IOS: %d\n", v, IOS_GetVersion());
 	usleep(300000);
-	if (!is_ios_type(IOS_TYPE_WANIN)) sleep(1); // Narolez: sleep after IOS reload lets power down/up the harddisk when cIOS 249 is used!
+	if (!is_ios_type(IOS_TYPE_WANIN)) sleep(1);
 	if (backup != 0)
 	{
 		memcpy(&__Arena2Lo, backup, 0x200000);
@@ -164,13 +164,13 @@ bool loadIOS(int n, bool init)
 	}
 	if (init)
 	{
-		Mount_Devices();
-		WBFS_OpenNamed((char *) &partition);
-
-		Disc_Init();
 		WPAD_Init();
 		PAD_Init();
 		WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+
+		Mount_Devices();
+		WBFS_OpenNamed((char *) &partition);
+		Disc_Init();
 	}
 	return iosOK;
 }

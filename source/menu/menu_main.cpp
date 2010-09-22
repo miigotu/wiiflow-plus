@@ -29,7 +29,6 @@ extern const u8 btnusb_png[];
 extern const u8 btnusbs_png[];
 extern const u8 btndvd_png[];
 extern const u8 btndvds_png[];
-extern const u8 gradient_png[];
 extern const u8 favoriteson_png[];
 extern const u8 favoritesons_png[];
 extern const u8 favoritesoff_png[];
