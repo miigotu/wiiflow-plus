@@ -97,7 +97,6 @@ int old_main(int argc, char **argv)
 	// adds 15 MB from MEM1 to obtain 27 MB for covers (about 150 HQ covers on screen)
 	MEM2_init(36, 12);	// Max ~48
 
-	Mount_Devices();// Do this after loadIOS and MEM2_init
 
 	// Init video
 	vid.init();
@@ -116,8 +115,7 @@ int old_main(int argc, char **argv)
 
 	if (iosOK)
 	{
-		if(!(WBFS_Available() || FS_USBAvailable()))//If a partition isnt mounted, try again.
-			Mount_Devices();
+		Mount_Devices();
 				
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		if (!wbfsOK)
