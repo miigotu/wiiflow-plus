@@ -37,7 +37,7 @@ u8 * GetImageData()
             break;
     } */
 	if(CONF_GetAspectRatio() == CONF_ASPECT_16_9)
-		ctx = PNGU_SelectImageFromBuffer(background_wide_png);
+			ctx = PNGU_SelectImageFromBuffer(background_wide_png);
 	else
 		ctx = PNGU_SelectImageFromBuffer(background_png);
 

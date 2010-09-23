@@ -15,14 +15,13 @@ extern "C" {
 #define ALIGN32(x) (((x) + 31) & ~31)
 
 /* Prototypes */
+void Unmount_All_Devices(void);
+bool Mount_Devices(void);
+
 bool FS_SDAvailable(void);
 bool FS_USBAvailable(void);
+
 bool FS_USB_isNTFS(void);
-
-bool Wakeup_USB(void);
-
-bool Mount_Devices(void);
-void Unmount_All_Devices(bool);
 
 bool FS_Mount_USB(u32, bool);
 void FS_Unmount_USB(void);
@@ -30,8 +29,10 @@ void FS_Unmount_USB(void);
 bool FS_Mount_SD(void);
 void FS_Unmount_SD(void);
 
+bool WBFS_Available(void);
 bool WBFS_Mount(u32, bool);
 void WBFS_Unmount(void);
+
 
 u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length);
 

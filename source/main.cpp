@@ -66,10 +66,9 @@ int old_main(int argc, char **argv)
 	bool dipOK = false;
 	bool wbfsOK = false;
 	int ret = 0;
+	
 	char *gameid = NULL;
-
-	Wakeup_USB(); //Attempt to wake up slow usb drives.	
-
+	
 	for (int i = 0; i < argc; i++)
 	{
 		if (argv[i] != NULL && strcasestr(argv[i], "ios=") != 0)
@@ -98,6 +97,8 @@ int old_main(int argc, char **argv)
 	// adds 15 MB from MEM1 to obtain 27 MB for covers (about 150 HQ covers on screen)
 	MEM2_init(36, 12);	// Max ~48
 
+	Mount_Devices();// Do this after loadIOS and MEM2_init
+
 	// Init video
 	vid.init();
 	// Init
@@ -111,26 +112,37 @@ int old_main(int argc, char **argv)
 
 	WPAD_Init();
 	PAD_Init();
-	
+	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+
 	if (iosOK)
 	{
-		Mount_Devices(); // this will power up the drive if it is not ready
+		if(!(WBFS_Available() || FS_USBAvailable()))//If a partition isnt mounted, try again.
+			Mount_Devices();
 				
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		if (!wbfsOK)
 		{
 			// Wait for HDD
 			vid.waitMessage(texWaitHDD);
-			for (int i = 0; i < 40; ++i)
+			for (int i = 0; i < 80; i +=2)
 			{
-				iosOK = loadIOS(mainIOS, false);
-				if (!iosOK)
-					break;
-				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
-				if (wbfsOK)
-					break;
-				if (Sys_Exiting())
-					Sys_Exit(0);
+				if (__io_usbstorage.isInserted())
+				{
+					iosOK = loadIOS(mainIOS, false);
+					if (!iosOK)
+						break;
+					wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
+					if (wbfsOK)
+						break;
+					if (Sys_Exiting())
+						Sys_Exit(0);
+				}
+				else
+				{
+					if(!(WBFS_Available() || FS_USBAvailable()))//This should always be true, but check anyway.
+						Mount_Devices();//USB wasnt inserted, try to mount one now.
+					i--;//Increase the timeout since no device was inserted.
+				}
 			}
 		}
 	}
@@ -138,13 +150,12 @@ int old_main(int argc, char **argv)
 	vid.waitMessage(texWait);
 	texWait.data.release();
 	texWaitHDD.data.release();
-
-	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
 	MEM2_takeBigOnes(true);
 	do
 	{
-		Mount_Devices();
-
+		if(!(WBFS_Available() || FS_USBAvailable()))//Don't remount devices here unless it is a reload situation.
+			Mount_Devices();
+				
 		gprintf("SD Available: %d\n", FS_SDAvailable());
 		gprintf("USB Available: %d\n", FS_USBAvailable());
 
@@ -170,11 +181,8 @@ int old_main(int argc, char **argv)
 			}
 		}
 		vid.cleanup();
-		Unmount_All_Devices(false);
+		Unmount_All_Devices();
 	} while (ret == 1);
-
-	Unmount_All_Devices(true);
-
 	return ret;
 };
 

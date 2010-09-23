@@ -661,7 +661,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 	COVER_clear();
 	WBFS_Close();
 	
-	Unmount_All_Devices(true);
+	Unmount_All_Devices();
 	cleanup();
 	USBStorage_Deinit();
 
@@ -893,7 +893,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 			return;
 		}
 	}
-	Unmount_All_Devices(true);
+	Unmount_All_Devices();
 	cleanup();
 	USBStorage_Deinit();
 
