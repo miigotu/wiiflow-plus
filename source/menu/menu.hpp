@@ -652,6 +652,7 @@ private:
 	void _hideSystem(bool instant = false);
 	void _hideGameInfo(bool instant = false);
 	void _hideWiiTDBUpdate(bool instant = false);
+	void _hideCheatDownload(bool instant = false);
 	//
 	void _showError(void);
 	void _showMain(void);
@@ -674,6 +675,7 @@ private:
 	void _showCFTheme(u32 curParam, int version, bool wide);
 	void _showGameSettings(void);
 	void _showWiiTDBUpdate(void);
+	void _showCheatDownload(void);
 	void _setBg(const STexture &tex, const STexture &lqTex);
 	void _updateBg(void);
 	void _drawBg(void);
@@ -704,6 +706,7 @@ private:
 public:
 	void _directlaunch(const std::string &id);
 private:
+	bool _loadFile(SmartBuf &buffer, u32 &size, const char *path, const char *file);
 	void _launch(dir_discHdr *hdr);
 	void _launchGame(dir_discHdr *hdr, bool dvd);
 	void _launchChannel(dir_discHdr *hdr);
@@ -763,6 +766,7 @@ private:
 	void _loopMusic(void);
 	void _stopSounds(void);
 	//
+	static u32 _downloadCheatFileAsync(void *obj);
 	static bool _updateProgress(void *obj, float progress);
 	static u32 _updateWiiTDBAsync(void *obj);
 	void _updateWiiTDB();

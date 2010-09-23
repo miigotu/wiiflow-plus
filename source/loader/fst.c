@@ -64,9 +64,7 @@ extern const u32 axnextframehooks[4];
 extern const u32 wpadbuttonsdownhooks[4];
 extern const u32 wpadbuttonsdown2hooks[4];
 
-//---------------------------------------------------------------------------------
-void app_loadgameconfig(char *discid)
-//---------------------------------------------------------------------------------
+int app_gameconfig_load(u8 *discid, const u8 *gameconfig, u32 tempgameconfsize)
 {
 	gameconfsize = 0;
 
@@ -75,70 +73,21 @@ void app_loadgameconfig(char *discid)
 		gameconf = malloc(65536);
 		if (gameconf == NULL)
 		{
-			return;
+			return -1;
 		}
 	}
+	
+	if (gameconfig == NULL || tempgameconfsize == 0)
+		return -2;
+	
+	u8 *tempgameconf = (u8 *) gameconfig;
 
-	FILE* fp = NULL;
 	u32 ret;
-	u32 filesize;
 	s32 gameidmatch, maxgameidmatch = -1, maxgameidmatch2 = -1;
 	u32 i, numnonascii, parsebufpos;
 	u32 codeaddr, codeval, codeaddr2, codeval2, codeoffset;
 	u32 temp, tempoffset = 0;
 	char parsebuffer[18];
-
-	//if (config_bytes[2] == 8)
-	//	hookset = 1;
-
-	u8 *tempgameconf;
-	u32 tempgameconfsize = 0;
-
-	//memcpy(tempgameconf, defaultgameconfig, defaultgameconfig_size);
-	//tempgameconf[defaultgameconfig_size] = '\n';
-	//tempgameconfsize = defaultgameconfig_size + 1;
-
-	char filepath[200];
-	if (FS_SDAvailable())
-	{
-		snprintf(filepath, sizeof(filepath), "sd:/gameconfig.txt");
-		fp = fopen(filepath, "rb");
-	}
-	if(!fp && FS_USBAvailable())
-	{
-		snprintf(filepath, sizeof(filepath), "usb:/gameconfig.txt");
-		fp = fopen(filepath, "rb");
-	}
-	if (fp) {
-		fseek(fp, 0, SEEK_END);
-		filesize = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
-
-		tempgameconf = malloc(filesize);
-		if (tempgameconf == NULL)
-		{
-			//TODO for oggzee
-			//print_status("Out of memory");
-			//wait(4);
-			return;
-		}
-
-		ret = fread((void*)tempgameconf, 1, filesize, fp);
-		fclose(fp);
-		if (ret != filesize)
-		{
-			//TODO for oggzee
-			//print_status("Error reading gameconfig.txt");
-			//wait(4);
-			return;
-		}
-		tempgameconfsize = filesize;
-	}
-	else
-	{
-		return;
-	}
-
 	// Remove non-ASCII characters
 	numnonascii = 0;
 	for (i = 0; i < tempgameconfsize; i++)
@@ -190,7 +139,7 @@ void app_loadgameconfig(char *discid)
 					gameidmatch = 0;
 					goto idmatch;
 				}
-				if (strncmp(discid, parsebuffer, strlen(parsebuffer)) == 0)
+				if (strncmp((char *) discid, parsebuffer, strlen(parsebuffer)) == 0)
 				{
 					gameidmatch += strlen(parsebuffer);
 				idmatch:
@@ -488,8 +437,7 @@ void app_loadgameconfig(char *discid)
 			if (i != tempgameconfsize) while ((tempgameconf[i] != 10 && tempgameconf[i] != 13) && (i != 0)) i--;
 		}
 	}
-
-	free(tempgameconf);
+	return 0;
 	//tempcodelist = ((u8 *) gameconf) + gameconfsize;
 }
 
@@ -504,8 +452,7 @@ int ocarina_load_code(u8 *id, const u8 *cheat, u32 cheatSize)
 		codelist = (u8 *) 0x800028B8;
 	codelistend = (u8 *) 0x80003000;
 
-
-	app_loadgameconfig((char *)id);
+//	app_loadgameconfig((char *)id);
 
 	code_buf = (u8 *)cheat;
     code_size = cheatSize;

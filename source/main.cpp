@@ -10,8 +10,6 @@
 #include <ogc/system.h>
 #include "gecko.h"
 
-
-
 extern "C"
 {
     extern void __exception_setreload(int t);
@@ -86,8 +84,6 @@ int old_main(int argc, char **argv)
 		}
 	}
 	
-	// Mount_Devices(); // Wake up certain drives
-
 	gprintf("Loading cIOS: %d\n", mainIOS);
 
 	// Load (passed) Custom IOS
@@ -111,26 +107,40 @@ int old_main(int argc, char **argv)
 	texWaitHDD.fromPNG(wait_hdd_png, GX_TF_RGB565, ALLOC_MALLOC);
 	Sys_Init();
 	Sys_ExitTo(0);
-
+	
+	WPAD_Init();
+	PAD_Init();
+	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+	
 	if (iosOK)
 	{
-		Mount_Devices(); // this will power up the drive if it is not ready
+		Mount_Devices();
 				
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		if (!wbfsOK)
 		{
 			// Wait for HDD
 			vid.waitMessage(texWaitHDD);
-			for (int i = 0; i < 40; ++i)
+			HDD_Wait();
+			for (int i = 0; i < 80; i += 2)
 			{
-				iosOK = loadIOS(mainIOS, false);
-				if (!iosOK)
-					break;
-				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
-				if (wbfsOK)
-					break;
-				if (Sys_Exiting())
-					Sys_Exit(0);
+				if (__io_usbstorage.isInserted())
+				{
+					iosOK = loadIOS(mainIOS, false);
+					if (!iosOK)
+						break;
+					wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
+					if (wbfsOK)
+						break;
+					if (Sys_Exiting())
+						Sys_Exit(0);
+				}
+				else
+				{
+					if(!(WBFS_Available() || FS_USBAvailable()))//This should always be true, but check anyway.
+						Mount_Devices();//USB wasnt inserted, try to mount one now.
+					i--;//Increase the timeout since no device was inserted.
+				}
 			}
 		}
 	}
@@ -138,9 +148,6 @@ int old_main(int argc, char **argv)
 	vid.waitMessage(texWait);
 	texWait.data.release();
 	texWaitHDD.data.release();
-	WPAD_Init();
-	PAD_Init();
-	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
 	MEM2_takeBigOnes(true);
 	do
 	{

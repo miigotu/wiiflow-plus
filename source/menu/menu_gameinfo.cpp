@@ -245,7 +245,7 @@ void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 	_addUserLabels(theme, m_gameinfoLblUser, 2, 1, "GAMEINFO");
 	
 	m_gameinfoBg = _texture(theme.texSet, "GAMEINFO/BG", "texture", theme.bg);
-	m_gameinfoLblID = _addLabel(theme, "GAMEINFO/GAMEID", theme.btnFont, L"", 125, 15, 420, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
+	m_gameinfoLblID = _addLabel(theme, "GAMEINFO/GAMEID", theme.btnFont, L"", 125, 10, 420, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 	m_gameinfoLblGenre = _addLabel(theme, "GAMEINFO/GENRE", theme.thxFont, L"", 40, 140, 460, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblDev = _addLabel(theme, "GAMEINFO/DEVELOPER", theme.thxFont, L"", 40, 170, 460, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblPublisher = _addLabel(theme, "GAMEINFO/PUBLISHER", theme.thxFont, L"", 40, 200, 460, 56, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
@@ -258,7 +258,7 @@ void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 	_addUserLabels(theme, m_gameinfoLblUser, 1, 1, "GAMEINFO");
 	_addUserLabels(theme, m_gameinfoLblUser, 3, 2, "GAMEINFO");
 
-	m_gameinfoLblTitle = _addLabel(theme, "GAMEINFO/TITLE", theme.btnFont, L"", 125, 60, 440, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
+	m_gameinfoLblTitle = _addLabel(theme, "GAMEINFO/TITLE", theme.btnFont, L"", 125, 37, 440, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 
 	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControlsReq); ++i) {
 		string dom(sfmt("GAMEINFO/CONTROLSREQ%i", i + 1));

@@ -23,8 +23,6 @@ extern s32 wbfsDev;
 extern s32 InitPartitionList();
 extern PartList plist;
 
-void ntfsInit();
-
 bool g_fat_sdOK = false;
 bool g_fat_usbOK = false;
 bool g_ntfs_sdOK = false;
@@ -59,6 +57,11 @@ bool FS_USBAvailable(void)
 	return g_fat_usbOK || g_ntfs_usbOK;
 }
 
+bool WBFS_Available(void)
+{
+	return g_wbfsOK;
+}
+
 bool FS_USB_isNTFS(void)
 {
 	return g_ntfs_usbOK;
@@ -79,18 +82,22 @@ bool Mount_Devices(void)
 	FS_Unmount_SD();
 	FS_Unmount_USB();
 
-	ntfsInit();
-	setlocale(LC_CTYPE, "C-UTF-8");
-	setlocale(LC_MESSAGES, "C-UTF-8");
+	FS_Mount_SD();
+
+    if(!__io_usbstorage.startup() || !__io_usbstorage.isInserted())
+        return false;
+
 	int i;
 	u32 sector = 0;
 	bool ntfs_found = false, fat_found = false;
 
-	FS_Mount_SD();
-
 	s32 ret = InitPartitionList();
 	
-	if (ret || plist.num == 0) return false;
+	if (ret || plist.num == 0)
+	{
+		__io_usbstorage.shutdown();
+		return false;
+	}
 
 	for (i=0; i<plist.num; i++)
 	{
@@ -113,7 +120,11 @@ bool Mount_Devices(void)
 		if (fat_found || ntfs_found)
 			break;
 	}
-	return FS_Mount_USB(sector, ntfs_found);
+	bool retval = FS_Mount_USB(sector, ntfs_found);
+	if (!retval)
+		__io_usbstorage.shutdown();
+		
+	return retval;
 }
 
 void FS_Unmount_SD(void)
@@ -161,12 +172,10 @@ bool FS_Mount_USB(u32 sector, bool ntfs)
 {
 	if (!g_fat_usbOK && !g_ntfs_usbOK && !ntfs)
 	{
-		__io_usbstorage.startup();
 		g_fat_usbOK = fatMount("usb", &__io_usbstorage, sector, CACHE, SECTORS);
 	}
 	if (!g_ntfs_usbOK && !g_fat_usbOK && ntfs)
 	{
-		__io_usbstorage.startup();
 		g_ntfs_usbOK = ntfsMount("usb", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE);
 	} 
 	if (g_fat_usbOK && !ntfs)
@@ -242,6 +251,8 @@ bool WBFS_Mount(u32 sector, bool ntfs)
 				gprintf("NTFS Mount (WBFS) sector: %d\n", fs_wbfs_sec);
 			}
 		}
+		else
+			__io_usbstorage.shutdown();
 	}
 	
 	return g_wbfsOK;
@@ -297,4 +308,19 @@ u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length)
 		ISFS_Close(fd);
 	}
 	return buf;
+}
+
+void HDD_Wait()
+{
+    bool start = false;
+    bool inserted = false;
+	u32 i = 0;
+    while (!(start && inserted) && i < 40)
+    {
+        start = __io_usbstorage.startup();
+        inserted = __io_usbstorage.isInserted();
+		if (!inserted)
+			__io_usbstorage.shutdown();
+        i++;
+    }
 }

@@ -4,7 +4,7 @@
 #include "libwbfs/wiidisc.h"
 #include "menu.hpp"
 #include "loader/fs.h"
-
+#include "gecko.h"
 
 #define ARRAY_SIZE(a)	(sizeof a / sizeof a[0])
 
@@ -381,13 +381,21 @@ void CMenu::_gameSettings(void)
 				break;
 			else if (m_btnMgr.selected() == m_gameSettingsBtnPageM)
 			{
-				if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 6) || m_gameSettingsPage > 51)
+				if (m_gameSettingsPage == 1)
+					m_gameSettingsPage = 5;
+				else if (m_gameSettingsPage == 51)
+					m_gameSettingsPage = 53;
+				else if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 6) || m_gameSettingsPage > 51)
 					--m_gameSettingsPage;
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected() == m_gameSettingsBtnPageP && !m_locked)
 			{
-				if (m_gameSettingsPage < 5 || (m_gameSettingsPage > 5 && m_gameSettingsPage < 53 && m_max_categories > 8)
+				if (m_gameSettingsPage == 5)
+					m_gameSettingsPage = 1;
+				else if (m_gameSettingsPage == 53)
+					m_gameSettingsPage = 51;
+				else if (m_gameSettingsPage < 5 || (m_gameSettingsPage > 5 && m_gameSettingsPage < 53 && m_max_categories > 8)
 				|| (m_gameSettingsPage > 5 && m_gameSettingsPage < 52 && m_max_categories > 5))
 					++m_gameSettingsPage;
 				_showGameSettings();

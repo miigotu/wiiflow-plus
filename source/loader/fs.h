@@ -29,11 +29,13 @@ void FS_Unmount_USB(void);
 bool FS_Mount_SD(void);
 void FS_Unmount_SD(void);
 
+bool WBFS_Available(void);
 bool WBFS_Mount(u32, bool);
 void WBFS_Unmount(void);
 
 
 u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length);
+void HDD_Wait();
 
 extern int 	 global_mount; // 1   -> sd_ok SD was mounted
 						   // 2   -> ud_ok  USB was mounted

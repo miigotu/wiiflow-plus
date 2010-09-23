@@ -1437,3 +1437,37 @@ void CMenu::_stopSounds(void)
 	m_cf.stopSound();
 	m_gameSound.stop();
 }
+
+bool CMenu::_loadFile(SmartBuf &buffer, u32 &size, const char *path, const char *file)
+{
+	FILE *fp = 0;
+	u32 fileSize;
+	SmartBuf fileBuf;
+
+	buffer.release();
+	size = 0;
+	fp = fopen(file == NULL ? path : fmt("%s/%s", path, file), "rb");
+		
+	if (fp == 0)
+		return false;
+
+	fseek(fp, 0, SEEK_END);
+	fileSize = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+	fileBuf = smartCoverAlloc(fileSize);
+	if (!fileBuf)
+	{
+		fclose(fp);
+		return false;
+	}
+	if (fread(fileBuf.get(), 1, fileSize, fp) != fileSize)
+	{
+		fclose(fp);
+		return false;
+	}
+	fclose(fp);
+	buffer = fileBuf;
+	size = fileSize;
+	
+	return true;
+}

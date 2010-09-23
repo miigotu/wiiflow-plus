@@ -226,12 +226,12 @@ char * OpenXMLFile(char *filename)
 			printf("uncompressed xml: %dkb\n", zipfilebuffersize/1024);
 		}
 		xmlData = (char*)malloc(zipfilebuffersize);
-		memset(xmlData, 0, zipfilebuffersize);
 		if (xmlData == NULL) {
 			unzCloseCurrentFile(unzfile);
 			unzClose(unzfile);
 			return NULL;
 		}
+		memset(xmlData, 0, zipfilebuffersize);
 		unzReadCurrentFile(unzfile, xmlData, zipfilebuffersize);
 		unzCloseCurrentFile(unzfile);
 		unzClose(unzfile);

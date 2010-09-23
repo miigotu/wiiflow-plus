@@ -2372,6 +2372,8 @@ void CCoverFlow::_dropHQLOD(int i)
 	newTex.data = smartCoverAlloc(newTexLen);
 	if (!newTex.data)
 		return;
+	if (!prevTex.data)
+		return;
 	memcpy(newTex.data.get(), prevTex.data.get() + (prevTexLen - newTexLen), newTexLen);
 	DCFlushRange(newTex.data.get(), newTexLen);
 	prevTex = newTex;

@@ -28,14 +28,17 @@
 
 #ifndef NO_NTFS_DEVICE_DEFAULT_IO_OPS
 
-#ifndef GEKKO
 #ifndef __CYGWIN32__
 
+#ifndef GEKKO
 /* Not on Cygwin; use standard Unix style low level device operations. */
 #define ntfs_device_default_io_ops ntfs_device_unix_io_ops
+#else /*  GEKKO  */
+/* On Nintendo GameCube/Wii; use Gekko low level device operations. */
+#define ntfs_device_default_io_ops ntfs_device_gekko_io_ops
+#endif
 
 #else /* __CYGWIN32__ */
-#endif /*  GEKKO  */
 
 #ifndef HDIO_GETGEO
 #	define HDIO_GETGEO	0x301
@@ -62,17 +65,9 @@ struct hd_geometry {
 #	define BLKBSZSET	0x40041271
 #endif
 
-#ifndef GEKKO
-
 /* On Cygwin; use Win32 low level device operations. */
 #define ntfs_device_default_io_ops ntfs_device_win32_io_ops
 
-#else
-
-/* On Nintendo GameCube/Wii; use Gekko low level device operations. */
-#define ntfs_device_default_io_ops ntfs_device_gekko_io_ops
-
-#endif /* GEKKO */
 #endif /* __CYGWIN32__ */
 
 
@@ -84,4 +79,3 @@ extern struct ntfs_device_operations ntfs_device_default_io_ops;
 #endif /* NO_NTFS_DEVICE_DEFAULT_IO_OPS */
 
 #endif /* defined _NTFS_DEVICE_IO_H */
-

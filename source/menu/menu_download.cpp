@@ -9,6 +9,8 @@
 #include "loader/fs.h"
 #include "loader/wdvd.h"
 #include "loader/usbstorage.h"
+#include "unzip/unzip.h"
+#include "unzip/miniunz.h"
 
 #include <network.h>
 
@@ -809,6 +811,10 @@ s8 CMenu::_versionDownloader() // code to download new dol
 	
 	// langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
 	
+	char dol_backup[33];
+	strcpy(dol_backup, m_dol.c_str());
+	strcat(dol_backup, ".backup");
+	
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
 	LWP_MutexUnlock(m_mutex);
@@ -818,6 +824,7 @@ s8 CMenu::_versionDownloader() // code to download new dol
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
 		LWP_MutexUnlock(m_mutex);
+		goto end;
 	}
 	else
 	{
@@ -829,45 +836,86 @@ s8 CMenu::_versionDownloader() // code to download new dol
 		m_thrdStep = 0.2f;
 		m_thrdStepLen = 0.9f - 0.2f;
 		gprintf("Update URL: %s\n", m_update_url);
+		
+		bool zipfile = true;
+		
 		newdol = downloadfile(buffer.get(), bufferSize, m_update_url, CMenu::_downloadProgress, this);
 		if (newdol.data == 0 || newdol.size < 4000)
 		{
-			LWP_MutexLock(m_mutex);
-			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
-			LWP_MutexUnlock(m_mutex);
+			// Replace zip with dol
+			strcpy(strrchr(m_update_url, '.'), ".dol");
+			zipfile = false;
+	
+			newdol = downloadfile(buffer.get(), bufferSize, m_update_url, CMenu::_downloadProgress, this);
+			if (newdol.data == 0 || newdol.size < 4000)
+			{
+				LWP_MutexLock(m_mutex);
+				_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
+				LWP_MutexUnlock(m_mutex);
+				goto end;
+			}
 		}
-		else
+		
+		if (newdol.data > 0)
 		{
 			// download finished, backup boot.dol and write new file.
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
 			LWP_MutexUnlock(m_mutex);			
 			
-			char dol_backup[33];
-			strcpy(dol_backup, m_dol.c_str());
-			strcat(dol_backup, ".backup");
 			remove(dol_backup);
 			rename(m_dol.c_str(), dol_backup);
-			file = fopen(m_dol.c_str(), "wb");
-			sleep(1);
-			if (file != NULL)
+			
+			if (zipfile)
 			{
-				fwrite(newdol.data, 1, newdol.size, file);
-				fclose(file);
-				LWP_MutexLock(m_mutex);
-				_setThrdMsg(_t("dlmsg21", L"WiiFlow will now exit to allow the update to take effect."), 1.f);
-				LWP_MutexUnlock(m_mutex);
-				m_exit = true;
+				file = fopen(m_dol.c_str(), "wb");
+				if (file != NULL)
+				{
+					fwrite(newdol.data, 1, newdol.size, file);
+					fclose(file);
+					
+					unzFile unzfile = unzOpen(m_dol.c_str());
+					if (unzfile == NULL)
+						goto fail;
+
+					int ret = extractZipOnefile(unzfile, m_dol.c_str(), 1, 1, NULL);
+					unzClose(unzfile);
+					if (ret == UNZ_OK)
+						goto succes;
+					else
+						goto fail;
+				}
+				else
+				{
+					goto fail;
+				}
 			}
 			else
 			{
-				rename(dol_backup, m_dol.c_str());
-				LWP_MutexLock(m_mutex);
-				_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
-				LWP_MutexUnlock(m_mutex);
+				file = fopen(m_dol.c_str(), "wb");
+				if (file == NULL)
+					goto fail;
+
+				fwrite(newdol.data, 1, newdol.size, file);
+				fclose(file);
+				goto succes;
 			}
 		}
 	}
+succes:
+	LWP_MutexLock(m_mutex);
+	_setThrdMsg(_t("dlmsg21", L"WiiFlow will now exit to allow the update to take effect."), 1.f);
+	LWP_MutexUnlock(m_mutex);
+	m_exit = true;
+	goto end;
+fail:
+	rename(dol_backup, m_dol.c_str());
+	LWP_MutexLock(m_mutex);
+	_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
+	LWP_MutexUnlock(m_mutex);
+	goto end;
+	
+end:
 	m_thrdWorking = false;
 	return 0;
 }

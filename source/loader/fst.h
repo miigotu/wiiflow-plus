@@ -34,6 +34,7 @@ extern u8 debuggerselect;
 
 u32 do_bca_code();
 u32 load_bca_code(u8 *bcaPath, u8 *id);
+int app_gameconfig_load(u8 *id, const u8 *gameconfig, u32 gameconfigsize);
 int ocarina_load_code(u8 *id, const u8 *cheat, u32 cheatSize);
 int ocarina_do_code();
 

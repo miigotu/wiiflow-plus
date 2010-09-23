@@ -1,47 +1,79 @@
 #include <string.h>
 #include <gccore.h>
-#include "cheat.hpp"
 #include "loader/fs.h"
-#include "gecko.h"
 #include "text.hpp"
+#include "lockMutex.hpp"
 
 #include "menu.hpp"
 #include "http.h"
+#include "sys.h"
 
 #define GECKOURL "http://geckocodes.org/codes/R/%s.txt"
 
 #define CHEATSPERPAGE 4
 
-void loadCheatFile(SmartBuf &buffer, u32 &size, const char *cheatPath, const char *gameId)
+void CMenu::_hideCheatDownload(bool instant)
 {
-	FILE *fp = 0;
-	u32 fileSize;
-	SmartBuf fileBuf;
+	m_btnMgr.hide(m_downloadBtnCancel, instant);
+	m_btnMgr.hide(m_downloadPBar, instant);
+	m_btnMgr.hide(m_downloadLblMessage[0], 0, 0, -2.f, 0.f, instant);
+	m_btnMgr.hide(m_downloadLblMessage[1], 0, 0, -2.f, 0.f, instant);
+}
 
-	buffer.release();
-	size = 0;
-	fp = fopen(fmt("%s/%s.gct", cheatPath, gameId), "rb");
-		
-	if (fp == 0)
-		return;
+void CMenu::_showCheatDownload(void)
+{
+	_setBg(m_downloadBg, m_downloadBg);
+	m_btnMgr.show(m_downloadBtnCancel);
+	m_btnMgr.show(m_downloadPBar);
+}
 
-	fseek(fp, 0, SEEK_END);
-	fileSize = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-	fileBuf = smartCoverAlloc(fileSize);
-	if (!fileBuf)
-	{
-		fclose(fp);
-		return;
+u32 CMenu::_downloadCheatFileAsync(void *obj)
+{
+	CMenu *m = (CMenu *)obj;
+	if (!m->m_thrdWorking)
+		return 0;
+
+	m->m_thrdStop = false;
+
+	LWP_MutexLock(m->m_mutex);
+	m->_setThrdMsg(m->_t("cfgg23", L"Downloading cheat file..."), 0);
+	LWP_MutexUnlock(m->m_mutex);
+
+	u32 bufferSize = 0x080000;	// Maximum download size 512kb
+	SmartBuf buffer;
+	block cheatfile;
+	FILE *file;
+	
+	if (m->_initNetwork() < 0) {
+		m->m_thrdWorking = false;
+		return -1;
 	}
-	if (fread(fileBuf.get(), 1, fileSize, fp) != fileSize)
+	
+	buffer = smartCoverAlloc(bufferSize);
+	if (!buffer)
 	{
-		fclose(fp);
-		return;
+		m->m_thrdWorking = false;
+		return -2;
 	}
-	fclose(fp);
-	buffer = fileBuf;
-	size = fileSize;
+	
+	cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m->m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, m);
+
+	if (cheatfile.data != NULL && cheatfile.size > 65 && cheatfile.data[0] != '<') {
+		// cheat file was downloaded (404's will now return emptybuffer)
+		file = fopen(fmt("%s/%s.txt", m->m_txtCheatDir.c_str(), m->m_cf.getId().c_str()), "wb");
+				
+		if (file != NULL)
+		{
+			fwrite(cheatfile.data, 1, cheatfile.size, file);
+			fclose(file);
+			
+			m->m_thrdWorking = false;
+			return 0;
+		}
+	}
+	
+	m->m_thrdWorking = false;
+	return -3;
 }
 
 void CMenu::_CheatSettings() 
@@ -73,24 +105,24 @@ void CMenu::_CheatSettings()
 			m_btnMgr.down();
 		else if (BTN_MINUS_PRESSED || BTN_LEFT_PRESSED)
 		{
-			if (m_cheatSettingsPage > 1)
-			{
+			_hideCheatSettings();
+			if (m_cheatSettingsPage == 1)
+				m_cheatSettingsPage = (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE;
+			else if (m_cheatSettingsPage > 1)
 				--m_cheatSettingsPage;
+			_showCheatSettings();
 
-				_hideCheatSettings();
-				_showCheatSettings();
-			}
 			m_btnMgr.click(m_cheatBtnPageM);
 		}
 		else if (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED)
 		{
-			if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
-			{
+			_hideCheatSettings();
+			if (m_cheatSettingsPage == (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
+				m_cheatSettingsPage = 1;
+			else if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
 				++m_cheatSettingsPage;
+			_showCheatSettings();
 
-				_hideCheatSettings();
-				_showCheatSettings();
-			}
 			m_btnMgr.click(m_cheatBtnPageP);
 		}
 		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1)!=0)
@@ -109,14 +141,18 @@ void CMenu::_CheatSettings()
 			else if (m_btnMgr.selected() == m_cheatBtnPageM)
 			{
 				_hideCheatSettings();
-				if (m_cheatSettingsPage > 1)
+				if (m_cheatSettingsPage == 1)
+					m_cheatSettingsPage = (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE;
+				else if (m_cheatSettingsPage > 1)
 					--m_cheatSettingsPage;
 				_showCheatSettings();
 			}
 			else if (m_btnMgr.selected() == m_cheatBtnPageP)
 			{
 				_hideCheatSettings();
-				if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
+				if (m_cheatSettingsPage == (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
+					m_cheatSettingsPage = 1;
+				else if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
 					++m_cheatSettingsPage;
 				_showCheatSettings();
 			}
@@ -157,42 +193,78 @@ void CMenu::_CheatSettings()
 			}
 			else if (m_btnMgr.selected() == m_cheatBtnDownload)
 			{
+				int msg = 0;
+				wstringEx prevMsg;
+				
 				// Download cheat code
-				m_btnMgr.hide(m_cheatLblTitle);
-				
-				u32 bufferSize = 0x080000;	// Maximum download size 512kb
-				SmartBuf buffer;
-				block cheatfile;
-				FILE *file;
-				
-				if (_initNetwork() < 0) {
-					m_btnMgr.hide(m_cheatLblTitle);
-					break;
-				}
-				
-				buffer = smartCoverAlloc(bufferSize);
-				if (!buffer)
-				{
-					error(L"Out of memory!");
-					break;
-				}
-				cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, this);
+				m_btnMgr.setProgress(m_downloadPBar, 0.f);
+				_hideCheatSettings();
+				_showCheatDownload();
+				m_btnMgr.setText(m_downloadBtnCancel, _t("dl1", L"Cancel"));
+				m_thrdStop = false;
+				m_thrdMessageAdded = false;
 
-				if (cheatfile.data != NULL && cheatfile.size > 65 && cheatfile.data[0] != '<') {
-					// cheat file was downloaded (404's will now return emptybuffer)
-					file = fopen(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()), "wb");
-							
-					if (file != NULL)
-					{
-						fwrite(cheatfile.data, 1, cheatfile.size, file);
-						fclose(file);
-						
-						m_btnMgr.hide(m_cheatBtnDownload);
-						_CheatSettings();
+				m_thrdWorking = true;
+				lwp_t thread = LWP_THREAD_NULL;
+				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_downloadCheatFileAsync, (void *)this, 0, 8192, 40);
+				while (m_thrdWorking)
+				{
+					_mainLoopCommon(false, m_thrdWorking);
+					if ((BTN_HOME_PRESSED || BTN_B_PRESSED) && !m_thrdWorking)
 						break;
+					if (BTN_A_PRESSED && !(m_thrdWorking && m_thrdStop))
+					{
+						m_btnMgr.click();
+						if (m_btnMgr.selected() == m_downloadBtnCancel)
+						{
+							LockMutex lock(m_mutex);
+							m_thrdStop = true;
+							m_thrdMessageAdded = true;
+							m_thrdMessage = _t("dlmsg6", L"Canceling...");
+						}
 					}
+					if (Sys_Exiting())
+					{
+						LockMutex lock(m_mutex);
+						m_thrdStop = true;
+						m_thrdMessageAdded = true;
+						m_thrdMessage = _t("dlmsg6", L"Canceling...");
+						m_thrdWorking = false;
+					}
+
+					if (m_thrdMessageAdded)
+					{
+						LockMutex lock(m_mutex);
+						m_thrdMessageAdded = false;
+						m_btnMgr.setProgress(m_downloadPBar, m_thrdProgress);
+						if (m_thrdProgress >= 1.f) {
+							// m_btnMgr.setText(m_downloadBtnCancel, _t("dl2", L"Back"));
+							break;
+						}
+						if (prevMsg != m_thrdMessage)
+						{
+							prevMsg = m_thrdMessage;
+							m_btnMgr.setText(m_downloadLblMessage[msg], m_thrdMessage, false);
+							m_btnMgr.hide(m_downloadLblMessage[msg], 0, 0, -1.f, -1.f, true);
+							m_btnMgr.show(m_downloadLblMessage[msg]);
+							msg ^= 1;
+							m_btnMgr.hide(m_downloadLblMessage[msg], 0, 0, -1.f, -1.f);
+						}
+					}
+					if (m_thrdStop && !m_thrdWorking)
+						break;
 				}
-				else
+				if (thread != LWP_THREAD_NULL)
+				{
+					LWP_JoinThread(thread, NULL);
+					thread = LWP_THREAD_NULL;
+				}
+				_hideCheatDownload();
+				
+				m_cheatfile.openTxtfile(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));
+				_showCheatSettings();
+
+				if (m_cheatfile.getCnt() == 0)
 				{
 					// cheat code not found, show result
 					m_btnMgr.setText(m_cheatLblItem[0], _t("cheat4", L"Download not found."));
