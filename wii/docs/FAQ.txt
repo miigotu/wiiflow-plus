@@ -14,31 +14,8 @@ Content:
 
 -------
 
-Q. I can't select a theme, i can't select my language.
-A. If you have a FAT32 partition on your USB HDD, WiiFlow will use it instead of your SD.
-So you can either :
-- Install WiiFlow on your HDD
-- Or copy wiiflow.ini to SD:/WiiFlow/ and modify the line "data_on_usb=yes"
-With "data_on_usb=no", the SD card will take priority over the USB HDD.
-
-
 Q. Can it play background music?
 A. Put your OGG files in /wiiflow/music/
-
-
-Q. It crashed when i tried to download covers.
-A. There is a bug in IOS 249 that makes it crash when your internet connection doesn't work.
-Check that your Wii actually is connected to the internet.
-
-
-Q. When i launch 2 games in a row it freezes.
-A. Don't use the IOS 249 rev13. Install rev14 or higher instead.
-If you already have rev14, please try to reinstall it cleanly.
-You can also use the IOS 222.
-
-
-Q. The Wii freezes when i leave a game.
-A. Disable "Block IOS reload".
 
 
 Q. The theme Nihonflow doesn't display accents correcty.
@@ -92,5 +69,5 @@ To remove the child mode persitently, go to the settings menu, click "Unlock", t
 
 
 Q. I've found a bug.
-A. Try to find an open source project based on WiiFlow and tell them about the bug.
+A. come to #wiiflow on irc.abjects.net and report it there.
 

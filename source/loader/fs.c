@@ -23,6 +23,8 @@ extern s32 wbfsDev;
 extern s32 InitPartitionList();
 extern PartList plist;
 
+void ntfsInit();
+
 bool g_fat_sdOK = false;
 bool g_fat_usbOK = false;
 bool g_ntfs_sdOK = false;
@@ -57,11 +59,6 @@ bool FS_USBAvailable(void)
 	return g_fat_usbOK || g_ntfs_usbOK;
 }
 
-bool WBFS_Available(void)
-{
-	return g_wbfsOK;
-}
-
 bool FS_USB_isNTFS(void)
 {
 	return g_ntfs_usbOK;
@@ -82,15 +79,14 @@ bool Mount_Devices(void)
 	FS_Unmount_SD();
 	FS_Unmount_USB();
 
-	FS_Mount_SD();
-
-    if(!__io_usbstorage.startup() || !__io_usbstorage.isInserted())
-        return false;
-
+	ntfsInit();
+	setlocale(LC_CTYPE, "C-UTF-8");
+	setlocale(LC_MESSAGES, "C-UTF-8");
 	int i;
 	u32 sector = 0;
 	bool ntfs_found = false, fat_found = false;
 
+	FS_Mount_SD();
 
 	s32 ret = InitPartitionList();
 	
@@ -164,9 +160,15 @@ void FS_Unmount_USB(void)
 bool FS_Mount_USB(u32 sector, bool ntfs)
 {
 	if (!g_fat_usbOK && !g_ntfs_usbOK && !ntfs)
+	{
+		__io_usbstorage.startup();
 		g_fat_usbOK = fatMount("usb", &__io_usbstorage, sector, CACHE, SECTORS);
+	}
 	if (!g_ntfs_usbOK && !g_fat_usbOK && ntfs)
+	{
+		__io_usbstorage.startup();
 		g_ntfs_usbOK = ntfsMount("usb", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE);
+	} 
 	if (g_fat_usbOK && !ntfs)
 	{
 		fs_fat_mount = 1;
