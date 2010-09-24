@@ -97,9 +97,19 @@ private:
 	std::string m_settingsDir;
 	std::string m_languagesDir;
 	std::string m_wdmDir;
-	const char* m_update_url;
+	/* Updates */
+	const char* m_old_update_url;
+	const char* m_app_update_url;
+	const char* m_data_update_url;
 	std::string m_dol;
+	bool m_update_dolOnly;
+	u32 m_dol_update_size;
+	std::string m_app_update_zip;
+	u32 m_app_update_size;
+	std::string m_data_update_zip;
+	u32 m_data_update_size;
 	std::string m_ver;
+	/* End Updates */
 	// 
 	STexture m_prevBg;
 	STexture m_nextBg;

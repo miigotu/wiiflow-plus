@@ -17,24 +17,24 @@ done
 
 rev_old=$(cat ./source/svnrev.h 2>/dev/null | tr -d '\n' | sed 's/[^0-9]*\([0-9]*\).*/\1/')
 
-	mkdir -p Compiles/txt
-	mkdir -p Compiles/r$rev_new
-	mkdir -p Compiles/r$rev_new/debug
+	mkdir -p Compiles/files/txt
+	mkdir -p Compiles/files/r$rev_new
+	mkdir -p Compiles/files/r$rev_new/debug
 
 	make ios249
-	cp $1.dol Compiles/r$rev_new/249_boot.dol
+	cp $1.dol Compiles/files/r$rev_new/249.dol
 	make ios250
-	cp $1.dol Compiles/r$rev_new/250_boot.dol
+	cp $1.dol Compiles/files/r$rev_new/250.dol
 	make ios222
-	cp $1.dol Compiles/r$rev_new/222_boot.dol
+	cp $1.dol Compiles/files/r$rev_new/222.dol
 	make ios223
-	cp $1.dol Compiles/r$rev_new/223_boot.dol
+	cp $1.dol Compiles/files/r$rev_new/223.dol
 	make ios224
-	cp $1.dol Compiles/r$rev_new/224_boot.dol
+	cp $1.dol Compiles/files/r$rev_new/224.dol
 	
-	cp $1.elf Compiles/r$rev_new/debug/boot.elf
-	cp build/*.map Compiles/r$rev_new/debug/boot.map
-	cp versions.txt Compiles/txt/versions.txt
+	cp $1.elf Compiles/files/r$rev_new/debug/boot.elf
+	cp build/*.map Compiles/files/r$rev_new/debug/boot.map
+	cp versions.txt Compiles/files/txt/versions.txt
 
 	echo >&2
 

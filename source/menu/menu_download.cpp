@@ -23,8 +23,6 @@
 #define TAG_REGION		"region"
 #define TITLES_URL		"http://www.wiitdb.com/titles.txt?LANG=%s"
 #define WIITDB_URL		"http://www.wiitdb.com/wiitdb.zip?LANG=%s&FALLBACK=TRUE&WIIWARE=TRUE"
-
-//Need to use wiiflow.ini to set these still
 #define UPDATE_URL_VERSION	"http://update.wiiflow.org/txt/versions.txt"
 
 using namespace std;
@@ -738,7 +736,7 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 				int svnrev = atoi(SVN_REV);
 				gprintf("Installed Version: %d\n", svnrev);
 				m_version.load(m_ver.c_str());
-				int rev = m_version.getInt("GENERAL", "latestversion", 0);
+				int rev = m_version.getInt("GENERAL", "version", 0);
 				gprintf("Latest available Version: %d\n", rev);
 				if (svnrev < rev)
 				{
@@ -775,13 +773,25 @@ s8 CMenu::_versionDownloaderInit(CMenu *m) //Handler to download new dol
 	return m->_versionDownloader();
 }
 
-s8 CMenu::_versionDownloader() // code to download new dol
+s8 CMenu::_versionDownloader() // code to download new version
 {
-	block newdol;
+	block update;
+	update.data = 0;
+	update.size = 0;
+
 	wstringEx ws;
 	SmartBuf buffer;
 	FILE *file = NULL;
-	u32 bufferSize = 1 * 0x400000;	// Maximum download size 4 MB
+
+	u32 updateZipSize = m_data_update_size > m_app_update_size ? m_data_update_size : m_app_update_size;
+	u32 sizeToBuffer = updateZipSize > m_dol_update_size ? updateZipSize : m_dol_update_size;
+	//sizeToBuffer is in bits, if it is not set in the ini, alloc 4MB
+	if (m_dol_update_size == 0) m_dol_update_size = 1*0x400000;
+	if (m_app_update_size == 0) m_app_update_size = 1*0x400000;
+	if (m_data_update_size == 0) m_data_update_size = 1*0x400000;
+	if(sizeToBuffer == 0) sizeToBuffer = 1*0x400000;
+
+	u32 bufferSize = sizeToBuffer;	// Buffer for size of the biggest file.
 	
 	// check for existing dol
     ifstream filestr;
@@ -808,13 +818,11 @@ s8 CMenu::_versionDownloader() // code to download new dol
 		m_thrdWorking = false;
 		return 0;
 	}
-	
-	// langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
-	
+
 	char dol_backup[33];
 	strcpy(dol_backup, m_dol.c_str());
 	strcat(dol_backup, ".backup");
-	
+
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
 	LWP_MutexUnlock(m_mutex);
@@ -830,35 +838,40 @@ s8 CMenu::_versionDownloader() // code to download new dol
 	{
 		// Load actual file
 		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg11", L"Downloading..."), 0.2f);
+		_setThrdMsg(_t("dlmsg22", L"Updating application directory..."), 0.2f);
 		LWP_MutexUnlock(m_mutex);
 
 		m_thrdStep = 0.2f;
 		m_thrdStepLen = 0.9f - 0.2f;
-		gprintf("Update URL: %s\n", m_update_url);
+		gprintf("App Update URL: %s\n", m_app_update_url);
+		gprintf("Data Update URL: %s\n", m_app_update_url);
 		
 		bool zipfile = true;
-		
-		newdol = downloadfile(buffer.get(), bufferSize, m_update_url, CMenu::_downloadProgress, this);
-		if (newdol.data == 0 || newdol.size < 4000)
+		if(!m_update_dolOnly)
+			update = downloadfile(buffer.get(), m_app_update_size, m_app_update_url, CMenu::_downloadProgress, this);
+		if (m_update_dolOnly || update.data == 0 || update.size < m_app_update_size)
 		{
-			// Replace zip with dol
-			strcpy(strrchr(m_update_url, '.'), ".dol");
+ 			// Replace zip with dol
+			strcpy(strrchr(m_app_update_url, '.'), ".dol"); 
 			zipfile = false;
 	
-			newdol = downloadfile(buffer.get(), bufferSize, m_update_url, CMenu::_downloadProgress, this);
-			if (newdol.data == 0 || newdol.size < 4000)
+			update = downloadfile(buffer.get(), m_dol_update_size, m_app_update_url, CMenu::_downloadProgress, this);
+			if (update.data == 0 || update.size < m_dol_update_size)
 			{
-				LWP_MutexLock(m_mutex);
-				_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
-				LWP_MutexUnlock(m_mutex);
-				goto end;
+				update = downloadfile(buffer.get(), m_dol_update_size, m_old_update_url, CMenu::_downloadProgress, this);
+				if (update.data == 0 || update.size < m_dol_update_size)
+				{
+					LWP_MutexLock(m_mutex);
+					_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
+					LWP_MutexUnlock(m_mutex);
+					goto end;
+				}
 			}
 		}
 		
-		if (newdol.data > 0)
+		if (update.data > 0)
 		{
-			// download finished, backup boot.dol and write new file.
+			// download finished, backup boot.dol and write new files.
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
 			LWP_MutexUnlock(m_mutex);			
@@ -868,27 +881,78 @@ s8 CMenu::_versionDownloader() // code to download new dol
 			
 			if (zipfile)
 			{
-				file = fopen(m_dol.c_str(), "wb");
+				remove(m_app_update_zip.c_str());
+
+				file = fopen(m_app_update_zip.c_str(), "wb");
 				if (file != NULL)
 				{
-					fwrite(newdol.data, 1, newdol.size, file);
+					fwrite(update.data, 1, update.size, file);
 					fclose(file);
 					
-					unzFile unzfile = unzOpen(m_dol.c_str());
+					unzFile unzfile = unzOpen(m_app_update_zip.c_str());
 					if (unzfile == NULL)
 						goto fail;
 
-					int ret = extractZipOnefile(unzfile, m_dol.c_str(), 1, 1, NULL);
+					int ret = extractZip(unzfile, 1, 1, NULL, m_appDir.c_str());
 					unzClose(unzfile);
 					if (ret == UNZ_OK)
-						goto succes;
+					{
+						//Update apps dir succeeded, try to update the data dir.
+						update.data = NULL;
+						update.size = NULL;
+
+						//memset(&buffer, 0, bufferSize);  should we be clearing the buffer of any possible data before downloading?
+
+						LWP_MutexLock(m_mutex);
+						_setThrdMsg(_t("dlmsg23", L"Updating data directory..."), 0.2f);
+						LWP_MutexUnlock(m_mutex);
+
+						update = downloadfile(buffer.get(), m_data_update_size, m_data_update_url, CMenu::_downloadProgress, this);
+						if (update.data == 0 || update.size < m_data_update_size)
+						{
+							LWP_MutexLock(m_mutex);
+							_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
+							LWP_MutexUnlock(m_mutex);
+							goto success;
+						}
+						
+						if (update.data > 0)
+						{
+							// download finished, write new files.
+							LWP_MutexLock(m_mutex);
+							_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
+							LWP_MutexUnlock(m_mutex);
+							
+							remove(m_data_update_zip.c_str());
+
+							file = fopen(m_data_update_zip.c_str(), "wb");
+							if (file != NULL)
+							{
+								fwrite(update.data, 1, update.size, file);
+								fclose(file);
+								
+								unzFile unzfile = unzOpen(m_data_update_zip.c_str());
+								if (unzfile == NULL)
+									goto success;
+
+								int ret = extractZip(unzfile, 1, 1, NULL, m_dataDir.c_str());
+								unzClose(unzfile);
+
+								if (ret != UNZ_OK)
+								{
+									LWP_MutexLock(m_mutex);
+									_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
+									LWP_MutexUnlock(m_mutex);
+								}
+							}
+						}
+						goto success;
+					}
 					else
 						goto fail;
 				}
 				else
-				{
 					goto fail;
-				}
 			}
 			else
 			{
@@ -896,13 +960,13 @@ s8 CMenu::_versionDownloader() // code to download new dol
 				if (file == NULL)
 					goto fail;
 
-				fwrite(newdol.data, 1, newdol.size, file);
+				fwrite(update.data, 1, update.size, file);
 				fclose(file);
-				goto succes;
+				goto success;
 			}
 		}
 	}
-succes:
+success:
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg21", L"WiiFlow will now exit to allow the update to take effect."), 1.f);
 	LWP_MutexUnlock(m_mutex);

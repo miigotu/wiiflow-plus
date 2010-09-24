@@ -117,6 +117,8 @@ void CMenu::init()
 	
 	m_dol = sfmt("%s/boot.dol", m_appDir.c_str());
 	m_ver = sfmt("%s/versions", m_appDir.c_str());
+	m_app_update_zip = sfmt("%s/update.zip", m_appDir.c_str());
+	m_data_update_zip = sfmt("%s/update.zip", m_dataDir.c_str());
 	//
 	m_cacheDir = m_cfg.getString("GENERAL", "dir_cache", sfmt("%s/cache", m_dataDir.c_str()));
 	m_settingsDir = m_cfg.getString("GENERAL", "dir_settings", sfmt("%s/settings", m_dataDir.c_str()));
@@ -894,6 +896,7 @@ void CMenu::_initCF(void)
 	else if (m_current_view == COVERFLOW_CHANNEL) m_gamelistdump = m_cfg.getBool("GENERAL", "dump_chanlist", true);
 	if (m_gamelistdump)
 		m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
+
 	if (titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str()))
 		m_titles_loaded = true;
 	m_cf.clear();
@@ -942,7 +945,7 @@ void CMenu::_initCF(void)
 	{
 		m_dump.save();
 		m_dump.unload();
-		if (m_current_view == COVERFLOW_CHANNEL) m_cfg.setBool("GENERAL", "dump_gamelist", false);
+		if (m_current_view == COVERFLOW_USB) m_cfg.setBool("GENERAL", "dump_gamelist", false);
 		else if (m_current_view == COVERFLOW_CHANNEL) m_cfg.setBool("GENERAL", "dump_chanlist", false);
 	}
 	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode", true));

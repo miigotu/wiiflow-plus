@@ -48,7 +48,7 @@ void CMenu::_system()
 				m_btnMgr.hide(m_downloadPBar);
 				m_btnMgr.hide(m_downloadLblMessage[0], 0, 0, -2.f, 0.f);
 				m_btnMgr.hide(m_downloadLblMessage[1], 0, 0, -2.f, 0.f);
-				CMenu::_version[1] = m_version.getInt("GENERAL", "latestversion", atoi(SVN_REV));
+				CMenu::_version[1] = m_version.getInt("GENERAL", "version", atoi(SVN_REV));
 				num_versions = m_version.getInt("GENERAL", "num_versions", 1);
 				for (i = 2; i < num_versions; i++)
 				{
@@ -79,7 +79,17 @@ void CMenu::_system()
 				m_thrdStop = false;
 				m_thrdWorking = true;
 				gprintf("\nVersion to DL: %i\n", newVer);
-				m_update_url = fmt("%s/r%i/%i_boot.zip", m_version.getString("GENERAL", "update_url", "http://update.wiiflow.org").c_str(), newVer, newIOS);
+
+				m_update_dolOnly = (strcasecmp(m_version.getString("GENERAL", "type", "zip").c_str(), "dol") == 0);
+
+				m_app_update_size = m_version.getInt("GENERAL", "app_zip_size", 0);
+				m_data_update_size = m_version.getInt("GENERAL", "data_zip_size", 0);
+				m_dol_update_size = m_version.getInt("GENERAL", "dol_size", 0);
+
+				m_old_update_url = fmt("%s/r%i/%i_boot.dol", m_version.getString("GENERAL", "update_url", "http://update.wiiflow.org").c_str(), newVer, newIOS);
+				m_app_update_url = fmt("%s/r%i/%i.zip", m_version.getString("GENERAL", "update_url", "http://update.wiiflow.org").c_str(), newVer, newIOS);
+				m_data_update_url = fmt("%s/r%i/data.zip", m_version.getString("GENERAL", "update_url", "http://update.wiiflow.org").c_str(), newVer);
+
 				m_showtimer = 120;
 				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_versionDownloaderInit, (void *)this, 0, 8192, 40);
 				if (m_exit && !m_thrdWorking) 

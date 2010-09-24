@@ -1,1 +1,40 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>	<app version="2.2">		<name> WiiFlow</name>		<coder>Hibernatus</coder>		<version>2.2beta</version>		<release_date>TBD</release_date>		<short_description>USB Loader</short_description>		<long_description>WiiFlow is a USB Loader that can be installed on a FAT/NTFS HDD or SD.Controls :- Main menu (coverflow) :-- Up / Down		Previous / next game (vertical)-- Left / Right		Previous / next game (horizontal)-- A				Select game-- B+A				Launch game immediately-- B+Home			Reload Wiiflow-- Home				Exit-- 1 / 2			Previous / next coverflow mode-- B+Left / B+Right	Previous / next page-- B+UP / B+DOWN	Alphabetic search-- B+Minus			Switch Partition-- B+Plus			Select sorting- Game :-- A on box			Show the backside-- A out of screen	Launch game-- B				Back to coverflow-- Minus / Plus		Previous / next game (vertical)-- Left / Right		Previous / next game (horizontal)- Settings menus :-- Minus / Plus		Previous / next page-- Left / Right		Previous / next page- Coverflow settings :-- B+Minus / B+Plus	Previous / next page-- B			Faster adjustement (B+A instead of just A to click a button)-- B+1			Copy whole coverflow-- B+2			Paste coverflow</long_description>	</app>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="2.2">
+		<name> WiiFlow</name>
+		<coder>Hibernatus</coder>
+		<version>2.2beta</version>
+		<release_date>TBD</release_date>
+		<short_description>USB Loader</short_description>
+		<long_description>WiiFlow is a USB Loader that can be installed on a FAT/NTFS HDD or SD.Controls :
+
+- Main menu (coverflow) :
+-- Up / Down		Previous / next game (vertical)
+-- Left / Right		Previous / next game (horizontal)
+-- A				Select game
+-- B+A				Launch game immediately
+-- B+Home			Reload Wiiflow
+-- Home				Exit
+-- 1 / 2			Previous / next coverflow mode
+-- B+Left / B+Right	Previous / next page
+-- B+UP / B+DOWN	Alphabetic search
+-- B+Minus			Switch Partition
+-- B+Plus			Select sorting
+
+- Game :
+-- A on box			Show the backside
+-- A out of screen	Launch game
+-- B				Back to coverflow
+-- Minus / Plus		Previous / next game (vertical)
+-- Left / Right		Previous / next game (horizontal)
+
+- Settings menus :
+-- Minus / Plus		Previous / next page
+-- Left / Right		Previous / next page
+
+- Coverflow settings :
+-- B+Minus / B+Plus	Previous / next page
+-- B			Faster adjustement (B+A instead of just A to click a button)
+-- B+1			Copy whole coverflow
+-- B+2			Paste coverflow
+</long_description>
+</app>
