@@ -1,4 +1,5 @@
 
+
 #include "menu.hpp"
 #include "svnrev.h"
 #include "loader/sys.h"
@@ -776,22 +777,27 @@ s8 CMenu::_versionDownloaderInit(CMenu *m) //Handler to download new dol
 s8 CMenu::_versionDownloader() // code to download new version
 {
 	block update;
-	update.data = 0;
+ 	update.data = 0;
 	update.size = 0;
 
 	wstringEx ws;
 	SmartBuf buffer;
 	FILE *file = NULL;
 
-	u32 updateZipSize = m_data_update_size > m_app_update_size ? m_data_update_size : m_app_update_size;
+	char dol_backup[33];
+	strcpy(dol_backup, m_dol.c_str());
+	strcat(dol_backup, ".backup");
+
+/* 	u32 updateZipSize = m_data_update_size > m_app_update_size ? m_data_update_size : m_app_update_size;
 	u32 sizeToBuffer = updateZipSize > m_dol_update_size ? updateZipSize : m_dol_update_size;
 	//sizeToBuffer is in bits, if it is not set in the ini, alloc 4MB
+	sizeToBuffer +=2000; //Add header room. */
 	if (m_dol_update_size == 0) m_dol_update_size = 1*0x400000;
 	if (m_app_update_size == 0) m_app_update_size = 1*0x400000;
 	if (m_data_update_size == 0) m_data_update_size = 1*0x400000;
-	if(sizeToBuffer == 0) sizeToBuffer = 1*0x400000;
+/* 	 if(sizeToBuffer == 2000)  sizeToBuffer = 1*0x400000; */	// Buffer for size of the biggest file.
 
-	u32 bufferSize = sizeToBuffer;	// Buffer for size of the biggest file.
+	u32 bufferSize = 1*0x400000;	// Buffer for size of the biggest file.
 	
 	// check for existing dol
     ifstream filestr;
@@ -803,9 +809,9 @@ s8 CMenu::_versionDownloader() // code to download new version
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg18", L"boot.dol not found at default path!"), 1.f);
 		LWP_MutexUnlock(m_mutex);
-		m_thrdWorking = false;
-
-        return 0;
+		filestr.close();
+		rename(dol_backup, m_dol.c_str());
+		goto end;
 	}
     filestr.close();
 
@@ -818,10 +824,6 @@ s8 CMenu::_versionDownloader() // code to download new version
 		m_thrdWorking = false;
 		return 0;
 	}
-
-	char dol_backup[33];
-	strcpy(dol_backup, m_dol.c_str());
-	strcat(dol_backup, ".backup");
 
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
@@ -848,17 +850,17 @@ s8 CMenu::_versionDownloader() // code to download new version
 		
 		bool zipfile = true;
 		if(!m_update_dolOnly)
-			update = downloadfile(buffer.get(), m_app_update_size, m_app_update_url, CMenu::_downloadProgress, this);
+			update = downloadfile(buffer.get(), bufferSize, m_app_update_url, CMenu::_downloadProgress, this);
 		if (m_update_dolOnly || update.data == 0 || update.size < m_app_update_size)
 		{
  			// Replace zip with dol
 			strcpy(strrchr(m_app_update_url, '.'), ".dol"); 
 			zipfile = false;
 	
-			update = downloadfile(buffer.get(), m_dol_update_size, m_app_update_url, CMenu::_downloadProgress, this);
+			update = downloadfile(buffer.get(), bufferSize, m_app_update_url, CMenu::_downloadProgress, this);
 			if (update.data == 0 || update.size < m_dol_update_size)
 			{
-				update = downloadfile(buffer.get(), m_dol_update_size, m_old_update_url, CMenu::_downloadProgress, this);
+				update = downloadfile(buffer.get(), bufferSize, m_old_update_url, CMenu::_downloadProgress, this);
 				if (update.data == 0 || update.size < m_dol_update_size)
 				{
 					LWP_MutexLock(m_mutex);
@@ -873,7 +875,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 		{
 			// download finished, backup boot.dol and write new files.
 			LWP_MutexLock(m_mutex);
-			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
+			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.8f);
 			LWP_MutexUnlock(m_mutex);			
 			
 			remove(dol_backup);
@@ -889,11 +891,15 @@ s8 CMenu::_versionDownloader() // code to download new version
 					fwrite(update.data, 1, update.size, file);
 					fclose(file);
 					
+					LWP_MutexLock(m_mutex);
+					_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
+					LWP_MutexUnlock(m_mutex);
+					
 					unzFile unzfile = unzOpen(m_app_update_zip.c_str());
 					if (unzfile == NULL)
 						goto fail;
 
-					int ret = extractZip(unzfile, 1, 1, NULL, m_appDir.c_str());
+					int ret = extractZip(unzfile, 0, 1, NULL, m_appDir.c_str());
 					unzClose(unzfile);
 					if (ret == UNZ_OK)
 					{
@@ -907,7 +913,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 						_setThrdMsg(_t("dlmsg23", L"Updating data directory..."), 0.2f);
 						LWP_MutexUnlock(m_mutex);
 
-						update = downloadfile(buffer.get(), m_data_update_size, m_data_update_url, CMenu::_downloadProgress, this);
+						update = downloadfile(buffer.get(), bufferSize, m_data_update_url, CMenu::_downloadProgress, this);
 						if (update.data == 0 || update.size < m_data_update_size)
 						{
 							LWP_MutexLock(m_mutex);
@@ -931,11 +937,15 @@ s8 CMenu::_versionDownloader() // code to download new version
 								fwrite(update.data, 1, update.size, file);
 								fclose(file);
 								
+								LWP_MutexLock(m_mutex);
+								_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
+								LWP_MutexUnlock(m_mutex);
+								
 								unzFile unzfile = unzOpen(m_data_update_zip.c_str());
 								if (unzfile == NULL)
 									goto success;
 
-								int ret = extractZip(unzfile, 1, 1, NULL, m_dataDir.c_str());
+								int ret = extractZip(unzfile, 0, 1, NULL, m_dataDir.c_str());
 								unzClose(unzfile);
 
 								if (ret != UNZ_OK)
@@ -970,6 +980,17 @@ success:
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg21", L"WiiFlow will now exit to allow the update to take effect."), 1.f);
 	LWP_MutexUnlock(m_mutex);
+
+    filestr.open(m_dol.c_str());
+    if (filestr.fail())
+	{
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg25", L"Extraction must have failed! Renaming the backup to boot.dol"), 1.f);
+		LWP_MutexUnlock(m_mutex);
+		rename(dol_backup, m_dol.c_str());
+	}
+    filestr.close();
+
 	m_exit = true;
 	goto end;
 fail:
