@@ -15,7 +15,7 @@ include $(DEVKITPPC)/wii_rules
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	$(notdir $(CURDIR))
+TARGET		:=	boot
 BUILD		:=	build
 SOURCES		:=	source \
 				source/cheats \
@@ -48,6 +48,7 @@ INCLUDES	:=	source \
 				source/libs/libfat \
 				source/libs/libntfs \
 				source/libs/libwbfs
+ios			:=	249
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
@@ -121,56 +122,32 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
 					-L$(LIBOGC_LIB)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
-.PHONY: $(BUILD) clean
+.PHONY: $(BUILD) all  clean run
 
 #---------------------------------------------------------------------------------
 $(BUILD):
-	@bash ./buildtype.sh
+	@echo Building for $(ios).
+	@bash ./buildtype.sh $(ios)
 	@[ -d $@ ] || mkdir -p $@
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
-ios222:
-	@bash ./buildtype.sh 222
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	
-#---------------------------------------------------------------------------------
-ios223:
-	@bash ./buildtype.sh 223
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-
-#---------------------------------------------------------------------------------
-ios224:
-	@bash ./buildtype.sh 224
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-
-#---------------------------------------------------------------------------------
-ios249:
-	@bash ./buildtype.sh 249
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	
-#---------------------------------------------------------------------------------
-ios250:
-	@bash ./buildtype.sh 250
-	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-
-#---------------------------------------------------------------------------------
-# Make sure to update versions.txt and commit all changes before running make release, or folders may be wrong.
-release:
-	@bash ./release.sh $(OUTPUT)
-#---------------------------------------------------------------------------------
-beta:
-	@bash ./beta.sh $(OUTPUT)
+all:
+	@make ios=224
+	@cp $(OUTPUT).dol 224.dol
+	@make  ios=223
+	@cp $(OUTPUT).dol 223.dol
+	@make  ios=222
+	@cp $(OUTPUT).dol 222.dol
+	@make ios=250
+	@cp $(OUTPUT).dol 250.dol
+	@make ios=249
+	@cp $(OUTPUT).dol 249.dol
 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol 222.dol 223.dol 224.dol 249.dol 250.dol
 
 #---------------------------------------------------------------------------------
 run:

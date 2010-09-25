@@ -1,14 +1,14 @@
 
 [GENERAL]
-app_zip_size=2041546
+app_zip_size=2042058
 changes=2.2 Alpha2 Now updates data folder with zip support.\nMany more changes. (see svn for full details.)
 data_zip_size=456334
-dol_size=0
+dol_size=3713248
 num_versions=6
 update_url=http://update.wiiflow.org
 type=zip
-version=227
-latestversion=227
+version=228
+latestversion=228
 
 [VERSION1]
 changes=Fix channels on base 57.\nAdd wiimote gestures and extenstions' stick sensitivity.\nOnly save ini's when they have changed.\nAdd ncard to channel launching.
