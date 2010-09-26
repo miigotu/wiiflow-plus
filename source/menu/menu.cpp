@@ -217,24 +217,17 @@ void CMenu::init()
 	pShadowX = m_theme.getFloat("GENERAL", "pointer_shadow_x", 3.f);
 	pShadowY = m_theme.getFloat("GENERAL", "pointer_shadow_y", 3.f);
 	pShadowBlur = m_theme.getBool("GENERAL", "pointer_shadow_blur", false);
-	
-	m_cursor1.init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", "pointer1").c_str()).c_str(),
-		pWide, pShadowColor, pShadowX, pShadowY, pShadowBlur, 0);
-	m_cursor2.init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", "pointer2").c_str()).c_str(),
-		pWide, pShadowColor, pShadowX, pShadowY, pShadowBlur, 1);
-	m_cursor3.init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", "pointer3").c_str()).c_str(),
-		pWide, pShadowColor, pShadowX, pShadowY, pShadowBlur, 2);
-	m_cursor4.init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", "pointer4").c_str()).c_str(),
-		pWide, pShadowColor, pShadowX, pShadowY, pShadowBlur, 3);
+
+	for (int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+		m_cursor[wmote].init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", sfmt("pointer%i", wmote+1).c_str()).c_str()).c_str(),
+			pWide, pShadowColor, pShadowX, pShadowY, pShadowBlur, wmote);
 		
 	m_btnMgr.init(m_vid);
 
 	_buildMenus();
 	_loadCFCfg();
-	WPAD_SetVRes(WPAD_CHAN_0, m_vid.width() + m_cursor1.width(), m_vid.height() + m_cursor1.height());
-	WPAD_SetVRes(WPAD_CHAN_1, m_vid.width() + m_cursor2.width(), m_vid.height() + m_cursor2.height());
-	WPAD_SetVRes(WPAD_CHAN_2, m_vid.width() + m_cursor3.width(), m_vid.height() + m_cursor3.height());
-	WPAD_SetVRes(WPAD_CHAN_3, m_vid.width() + m_cursor4.width(), m_vid.height() + m_cursor4.height());
+	for (int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+		WPAD_SetVRes(wmote, m_vid.width() + m_cursor[wmote].width(), m_vid.height() + m_cursor[wmote].height());
 	m_locked = m_cfg.getString("GENERAL", "parent_code", "").size() >= 4;
 	m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble", true));
 	m_vid.set2DViewport(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480),

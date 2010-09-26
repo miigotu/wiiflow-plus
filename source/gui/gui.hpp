@@ -4,6 +4,9 @@
 #ifndef __GUI_HPP
 #define __GUI_HPP
 
+#include <wiiuse/wpad.h>
+#include <ogc/pad.h>
+
 #include "video.hpp"
 #include "FreeTypeGX.h"
 #include "wstringEx.hpp"
@@ -53,9 +56,10 @@ public:
 	void down(void);
 	void draw(void);
 	void tick(void);
-	void click(u32 id = (u32)-1);
-	u32 selected(void) const { return m_selected; }
-	void deselect(void){ m_selected = false; }
+	void click(int wmote = -1, u32 id = (u32)-1);
+	bool selected(u32 button);
+	void setRumble(int, bool wii = false, bool gc = false);
+	void deselect(void){ for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++) m_selected[wmote] = (u32)-1; }
 	void stopSounds(void);
 	void setSoundVolume(int vol);
 private:
@@ -133,9 +137,11 @@ private:
 	};
 private:
 	std::vector<SmartPtr<SElement> > m_elts;
-	u32 m_selected;
+	u32 m_selected[WPAD_MAX_WIIMOTES];
 	bool m_rumbleEnabled;
-	int m_rumble;
+	u8 m_rumble[WPAD_MAX_WIIMOTES];
+	bool wii_rumble[WPAD_MAX_WIIMOTES];
+	bool gc_rumble[WPAD_MAX_WIIMOTES];
 	SSoundEffect m_sndHover;
 	SSoundEffect m_sndClick;
 	u8 m_soundVolume;

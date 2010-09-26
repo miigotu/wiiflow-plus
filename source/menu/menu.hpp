@@ -45,10 +45,7 @@ private:
 		int h;
 	};
 	CVideo &m_vid;
-	CCursor m_cursor1;
-	CCursor m_cursor2;
-	CCursor m_cursor3;
-	CCursor m_cursor4;
+	CCursor m_cursor[WPAD_MAX_WIIMOTES];
 	CButtonsMgr m_btnMgr;
 
 	CCoverFlow m_cf;
@@ -447,11 +444,11 @@ private:
 	bool m_reload;
 	bool m_initialCoverStatusComplete;
 	
-	WPADData *wd[4];
+	WPADData *wd[WPAD_MAX_WIIMOTES];
 	void LeftStick();
-	u8 pointerhidedelay[4];
-	u16 stickPointer_x[4];
-	u16 stickPointer_y[4];
+	u8 pointerhidedelay[WPAD_MAX_WIIMOTES];
+	u16 stickPointer_x[WPAD_MAX_WIIMOTES];
+	u16 stickPointer_y[WPAD_MAX_WIIMOTES];
 	u32 wii_repeat;	
 	u32 gc_repeat;	
 	
@@ -474,14 +471,15 @@ private:
 	u32 gc_btnsPressed;
 	u32 gc_btnsHeld;
 	
-	float left_stick_angle[4];
-	float left_stick_mag[4];
-	float right_stick_angle[4];
-	float right_stick_mag[4];
-	float wmote_roll[4];
-	s32   right_stick_skip[4];
-	s32	  wmote_roll_skip[4];
+	float left_stick_angle[WPAD_MAX_WIIMOTES];
+	float left_stick_mag[WPAD_MAX_WIIMOTES];
+	float right_stick_angle[WPAD_MAX_WIIMOTES];
+	float right_stick_mag[WPAD_MAX_WIIMOTES];
+	float wmote_roll[WPAD_MAX_WIIMOTES];
+	s32   right_stick_skip[WPAD_MAX_WIIMOTES];
+	s32	  wmote_roll_skip[WPAD_MAX_WIIMOTES];
 	bool  enable_wmote_roll;
+	int   m_wmote;
 
 	u32 wii_btnRepeat();
 	u32 gc_btnRepeat();

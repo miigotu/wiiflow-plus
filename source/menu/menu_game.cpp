@@ -342,10 +342,10 @@ void CMenu::_game(bool launch)
 		}
 		else if (launch || BTN_A_PRESSED)
 		{
-			m_btnMgr.click();
-			if (m_btnMgr.selected() == m_mainBtnQuit)
+			m_btnMgr.click(m_wmote);
+			if (m_btnMgr.selected(m_mainBtnQuit))
 				break;
-			else if (m_btnMgr.selected() == m_gameBtnDelete)
+			else if (m_btnMgr.selected(m_gameBtnDelete))
 			{
 				if (!m_locked)
 				{
@@ -356,23 +356,23 @@ void CMenu::_game(bool launch)
 					_showGame();
 				}
 			}
-			else if (m_btnMgr.selected() == m_gameBtnFavoriteOn || m_btnMgr.selected() == m_gameBtnFavoriteOff)
+			else if (m_btnMgr.selected(m_gameBtnFavoriteOn) || m_btnMgr.selected(m_gameBtnFavoriteOff))
 				m_gcfg1.setBool("FAVORITES", id, !m_gcfg1.getBool("FAVORITES", id, false));
-			else if (m_btnMgr.selected() == m_gameBtnAdultOn || m_btnMgr.selected() == m_gameBtnAdultOff)
+			else if (m_btnMgr.selected(m_gameBtnAdultOn) || m_btnMgr.selected(m_gameBtnAdultOff))
 				m_gcfg1.setBool("ADULTONLY", id, !m_gcfg1.getBool("ADULTONLY", id, false));
-			else if (m_btnMgr.selected() == m_gameBtnBack)
+			else if (m_btnMgr.selected(m_gameBtnBack))
 			{
 				m_gameSound.stop();
 				break;
 			}
-			else if (m_btnMgr.selected() == m_gameBtnSettings)
+			else if (m_btnMgr.selected(m_gameBtnSettings))
 			{
 				_hideGame();
 				_waitForGameSoundExtract();
 				_gameSettings();
 				_showGame();
 			}
-			else if (launch || m_btnMgr.selected() == m_gameBtnPlay || (!WPadIR_Valid(0) && !WPadIR_Valid(1) && !WPadIR_Valid(2) && !WPadIR_Valid(3) && m_btnMgr.selected() == (u32)-1))
+			else if (launch || m_btnMgr.selected(m_gameBtnPlay) || (!WPadIR_Valid(0) && !WPadIR_Valid(1) && !WPadIR_Valid(2) && !WPadIR_Valid(3) && m_btnMgr.selected((u32)-1)))
 			{
 				_hideGame();
 				dir_discHdr *hdr = m_cf.getHdr();
@@ -409,35 +409,29 @@ void CMenu::_game(bool launch)
 				gprintf("Launching game\n");
 				_launch(hdr);
 				launch = false;
-				WPAD_SetVRes(WPAD_CHAN_0, m_vid.width() + m_cursor1.width(), m_vid.height() + m_cursor1.height());	// b/c IOS reload
-				WPAD_SetVRes(WPAD_CHAN_1, m_vid.width() + m_cursor2.width(), m_vid.height() + m_cursor2.height());	// b/c IOS reload
-				WPAD_SetVRes(WPAD_CHAN_2, m_vid.width() + m_cursor3.width(), m_vid.height() + m_cursor3.height());	// b/c IOS reload
-				WPAD_SetVRes(WPAD_CHAN_3, m_vid.width() + m_cursor4.width(), m_vid.height() + m_cursor4.height());	// b/c IOS reload
+				for (int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+					WPAD_SetVRes(wmote, m_vid.width() + m_cursor[wmote].width(), m_vid.height() + m_cursor[wmote].height());
 				_showGame();
 				_initCF();
 				m_cf.select();
 			}
-			else if (m_btnMgr.selected() == m_gameBtnWdmM)
+			else if (m_btnMgr.selected(m_gameBtnWdmM))
 			{
 				current_wdm = (current_wdm == 0) ? wdm_count - 1 : current_wdm - 1;
 				wdm_entry = &wdm_entries[current_wdm];
 				m_btnMgr.setText(m_gameLblWdm, wstringEx(wdm_entry->name));
 			}
-			else if (m_btnMgr.selected() == m_gameBtnWdmP)
+			else if (m_btnMgr.selected(m_gameBtnWdmP))
 			{
 				current_wdm = (current_wdm == wdm_count - 1) ? 0 : current_wdm + 1;
 				wdm_entry = &wdm_entries[current_wdm];
 				m_btnMgr.setText(m_gameLblWdm, wstringEx(wdm_entry->name));
 			}
-			else if ((m_cf.mouseOver(m_vid, m_cursor1.x(), m_cursor1.y()))
-			|| (m_cf.mouseOver(m_vid, m_cursor2.x(), m_cursor2.y()))
-			|| (m_cf.mouseOver(m_vid, m_cursor3.x(), m_cursor3.y()))
-			|| (m_cf.mouseOver(m_vid, m_cursor4.x(), m_cursor4.y())))
-				m_cf.flip();
+			for (int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+				if (m_cf.mouseOver(m_vid, m_cursor[wmote].x(), m_cursor[wmote].y()))
+					m_cf.flip();
 		}
-		//Normal coverflow movement
-		for(int wmote=0;wmote<4;wmote++)
-		{
+		for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
 			if (BTN_UP_REPEAT || RIGHT_STICK_UP)
 			{
 				m_gameSound.stop();				
@@ -470,58 +464,57 @@ void CMenu::_game(bool launch)
 			{
 				startGameSound = false;
 				_playGameSound();
-			} 
-			if (m_show_zone_game)
-			{
-				b = m_gcfg1.getBool("FAVORITES", id, false);
-				m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
-				m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
-				m_btnMgr.show(m_gameBtnPlay);
-				m_btnMgr.show(m_gameBtnBack);
-				for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
-					if (m_gameLblUser[i] != -1u)
-						m_btnMgr.show(m_gameLblUser[i]);
+			}
+		if (m_show_zone_game)
+		{
+			b = m_gcfg1.getBool("FAVORITES", id, false);
+			m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
+			m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
+			m_btnMgr.show(m_gameBtnPlay);
+			m_btnMgr.show(m_gameBtnBack);
+			for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
+				if (m_gameLblUser[i] != -1u)
+					m_btnMgr.show(m_gameLblUser[i]);
 
+			if (!m_locked)
+			{
+				b = m_gcfg1.getBool("ADULTONLY", id, false);
+				m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
+				m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
+			}
+
+			if (m_current_view == COVERFLOW_USB)
+			{
+	
 				if (!m_locked)
 				{
-					b = m_gcfg1.getBool("ADULTONLY", id, false);
-					m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
-					m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
+					m_btnMgr.show(m_gameBtnDelete);
+					m_btnMgr.show(m_gameBtnSettings);
 				}
-
-				if (m_current_view == COVERFLOW_USB)
+				if (wdm_count > 1)
 				{
-		
-					if (!m_locked)
-					{
-						m_btnMgr.show(m_gameBtnDelete);
-						m_btnMgr.show(m_gameBtnSettings);
-					}
-					if (wdm_count > 1)
-					{
-						m_btnMgr.show(m_gameLblWdm);
-						m_btnMgr.show(m_gameBtnWdmM);
-						m_btnMgr.show(m_gameBtnWdmP);
-					}
+					m_btnMgr.show(m_gameLblWdm);
+					m_btnMgr.show(m_gameBtnWdmM);
+					m_btnMgr.show(m_gameBtnWdmP);
 				}
 			}
-			else
-			{
-				m_btnMgr.hide(m_gameBtnFavoriteOn);
-				m_btnMgr.hide(m_gameBtnFavoriteOff);
-				m_btnMgr.hide(m_gameBtnAdultOn);
-				m_btnMgr.hide(m_gameBtnAdultOff);
-				m_btnMgr.hide(m_gameBtnDelete);
-				m_btnMgr.hide(m_gameBtnSettings);
-				m_btnMgr.hide(m_gameBtnPlay);
-				m_btnMgr.hide(m_gameBtnBack);
-				m_btnMgr.hide(m_gameLblWdm);
-				m_btnMgr.hide(m_gameBtnWdmM);
-				m_btnMgr.hide(m_gameBtnWdmP);					
-				for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
-					if (m_gameLblUser[i] != -1u)
-						m_btnMgr.hide(m_gameLblUser[i]);
-			}
+		}
+		else
+		{
+			m_btnMgr.hide(m_gameBtnFavoriteOn);
+			m_btnMgr.hide(m_gameBtnFavoriteOff);
+			m_btnMgr.hide(m_gameBtnAdultOn);
+			m_btnMgr.hide(m_gameBtnAdultOff);
+			m_btnMgr.hide(m_gameBtnDelete);
+			m_btnMgr.hide(m_gameBtnSettings);
+			m_btnMgr.hide(m_gameBtnPlay);
+			m_btnMgr.hide(m_gameBtnBack);
+			m_btnMgr.hide(m_gameLblWdm);
+			m_btnMgr.hide(m_gameBtnWdmM);
+			m_btnMgr.hide(m_gameBtnWdmP);					
+			for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
+				if (m_gameLblUser[i] != -1u)
+					m_btnMgr.hide(m_gameLblUser[i]);
 		}
 	}
 	m_gcfg1.save();

@@ -539,10 +539,10 @@ void CMenu::_download(string gameId)
 			m_btnMgr.down();
 		if ((BTN_A_PRESSED || !gameId.empty()) && !(m_thrdWorking && m_thrdStop))
 		{
-			m_btnMgr.click();
-			if ((m_btnMgr.selected() == m_downloadBtnAll || m_btnMgr.selected() == m_downloadBtnMissing || !gameId.empty()) && !m_thrdWorking)
+			m_btnMgr.click(m_wmote);
+			if ((m_btnMgr.selected(m_downloadBtnAll) || m_btnMgr.selected(m_downloadBtnMissing) || !gameId.empty()) && !m_thrdWorking)
 			{
-				bool dlAll = m_btnMgr.selected() == m_downloadBtnAll;
+				bool dlAll = m_btnMgr.selected(m_downloadBtnAll);
 				m_btnMgr.show(m_downloadPBar);
 				m_btnMgr.setProgress(m_downloadPBar, 0.f);
 				m_btnMgr.hide(m_downloadBtnAll);
@@ -558,9 +558,9 @@ void CMenu::_download(string gameId)
 				else
 					LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_coverDownloaderMissing, (void *)this, 0, 8192, 40);
 			}
-			else if (m_btnMgr.selected() == m_downloadBtnWiiTDBDownload && !m_thrdWorking)
+			else if (m_btnMgr.selected(m_downloadBtnWiiTDBDownload) && !m_thrdWorking)
 			{
-//				bool dlAll = m_btnMgr.selected() == m_downloadBtnAllTitles;
+//				bool dlAll = m_btnMgr.selected(m_downloadBtnAllTitles);
 				m_btnMgr.show(m_downloadPBar);
 				m_btnMgr.setProgress(m_downloadPBar, 0.f);
 				m_btnMgr.hide(m_downloadBtnAll);
@@ -575,7 +575,7 @@ void CMenu::_download(string gameId)
 
 				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_wiitdbDownloader, (void *)this, 0, 8192, 40);		
 			}
-			else if (m_btnMgr.selected() == m_downloadBtnCancel)
+			else if (m_btnMgr.selected(m_downloadBtnCancel))
 			{
 				LockMutex lock(m_mutex);
 				m_thrdStop = true;
@@ -899,7 +899,11 @@ s8 CMenu::_versionDownloader() // code to download new version
 					if (unzfile == NULL)
 						goto fail;
 
-					int ret = extractZip(unzfile, 0, 1, NULL, m_appDir.c_str());
+					char appdir[20];
+					strcpy(appdir, m_appDir.c_str());
+					strcat(appdir, "/");
+					
+					int ret = extractZip(unzfile, 0, 1, NULL, appdir);
 					unzClose(unzfile);
 					if (ret == UNZ_OK)
 					{
@@ -945,7 +949,11 @@ s8 CMenu::_versionDownloader() // code to download new version
 								if (unzfile == NULL)
 									goto success;
 
-								int ret = extractZip(unzfile, 0, 1, NULL, m_dataDir.c_str());
+								char datadir[20];
+								strcpy(datadir, m_appDir.c_str());
+								strcat(datadir, "/");
+
+								int ret = extractZip(unzfile, 0, 1, NULL, datadir);
 								unzClose(unzfile);
 
 								if (ret != UNZ_OK)

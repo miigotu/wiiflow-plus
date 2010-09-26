@@ -19,12 +19,12 @@ void CMenu::_CategorySettings()
 			m_btnMgr.down();
 		if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click();
-			if (m_btnMgr.selected() == m_categoryBtnBack)
+			m_btnMgr.click(m_wmote);
+			if (m_btnMgr.selected(m_categoryBtnBack))
 				break;
 			for (int i = 0; i < 12; ++i)
 			{
-				if (m_btnMgr.selected() == m_categoryBtn[i])
+				if (m_btnMgr.selected(m_categoryBtn[i]))
 				{
 					// handling code for clicked favorite
 					m_category = i;

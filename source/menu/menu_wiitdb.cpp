@@ -68,8 +68,8 @@ void CMenu::_updateWiiTDB()
 				break;
 			if (BTN_A_PRESSED && !(m_thrdWorking && m_thrdStop))
 			{
-				m_btnMgr.click();
-				if (m_btnMgr.selected() == m_downloadBtnCancel)
+				m_btnMgr.click(m_wmote);
+				if (m_btnMgr.selected(m_downloadBtnCancel))
 				{
 					LockMutex lock(m_mutex);
 					m_thrdStop = true;

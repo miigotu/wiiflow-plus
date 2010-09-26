@@ -59,19 +59,19 @@ bool CMenu::_code(char code[4], bool erase)
 				m_btnMgr.down();
 			if (BTN_A_PRESSED)
 			{
-				m_btnMgr.click();
-				if (m_btnMgr.selected() == m_codeBtnErase)
+				m_btnMgr.click(m_wmote);
+				if (m_btnMgr.selected(m_codeBtnErase))
 				{
 					memset(code, 0, sizeof code);
 					m_cfg.remove("GENERAL", "parent_code");
 					n = 0;
 					m_locked = false;
 				}
-				if (m_btnMgr.selected() == m_codeBtnBack)
+				if (m_btnMgr.selected(m_codeBtnBack))
 					break;
 				else
 					for (int i = 0; i < 10; ++i)
-						if (m_btnMgr.selected() == m_codeBtnKey[i])
+						if (m_btnMgr.selected(m_codeBtnKey[i]))
 						{
 							codeLbl[n * 2] = 'X';
 							code[n++] = '0' + i;

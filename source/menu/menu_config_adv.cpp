@@ -128,24 +128,24 @@ int CMenu::_configAdv(void)
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageM))
+		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageM)))
 		{
 			nextPage = max(1, m_locked ? 1 : g_curPage - 1);
-			m_btnMgr.click(m_configBtnPageM);
+			m_btnMgr.click(m_wmote, m_configBtnPageM);
 			break;
 		}
-		if (!m_locked && (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageP)))
+		if (!m_locked && (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageP))))
 		{
 			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
-			m_btnMgr.click(m_configBtnPageP);
+			m_btnMgr.click(m_wmote, m_configBtnPageP);
 			break;
 		}
 		if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click();
-			if (m_btnMgr.selected() == m_configBtnBack)
+			m_btnMgr.click(m_wmote);
+			if (m_btnMgr.selected(m_configBtnBack))
 				break;
-			else if (m_btnMgr.selected() == m_configAdvBtnInstall)
+			else if (m_btnMgr.selected(m_configAdvBtnInstall))
 			{
 				if (!m_locked)
 				{
@@ -154,19 +154,19 @@ int CMenu::_configAdv(void)
 					_showConfigAdv();
 				}
 			}
-			else if (m_btnMgr.selected() == m_configAdvBtnCurThemeP)
+			else if (m_btnMgr.selected(m_configAdvBtnCurThemeP))
 			{
 				curTheme = loopNum(curTheme + 1, (int)themes.size());
 				m_cfg.setString("GENERAL", "theme", themes[curTheme]);
 				_showConfigAdv();
 			}
-			else if (m_btnMgr.selected() == m_configAdvBtnCurThemeM)
+			else if (m_btnMgr.selected(m_configAdvBtnCurThemeM))
 			{
 				curTheme = loopNum(curTheme - 1, (int)themes.size());
 				m_cfg.setString("GENERAL", "theme", themes[curTheme]);
 				_showConfigAdv();
 			}
-			else if (m_btnMgr.selected() == m_configAdvBtnCurLanguageP)
+			else if (m_btnMgr.selected(m_configAdvBtnCurLanguageP))
 			{
 				int lang = (int)loopNum((u32)m_cfg.getInt("GENERAL", "language", 0) + 1, ARRAY_SIZE(CMenu::_translations));
 				m_curLanguage = CMenu::_translations[lang];
@@ -188,7 +188,7 @@ int CMenu::_configAdv(void)
 				_updateText();
 				_showConfigAdv();
 			}
-			else if (m_btnMgr.selected() == m_configAdvBtnCurLanguageM)
+			else if (m_btnMgr.selected(m_configAdvBtnCurLanguageM))
 			{
 				int lang = (int)loopNum((u32)m_cfg.getInt("GENERAL", "language", 0) - 1, ARRAY_SIZE(CMenu::_translations));
 				m_curLanguage = CMenu::_translations[lang];
@@ -210,7 +210,7 @@ int CMenu::_configAdv(void)
 				_updateText();
 				_showConfigAdv();
 			}
-			else if (m_btnMgr.selected() == m_configAdvBtnCFTheme)
+			else if (m_btnMgr.selected(m_configAdvBtnCFTheme))
 			{
 				_hideConfigAdv();
 				_cfTheme();

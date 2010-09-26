@@ -129,7 +129,7 @@ int CMenu::main(void)
 			WDVD_GetCoverStatus(&disc_check);
 		}
 		//Check for exit or reload request
-		if (BTN_HOME_PRESSED || m_exit)
+		if (BTN_HOME_PRESSED)
 		{
 			m_reload = BTN_B_HELD;
 			break;
@@ -137,10 +137,9 @@ int CMenu::main(void)
 		++repeatButton;
 		if ((wii_btnsHeld & WBTN_A) == 0)
 			buttonHeld = (u32)-1;
-		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16)
+		else if (buttonHeld != (u32)-1 &&  m_btnMgr.selected(buttonHeld) && repeatButton >= 16)
 			wii_btnsPressed |= WBTN_A;
-		//Normal coverflow movement
-		for(int wmote=0;wmote<4;wmote++)
+		for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
 		{
 			if ((BTN_UP_REPEAT || RIGHT_STICK_UP) && (wii_btnsHeld & WBTN_B) == 0)
 				m_cf.up();
@@ -244,10 +243,10 @@ int CMenu::main(void)
 		}
 		if (BTN_B_PRESSED)
 		{
-			if (buttonHeld != m_btnMgr.selected())
-				m_btnMgr.click();
+			if (!m_btnMgr.selected(buttonHeld))
+				m_btnMgr.click(m_wmote);
 			//Events to Show Categories
-			if (m_btnMgr.selected() == m_mainBtnFavoritesOn || m_btnMgr.selected() == m_mainBtnFavoritesOff)
+			if (m_btnMgr.selected(m_mainBtnFavoritesOn) || m_btnMgr.selected(m_mainBtnFavoritesOff))
 			{
 				if (m_current_view == COVERFLOW_USB) // Only supported in game mode (not for channels, since you don't have options for channels yet)
 				{
@@ -260,7 +259,7 @@ int CMenu::main(void)
 				}
 			}
 			/*//Events to Switch off/on nand emu
-			if (m_btnMgr.selected() == m_mainBtnChannel || m_btnMgr.selected() == m_mainBtnUsb)
+			if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb))
 			{
 				//switch to nand emu here.
 			}
@@ -279,20 +278,20 @@ int CMenu::main(void)
 		//Handling input when other gui buttons are selected
 		else if (BTN_A_PRESSED)
 		{
-			if (buttonHeld != m_btnMgr.selected())
-				m_btnMgr.click();
-			if (m_btnMgr.selected() == m_mainBtnQuit) {
+			if (!m_btnMgr.selected(buttonHeld))
+				m_btnMgr.click(m_wmote);
+			if (m_btnMgr.selected(m_mainBtnQuit)) {
 				Sys_ExitTo(0);
 				break;
 			}
-			else if (m_btnMgr.selected() == m_mainBtnChannel || m_btnMgr.selected() == m_mainBtnUsb)
+			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb))
 			{
-				if (m_btnMgr.selected() == m_mainBtnChannel) 
+				if (m_btnMgr.selected(m_mainBtnChannel)) 
 				{
 					m_current_view = COVERFLOW_CHANNEL;
 					m_category = 0;
 				}
-				else if (m_btnMgr.selected() == m_mainBtnUsb)
+				else if (m_btnMgr.selected(m_mainBtnUsb))
 				{
 					m_current_view = COVERFLOW_USB;
 					m_category = m_cat.getInt("GENERAL", "category", 0);
@@ -303,7 +302,7 @@ int CMenu::main(void)
 				_initCF();
 				_showMain();
 			}
-			else if (m_btnMgr.selected() == m_mainBtnInit)
+			else if (m_btnMgr.selected(m_mainBtnInit))
 			{
 				if (!m_locked)
 				{
@@ -317,7 +316,7 @@ int CMenu::main(void)
 					_showMain();
 				}
 			}
-			else if (m_btnMgr.selected() == m_mainBtnInit2)
+			else if (m_btnMgr.selected(m_mainBtnInit2))
 			{
 				_hideMain();
 				_config(7);
@@ -328,7 +327,7 @@ int CMenu::main(void)
 				}
 				_showMain();
 			}
-			else if (m_btnMgr.selected() == m_mainBtnConfig)
+			else if (m_btnMgr.selected(m_mainBtnConfig))
 			{
 				_hideMain();
 				_config(1);
@@ -339,13 +338,14 @@ int CMenu::main(void)
 				}
 				_showMain();
 			}
-			else if (m_btnMgr.selected() == m_mainBtnInfo)
+			else if (m_btnMgr.selected(m_mainBtnInfo))
 			{
 				_hideMain();
 				_about();
+				 if(m_exit)break;
 				_showMain();
 			}
-			else if (m_btnMgr.selected() == m_mainBtnDVD)
+			else if (m_btnMgr.selected(m_mainBtnDVD))
 			{
 				_hideMain();
 				dir_discHdr hdr;
@@ -355,25 +355,25 @@ int CMenu::main(void)
 				_launchGame(&hdr, true);
 				_showMain();
 			}
-			else if (m_btnMgr.selected() == m_mainBtnNext)
+			else if (m_btnMgr.selected(m_mainBtnNext))
 			{
 				m_cf.right();
-				if (buttonHeld != m_btnMgr.selected())
+				if (!m_btnMgr.selected(buttonHeld))
 				{
 					repeatButton = 0;
-					buttonHeld = m_btnMgr.selected();
+					buttonHeld = m_mainBtnNext;
 				}
 			}
-			else if (m_btnMgr.selected() == m_mainBtnPrev)
+			else if (m_btnMgr.selected(m_mainBtnPrev))
 			{
 				m_cf.left();
-				if (buttonHeld != m_btnMgr.selected())
+				if (!m_btnMgr.selected(buttonHeld))
 				{
 					repeatButton = 0;
-					buttonHeld = m_btnMgr.selected();
+					buttonHeld = m_mainBtnPrev;
 				}
 			}
-			else if (m_btnMgr.selected() == m_mainBtnFavoritesOn || m_btnMgr.selected() == m_mainBtnFavoritesOff)
+			else if (m_btnMgr.selected(m_mainBtnFavoritesOn) || m_btnMgr.selected(m_mainBtnFavoritesOff))
 			{
 				m_favorites = !m_favorites;
 				m_cfg.setInt("GENERAL", "favorites", m_favorites);
@@ -457,16 +457,11 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainLblUser[5]);
 		}
 		//
-		if ((m_shown_pointer == 1 && WPadIR_Valid(0)) || (m_shown_pointer == 10 && !WPadIR_Valid(0)))
-			m_cf.mouse(m_vid, 0, m_cursor1.x(), m_cursor1.y());
-		else if ((m_shown_pointer == 2 && WPadIR_Valid(1)) || (m_shown_pointer == 20 && !WPadIR_Valid(1)))
-			m_cf.mouse(m_vid, 1, m_cursor2.x(), m_cursor2.y());
-		else if ((m_shown_pointer == 3 && WPadIR_Valid(2)) || (m_shown_pointer == 30 && !WPadIR_Valid(2)))
-			m_cf.mouse(m_vid, 2, m_cursor3.x(), m_cursor3.y());
-		else if ((m_shown_pointer == 4 && WPadIR_Valid(3)) || (m_shown_pointer == 40 && !WPadIR_Valid(3)))
-			m_cf.mouse(m_vid, 3, m_cursor4.x(), m_cursor4.y());	
-		else
-			m_cf.mouse(m_vid, 0, -1, -1);
+		for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+			if (WPadIR_Valid(wmote) || (m_shown_pointer == (wmote+1)*10 && !WPadIR_Valid(wmote)))
+				m_cf.mouse(m_vid, wmote, m_cursor[wmote].x(), m_cursor[wmote].y());
+			else
+				m_cf.mouse(m_vid, wmote, -1, -1);		
 	}
 	// 
 	GX_InvVtxCache();

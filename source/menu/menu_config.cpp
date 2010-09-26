@@ -111,30 +111,30 @@ int CMenu::_config1(void)
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageM))
+		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageM)))
 		{
 			nextPage = g_curPage == 1 && !m_locked ? 7 : max(1, m_locked ? 1 : g_curPage - 1);
-			m_btnMgr.click(m_configBtnPageM);
+			m_btnMgr.click(m_wmote, m_configBtnPageM);
 			break;
 		}
-		if (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageP))
+		if (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageP)))
 		{
 			nextPage = (g_curPage == CMenu::_nbCfgPages) ? 1 : min(g_curPage + 1, CMenu::_nbCfgPages);
-			m_btnMgr.click(m_configBtnPageP);
+			m_btnMgr.click(m_wmote, m_configBtnPageP);
 			break;
 		}
 		if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click();
-			if (m_btnMgr.selected() == m_configBtnBack)
+			m_btnMgr.click(m_wmote);
+			if (m_btnMgr.selected(m_configBtnBack))
 				break;
-			else if (m_btnMgr.selected() == m_configBtnDownload)
+			else if (m_btnMgr.selected(m_configBtnDownload))
 			{
 				_hideConfig();
 				_download();
 				_showConfig();
 			}
-			else if (m_btnMgr.selected() == m_configBtnUnlock)
+			else if (m_btnMgr.selected(m_configBtnUnlock))
 			{
 				char code[4];
 				_hideConfig();
@@ -142,7 +142,7 @@ int CMenu::_config1(void)
 					m_locked = false;
 				_showConfig();
 			}
-			else if (m_btnMgr.selected() == m_configBtnSetCode)
+			else if (m_btnMgr.selected(m_configBtnSetCode))
 			{
 				char code[4];
 				_hideConfig();
@@ -153,12 +153,12 @@ int CMenu::_config1(void)
 				}
 				_showConfig();
 			}
-			else if (m_btnMgr.selected() == m_configBtnBoxMode)
+			else if (m_btnMgr.selected(m_configBtnBoxMode))
 			{
 				m_cfg.setBool("GENERAL", "box_mode", !m_cfg.getBool("GENERAL", "box_mode"));
 				_showConfig();
 			}
-			else if (m_btnMgr.selected() == m_configBtnRumble)
+			else if (m_btnMgr.selected(m_configBtnRumble))
 			{
 				m_cfg.setBool("GENERAL", "rumble", !m_cfg.getBool("GENERAL", "rumble"));
 				m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble"));

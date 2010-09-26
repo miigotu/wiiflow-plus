@@ -112,7 +112,7 @@ void CMenu::_CheatSettings()
 				--m_cheatSettingsPage;
 			_showCheatSettings();
 
-			m_btnMgr.click(m_cheatBtnPageM);
+			m_btnMgr.click(m_wmote, m_cheatBtnPageM);
 		}
 		else if (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED)
 		{
@@ -123,7 +123,7 @@ void CMenu::_CheatSettings()
 				++m_cheatSettingsPage;
 			_showCheatSettings();
 
-			m_btnMgr.click(m_cheatBtnPageP);
+			m_btnMgr.click(m_wmote, m_cheatBtnPageP);
 		}
 		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1)!=0)
 		{
@@ -135,10 +135,10 @@ void CMenu::_CheatSettings()
 		}
 		else if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click();
-			if (m_btnMgr.selected() == m_cheatBtnBack)
+			m_btnMgr.click(m_wmote);
+			if (m_btnMgr.selected(m_cheatBtnBack))
 				break;
-			else if (m_btnMgr.selected() == m_cheatBtnPageM)
+			else if (m_btnMgr.selected(m_cheatBtnPageM))
 			{
 				_hideCheatSettings();
 				if (m_cheatSettingsPage == 1)
@@ -147,7 +147,7 @@ void CMenu::_CheatSettings()
 					--m_cheatSettingsPage;
 				_showCheatSettings();
 			}
-			else if (m_btnMgr.selected() == m_cheatBtnPageP)
+			else if (m_btnMgr.selected(m_cheatBtnPageP))
 			{
 				_hideCheatSettings();
 				if (m_cheatSettingsPage == (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
@@ -158,17 +158,19 @@ void CMenu::_CheatSettings()
 			}
 				
 			for (int i = 0; i < CHEATSPERPAGE; ++i)
-				if (m_btnMgr.selected() == m_cheatBtnItem[i]) {
+				if (m_btnMgr.selected(m_cheatBtnItem[i]))
+				{
 					// handling code for clicked cheat
 					m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*CHEATSPERPAGE + i] = !m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*CHEATSPERPAGE + i];
 					_showCheatSettings();
 				}
 			
- 			if (m_btnMgr.selected() == m_cheatBtnApply)
+ 			if (m_btnMgr.selected(m_cheatBtnApply))
 			{
 				bool selected = false;
 				//checks if at least one cheat is selected
-				for (unsigned int i=0; i < m_cheatfile.getCnt(); ++i) {
+				for (unsigned int i=0; i < m_cheatfile.getCnt(); ++i)
+				{
 					if (m_cheatfile.sCheatSelected[i] == true) 
 					{
 						selected = true;
@@ -191,7 +193,7 @@ void CMenu::_CheatSettings()
 				m_cheatfile.createTXT(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));
 				break;
 			}
-			else if (m_btnMgr.selected() == m_cheatBtnDownload)
+			else if (m_btnMgr.selected(m_cheatBtnDownload))
 			{
 				int msg = 0;
 				wstringEx prevMsg;
@@ -214,8 +216,8 @@ void CMenu::_CheatSettings()
 						break;
 					if (BTN_A_PRESSED && !(m_thrdWorking && m_thrdStop))
 					{
-						m_btnMgr.click();
-						if (m_btnMgr.selected() == m_downloadBtnCancel)
+						m_btnMgr.click(m_wmote);
+						if (m_btnMgr.selected(m_downloadBtnCancel))
 						{
 							LockMutex lock(m_mutex);
 							m_thrdStop = true;

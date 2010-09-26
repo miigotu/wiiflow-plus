@@ -25,12 +25,14 @@ void CMenu::_about(void)
 			break;
 		if (BTN_A_PRESSED && !(m_thrdWorking && m_thrdStop))
 		{
-			m_btnMgr.click();
-			if (m_btnMgr.selected() == m_aboutBtnSystem) {
+			m_btnMgr.click(m_wmote);
+			if (m_btnMgr.selected(m_aboutBtnSystem))
+			{
 				// show system menu
 				_hideAbout(false);
 				_system();
 				remove(m_ver.c_str());
+				 if(m_exit) break;
 				_showAbout();
 			}
 		}

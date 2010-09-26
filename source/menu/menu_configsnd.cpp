@@ -96,88 +96,97 @@ int CMenu::_configSnd(void)
 			buttonHeld = (u32)-1;
 			step = 1;
 		}
-		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16 && (repeatButton % 2 == 0))
+		else if (buttonHeld != (u32)-1 && m_btnMgr.selected(buttonHeld) && repeatButton >= 16 && (repeatButton % 2 == 0))
 			wii_btnsPressed |= WBTN_A;
-		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageM))
+		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageM)))
 		{
 			nextPage = max(1, m_locked ? 1 : g_curPage - 1);
-			m_btnMgr.click(m_configBtnPageM);
+			m_btnMgr.click(m_wmote, m_configBtnPageM);
 			break;
 		}
-		if (!m_locked && (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected() == m_configBtnPageP)))
+		if (!m_locked && (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageP))))
 		{
 			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
-			m_btnMgr.click(m_configBtnPageP);
+			m_btnMgr.click(m_wmote, m_configBtnPageP);
 			break;
 		}
 		repeat = false;
 		if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click();
-			if (m_btnMgr.selected() == m_configBtnBack)
+			u32 h_button;
+			m_btnMgr.click(m_wmote);
+			if (m_btnMgr.selected(m_configBtnBack))
 				break;
-			else if (m_btnMgr.selected() == m_configSndBtnBnrVolP)
+			else if (m_btnMgr.selected(m_configSndBtnBnrVolP))
 			{
 				m_cfg.setInt("GENERAL", "sound_volume_bnr", min(m_cfg.getInt("GENERAL", "sound_volume_bnr", 255) + step, 255));
 				_showConfigSnd();
 				m_bnrSndVol = m_cfg.getInt("GENERAL", "sound_volume_bnr", 255);
+				h_button = m_configSndBtnBnrVolP;
 				repeat = true;
 			}
-			else if (m_btnMgr.selected() == m_configSndBtnBnrVolM)
+			else if (m_btnMgr.selected(m_configSndBtnBnrVolM))
 			{
 				m_cfg.setInt("GENERAL", "sound_volume_bnr", max(m_cfg.getInt("GENERAL", "sound_volume_bnr", 255) - step, 0));
 				_showConfigSnd();
 				m_bnrSndVol = m_cfg.getInt("GENERAL", "sound_volume_bnr", 255);
+				h_button = m_configSndBtnBnrVolM;
 				repeat = true;
 			}
-			else if (m_btnMgr.selected() == m_configSndBtnGuiVolP)
+			else if (m_btnMgr.selected(m_configSndBtnGuiVolP))
 			{
 				m_cfg.setInt("GENERAL", "sound_volume_gui", min(m_cfg.getInt("GENERAL", "sound_volume_gui", 255) + step, 255));
 				_showConfigSnd();
 				m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
+				h_button = m_configSndBtnGuiVolP;
 				repeat = true;
 			}
-			else if (m_btnMgr.selected() == m_configSndBtnGuiVolM)
+			else if (m_btnMgr.selected(m_configSndBtnGuiVolM))
 			{
 				m_cfg.setInt("GENERAL", "sound_volume_gui", max(m_cfg.getInt("GENERAL", "sound_volume_gui", 255) - step, 0));
 				_showConfigSnd();
 				m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
+				h_button = m_configSndBtnGuiVolM;
 				repeat = true;
 			}
-			else if (m_btnMgr.selected() == m_configSndBtnMusicVolP)
+			else if (m_btnMgr.selected(m_configSndBtnMusicVolP))
 			{
 				m_cfg.setInt("GENERAL", "sound_volume_music", min(m_cfg.getInt("GENERAL", "sound_volume_music", 255) + step, 255));
 				_showConfigSnd();
 				SetVolumeOgg(m_cfg.getInt("GENERAL", "sound_volume_music", 255));
 				MP3Player_Volume(m_cfg.getInt("GENERAL", "sound_volume_music", 255));
+				h_button = m_configSndBtnMusicVolP;
 				repeat = true;
 			}
-			else if (m_btnMgr.selected() == m_configSndBtnMusicVolM)
+			else if (m_btnMgr.selected(m_configSndBtnMusicVolM))
 			{
 				m_cfg.setInt("GENERAL", "sound_volume_music", max(m_cfg.getInt("GENERAL", "sound_volume_music", 255) - step, 0));
 				_showConfigSnd();
 				SetVolumeOgg(m_cfg.getInt("GENERAL", "sound_volume_music", 255));
 				MP3Player_Volume(m_cfg.getInt("GENERAL", "sound_volume_music", 255));
+				h_button = m_configSndBtnMusicVolM;
 				repeat = true;
 			}
-			else if (m_btnMgr.selected() == m_configSndBtnCFVolP)
+			else if (m_btnMgr.selected(m_configSndBtnCFVolP))
 			{
 				m_cfg.setInt("GENERAL", "sound_volume_coverflow", min(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255) + step, 255));
 				_showConfigSnd();
 				m_cf.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255));
+				h_button = m_configSndBtnCFVolP;
 				repeat = true;
 			}
-			else if (m_btnMgr.selected() == m_configSndBtnCFVolM)
+			else if (m_btnMgr.selected(m_configSndBtnCFVolM))
 			{
 				m_cfg.setInt("GENERAL", "sound_volume_coverflow", max(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255) - step, 0));
 				_showConfigSnd();
 				m_cf.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255));
+				h_button = m_configSndBtnCFVolM;
 				repeat = true;
 			}
-			if (repeat && m_btnMgr.selected() != buttonHeld)
+			if (repeat && !m_btnMgr.selected(buttonHeld))
 			{
 				repeatButton = 0;
-				buttonHeld = m_btnMgr.selected();
+				buttonHeld = h_button;
 				step = 8;
 			}
 		}

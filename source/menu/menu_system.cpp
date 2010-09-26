@@ -69,8 +69,8 @@ void CMenu::_system()
 			m_btnMgr.down();
 		if ((BTN_A_PRESSED) && !(m_thrdWorking && m_thrdStop))
 		{
-			m_btnMgr.click();
-			if ((m_btnMgr.selected() == m_systemBtnDownload) && !m_thrdWorking)
+			m_btnMgr.click(m_wmote);
+			if ((m_btnMgr.selected(m_systemBtnDownload)) && !m_thrdWorking)
 			{
 				// Download selected version
 				_hideSystem();
@@ -98,14 +98,14 @@ void CMenu::_system()
 					break;
 				}
 			}
-			else if (m_btnMgr.selected() == m_systemBtnBack)
+			else if (m_btnMgr.selected(m_systemBtnBack))
 			{
 				LockMutex lock(m_mutex);
 				m_thrdStop = true;
 				m_thrdMessageAdded = true;
 				m_thrdMessage = _t("dlmsg6", L"Canceling...");
 			}
-			else if (m_btnMgr.selected() == m_systemBtnIosSelectM)
+			else if (m_btnMgr.selected(m_systemBtnIosSelectM))
 			{
 				if (ios_num > 1)
 					--ios_num;
@@ -117,7 +117,7 @@ void CMenu::_system()
 					newIOS = CMenu::_ios[i];
 				}
 			}
-			else if (m_btnMgr.selected() == m_systemBtnIosSelectP)
+			else if (m_btnMgr.selected(m_systemBtnIosSelectP))
 			{
 				if (ios_num < 5)
 					++ios_num;
@@ -129,7 +129,7 @@ void CMenu::_system()
 					newIOS = CMenu::_ios[i];
 				}
 			}
-			else if (m_btnMgr.selected() == m_systemBtnVerSelectM)
+			else if (m_btnMgr.selected(m_systemBtnVerSelectM))
 			{
 				if (version_num > 1)
 					--version_num;
@@ -148,7 +148,7 @@ void CMenu::_system()
 							m_btnMgr.setText(m_systemLblInfo, m_version.getWString("GENERAL", "changes"));	
 				}
 			}
-			else if (m_btnMgr.selected() == m_systemBtnVerSelectP)
+			else if (m_btnMgr.selected(m_systemBtnVerSelectP))
 			{
 				if (version_num < num_versions)
 					++version_num;

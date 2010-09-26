@@ -360,7 +360,7 @@ void CMenu::_gameSettings(void)
 			else if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 6) || m_gameSettingsPage > 51)
 				--m_gameSettingsPage;
 			_showGameSettings();
-			m_btnMgr.click(m_gameSettingsBtnPageM);
+			m_btnMgr.click(m_wmote, m_gameSettingsBtnPageM);
 		}
 		else if (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED)
 		{
@@ -372,14 +372,14 @@ void CMenu::_gameSettings(void)
 				|| (m_gameSettingsPage > 5 && m_gameSettingsPage < 52 && m_max_categories > 5))
 				++m_gameSettingsPage;
 			_showGameSettings();
-			m_btnMgr.click(m_gameSettingsBtnPageP);
+			m_btnMgr.click(m_wmote, m_gameSettingsBtnPageP);
 		}
 		else if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click();
-			if (m_btnMgr.selected() == m_gameSettingsBtnBack)
+			m_btnMgr.click(m_wmote);
+			if (m_btnMgr.selected(m_gameSettingsBtnBack))
 				break;
-			else if (m_btnMgr.selected() == m_gameSettingsBtnPageM)
+			else if (m_btnMgr.selected(m_gameSettingsBtnPageM))
 			{
 				if (m_gameSettingsPage == 1)
 					m_gameSettingsPage = 5;
@@ -389,7 +389,7 @@ void CMenu::_gameSettings(void)
 					--m_gameSettingsPage;
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnPageP && !m_locked)
+			else if (m_btnMgr.selected(m_gameSettingsBtnPageP) && !m_locked)
 			{
 				if (m_gameSettingsPage == 5)
 					m_gameSettingsPage = 1;
@@ -400,7 +400,7 @@ void CMenu::_gameSettings(void)
 					++m_gameSettingsPage;
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnOcarina)
+			else if (m_btnMgr.selected(m_gameSettingsBtnOcarina))
 			{
 				int intoption = loopNum(m_gcfg2.getOptBool(id, "cheat") + 1, 3);
 				if (intoption !=0 && intoption !=1)
@@ -409,7 +409,7 @@ void CMenu::_gameSettings(void)
 					m_gcfg2.setOptBool(id, "cheat", intoption);
 					_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnVipatch)
+			else if (m_btnMgr.selected(m_gameSettingsBtnVipatch))
 			{
 //				m_gcfg2.setOptBool(id, "vipatch", loopNum(m_gcfg2.getOptBool(id, "vipatch") + 1, 3));
 				bool booloption = m_gcfg2.getBool(id, "vipatch");
@@ -419,7 +419,7 @@ void CMenu::_gameSettings(void)
 					m_gcfg2.setBool(id, "vipatch", true);
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnCountryPatch)
+			else if (m_btnMgr.selected(m_gameSettingsBtnCountryPatch))
 			{
 //				m_gcfg2.setOptBool(id, "country_patch", loopNum(m_gcfg2.getOptBool(id, "country_patch") + 1, 3));
 				bool booloption = m_gcfg2.getBool(id, "country_patch");
@@ -429,7 +429,7 @@ void CMenu::_gameSettings(void)
 					m_gcfg2.setBool(id, "country_patch", true);
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnErr2Fix)
+			else if (m_btnMgr.selected(m_gameSettingsBtnErr2Fix))
 			{
 				int intoption = loopNum(m_gcfg2.getOptBool(id, "error_002_fix") + 1, 3);
 				if (intoption !=0 && intoption !=1)
@@ -438,7 +438,7 @@ void CMenu::_gameSettings(void)
 					m_gcfg2.setOptBool(id, "error_002_fix", intoption);
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnBlockIOSReload)
+			else if (m_btnMgr.selected(m_gameSettingsBtnBlockIOSReload))
 			{
 				bool booloption = m_gcfg2.getBool(id, "block_ios_reload");
 				if (booloption != false)
@@ -447,47 +447,47 @@ void CMenu::_gameSettings(void)
 				m_gcfg2.setBool(id, "block_ios_reload", true);
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnLanguageP)
+			else if (m_btnMgr.selected(m_gameSettingsBtnLanguageP))
 			{
 				m_gcfg2.setInt(id, "language", (int)loopNum((u32)m_gcfg2.getInt(id, "language", 0) + 1, ARRAY_SIZE(CMenu::_languages)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnLanguageM)
+			else if (m_btnMgr.selected(m_gameSettingsBtnLanguageM))
 			{
 				m_gcfg2.setInt(id, "language", (int)loopNum((u32)m_gcfg2.getInt(id, "language", 0) - 1, ARRAY_SIZE(CMenu::_languages)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnVideoP)
+			else if (m_btnMgr.selected(m_gameSettingsBtnVideoP))
 			{
 				m_gcfg2.setInt(id, "video_mode", (int)loopNum((u32)m_gcfg2.getInt(id, "video_mode", 0) + 1, ARRAY_SIZE(CMenu::_videoModes)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnVideoM)
+			else if (m_btnMgr.selected(m_gameSettingsBtnVideoM))
 			{
 				m_gcfg2.setInt(id, "video_mode", (int)loopNum((u32)m_gcfg2.getInt(id, "video_mode", 0) - 1, ARRAY_SIZE(CMenu::_videoModes)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnIOSP)
+			else if (m_btnMgr.selected(m_gameSettingsBtnIOSP))
 			{
 				m_gcfg2.setInt(id, "ios", (int)loopNum((u32)m_gcfg2.getInt(id, "ios", 0) + 1, ARRAY_SIZE(CMenu::_ios)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnIOSM)
+			else if (m_btnMgr.selected(m_gameSettingsBtnIOSM))
 			{
 				m_gcfg2.setInt(id, "ios", (int)loopNum((u32)m_gcfg2.getInt(id, "ios", 0) - 1, ARRAY_SIZE(CMenu::_ios)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnPatchVidModesP)
+			else if (m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP))
 			{
 				m_gcfg2.setInt(id, "patch_video_modes", (int)loopNum((u32)m_gcfg2.getInt(id, "patch_video_modes", 0) + 1, ARRAY_SIZE(CMenu::_vidModePatch)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnPatchVidModesM)
+			else if (m_btnMgr.selected(m_gameSettingsBtnPatchVidModesM))
 			{
 				m_gcfg2.setInt(id, "patch_video_modes", (int)loopNum((u32)m_gcfg2.getInt(id, "patch_video_modes", 0) - 1, ARRAY_SIZE(CMenu::_vidModePatch)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnAltDolP || m_btnMgr.selected() == m_gameSettingsBtnAltDolM)
+			else if (m_btnMgr.selected(m_gameSettingsBtnAltDolP) || m_btnMgr.selected(m_gameSettingsBtnAltDolM))
 			{
 				if (!dolsListed)
 				{
@@ -500,14 +500,14 @@ void CMenu::_gameSettings(void)
 					m_cf.startPicLoader();
 				}
 				int i = find(dols.begin(), dols.end(), m_gcfg2.getString(id, "dol")) - dols.begin();
-				if (m_btnMgr.selected() == m_gameSettingsBtnAltDolP)
+				if (m_btnMgr.selected(m_gameSettingsBtnAltDolP))
 					++i;
 				else
 					--i;
 				m_gcfg2.setString(id, "dol", dols[loopNum(i, (int)dols.size())]);
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnCover)
+			else if (m_btnMgr.selected(m_gameSettingsBtnCover))
 			{
 				m_cf.stopPicLoader(true);
 				_hideGameSettings();
@@ -515,34 +515,34 @@ void CMenu::_gameSettings(void)
 				_showGameSettings();
 				m_cf.startPicLoader();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnCheat)
+			else if (m_btnMgr.selected(m_gameSettingsBtnCheat))
 			{
 				_hideGameSettings();
 				_CheatSettings();
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnHooktypeP)
+			else if (m_btnMgr.selected(m_gameSettingsBtnHooktypeP))
 			{
 				m_gcfg2.setInt(id, "hooktype", (int)loopNum((u32)m_gcfg2.getInt(id, "hooktype", 1) + 1, ARRAY_SIZE(CMenu::_hooktype)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnHooktypeM)
+			else if (m_btnMgr.selected(m_gameSettingsBtnHooktypeM))
 			{
 				m_gcfg2.setInt(id, "hooktype", (int)loopNum((u32)m_gcfg2.getInt(id, "hooktype", 1) - 1, ARRAY_SIZE(CMenu::_hooktype)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnDvdPatch)
+			else if (m_btnMgr.selected(m_gameSettingsBtnDvdPatch))
 			{
 				m_gcfg2.setBool(id, "disable_dvd_patch", !m_gcfg2.getBool(id, "disable_dvd_patch", false));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnReturnTo)
+			else if (m_btnMgr.selected(m_gameSettingsBtnReturnTo))
 			{
 				_hideGameSettings();
 				m_gcfg2.setBool(id, "returnto", !m_gcfg2.getBool(id, "returnto", false));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnDebuggerP)
+			else if (m_btnMgr.selected(m_gameSettingsBtnDebuggerP))
 			{
 				bool booloption = m_gcfg2.getBool(id, "debugger");
 				if (booloption != false)
@@ -551,7 +551,7 @@ void CMenu::_gameSettings(void)
 				m_gcfg2.setBool(id, "debugger", true);
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnDebuggerM)
+			else if (m_btnMgr.selected(m_gameSettingsBtnDebuggerM))
 			{
 				bool booloption = m_gcfg2.getBool(id, "debugger");
 				if (booloption != false)
@@ -560,14 +560,14 @@ void CMenu::_gameSettings(void)
 				m_gcfg2.setBool(id, "debugger", true);
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected() == m_gameSettingsBtnCategoryMain)
+			else if (m_btnMgr.selected(m_gameSettingsBtnCategoryMain))
 			{
 				_hideGameSettings();
 				m_gameSettingsPage = 51;
 				_showGameSettings();
 			}
 			for (int i = 0; i < 12; ++i)
-				if (m_btnMgr.selected() == m_gameSettingsBtnCategory[i])
+				if (m_btnMgr.selected(m_gameSettingsBtnCategory[i]))
 				{
 					m_gameSettingCategories[i] = m_gameSettingCategories[i] == '1' ? '0' : '1';
 					char categories[13];
@@ -580,7 +580,7 @@ void CMenu::_gameSettings(void)
 		}
 		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1)!=0)
 		{	
-			if (m_btnMgr.selected() == m_gameSettingsBtnCover)
+			if (m_btnMgr.selected(m_gameSettingsBtnCover))
 			{
 					m_cf.stopPicLoader(true);	// Empty cover cache
 					remove(fmt("%s/%s.png", m_picDir.c_str(), m_cf.getId().c_str()));

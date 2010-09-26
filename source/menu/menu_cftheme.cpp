@@ -410,34 +410,34 @@ void CMenu::_cfTheme(void)
 		++repeatButton;
 		if ((wii_btnsHeld & WBTN_A) == 0)
 			buttonHeld = (u32)-1;
-		else if (buttonHeld != (u32)-1 && buttonHeld == m_btnMgr.selected() && repeatButton >= 16 && (repeatButton % btnDelay == 0))
+		else if (buttonHeld != (u32)-1 &&  m_btnMgr.selected(buttonHeld) && repeatButton >= 16 && (repeatButton % btnDelay == 0))
 			wii_btnsPressed |= WBTN_A;
 		if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click();
-			if (m_btnMgr.selected() != (u32)-1)
+			m_btnMgr.click(m_wmote);
+			if (!m_btnMgr.selected((u32)-1))
 			{
-				if (m_btnMgr.selected() == m_cfThemeBtnSave)
+				if (m_btnMgr.selected(m_cfThemeBtnSave))
 				{
 					m_cf.stopPicLoader();
 					m_theme.save();
 					break;
 				}
-				else if (m_btnMgr.selected() == m_cfThemeBtnCancel)
+				else if (m_btnMgr.selected(m_cfThemeBtnCancel))
 				{
 					m_theme.clear();
 					m_theme.unload();
 					m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), m_cfg.getString("GENERAL", "theme", "defaut").c_str()).c_str());
 					break;
 				}
-				else if (m_btnMgr.selected() == m_cfThemeBtnAlt)
+				else if (m_btnMgr.selected(m_cfThemeBtnAlt))
 				{
 					cfVersion = 1 + loopNum(cfVersion, m_numCFVersions);
 					_showCFTheme(curParam, cfVersion, wide);
 					_loadCFLayout(cfVersion, true, wide != m_vid.wide());
 					m_cf.applySettings();
 				}
-				else if (m_btnMgr.selected() == m_cfThemeBtnSelect)
+				else if (m_btnMgr.selected(m_cfThemeBtnSelect))
 				{
 					if (m_cf.selected())
 						m_cf.cancel();
@@ -447,21 +447,21 @@ void CMenu::_cfTheme(void)
 					_loadCFLayout(cfVersion, true, wide != m_vid.wide());
 					m_cf.applySettings();
 				}
-				else if (m_btnMgr.selected() == m_cfThemeBtnWide)
+				else if (m_btnMgr.selected(m_cfThemeBtnWide))
 				{
 					wide = !wide;
 					_showCFTheme(curParam, cfVersion, wide);
 					_loadCFLayout(cfVersion, true, wide != m_vid.wide());
 					m_cf.applySettings();
 				}
-				else if (m_btnMgr.selected() == m_cfThemeBtnParamM)
+				else if (m_btnMgr.selected(m_cfThemeBtnParamM))
 				{
 					curParam = loopNum(curParam - 1, ARRAY_SIZE(CMenu::_cfParams));
 					if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
 						m_cf.select();
 					_showCFTheme(curParam, cfVersion, wide);
 				}
-				else if (m_btnMgr.selected() == m_cfThemeBtnParamP)
+				else if (m_btnMgr.selected(m_cfThemeBtnParamP))
 				{
 					curParam = loopNum(curParam + 1, ARRAY_SIZE(CMenu::_cfParams));
 					if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
@@ -470,16 +470,16 @@ void CMenu::_cfTheme(void)
 				}
 				else
 					for (int i = 0; i < 16; ++i)
-						if (m_btnMgr.selected() == m_cfThemeBtnValM[i] || m_btnMgr.selected() == m_cfThemeBtnValP[i])
+						if (m_btnMgr.selected(m_cfThemeBtnValM[i]) || m_btnMgr.selected(m_cfThemeBtnValP[i]))
 						{
-							_cfParam(m_btnMgr.selected() == m_cfThemeBtnValP[i], i, CMenu::_cfParams[curParam], cfVersion, wide);
+							_cfParam(m_btnMgr.selected(m_cfThemeBtnValP[i]), i, CMenu::_cfParams[curParam], cfVersion, wide);
 							_showCFTheme(curParam, cfVersion, wide);
 							_loadCFLayout(cfVersion, true, wide != m_vid.wide());
 							m_cf.applySettings();
-							if (buttonHeld != m_btnMgr.selected())
+							if (!m_btnMgr.selected(buttonHeld))
 							{
 								repeatButton = 0;
-								buttonHeld = m_btnMgr.selected();
+								buttonHeld = m_cfThemeBtnValP[i];
 							}
 							break;
 						}
