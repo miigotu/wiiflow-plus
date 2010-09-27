@@ -898,11 +898,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 					if (unzfile == NULL)
 						goto fail;
 
-					char appdir[20];
-					strcpy(appdir, m_appDir.c_str());
-					strcat(appdir, "/");
-					
-					int ret = extractZip(unzfile, 0, 1, NULL, appdir);
+					int ret = extractZip(unzfile, 0, 1, NULL, m_appDir.c_str());
 					unzClose(unzfile);
 					if (ret == UNZ_OK)
 					{
@@ -948,11 +944,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 								if (unzfile == NULL)
 									goto success;
 
-								char datadir[20];
-								strcpy(datadir, m_appDir.c_str());
-								strcat(datadir, "/");
-
-								int ret = extractZip(unzfile, 0, 1, NULL, datadir);
+								int ret = extractZip(unzfile, 0, 1, NULL, m_dataDir.c_str());
 								unzClose(unzfile);
 
 								if (ret != UNZ_OK)

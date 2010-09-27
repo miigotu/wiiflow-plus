@@ -134,7 +134,7 @@ int CMenu::main(void)
 			m_reload = BTN_B_HELD;
 			break;
 		}
-		for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 		{
 			if ((BTN_UP_REPEAT || RIGHT_STICK_UP) && (wii_btnsHeld & WBTN_B) == 0)
 				m_cf.up();
@@ -460,7 +460,7 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainLblUser[5]);
 		}
 		//
-		for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 			if (WPadIR_Valid(chan) || (m_show_pointer[chan] && !WPadIR_Valid(chan)))
 				m_cf.mouse(m_vid, chan, m_cursor[chan].x(), m_cursor[chan].y());
 			else

@@ -12,7 +12,7 @@ void CMenu::SetupInput()
 	wii_btnRepeat();
 	gc_btnRepeat();
 
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
 		stickPointer_x[chan] = (m_vid.width() + m_cursor[chan].width())/2;
 		stickPointer_y[chan] = (m_vid.height() + m_cursor[chan].height())/2;
@@ -69,7 +69,7 @@ void CMenu::ScanInput()
 	ButtonsHeld();
 	LeftStick();
 	
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES;chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
 		wd[chan] = WPAD_Data(chan);
 		left_stick_angle[chan] = 0;
@@ -102,7 +102,7 @@ void CMenu::ScanInput()
 		}
 		right_stick_skip[chan] = CalculateRepeatSpeed(right_stick_mag[chan], right_stick_skip[chan]);
 	}
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
 		m_btnMgr.setRumble(chan, WPadIR_Valid(chan), PAD_StickX(chan) < -20 || PAD_StickX(chan) > 20 || PAD_StickY(chan) < -20 || PAD_StickY(chan) > 20);
 
@@ -130,7 +130,7 @@ void CMenu::ButtonsPressed()
 	wii_btnsPressed = 0;
 	gc_btnsPressed = 0;
 
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
         wii_btnsPressed |= WPAD_ButtonsDown(chan);
         gc_btnsPressed |= PAD_ButtonsDown(chan);
@@ -142,7 +142,7 @@ void CMenu::ButtonsHeld()
 	wii_btnsHeld = 0;
 	gc_btnsHeld = 0;
 
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
         wii_btnsHeld |= WPAD_ButtonsHeld(chan);
         gc_btnsHeld |= PAD_ButtonsHeld(chan);
@@ -152,7 +152,7 @@ void CMenu::ButtonsHeld()
 void CMenu::LeftStick()
 {
 	u8 speed = 0,pSpeed = 0;
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
 
 		if (left_stick_mag[chan] > 0.15 || abs(PAD_StickX(chan)) > 20 || abs(PAD_StickY(chan)) > 20)
@@ -326,7 +326,7 @@ u32 CMenu::gc_btnRepeat()
 void CMenu::ShowZone(SZone zone, bool &showZone)
 {
 	showZone = false;
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 		if ((WPadIR_Valid(chan) || m_show_pointer[chan]) && m_cursor[chan].x() >= zone.x && m_cursor[chan].y() >= zone.y
 			&& m_cursor[chan].x() < zone.x + zone.w && m_cursor[chan].y() < zone.y + zone.h)
 			showZone = true;

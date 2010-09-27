@@ -210,7 +210,8 @@ CCoverFlow::CCoverFlow(void)
 	m_rows = 1;
 	m_columns = 11;
 	m_range = m_rows * m_columns;
-	m_mouse = -1;
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		m_mouse[chan] = -1;
 	m_snd2 = false;
 	m_soundVolume = 0xFF;
 	m_sorting = SORT_ALPHA;
@@ -1439,15 +1440,16 @@ bool CCoverFlow::select(void)
 	if (m_selected)
 		return true;
 	curPos = (int)m_range / 2;
-	if ((u32)m_mouse < m_range && m_mouse != curPos)
-	{
-		if (m_rows >= 3)
-			j = ((m_mouse / m_rows - 1) * (m_rows - 2) + m_mouse % m_rows - 1)
-				- ((curPos / m_rows - 1) * (m_rows - 2) + curPos % m_rows - 1);
-		else
-			j = m_mouse - (int)(m_range / 2);
-		_setJump(j);
-	}
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if ((u32)m_mouse[chan] < m_range && m_mouse[chan] != curPos)
+		{
+			if (m_rows >= 3)
+				j = ((m_mouse[chan] / m_rows - 1) * (m_rows - 2) + m_mouse[chan] % m_rows - 1)
+					- ((curPos / m_rows - 1) * (m_rows - 2) + curPos % m_rows - 1);
+			else
+				j = m_mouse[chan] - (int)(m_range / 2);
+			_setJump(j);
+		}
 	m_cameraPos += _cameraMoves();
 	m_covers[m_range / 2].angle += _coverMovesA();
 	m_covers[m_range / 2].pos += _coverMovesP();
@@ -1612,32 +1614,33 @@ void CCoverFlow::_updateTarget(int i, bool instant)
 		cvr.targetShadowColor = CColor::interpolate(lo.shadowColorBeg, cvr.targetShadowColor, 0x7F);
 	}
 	// Mouse selection
-	if (!m_selected && (u32)m_mouse < m_range)
-	{
-		if (i == m_mouse)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if (!m_selected && (u32)m_mouse[chan] < m_range)
 		{
-			cvr.targetColor = 0xFFFFFFFF;
-			cvr.targetShadowColor = lo.shadowColorCenter;
-			cvr.txtTargetAngle = lo.txtCenterAngle;
-			cvr.txtTargetPos = lo.txtCenterPos;
-			cvr.txtTargetColor = 0xFF;
-			cvr.title.setFrame(lo.txtCenterWidth, lo.txtCenterStyle, false, instant);
+			if (i == m_mouse[chan])
+			{
+				cvr.targetColor = 0xFFFFFFFF;
+				cvr.targetShadowColor = lo.shadowColorCenter;
+				cvr.txtTargetAngle = lo.txtCenterAngle;
+				cvr.txtTargetPos = lo.txtCenterPos;
+				cvr.txtTargetColor = 0xFF;
+				cvr.title.setFrame(lo.txtCenterWidth, lo.txtCenterStyle, false, instant);
+			}
+			else
+			{
+				cvr.targetColor = lo.mouseOffColor;
+				cvr.targetShadowColor = lo.shadowColorOff;
+				cvr.txtTargetAngle = m_mouse[chan] > i ? lo.txtLeftAngle : lo.txtRightAngle;
+				cvr.txtTargetPos = m_mouse[chan] > i ? lo.txtLeftPos : lo.txtRightPos;
+				cvr.txtTargetColor = 0;
+				cvr.title.setFrame(lo.txtSideWidth, lo.txtSideStyle, false, instant);
+			}
+			if (_invisibleCover(x, y))
+			{
+				cvr.targetColor.a = 0;
+				cvr.targetShadowColor.a = 0;
+			}
 		}
-		else
-		{
-			cvr.targetColor = lo.mouseOffColor;
-			cvr.targetShadowColor = lo.shadowColorOff;
-			cvr.txtTargetAngle = m_mouse > i ? lo.txtLeftAngle : lo.txtRightAngle;
-			cvr.txtTargetPos = m_mouse > i ? lo.txtLeftPos : lo.txtRightPos;
-			cvr.txtTargetColor = 0;
-			cvr.title.setFrame(lo.txtSideWidth, lo.txtSideStyle, false, instant);
-		}
-		if (_invisibleCover(x, y))
-		{
-			cvr.targetColor.a = 0;
-			cvr.targetShadowColor.a = 0;
-		}
-	}
 	// 
 	if (instant)
 		_instantTarget(i);
@@ -1875,20 +1878,20 @@ void CCoverFlow::mouse(CVideo &vid, int chan, int x, int y)
 {
 	if (m_covers.empty())
 		return;
-	chan = 0; //stop compile warnings, this is for simultaneous pointers later.
-	int m = m_mouse;
+
+	int m = m_mouse[chan];
 	if (x < 0 || y < 0)
-		m_mouse = -1;
+		m_mouse[chan] = -1;
 	else
 	{
 		vid.prepareStencil();
 		_draw(CCoverFlow::CFDR_STENCIL, false, false);
 		vid.renderStencil();
-		m_mouse = vid.stencilVal(x, y) - 1;
+		m_mouse[chan] = vid.stencilVal(x, y) - 1;
 	}
-	if (m != m_mouse)
+	if (m != m_mouse[chan])
 	{
-		if ((u32)m_mouse < m_range)
+		if ((u32)m_mouse[chan] < m_range)
 			m_hoverSound.play(m_soundVolume);
 		_updateAllTargets();
 	}

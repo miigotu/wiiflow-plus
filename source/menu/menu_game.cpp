@@ -408,7 +408,7 @@ void CMenu::_game(bool launch)
 				gprintf("Launching game\n");
 				_launch(hdr);
 				launch = false;
-				for (int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+				for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 					WPAD_SetVRes(chan, m_vid.width() + m_cursor[chan].width(), m_vid.height() + m_cursor[chan].height());
 				_showGame();
 				_initCF();
@@ -426,11 +426,11 @@ void CMenu::_game(bool launch)
 				wdm_entry = &wdm_entries[current_wdm];
 				m_btnMgr.setText(m_gameLblWdm, wstringEx(wdm_entry->name));
 			}
-			for (int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+			for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 				if (m_cf.mouseOver(m_vid, m_cursor[chan].x(), m_cursor[chan].y()))
 					m_cf.flip();
 		}
-		for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 			if (BTN_UP_REPEAT || RIGHT_STICK_UP)
 			{
 				m_gameSound.stop();				

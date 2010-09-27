@@ -8,6 +8,9 @@
 #include <string>
 #include <vector>
 
+#include <wiiuse/wpad.h>
+#include <ogc/pad.h>
+
 #include "video.hpp"
 #include "smartptr.hpp"
 #include "FreeTypeGX.h"
@@ -250,7 +253,7 @@ private:
 	u32 m_columns;
 	SLayout m_loNormal;
 	SLayout m_loSelected;
-	int m_mouse;
+	int m_mouse[WPAD_MAX_WIIMOTES];
 	bool m_hideCover;
 	bool m_compressTextures;
 	bool m_compressCache;

@@ -218,7 +218,7 @@ void CMenu::init()
 	pShadowY = m_theme.getFloat("GENERAL", "pointer_shadow_y", 3.f);
 	pShadowBlur = m_theme.getBool("GENERAL", "pointer_shadow_blur", false);
 
-	for (int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 		m_cursor[chan].init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", sfmt("pointer%i", chan+1).c_str()).c_str()).c_str(),
 			pWide, pShadowColor, pShadowX, pShadowY, pShadowBlur, chan);
 		
@@ -226,7 +226,7 @@ void CMenu::init()
 
 	_buildMenus();
 	_loadCFCfg();
-	for (int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 		WPAD_SetVRes(chan, m_vid.width() + m_cursor[chan].width(), m_vid.height() + m_cursor[chan].height());
 	m_locked = m_cfg.getString("GENERAL", "parent_code", "").size() >= 4;
 	m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble", true));

@@ -15,7 +15,7 @@ SSoundEffect CButtonsMgr::_noSound;
 bool CButtonsMgr::init(CVideo &vid)
 {
 	m_elts.clear();
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
 		m_selected[chan] = -1;
 		m_rumble[chan] = 0;
@@ -137,7 +137,7 @@ void CButtonsMgr::hide(u32 id, int dx, int dy, float scaleX, float scaleY, bool 
 			b.pos = b.targetPos;
 			b.alpha = b.targetAlpha;
 		}
-		for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 			if (m_selected[chan] == id)
 				m_selected[chan] = -1;
 	}
@@ -242,7 +242,7 @@ void CButtonsMgr::mouse(int chan, int x, int y)
 
 bool CButtonsMgr::selected(u32 button)
 {
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
 		if(m_selected[chan] == button)
 		{
@@ -262,7 +262,7 @@ void CButtonsMgr::up(void)
 
 	if (m_elts.empty())
 		return;
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
 		if (m_selected[chan] < m_elts.size())
 		{
@@ -293,7 +293,7 @@ void CButtonsMgr::down(void)
 
 	if (m_elts.empty())
 		return;
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
 		if (m_selected[chan] < m_elts.size())
 		{
@@ -324,7 +324,7 @@ void CButtonsMgr::noClick(bool noclick)
 
 void CButtonsMgr::click(u32 id)
 {
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
 		WPAD_Rumble(chan, 0);
 		PAD_ControlMotor(chan, 0);
@@ -378,7 +378,7 @@ void CButtonsMgr::tick(void)
 {
 	for (u32 i = 0; i < m_elts.size(); ++i)
 		m_elts[i]->tick();
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 		if (m_rumble[chan] > 0 && --m_rumble[chan] == 0)
 		{
 			WPAD_Rumble(chan, 0);
@@ -915,7 +915,7 @@ void CButtonsMgr::draw(void)
 	GX_SetAlphaUpdate(GX_TRUE);
 	GX_SetCullMode(GX_CULL_NONE);
 	GX_SetZMode(GX_DISABLE, GX_LEQUAL, GX_TRUE);
-	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 		for (u32 i = 0; i < m_elts.size(); ++i)
 		{
 			switch (m_elts[i]->t)

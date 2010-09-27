@@ -60,7 +60,7 @@ public:
 	void click(u32 id = (u32)-1);
 	bool selected(u32 button = (u32)-1);
 	void setRumble(int, bool wii = false, bool gc = false);
-	void deselect(void){ for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++) m_selected[chan] = (u32)-1; }
+	void deselect(void){ for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--) m_selected[chan] = (u32)-1; }
 	void stopSounds(void);
 	void setSoundVolume(int vol);
 private:
