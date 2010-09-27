@@ -142,7 +142,6 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 			m_btnMgr.down();
 		if (BTN_A_PRESSED && !m_thrdWorking)
 		{
-			m_btnMgr.click(m_wmote);
 			if (m_btnMgr.selected(m_wbfsBtnBack))
 				break;
 			else if (m_btnMgr.selected(m_wbfsBtnGo))

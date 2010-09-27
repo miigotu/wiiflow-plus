@@ -58,42 +58,42 @@
 #define BTN_1_HELD ((wii_btnsHeld & WBTN_1)||(gc_btnsHeld & BTN_1)!=0)
 #define BTN_2_HELD ((wii_btnsHeld & WBTN_2)||(gc_btnsHeld & BTN_2)!=0)
 
-#define BTN_UP_REPEAT ((wii_repeat & WBTN_UP)||(gc_repeat & BTN_UP)!=0)
-#define BTN_RIGHT_REPEAT ((wii_repeat & WBTN_RIGHT)||(gc_repeat & BTN_RIGHT)!=0)
-#define BTN_DOWN_REPEAT ((wii_repeat & WBTN_DOWN)||(gc_repeat & BTN_DOWN)!=0)
-#define BTN_LEFT_REPEAT ((wii_repeat & WBTN_LEFT)||(gc_repeat & BTN_LEFT)!=0)
-#define BTN_A_REPEAT ((wii_repeat & WBTN_A)||(gc_repeat & BTN_A)!=0)
-#define BTN_B_REPEAT ((wii_repeat & WBTN_B)||(gc_repeat & BTN_B)!=0)
-#define BTN_MINUS_REPEAT ((wii_repeat & WBTN_MINUS)||(gc_repeat & BTN_MINUS)!=0)
-#define BTN_PLUS_REPEAT ((wii_repeat & WBTN_PLUS)||(gc_repeat & BTN_PLUS)!=0)
-#define BTN_HOME_REPEAT ((wii_repeat & WBTN_HOME)||(gc_repeat & BTN_HOME)!=0)
-#define BTN_1_REPEAT ((wii_repeat & WBTN_1)||(gc_repeat & BTN_1)!=0)
-#define BTN_2_REPEAT ((wii_repeat & WBTN_2)||(gc_repeat & BTN_2)!=0)
+#define BTN_UP_REPEAT ((wii_btnRepeat() & WBTN_UP)||(gc_btnRepeat() & BTN_UP)!=0)
+#define BTN_RIGHT_REPEAT ((wii_btnRepeat() & WBTN_RIGHT)||(gc_btnRepeat() & BTN_RIGHT)!=0)
+#define BTN_DOWN_REPEAT ((wii_btnRepeat() & WBTN_DOWN)||(gc_btnRepeat() & BTN_DOWN)!=0)
+#define BTN_LEFT_REPEAT ((wii_btnRepeat() & WBTN_LEFT)||(gc_btnRepeat() & BTN_LEFT)!=0)
+#define BTN_A_REPEAT ((wii_btnRepeat() & WBTN_A)||(gc_btnRepeat() & BTN_A)!=0)
+#define BTN_B_REPEAT ((wii_btnRepeat() & WBTN_B)||(gc_btnRepeat() & BTN_B)!=0)
+#define BTN_MINUS_REPEAT ((wii_btnRepeat() & WBTN_MINUS)||(gc_btnRepeat() & BTN_MINUS)!=0)
+#define BTN_PLUS_REPEAT ((wii_btnRepeat() & WBTN_PLUS)||(gc_btnRepeat() & BTN_PLUS)!=0)
+#define BTN_HOME_REPEAT ((wii_btnRepeat() & WBTN_HOME)||(gc_btnRepeat() & BTN_HOME)!=0)
+#define BTN_1_REPEAT ((wii_btnRepeat() & WBTN_1)||(gc_btnRepeat() & BTN_1)!=0)
+#define BTN_2_REPEAT ((wii_btnRepeat() & WBTN_2)||(gc_btnRepeat() & BTN_2)!=0)
 
-#define LEFT_STICK_UP ((LEFT_STICK_ANG_UP && left_stick_mag[wmote] > 0.15) || PAD_StickY(wmote) > 20)
-#define LEFT_STICK_RIGHT ((LEFT_STICK_ANG_RIGHT && left_stick_mag[wmote] > 0.15) || PAD_StickX(wmote) > 20)
-#define LEFT_STICK_DOWN ((LEFT_STICK_ANG_DOWN && left_stick_mag[wmote] > 0.15) || PAD_StickY(wmote) < -20)
-#define LEFT_STICK_LEFT ((LEFT_STICK_ANG_LEFT && left_stick_mag[wmote] > 0.15) || PAD_StickX(wmote) < -20)
+#define LEFT_STICK_UP ((LEFT_STICK_ANG_UP && left_stick_mag[chan] > 0.15) || PAD_StickY(chan) > 20)
+#define LEFT_STICK_RIGHT ((LEFT_STICK_ANG_RIGHT && left_stick_mag[chan] > 0.15) || PAD_StickX(chan) > 20)
+#define LEFT_STICK_DOWN ((LEFT_STICK_ANG_DOWN && left_stick_mag[chan] > 0.15) || PAD_StickY(chan) < -20)
+#define LEFT_STICK_LEFT ((LEFT_STICK_ANG_LEFT && left_stick_mag[chan] > 0.15) || PAD_StickX(chan) < -20)
 
-#define LEFT_STICK_ANG_UP ((left_stick_angle[wmote] >= 300 && left_stick_angle[wmote] <= 360) \
-		|| (left_stick_angle[wmote] >= 0 && left_stick_angle[wmote] <= 60))
-#define LEFT_STICK_ANG_RIGHT (left_stick_angle[wmote] >= 30 && left_stick_angle[wmote] <= 150)
-#define LEFT_STICK_ANG_DOWN (left_stick_angle[wmote] >= 120 && left_stick_angle[wmote] <= 240)
-#define LEFT_STICK_ANG_LEFT (left_stick_angle[wmote] >= 210 && left_stick_angle[wmote] <= 330)
+#define LEFT_STICK_ANG_UP ((left_stick_angle[chan] >= 300 && left_stick_angle[chan] <= 360) \
+		|| (left_stick_angle[chan] >= 0 && left_stick_angle[chan] <= 60))
+#define LEFT_STICK_ANG_RIGHT (left_stick_angle[chan] >= 30 && left_stick_angle[chan] <= 150)
+#define LEFT_STICK_ANG_DOWN (left_stick_angle[chan] >= 120 && left_stick_angle[chan] <= 240)
+#define LEFT_STICK_ANG_LEFT (left_stick_angle[chan] >= 210 && left_stick_angle[chan] <= 330)
 
-#define RIGHT_STICK_UP ((RIGHT_STICK_ANG_UP && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || PAD_SubStickY(wmote) > 20)
-#define RIGHT_STICK_RIGHT ((RIGHT_STICK_ANG_RIGHT && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || PAD_SubStickX(wmote) > 20)
-#define RIGHT_STICK_DOWN ((RIGHT_STICK_ANG_DOWN && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || PAD_SubStickY(wmote) < -20)
-#define RIGHT_STICK_LEFT ((RIGHT_STICK_ANG_LEFT && right_stick_mag[wmote] > 0.15 && right_stick_skip[wmote] == 0) || PAD_SubStickX(wmote) < -20)
+#define RIGHT_STICK_UP ((RIGHT_STICK_ANG_UP && right_stick_mag[chan] > 0.15 && right_stick_skip[chan] == 0) || PAD_SubStickY(chan) > 20)
+#define RIGHT_STICK_RIGHT ((RIGHT_STICK_ANG_RIGHT && right_stick_mag[chan] > 0.15 && right_stick_skip[chan] == 0) || PAD_SubStickX(chan) > 20)
+#define RIGHT_STICK_DOWN ((RIGHT_STICK_ANG_DOWN && right_stick_mag[chan] > 0.15 && right_stick_skip[chan] == 0) || PAD_SubStickY(chan) < -20)
+#define RIGHT_STICK_LEFT ((RIGHT_STICK_ANG_LEFT && right_stick_mag[chan] > 0.15 && right_stick_skip[chan] == 0) || PAD_SubStickX(chan) < -20)
 
-#define RIGHT_STICK_ANG_UP ((right_stick_angle[wmote] >= 300 && right_stick_angle[wmote] <= 360) \
-		|| (right_stick_angle[wmote] >= 0 && right_stick_angle[wmote] <= 60))
-#define RIGHT_STICK_ANG_RIGHT (right_stick_angle[wmote] >= 30 && right_stick_angle[wmote] <= 150)
-#define RIGHT_STICK_ANG_DOWN (right_stick_angle[wmote] >= 120 && right_stick_angle[wmote] <= 240)
-#define RIGHT_STICK_ANG_LEFT (right_stick_angle[wmote] >= 210 && right_stick_angle[wmote] <= 330)
+#define RIGHT_STICK_ANG_UP ((right_stick_angle[chan] >= 300 && right_stick_angle[chan] <= 360) \
+		|| (right_stick_angle[chan] >= 0 && right_stick_angle[chan] <= 60))
+#define RIGHT_STICK_ANG_RIGHT (right_stick_angle[chan] >= 30 && right_stick_angle[chan] <= 150)
+#define RIGHT_STICK_ANG_DOWN (right_stick_angle[chan] >= 120 && right_stick_angle[chan] <= 240)
+#define RIGHT_STICK_ANG_LEFT (right_stick_angle[chan] >= 210 && right_stick_angle[chan] <= 330)
 
-#define WROLL_LEFT  (WBTN_B_HELD && (wmote_roll[wmote] < -5) && wmote_roll_skip[wmote] == 0)
-#define WROLL_RIGHT (WBTN_B_HELD && (wmote_roll[wmote] > 5)  && wmote_roll_skip[wmote] == 0)
+#define WROLL_LEFT  (WBTN_B_HELD && (wmote_roll[chan] < -5) && wmote_roll_skip[chan] == 0)
+#define WROLL_RIGHT (WBTN_B_HELD && (wmote_roll[chan] > 5)  && wmote_roll_skip[chan] == 0)
 
 /*
 //Button values reference//

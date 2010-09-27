@@ -407,14 +407,8 @@ void CMenu::_cfTheme(void)
 			m_cf.right();
 		if (sel && !m_cf.selected())
 			m_cf.select();
-		++repeatButton;
-		if ((wii_btnsHeld & WBTN_A) == 0)
-			buttonHeld = (u32)-1;
-		else if (buttonHeld != (u32)-1 &&  m_btnMgr.selected(buttonHeld) && repeatButton >= 16 && (repeatButton % btnDelay == 0))
-			wii_btnsPressed |= WBTN_A;
 		if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click(m_wmote);
 			if (!m_btnMgr.selected((u32)-1))
 			{
 				if (m_btnMgr.selected(m_cfThemeBtnSave))
@@ -468,22 +462,17 @@ void CMenu::_cfTheme(void)
 						m_cf.select();
 					_showCFTheme(curParam, cfVersion, wide);
 				}
-				else
-					for (int i = 0; i < 16; ++i)
-						if (m_btnMgr.selected(m_cfThemeBtnValM[i]) || m_btnMgr.selected(m_cfThemeBtnValP[i]))
-						{
-							_cfParam(m_btnMgr.selected(m_cfThemeBtnValP[i]), i, CMenu::_cfParams[curParam], cfVersion, wide);
-							_showCFTheme(curParam, cfVersion, wide);
-							_loadCFLayout(cfVersion, true, wide != m_vid.wide());
-							m_cf.applySettings();
-							if (!m_btnMgr.selected(buttonHeld))
-							{
-								repeatButton = 0;
-								buttonHeld = m_cfThemeBtnValP[i];
-							}
-							break;
-						}
 			}
+			if (BTN_A_REPEAT)
+				for (int i = 0; i < 16; ++i)
+					if (m_btnMgr.selected(m_cfThemeBtnValM[i]) || m_btnMgr.selected(m_cfThemeBtnValP[i]))
+					{
+						_cfParam(m_btnMgr.selected(m_cfThemeBtnValP[i]), i, CMenu::_cfParams[curParam], cfVersion, wide);
+						_showCFTheme(curParam, cfVersion, wide);
+						_loadCFLayout(cfVersion, true, wide != m_vid.wide());
+						m_cf.applySettings();
+						break;
+					}
 		}
 		if (WPadIR_Valid(0) || WPadIR_Valid(1) || WPadIR_Valid(2) || WPadIR_Valid(3))
 			_showCFTheme(curParam, cfVersion, wide);

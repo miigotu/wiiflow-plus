@@ -7,7 +7,7 @@
 class CCursor
 {
 public:
-	bool init(const char *png, bool wideFix, CColor shadowColor, float shadowX, float shadowY, bool blur, int wmote);
+	bool init(const char *png, bool wideFix, CColor shadowColor, float shadowX, float shadowY, bool blur, int chan);
 	void draw(int x, int y, float a);
 	u32 width(void) const { return m_texture.height; }
 	u32 height(void) const { return m_texture.width; }

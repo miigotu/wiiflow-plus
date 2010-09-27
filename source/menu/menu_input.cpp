@@ -5,34 +5,25 @@
 using namespace std;
 
 
-static const u32 g_repeatDelay = 15;
+static const u32 g_repeatDelay = 120;
 
 void CMenu::SetupInput()
 {
-	m_wpadLeftDelay = 0;
-	m_wpadDownDelay = 0;
-	m_wpadRightDelay = 0;
-	m_wpadUpDelay = 0;
-	
-	m_padLeftDelay = 0;
-	m_padDownDelay = 0;
-	m_padRightDelay = 0;
-	m_padUpDelay = 0;
-	
-	repeatButton = 0;		
-	buttonHeld = (u32)-1;
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+	wii_btnRepeat();
+	gc_btnRepeat();
+
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 	{
-		stickPointer_x[wmote] = (m_vid.width() + m_cursor[wmote].width())/2;
-		stickPointer_y[wmote] = (m_vid.height() + m_cursor[wmote].height())/2;
-		left_stick_angle[wmote] = 0;
-		left_stick_mag[wmote] = 0;
-		right_stick_angle[wmote] = 0;
-		right_stick_mag[wmote] = 0;
-		pointerhidedelay[wmote] = 0;
-		right_stick_skip[wmote] = 0;
-		wmote_roll[wmote] = 0;
-		wmote_roll_skip[wmote] = 0;
+		stickPointer_x[chan] = (m_vid.width() + m_cursor[chan].width())/2;
+		stickPointer_y[chan] = (m_vid.height() + m_cursor[chan].height())/2;
+		left_stick_angle[chan] = 0;
+		left_stick_mag[chan] = 0;
+		right_stick_angle[chan] = 0;
+		right_stick_mag[chan] = 0;
+		pointerhidedelay[chan] = 0;
+		right_stick_skip[chan] = 0;
+		wmote_roll[chan] = 0;
+		wmote_roll_skip[chan] = 0;
 	}
 	
 	enable_wmote_roll = m_cfg.getBool("GENERAL", "wiimote_gestures", false);
@@ -78,59 +69,52 @@ void CMenu::ScanInput()
 	ButtonsHeld();
 	LeftStick();
 	
-	wii_repeat = wii_btnRepeat();
-	gc_repeat = gc_btnRepeat();
-	
-
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES;wmote++)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES;chan++)
 	{
-		wd[wmote] = WPAD_Data(wmote);
-		left_stick_angle[wmote] = 0;
-		left_stick_mag[wmote] = 0;		
-		right_stick_angle[wmote] = 0;
-		right_stick_mag[wmote] = 0;
-		switch (wd[wmote]->exp.type)
+		wd[chan] = WPAD_Data(chan);
+		left_stick_angle[chan] = 0;
+		left_stick_mag[chan] = 0;		
+		right_stick_angle[chan] = 0;
+		right_stick_mag[chan] = 0;
+		switch (wd[chan]->exp.type)
 		{
 			case WPAD_EXP_NUNCHUK:
-				right_stick_mag[wmote] = wd[wmote]->exp.nunchuk.js.mag;
-				right_stick_angle[wmote] = wd[wmote]->exp.nunchuk.js.ang;
+				right_stick_mag[chan] = wd[chan]->exp.nunchuk.js.mag;
+				right_stick_angle[chan] = wd[chan]->exp.nunchuk.js.ang;
 				break;
 			case WPAD_EXP_GUITARHERO3:
-				left_stick_mag[wmote] = wd[wmote]->exp.nunchuk.js.mag;
-				left_stick_angle[wmote] = wd[wmote]->exp.nunchuk.js.ang;
+				left_stick_mag[chan] = wd[chan]->exp.nunchuk.js.mag;
+				left_stick_angle[chan] = wd[chan]->exp.nunchuk.js.ang;
 				break;
 			case WPAD_EXP_CLASSIC:
-				left_stick_mag[wmote] = wd[wmote]->exp.classic.ljs.mag;
-				left_stick_angle[wmote] = wd[wmote]->exp.classic.ljs.ang;
-				right_stick_mag[wmote] = wd[wmote]->exp.classic.rjs.mag;
-				right_stick_angle[wmote] = wd[wmote]->exp.classic.rjs.ang;
+				left_stick_mag[chan] = wd[chan]->exp.classic.ljs.mag;
+				left_stick_angle[chan] = wd[chan]->exp.classic.ljs.ang;
+				right_stick_mag[chan] = wd[chan]->exp.classic.rjs.mag;
+				right_stick_angle[chan] = wd[chan]->exp.classic.rjs.ang;
 				break;
 			default:
 				break;
 		}
 		if (enable_wmote_roll)
 		{
-			wmote_roll[wmote] = wd[wmote]->orient.roll; // Use wd[wmote]->ir.angle if you only want this to work when pointing at the screen
-			wmote_roll_skip[wmote] = CalculateRepeatSpeed(wmote_roll[wmote] / 45.f, wmote_roll_skip[wmote]);
+			wmote_roll[chan] = wd[chan]->orient.roll; // Use wd[chan]->ir.angle if you only want this to work when pointing at the screen
+			wmote_roll_skip[chan] = CalculateRepeatSpeed(wmote_roll[chan] / 45.f, wmote_roll_skip[chan]);
 		}
-		right_stick_skip[wmote] = CalculateRepeatSpeed(right_stick_mag[wmote], right_stick_skip[wmote]);
+		right_stick_skip[chan] = CalculateRepeatSpeed(right_stick_mag[chan], right_stick_skip[chan]);
 	}
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 	{
-		m_btnMgr.setRumble(wmote, WPadIR_Valid(wmote), PAD_StickX(wmote) < -20 || PAD_StickX(wmote) > 20 || PAD_StickY(wmote) < -20 || PAD_StickY(wmote) > 20);
+		m_btnMgr.setRumble(chan, WPadIR_Valid(chan), PAD_StickX(chan) < -20 || PAD_StickX(chan) > 20 || PAD_StickY(chan) < -20 || PAD_StickY(chan) > 20);
 
-		if (WPadIR_Valid(wmote))
+		if (WPadIR_Valid(chan))
 		{
-			m_shown_pointer = wmote+1;
-			m_cursor[wmote].draw(wd[wmote]->ir.x, wd[wmote]->ir.y, wd[wmote]->ir.angle);
-			m_btnMgr.mouse(wmote, wd[wmote]->ir.x - m_cursor[wmote].width() / 2, wd[wmote]->ir.y - m_cursor[wmote].height() / 2);
-			m_wmote = wmote;
+			m_cursor[chan].draw(wd[chan]->ir.x, wd[chan]->ir.y, wd[chan]->ir.angle);
+			m_btnMgr.mouse(chan, wd[chan]->ir.x - m_cursor[chan].width() / 2, wd[chan]->ir.y - m_cursor[chan].height() / 2);
 		}
-		else if (pointerhidedelay[wmote] > 0 && !WPadIR_Valid(wmote))
+		else if (m_show_pointer[chan])
 		{
-			m_cursor[wmote].draw(stickPointer_x[wmote], stickPointer_y[wmote], 0);
-			m_btnMgr.mouse(wmote, stickPointer_x[wmote] - m_cursor[wmote].width() / 2, stickPointer_y[wmote] - m_cursor[wmote].height() / 2);
-			m_wmote = wmote;
+			m_cursor[chan].draw(stickPointer_x[chan], stickPointer_y[chan], 0);
+			m_btnMgr.mouse(chan, stickPointer_x[chan] - m_cursor[chan].width() / 2, stickPointer_y[chan] - m_cursor[chan].height() / 2);
 		}
 	}
 	ShowMainZone();
@@ -146,10 +130,10 @@ void CMenu::ButtonsPressed()
 	wii_btnsPressed = 0;
 	gc_btnsPressed = 0;
 
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 	{
-        wii_btnsPressed |= WPAD_ButtonsDown(wmote);
-        gc_btnsPressed |= PAD_ButtonsDown(wmote);
+        wii_btnsPressed |= WPAD_ButtonsDown(chan);
+        gc_btnsPressed |= PAD_ButtonsDown(chan);
     }
 }
 
@@ -158,74 +142,70 @@ void CMenu::ButtonsHeld()
 	wii_btnsHeld = 0;
 	gc_btnsHeld = 0;
 
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 	{
-        wii_btnsHeld |= WPAD_ButtonsHeld(wmote);
-        gc_btnsHeld |= PAD_ButtonsHeld(wmote);
+        wii_btnsHeld |= WPAD_ButtonsHeld(chan);
+        gc_btnsHeld |= PAD_ButtonsHeld(chan);
     }
 }
 
 void CMenu::LeftStick()
 {
 	u8 speed = 0,pSpeed = 0;
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 	{
 
-		if (left_stick_mag[wmote] > 0.15 || abs(PAD_StickX(wmote)) > 20 || abs(PAD_StickY(wmote)) > 20)
+		if (left_stick_mag[chan] > 0.15 || abs(PAD_StickX(chan)) > 20 || abs(PAD_StickY(chan)) > 20)
 		{
+			m_show_pointer[chan] = true;
 			if (LEFT_STICK_LEFT)
 			{
-				speed = (u8)(left_stick_mag[wmote] * 10.00);
-				pSpeed = (u8)abs(PAD_StickX(wmote))/10;
-				if (stickPointer_x[wmote] > m_cursor[wmote].width()/2) stickPointer_x[wmote] = stickPointer_x[wmote]-speed-pSpeed;
-				pointerhidedelay[wmote] = 150;
-				m_shown_pointer = (wmote+1)*10;
+				speed = (u8)(left_stick_mag[chan] * 10.00);
+				pSpeed = (u8)abs(PAD_StickX(chan))/10;
+				if (stickPointer_x[chan] > m_cursor[chan].width()/2) stickPointer_x[chan] = stickPointer_x[chan]-speed-pSpeed;
+				pointerhidedelay[chan] = 150;
 			}
 			if (LEFT_STICK_DOWN)
 			{
-				speed = (u8)(left_stick_mag[wmote] * 10.00);
-				pSpeed = (u8)abs(PAD_StickY(wmote))/10;
-				if (stickPointer_y[wmote] < (m_vid.height() + (m_cursor[wmote].height()/2))) stickPointer_y[wmote] = stickPointer_y[wmote]+speed+pSpeed;
-				pointerhidedelay[wmote] = 150;
-				m_shown_pointer = (wmote+1)*10;
+				speed = (u8)(left_stick_mag[chan] * 10.00);
+				pSpeed = (u8)abs(PAD_StickY(chan))/10;
+				if (stickPointer_y[chan] < (m_vid.height() + (m_cursor[chan].height()/2))) stickPointer_y[chan] = stickPointer_y[chan]+speed+pSpeed;
+				pointerhidedelay[chan] = 150;
 			}
 			if (LEFT_STICK_RIGHT)
 			{
-				speed = (u8)(left_stick_mag[wmote] * 10.00);
-				pSpeed = (u8)abs(PAD_StickX(wmote))/10;
-				if (stickPointer_x[wmote] < (m_vid.width() + (m_cursor[wmote].width()/2))) stickPointer_x[wmote] = stickPointer_x[wmote]+speed+pSpeed;
-				pointerhidedelay[wmote] = 150;
-				m_shown_pointer = (wmote+1)*10;
+				speed = (u8)(left_stick_mag[chan] * 10.00);
+				pSpeed = (u8)abs(PAD_StickX(chan))/10;
+				if (stickPointer_x[chan] < (m_vid.width() + (m_cursor[chan].width()/2))) stickPointer_x[chan] = stickPointer_x[chan]+speed+pSpeed;
+				pointerhidedelay[chan] = 150;
 			}
 			if (LEFT_STICK_UP)
 			{
-				speed = (u8)(left_stick_mag[wmote] * 10.00);
-				pSpeed = (u8)abs(PAD_StickY(wmote))/10;
-				if (stickPointer_y[wmote] > m_cursor[wmote].height()/2) stickPointer_y[wmote] = stickPointer_y[wmote]-speed-pSpeed;
-				pointerhidedelay[wmote] = 150;
-				m_shown_pointer = (wmote+1)*10;
+				speed = (u8)(left_stick_mag[chan] * 10.00);
+				pSpeed = (u8)abs(PAD_StickY(chan))/10;
+				if (stickPointer_y[chan] > m_cursor[chan].height()/2) stickPointer_y[chan] = stickPointer_y[chan]-speed-pSpeed;
+				pointerhidedelay[chan] = 150;
 			}
 		}
-		else
-			if (pointerhidedelay[wmote] > 0 && !wii_btnsHeld && !wii_btnsPressed) 
-				pointerhidedelay[wmote]--;
+		else 
+		{
+			if(pointerhidedelay[chan] > 0 && !wii_btnsHeld && !wii_btnsPressed && !gc_btnsHeld && !gc_btnsPressed) 
+				pointerhidedelay[chan]--;
 			else
 			{
 				if (!wii_btnsHeld && !wii_btnsPressed)
 				{
-					pointerhidedelay[wmote] = 0;
-					stickPointer_x[wmote] = (m_vid.width() + m_cursor[wmote].width())/2;
-					stickPointer_y[wmote] = (m_vid.height() + m_cursor[wmote].height())/2;
+					pointerhidedelay[chan] = 0;
+					stickPointer_x[chan] = (m_vid.width() + m_cursor[chan].width())/2;
+					stickPointer_y[chan] = (m_vid.height() + m_cursor[chan].height())/2;
 				}
-				else
-					if (pointerhidedelay[wmote] > 0) pointerhidedelay[wmote] = 150;
+				else if (pointerhidedelay[chan] > 0) 
+						pointerhidedelay[chan] = 150;
 			}
+		}
+		if (pointerhidedelay[chan] == 0)
+			m_show_pointer[chan] = false;
     }
-	bool allNoDelay = true;
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
-		if (pointerhidedelay[wmote] != 0)
-			allNoDelay = false;
-	if (allNoDelay) m_shown_pointer = 90;
 }
 
 bool CMenu::WPadIR_Valid(int i)
@@ -244,9 +224,8 @@ bool CMenu::WPadIR_ANY()
 u32 CMenu::wii_btnRepeat()
 {
 	u32 b = 0;
-	wii_repeat = wii_btnsHeld;
 
-	if ((wii_repeat & WBTN_LEFT) != 0)
+	if ((wii_btnsHeld & WBTN_LEFT) != 0)
 	{
 		if (m_wpadLeftDelay == 0 || m_wpadLeftDelay > g_repeatDelay)
 			b |= WPAD_BUTTON_LEFT;
@@ -254,7 +233,7 @@ u32 CMenu::wii_btnRepeat()
 	}
 	else
 		m_wpadLeftDelay = 0;
-	if ((wii_repeat & WBTN_DOWN) != 0)
+	if ((wii_btnsHeld & WBTN_DOWN) != 0)
 	{
 		if (m_wpadDownDelay == 0 || m_wpadDownDelay > g_repeatDelay)
 			b |= WPAD_BUTTON_DOWN;
@@ -262,7 +241,7 @@ u32 CMenu::wii_btnRepeat()
 	}
 	else
 		m_wpadDownDelay = 0;
-	if ((wii_repeat & WBTN_RIGHT) != 0)
+	if ((wii_btnsHeld & WBTN_RIGHT) != 0)
 	{
 		if (m_wpadRightDelay == 0 || m_wpadRightDelay > g_repeatDelay)
 			b |= WPAD_BUTTON_RIGHT;
@@ -270,7 +249,7 @@ u32 CMenu::wii_btnRepeat()
 	}
 	else
 		m_wpadRightDelay = 0;
-	if ((wii_repeat & WBTN_UP) != 0)
+	if ((wii_btnsHeld & WBTN_UP) != 0)
 	{
 		if (m_wpadUpDelay == 0 || m_wpadUpDelay > g_repeatDelay)
 			b |= WPAD_BUTTON_UP;
@@ -278,15 +257,26 @@ u32 CMenu::wii_btnRepeat()
 	}
 	else
 		m_wpadUpDelay = 0;
+	if ((wii_btnsHeld & WBTN_A) != 0)
+	{
+		if (m_wpadADelay == 0 || m_wpadADelay > g_repeatDelay)
+			b |= WPAD_BUTTON_A;
+		++m_wpadADelay;
+		m_btnMgr.noClick(true);
+	}
+	else
+	{
+		m_btnMgr.noClick();
+		m_wpadADelay = 0;
+	}
 	return b;
 }
 
 u32 CMenu::gc_btnRepeat()
 {
 	u32 b = 0;
-	gc_repeat = gc_btnsHeld;
 
-	if ((gc_repeat & BTN_LEFT) != 0)
+	if ((gc_btnsHeld & BTN_LEFT) != 0)
 	{
 		if (m_padLeftDelay == 0 || m_padLeftDelay > g_repeatDelay)
 			b |= BTN_LEFT;
@@ -294,7 +284,7 @@ u32 CMenu::gc_btnRepeat()
 	}
 	else
 		m_padLeftDelay = 0;
-	if (gc_repeat & BTN_DOWN)
+	if (gc_btnsHeld & BTN_DOWN)
 	{
 		if (m_padDownDelay == 0 || m_padDownDelay > g_repeatDelay)
 			b |= BTN_DOWN;
@@ -302,7 +292,7 @@ u32 CMenu::gc_btnRepeat()
 	}
 	else
 		m_padDownDelay = 0;
-	if (gc_repeat & BTN_RIGHT)
+	if (gc_btnsHeld & BTN_RIGHT)
 	{
 		if (m_padRightDelay == 0 || m_padRightDelay > g_repeatDelay)
 			b |= BTN_RIGHT;
@@ -310,7 +300,7 @@ u32 CMenu::gc_btnRepeat()
 	}
 	else
 		m_padRightDelay = 0;
-	if (gc_repeat & BTN_UP)
+	if (gc_btnsHeld & BTN_UP)
 	{
 		if (m_padUpDelay == 0 || m_padUpDelay > g_repeatDelay)
 			b |= BTN_UP;
@@ -318,15 +308,27 @@ u32 CMenu::gc_btnRepeat()
 	}
 	else
 		m_padUpDelay = 0;
+	if (gc_btnsHeld & BTN_A)
+	{
+		if (m_padADelay == 0 || m_padADelay > g_repeatDelay)
+			b |= BTN_A;
+		++m_padADelay;
+		m_btnMgr.noClick(true);
+	}
+	else
+	{
+		m_btnMgr.noClick();
+		m_padADelay = 0;
+	}
 	return b;
 }
 
 void CMenu::ShowZone(SZone zone, bool &showZone)
 {
 	showZone = false;
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
-		if ((WPadIR_Valid(wmote) || m_shown_pointer==(wmote+1)*10) && m_cursor[wmote].x() >= zone.x && m_cursor[wmote].y() >= zone.y
-			&& m_cursor[wmote].x() < zone.x + zone.w && m_cursor[wmote].y() < zone.y + zone.h)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+		if ((WPadIR_Valid(chan) || m_show_pointer[chan]) && m_cursor[chan].x() >= zone.x && m_cursor[chan].y() >= zone.y
+			&& m_cursor[chan].x() < zone.x + zone.w && m_cursor[chan].y() < zone.y + zone.h)
 			showZone = true;
 }
 

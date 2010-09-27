@@ -111,8 +111,6 @@ void CMenu::_CheatSettings()
 			else if (m_cheatSettingsPage > 1)
 				--m_cheatSettingsPage;
 			_showCheatSettings();
-
-			m_btnMgr.click(m_wmote, m_cheatBtnPageM);
 		}
 		else if (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED)
 		{
@@ -122,8 +120,6 @@ void CMenu::_CheatSettings()
 			else if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
 				++m_cheatSettingsPage;
 			_showCheatSettings();
-
-			m_btnMgr.click(m_wmote, m_cheatBtnPageP);
 		}
 		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1)!=0)
 		{
@@ -135,7 +131,6 @@ void CMenu::_CheatSettings()
 		}
 		else if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click(m_wmote);
 			if (m_btnMgr.selected(m_cheatBtnBack))
 				break;
 			else if (m_btnMgr.selected(m_cheatBtnPageM))
@@ -216,7 +211,6 @@ void CMenu::_CheatSettings()
 						break;
 					if (BTN_A_PRESSED && !(m_thrdWorking && m_thrdStop))
 					{
-						m_btnMgr.click(m_wmote);
 						if (m_btnMgr.selected(m_downloadBtnCancel))
 						{
 							LockMutex lock(m_mutex);

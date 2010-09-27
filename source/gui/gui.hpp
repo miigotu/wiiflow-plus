@@ -51,15 +51,16 @@ public:
 	void hide(u32 id, int dx, int dy, float scaleX, float scaleY, bool instant = false);
 	void hide(u32 id, bool instant = false);
 	void show(u32 id, bool instant = false);
-	void mouse(int wmote, int x, int y);
+	void mouse(int chan, int x, int y);
 	void up(void);
 	void down(void);
 	void draw(void);
 	void tick(void);
-	void click(int wmote = -1, u32 id = (u32)-1);
-	bool selected(u32 button);
+	void noClick(bool noclick = false);
+	void click(u32 id = (u32)-1);
+	bool selected(u32 button = (u32)-1);
 	void setRumble(int, bool wii = false, bool gc = false);
-	void deselect(void){ for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++) m_selected[wmote] = (u32)-1; }
+	void deselect(void){ for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++) m_selected[chan] = (u32)-1; }
 	void stopSounds(void);
 	void setSoundVolume(int vol);
 private:
@@ -145,6 +146,7 @@ private:
 	SSoundEffect m_sndHover;
 	SSoundEffect m_sndClick;
 	u8 m_soundVolume;
+	bool m_noclick;
 	CVideo m_vid;
 private:
 	void _drawBtn(const SButton &b, bool selected, bool click);

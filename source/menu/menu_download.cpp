@@ -539,7 +539,6 @@ void CMenu::_download(string gameId)
 			m_btnMgr.down();
 		if ((BTN_A_PRESSED || !gameId.empty()) && !(m_thrdWorking && m_thrdStop))
 		{
-			m_btnMgr.click(m_wmote);
 			if ((m_btnMgr.selected(m_downloadBtnAll) || m_btnMgr.selected(m_downloadBtnMissing) || !gameId.empty()) && !m_thrdWorking)
 			{
 				bool dlAll = m_btnMgr.selected(m_downloadBtnAll);

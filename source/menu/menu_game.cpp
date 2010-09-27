@@ -342,7 +342,6 @@ void CMenu::_game(bool launch)
 		}
 		else if (launch || BTN_A_PRESSED)
 		{
-			m_btnMgr.click(m_wmote);
 			if (m_btnMgr.selected(m_mainBtnQuit))
 				break;
 			else if (m_btnMgr.selected(m_gameBtnDelete))
@@ -409,8 +408,8 @@ void CMenu::_game(bool launch)
 				gprintf("Launching game\n");
 				_launch(hdr);
 				launch = false;
-				for (int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
-					WPAD_SetVRes(wmote, m_vid.width() + m_cursor[wmote].width(), m_vid.height() + m_cursor[wmote].height());
+				for (int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+					WPAD_SetVRes(chan, m_vid.width() + m_cursor[chan].width(), m_vid.height() + m_cursor[chan].height());
 				_showGame();
 				_initCF();
 				m_cf.select();
@@ -427,11 +426,11 @@ void CMenu::_game(bool launch)
 				wdm_entry = &wdm_entries[current_wdm];
 				m_btnMgr.setText(m_gameLblWdm, wstringEx(wdm_entry->name));
 			}
-			for (int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
-				if (m_cf.mouseOver(m_vid, m_cursor[wmote].x(), m_cursor[wmote].y()))
+			for (int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+				if (m_cf.mouseOver(m_vid, m_cursor[chan].x(), m_cursor[chan].y()))
 					m_cf.flip();
 		}
-		for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+		for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 			if (BTN_UP_REPEAT || RIGHT_STICK_UP)
 			{
 				m_gameSound.stop();				

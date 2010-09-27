@@ -86,29 +86,24 @@ int CMenu::_config3(void)
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		++repeatButton;
-		if ((wii_btnsHeld & WBTN_A) == 0)
-			buttonHeld = (u32)-1;
-		else if (buttonHeld != (u32)-1 &&  m_btnMgr.selected(buttonHeld) && repeatButton >= 16 && (repeatButton % 4 == 0))
-			wii_btnsPressed |= WBTN_A;
 		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageM)))
 		{
 			nextPage = max(1, m_locked ? 1 : g_curPage - 1);
-			m_btnMgr.click(m_wmote, m_configBtnPageM);
 			break;
 		}
 		if (!m_locked && (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageP))))
 		{
 			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
-			m_btnMgr.click(m_wmote, m_configBtnPageP);
 			break;
 		}
 		if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click(m_wmote);
 			if (m_btnMgr.selected(m_configBtnBack))
 				break;
-			else if (m_btnMgr.selected(m_config3BtnTVWidthP) || m_btnMgr.selected(m_config3BtnTVWidthM)
+		}
+		if (BTN_A_REPEAT)
+		{
+			if (m_btnMgr.selected(m_config3BtnTVWidthP) || m_btnMgr.selected(m_config3BtnTVWidthM)
 				|| m_btnMgr.selected(m_config3BtnTVHeightP) || m_btnMgr.selected(m_config3BtnTVHeightM)
 				|| m_btnMgr.selected(m_config3BtnTVXP) || m_btnMgr.selected(m_config3BtnTVXM)
 				|| m_btnMgr.selected(m_config3BtnTVYP) || m_btnMgr.selected(m_config3BtnTVYM))
@@ -132,11 +127,6 @@ int CMenu::_config3(void)
 					m_cfg.setInt("GENERAL", "tv_y", min(max(-30, m_cfg.getInt("GENERAL", "tv_y", 0) + step), 30));
 				_showConfig3();
 				m_vid.set2DViewport(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480), m_cfg.getInt("GENERAL", "tv_x", 0), m_cfg.getInt("GENERAL", "tv_y", 0));
-				if (!m_btnMgr.selected(buttonHeld))
-				{
-					repeatButton = 0;
-					//buttonHeld = m_btnMgr.selected();
-				}
 			}
 		}
 	}

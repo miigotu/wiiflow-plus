@@ -1871,11 +1871,11 @@ u32 CCoverFlow::_currentPos(void) const
 	return m_covers[m_range / 2].index;
 }
 
-void CCoverFlow::mouse(CVideo &vid, int wmote, int x, int y)
+void CCoverFlow::mouse(CVideo &vid, int chan, int x, int y)
 {
 	if (m_covers.empty())
 		return;
-	wmote = 0; //stop compile warnings, this is for simultaneous pointers later.
+	chan = 0; //stop compile warnings, this is for simultaneous pointers later.
 	int m = m_mouse;
 	if (x < 0 || y < 0)
 		m_mouse = -1;

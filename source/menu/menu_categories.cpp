@@ -19,7 +19,6 @@ void CMenu::_CategorySettings()
 			m_btnMgr.down();
 		if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click(m_wmote);
 			if (m_btnMgr.selected(m_categoryBtnBack))
 				break;
 			for (int i = 0; i < 12; ++i)

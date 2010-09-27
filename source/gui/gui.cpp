@@ -15,13 +15,14 @@ SSoundEffect CButtonsMgr::_noSound;
 bool CButtonsMgr::init(CVideo &vid)
 {
 	m_elts.clear();
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 	{
-		m_selected[wmote] = -1;
-		m_rumble[wmote] = 0;
+		m_selected[chan] = -1;
+		m_rumble[chan] = 0;
 	}
 	m_rumbleEnabled = false;
 	m_soundVolume = 0xFF;
+	m_noclick = false;
 	m_vid = vid;
 	soundInit();
 	// 
@@ -136,9 +137,9 @@ void CButtonsMgr::hide(u32 id, int dx, int dy, float scaleX, float scaleY, bool 
 			b.pos = b.targetPos;
 			b.alpha = b.targetAlpha;
 		}
-		for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
-			if (m_selected[wmote] == id)
-				m_selected[wmote] = -1;
+		for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+			if (m_selected[chan] == id)
+				m_selected[chan] = -1;
 	}
 }
 
@@ -194,20 +195,20 @@ void CButtonsMgr::setRumble(int chan, bool wii, bool gc)
 	gc_rumble[chan] = gc;
 }
 
-void CButtonsMgr::mouse(int wmote, int x, int y)
+void CButtonsMgr::mouse(int chan, int x, int y)
 {
 	float w;
 	float h;
-	u32 s = m_selected[wmote];
+	u32 s = m_selected[chan];
 
 	if (m_elts.empty())
 		return;
-	if (m_selected[wmote] < m_elts.size())
+	if (m_selected[chan] < m_elts.size())
 	{
-		m_elts[m_selected[wmote]]->targetScaleX = 1.f;
-		m_elts[m_selected[wmote]]->targetScaleY = 1.f;
+		m_elts[m_selected[chan]]->targetScaleX = 1.f;
+		m_elts[m_selected[chan]]->targetScaleY = 1.f;
 	}
-	m_selected[wmote] = -1;
+	m_selected[chan] = -1;
 	for (int i = (int)m_elts.size() - 1; i >= 0; --i)
 	{
 		CButtonsMgr::SElement &b = *m_elts[i];
@@ -218,19 +219,19 @@ void CButtonsMgr::mouse(int wmote, int x, int y)
 			h = (float)(but.h / 2);
 			if (but.visible && (float)x >= but.pos.x - w && (float)x < but.pos.x + w && (float)y >= but.pos.y - h && (float)y < but.pos.y + h)
 			{
-				m_selected[wmote] = i;
+				m_selected[chan] = i;
 				but.targetScaleX = 1.05f;
 				but.targetScaleY = 1.05f;
 				// 
-				if (s != m_selected[wmote])
+				if (s != m_selected[chan])
 				{
 					if (m_soundVolume > 0)
 						but.hoverSound.play(m_soundVolume);
 					if (m_rumbleEnabled)
 					{
-						m_rumble[wmote] = 4;
-						if(wii_rumble[wmote]) WPAD_Rumble(wmote, 1);
-						if(gc_rumble[wmote]) PAD_ControlMotor(wmote, 1);
+						m_rumble[chan] = 4;
+						if(wii_rumble[chan]) WPAD_Rumble(chan, 1);
+						if(gc_rumble[chan]) PAD_ControlMotor(chan, 1);
 					}
 				}
 				break;
@@ -241,10 +242,15 @@ void CButtonsMgr::mouse(int wmote, int x, int y)
 
 bool CButtonsMgr::selected(u32 button)
 {
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 	{
-		if(m_selected[wmote] == button)
+		if(m_selected[chan] == button)
+		{
+			if(m_selected[chan] != (u32)-1)
+				if(!m_noclick) 
+					click(m_selected[chan]);
 			return true;
+		}
 	}
 	return false;
 }
@@ -256,22 +262,22 @@ void CButtonsMgr::up(void)
 
 	if (m_elts.empty())
 		return;
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 	{
-		if (m_selected[wmote] < m_elts.size())
+		if (m_selected[chan] < m_elts.size())
 		{
-			m_elts[m_selected[wmote]]->targetScaleX = 1.f;
-			m_elts[m_selected[wmote]]->targetScaleY = 1.f;
+			m_elts[m_selected[chan]]->targetScaleX = 1.f;
+			m_elts[m_selected[chan]]->targetScaleY = 1.f;
 		}
-		start = m_selected[wmote];
-		m_selected[wmote] = -1;
+		start = m_selected[chan];
+		m_selected[chan] = -1;
 		for (u32 i = 1; i <= m_elts.size(); ++i)
 		{
 			j = loopNum(start - i, m_elts.size());
 			CButtonsMgr::SElement &b = *m_elts[j];
 			if (b.t == CButtonsMgr::GUIELT_BUTTON && b.visible)
 			{
-				m_selected[wmote] = j;
+				m_selected[chan] = j;
 				b.targetScaleX = 1.1f;
 				b.targetScaleY = 1.1f;
 				break;
@@ -287,22 +293,22 @@ void CButtonsMgr::down(void)
 
 	if (m_elts.empty())
 		return;
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 	{
-		if (m_selected[wmote] < m_elts.size())
+		if (m_selected[chan] < m_elts.size())
 		{
-			m_elts[m_selected[wmote]]->targetScaleX = 1.f;
-			m_elts[m_selected[wmote]]->targetScaleY = 1.f;
+			m_elts[m_selected[chan]]->targetScaleX = 1.f;
+			m_elts[m_selected[chan]]->targetScaleY = 1.f;
 		}
-		start = m_selected[wmote];
-		m_selected[wmote] = -1;
+		start = m_selected[chan];
+		m_selected[chan] = -1;
 		for (u32 i = 1; i <= m_elts.size(); ++i)
 		{
 			j = loopNum(start + i, m_elts.size());
 			CButtonsMgr::SElement &b = *m_elts[j];
 			if (b.t == CButtonsMgr::GUIELT_BUTTON && b.visible)
 			{
-				m_selected[wmote] = j;
+				m_selected[chan] = j;
 				b.targetScaleX = 1.1f;
 				b.targetScaleY = 1.1f;
 				break;
@@ -311,21 +317,29 @@ void CButtonsMgr::down(void)
 	}
 }
 
-void CButtonsMgr::click(int wmote, u32 id)
+void CButtonsMgr::noClick(bool noclick)
 {
-	WPAD_Rumble(wmote, 0);
-	PAD_ControlMotor(wmote, 0);
+	m_noclick = noclick;
+}
 
-	if (id == (u32)-1)
-		id = m_selected[wmote];
-	if (id < m_elts.size() && m_elts[id]->t == CButtonsMgr::GUIELT_BUTTON)
+void CButtonsMgr::click(u32 id)
+{
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 	{
-		CButtonsMgr::SButton &b = *((CButtonsMgr::SButton *)m_elts[id].get());
-		b.click = 1.f;
-		b.scaleX = 1.1f;
-		b.scaleY = 1.1f;
-		if (m_soundVolume > 0)
-			b.clickSound.play(m_soundVolume);
+		WPAD_Rumble(chan, 0);
+		PAD_ControlMotor(chan, 0);
+
+		if (id == (u32)-1)
+			id = m_selected[chan];
+		if (id < m_elts.size() && m_elts[id]->t == CButtonsMgr::GUIELT_BUTTON)
+		{
+			CButtonsMgr::SButton &b = *((CButtonsMgr::SButton *)m_elts[id].get());
+			b.click = 1.f;
+			b.scaleX = 1.1f;
+			b.scaleY = 1.1f;
+			if (m_soundVolume > 0)
+				b.clickSound.play(m_soundVolume);
+		}
 	}
 }
 
@@ -364,11 +378,11 @@ void CButtonsMgr::tick(void)
 {
 	for (u32 i = 0; i < m_elts.size(); ++i)
 		m_elts[i]->tick();
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
-		if (m_rumble[wmote] > 0 && --m_rumble[wmote] == 0)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+		if (m_rumble[chan] > 0 && --m_rumble[chan] == 0)
 		{
-			WPAD_Rumble(wmote, 0);
-			PAD_ControlMotor(wmote, 0);
+			WPAD_Rumble(chan, 0);
+			PAD_ControlMotor(chan, 0);
 		}
 
 }
@@ -901,7 +915,7 @@ void CButtonsMgr::draw(void)
 	GX_SetAlphaUpdate(GX_TRUE);
 	GX_SetCullMode(GX_CULL_NONE);
 	GX_SetZMode(GX_DISABLE, GX_LEQUAL, GX_TRUE);
-	for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+	for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 		for (u32 i = 0; i < m_elts.size(); ++i)
 		{
 			switch (m_elts[i]->t)
@@ -909,7 +923,7 @@ void CButtonsMgr::draw(void)
 				case CButtonsMgr::GUIELT_BUTTON:
 				{
 					CButtonsMgr::SButton &b = (CButtonsMgr::SButton &)*m_elts[i];
-					CButtonsMgr::_drawBtn(b, i == m_selected[wmote], false);
+					CButtonsMgr::_drawBtn(b, i == m_selected[chan], false);
 					if (b.click > 0.f)
 						CButtonsMgr::_drawBtn(b, true, true);
 					break;

@@ -114,18 +114,15 @@ int CMenu::_config1(void)
 		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageM)))
 		{
 			nextPage = g_curPage == 1 && !m_locked ? 7 : max(1, m_locked ? 1 : g_curPage - 1);
-			m_btnMgr.click(m_wmote, m_configBtnPageM);
 			break;
 		}
 		if (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageP)))
 		{
 			nextPage = (g_curPage == CMenu::_nbCfgPages) ? 1 : min(g_curPage + 1, CMenu::_nbCfgPages);
-			m_btnMgr.click(m_wmote, m_configBtnPageP);
 			break;
 		}
 		if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click(m_wmote);
 			if (m_btnMgr.selected(m_configBtnBack))
 				break;
 			else if (m_btnMgr.selected(m_configBtnDownload))

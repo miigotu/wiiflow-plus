@@ -25,7 +25,6 @@ void CMenu::_about(void)
 			break;
 		if (BTN_A_PRESSED && !(m_thrdWorking && m_thrdStop))
 		{
-			m_btnMgr.click(m_wmote);
 			if (m_btnMgr.selected(m_aboutBtnSystem))
 			{
 				// show system menu

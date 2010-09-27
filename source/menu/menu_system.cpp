@@ -69,7 +69,6 @@ void CMenu::_system()
 			m_btnMgr.down();
 		if ((BTN_A_PRESSED) && !(m_thrdWorking && m_thrdStop))
 		{
-			m_btnMgr.click(m_wmote);
 			if ((m_btnMgr.selected(m_systemBtnDownload)) && !m_thrdWorking)
 			{
 				// Download selected version

@@ -59,7 +59,6 @@ bool CMenu::_code(char code[4], bool erase)
 				m_btnMgr.down();
 			if (BTN_A_PRESSED)
 			{
-				m_btnMgr.click(m_wmote);
 				if (m_btnMgr.selected(m_codeBtnErase))
 				{
 					memset(code, 0, sizeof code);

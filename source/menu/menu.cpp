@@ -218,16 +218,16 @@ void CMenu::init()
 	pShadowY = m_theme.getFloat("GENERAL", "pointer_shadow_y", 3.f);
 	pShadowBlur = m_theme.getBool("GENERAL", "pointer_shadow_blur", false);
 
-	for (int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
-		m_cursor[wmote].init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", sfmt("pointer%i", wmote+1).c_str()).c_str()).c_str(),
-			pWide, pShadowColor, pShadowX, pShadowY, pShadowBlur, wmote);
+	for (int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+		m_cursor[chan].init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", sfmt("pointer%i", chan+1).c_str()).c_str()).c_str(),
+			pWide, pShadowColor, pShadowX, pShadowY, pShadowBlur, chan);
 		
 	m_btnMgr.init(m_vid);
 
 	_buildMenus();
 	_loadCFCfg();
-	for (int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
-		WPAD_SetVRes(wmote, m_vid.width() + m_cursor[wmote].width(), m_vid.height() + m_cursor[wmote].height());
+	for (int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+		WPAD_SetVRes(chan, m_vid.width() + m_cursor[chan].width(), m_vid.height() + m_cursor[chan].height());
 	m_locked = m_cfg.getString("GENERAL", "parent_code", "").size() >= 4;
 	m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble", true));
 	m_vid.set2DViewport(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480),

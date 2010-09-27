@@ -449,28 +449,25 @@ private:
 	u8 pointerhidedelay[WPAD_MAX_WIIMOTES];
 	u16 stickPointer_x[WPAD_MAX_WIIMOTES];
 	u16 stickPointer_y[WPAD_MAX_WIIMOTES];
-	u32 wii_repeat;	
-	u32 gc_repeat;	
 	
 	u8 m_wpadLeftDelay;
 	u8 m_wpadDownDelay;
 	u8 m_wpadRightDelay;
 	u8 m_wpadUpDelay;
+	u8 m_wpadADelay;
 	
 	u8 m_padLeftDelay;
 	u8 m_padDownDelay;
 	u8 m_padRightDelay;
 	u8 m_padUpDelay;
-	
-	u32 buttonHeld;
-	u8 repeatButton;
-	s8 m_shown_pointer;
+	u8 m_padADelay;
 	
 	u32 wii_btnsPressed;
 	u32 wii_btnsHeld;
 	u32 gc_btnsPressed;
 	u32 gc_btnsHeld;
 	
+	bool m_show_pointer[WPAD_MAX_WIIMOTES];
 	float left_stick_angle[WPAD_MAX_WIIMOTES];
 	float left_stick_mag[WPAD_MAX_WIIMOTES];
 	float right_stick_angle[WPAD_MAX_WIIMOTES];
@@ -479,7 +476,6 @@ private:
 	s32   right_stick_skip[WPAD_MAX_WIIMOTES];
 	s32	  wmote_roll_skip[WPAD_MAX_WIIMOTES];
 	bool  enable_wmote_roll;
-	int   m_wmote;
 
 	u32 wii_btnRepeat();
 	u32 gc_btnRepeat();

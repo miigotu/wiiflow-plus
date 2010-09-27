@@ -360,7 +360,6 @@ void CMenu::_gameSettings(void)
 			else if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 6) || m_gameSettingsPage > 51)
 				--m_gameSettingsPage;
 			_showGameSettings();
-			m_btnMgr.click(m_wmote, m_gameSettingsBtnPageM);
 		}
 		else if (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED)
 		{
@@ -372,11 +371,9 @@ void CMenu::_gameSettings(void)
 				|| (m_gameSettingsPage > 5 && m_gameSettingsPage < 52 && m_max_categories > 5))
 				++m_gameSettingsPage;
 			_showGameSettings();
-			m_btnMgr.click(m_wmote, m_gameSettingsBtnPageP);
 		}
 		else if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click(m_wmote);
 			if (m_btnMgr.selected(m_gameSettingsBtnBack))
 				break;
 			else if (m_btnMgr.selected(m_gameSettingsBtnPageM))

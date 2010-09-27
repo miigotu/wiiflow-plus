@@ -81,26 +81,18 @@ int CMenu::_config5(void)
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		++repeatButton;
-		if ((wii_btnsHeld & WBTN_A) == 0)
-			buttonHeld = (u32)-1;
-		else if (buttonHeld != (u32)-1 && m_btnMgr.selected(buttonHeld) && repeatButton >= 16 && (repeatButton % 4 == 0))
-			wii_btnsPressed |= WBTN_A;
 		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageM)))
 		{
 			nextPage = g_curPage == 1 && !m_locked ? 7 : max(1, m_locked ? 1 : g_curPage - 1);
-			m_btnMgr.click(m_wmote, m_configBtnPageM);
 			break;
 		}
 		if (!m_locked && (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageP))))
 		{
 			nextPage = (g_curPage == CMenu::_nbCfgPages) ? 1 : min(g_curPage + 1, CMenu::_nbCfgPages);
-			m_btnMgr.click(m_wmote, m_configBtnPageP);
 			break;
 		}
 		if (BTN_A_PRESSED)
 		{
-			m_btnMgr.click(m_wmote);
 			if (m_btnMgr.selected(m_configBtnBack))
 				break;
 			else if (m_btnMgr.selected(m_config5BtnPartitionP))

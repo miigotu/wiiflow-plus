@@ -134,20 +134,15 @@ int CMenu::main(void)
 			m_reload = BTN_B_HELD;
 			break;
 		}
-		++repeatButton;
-		if ((wii_btnsHeld & WBTN_A) == 0)
-			buttonHeld = (u32)-1;
-		else if (buttonHeld != (u32)-1 &&  m_btnMgr.selected(buttonHeld) && repeatButton >= 16)
-			wii_btnsPressed |= WBTN_A;
-		for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
+		for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
 		{
 			if ((BTN_UP_REPEAT || RIGHT_STICK_UP) && (wii_btnsHeld & WBTN_B) == 0)
 				m_cf.up();
-			if (((BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT) && (wii_btnsHeld & WBTN_B) == 0) || WROLL_RIGHT)
+			if (((BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT) && (wii_btnsHeld & WBTN_B) == 0) || WROLL_RIGHT/*  || (BTN_A_REPEAT && m_btnMgr.selected(m_mainBtnNext)) */)
 				m_cf.right();
 			if ((BTN_DOWN_REPEAT ||  RIGHT_STICK_DOWN) && (wii_btnsHeld & WBTN_B) == 0)
 				m_cf.down();
-			if (((BTN_LEFT_REPEAT || RIGHT_STICK_LEFT) && (wii_btnsHeld & WBTN_B) == 0) || WROLL_LEFT)
+			if (((BTN_LEFT_REPEAT || RIGHT_STICK_LEFT) && (wii_btnsHeld & WBTN_B) == 0) || WROLL_LEFT/*  || (BTN_A_REPEAT && m_btnMgr.selected(m_mainBtnPrev)) */)
 				m_cf.left();
 		}
 		//CF Layout select
@@ -243,8 +238,6 @@ int CMenu::main(void)
 		}
 		if (BTN_B_PRESSED)
 		{
-			if (!m_btnMgr.selected(buttonHeld))
-				m_btnMgr.click(m_wmote);
 			//Events to Show Categories
 			if (m_btnMgr.selected(m_mainBtnFavoritesOn) || m_btnMgr.selected(m_mainBtnFavoritesOff))
 			{
@@ -259,11 +252,37 @@ int CMenu::main(void)
 				}
 			}
 			/*//Events to Switch off/on nand emu
-			if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb))
+			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb))
 			{
 				//switch to nand emu here.
 			}
 			*/
+			else if (m_btnMgr.selected(m_mainBtnPrev))
+			{
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
+				{
+					m_cf.setSorting((Sorting)SORT_ALPHA);
+					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
+				}
+				curLetter.resize(1);
+				curLetter[0] = m_cf.prevLetter();
+				m_showtimer = 60;
+				m_btnMgr.setText(m_mainLblLetter, curLetter);
+				m_btnMgr.show(m_mainLblLetter);
+			}
+		 	else if (m_btnMgr.selected(m_mainBtnNext))
+			{
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
+				{
+					m_cf.setSorting((Sorting)SORT_ALPHA);
+					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
+				}
+				curLetter.resize(1);
+				curLetter[0] = m_cf.nextLetter();
+				m_showtimer = 60;
+				m_btnMgr.setText(m_mainLblLetter, curLetter);
+				m_btnMgr.show(m_mainLblLetter);
+			}
 		}
 		else if (done==0 && m_current_view == COVERFLOW_USB && m_cat.getBool("GENERAL", "category_on_start", false)) // Only supported in game mode (not for channels, since you don't have options for channels yet)
 		{
@@ -278,10 +297,12 @@ int CMenu::main(void)
 		//Handling input when other gui buttons are selected
 		else if (BTN_A_PRESSED)
 		{
-			if (!m_btnMgr.selected(buttonHeld))
-				m_btnMgr.click(m_wmote);
-			if (m_btnMgr.selected(m_mainBtnQuit)) {
-				Sys_ExitTo(0);
+			if (m_btnMgr.selected(m_mainBtnPrev))
+				m_cf.pageUp();
+		 	else if (m_btnMgr.selected(m_mainBtnNext))
+				m_cf.pageDown();
+			else if (m_btnMgr.selected(m_mainBtnQuit)) {
+				Sys_ExitTo(m_cfg.getInt("GENERAL", "exit_to", 0));
 				break;
 			}
 			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb))
@@ -354,24 +375,6 @@ int CMenu::main(void)
 				m_vid.waitMessage(m_waitMessage);
 				_launchGame(&hdr, true);
 				_showMain();
-			}
-			else if (m_btnMgr.selected(m_mainBtnNext))
-			{
-				m_cf.right();
-				if (!m_btnMgr.selected(buttonHeld))
-				{
-					repeatButton = 0;
-					buttonHeld = m_mainBtnNext;
-				}
-			}
-			else if (m_btnMgr.selected(m_mainBtnPrev))
-			{
-				m_cf.left();
-				if (!m_btnMgr.selected(buttonHeld))
-				{
-					repeatButton = 0;
-					buttonHeld = m_mainBtnPrev;
-				}
 			}
 			else if (m_btnMgr.selected(m_mainBtnFavoritesOn) || m_btnMgr.selected(m_mainBtnFavoritesOff))
 			{
@@ -457,11 +460,11 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainLblUser[5]);
 		}
 		//
-		for(int wmote = 0; wmote < WPAD_MAX_WIIMOTES; wmote++)
-			if (WPadIR_Valid(wmote) || (m_shown_pointer == (wmote+1)*10 && !WPadIR_Valid(wmote)))
-				m_cf.mouse(m_vid, wmote, m_cursor[wmote].x(), m_cursor[wmote].y());
+		for(int chan = 0; chan < WPAD_MAX_WIIMOTES; chan++)
+			if (WPadIR_Valid(chan) || (m_show_pointer[chan] && !WPadIR_Valid(chan)))
+				m_cf.mouse(m_vid, chan, m_cursor[chan].x(), m_cursor[chan].y());
 			else
-				m_cf.mouse(m_vid, wmote, -1, -1);		
+				m_cf.mouse(m_vid, chan, -1, -1);		
 	}
 	// 
 	GX_InvVtxCache();
