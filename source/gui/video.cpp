@@ -1,4 +1,4 @@
-#include <pngu/pngu.h>
+#include "pngu.h"
 #include "video.hpp"
 #include <string.h>
 

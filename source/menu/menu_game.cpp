@@ -351,7 +351,10 @@ void CMenu::_game(bool launch)
 					_hideGame();
 					_waitForGameSoundExtract();
 					if (_wbfsOp(CMenu::WO_REMOVE_GAME))
+					{
+						m_gameSound.stop();
 						break;
+					}
 					_showGame();
 				}
 			}

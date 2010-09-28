@@ -31,6 +31,7 @@
 #include "oggplayer.h"
 #include <gccore.h>
 #include <unistd.h>
+#include <string.h>
 
 /* OGG control */
 
@@ -217,6 +218,214 @@ static void * ogg_player_thread(private_data_ogg * priv)
 	return 0;
 }
 
+/* functions to read the Ogg file from memory */
+
+static struct
+{
+	char *mem;
+	int size;
+	int pos;
+} file[4];
+
+int f_read(void * punt, int bytes, int blocks, int *f)
+{
+	int b;
+	int c = 0;
+	int d;
+
+	if (bytes * blocks <= 0)
+		return 0;
+
+	blocks *= bytes;
+
+	while (blocks > 0)
+	{
+		b = blocks;
+		if (b > 4096)
+			b = 4096;
+
+		d = (*f) - 0x666;
+		if((unsigned)(d) <= (0x669 - 0x666))
+		{
+			if (file[d].size == 0)
+				return -1;
+			if ((file[d].pos + b) > file[d].size)
+				b = file[d].size - file[d].pos;
+			if (b > 0)
+			{
+				memcpy(punt, file[d].mem + file[d].pos, b);
+				file[d].pos += b;
+			}
+		}
+		else
+			b = read(*f, ((char *) punt) + c, b);
+
+		if (b <= 0)
+		{
+			return c / bytes;
+		}
+		c += b;
+		blocks -= b;
+	}
+	return c / bytes;
+}
+
+int f_seek(int *f, ogg_int64_t offset, int mode)
+{
+	if(f==NULL) return(-1);
+
+	int k;
+	mode &= 3;
+
+	int d = (*f) - 0x666;
+	if((unsigned)(d) <= (0x669 - 0x666))
+	{
+		k = 0;
+
+		if (file[d].size == 0)
+			return -1;
+
+		if (mode == 0)
+		{
+			if ((offset) >= file[d].size)
+			{
+				file[d].pos = file[d].size;
+				k = -1;
+			}
+			else if ((offset) < 0)
+			{
+				file[d].pos = 0;
+				k = -1;
+			}
+			else
+				file[d].pos = offset;
+		}
+		else if (mode == 1)
+		{
+			if ((file[d].pos + offset) >= file[d].size)
+			{
+				file[d].pos = file[d].size;
+				k = -1;
+			}
+			else if ((file[d].pos + offset) < 0)
+			{
+				file[d].pos = 0;
+				k = -1;
+			}
+			else
+				file[d].pos += offset;
+		}
+		else if (mode == 2)
+		{
+
+			if ((file[d].size + offset) >= file[d].size)
+			{
+				file[d].pos = file[d].size;
+				k = -1;
+			}
+			else if ((file[d].size + offset) < 0)
+			{
+				file[d].pos = 0;
+				k = -1;
+			}
+			else
+				file[d].pos = file[d].size + offset;
+		}
+
+	}
+	else
+		k = lseek(*f, (int) offset, mode);
+
+	if (k < 0)
+		k = -1;
+	else
+		k = 0;
+	return k;
+}
+
+int f_close(int *f)
+{
+	int d = (*f) - 0x666;
+	if((unsigned)(d) <= (0x669 - 0x666))
+	{
+		file[d].size = 0;
+		file[d].pos = 0;
+		if (file[d].mem)
+		{
+			file[d].mem = (char *) 0;
+		}
+		return 0;
+	}
+	else
+		return close(*f);
+	return 0;
+}
+
+long f_tell(int *f)
+{
+	int k;
+
+	int d = (*f) - 0x666;
+	if((unsigned)(d) <= (0x669 - 0x666))
+	{
+		k = file[d].pos;
+	}
+	else
+		k = lseek(*f, 0, 1);
+
+	return (long) k;
+}
+
+int mem_open(char * ogg, int size)
+{
+	static int one = 1;
+	int n;
+	if (one)
+	{
+		one = 0;
+
+		file[0].size = 0;
+		file[1].size = 0;
+		file[2].size = 0;
+		file[3].size = 0;
+		file[0].mem = ogg;
+		file[0].size = size;
+		file[0].pos = 0;
+		return (0x666);
+	}
+
+	for (n = 0; n < 4; n++)
+	{
+		if (file[n].size == 0)
+		{
+			file[n].mem = ogg;
+			file[n].size = size;
+			file[n].pos = 0;
+			return (0x666 + n);
+		}
+	}
+	return -1;
+}
+
+int mem_close(int fd)
+{
+	if((unsigned)((fd) - 0x666) <= (0x669 - 0x666)) // it is a memory file descriptor?
+	{
+		fd -= 0x666;
+		file[fd].size = 0;
+		return 0;
+	}
+	else
+		return f_close(&fd);
+}
+
+static ov_callbacks callbacks = {
+	(size_t (*)(void *, size_t, size_t, void *))  f_read,
+	(int (*)(void *, ogg_int64_t, int))           f_seek,
+	(int (*)(void *))                             f_close,
+	(long (*)(void *))                            f_tell
+};
+
 void StopOgg()
 {
 	ASND_StopVoice(0);
@@ -255,7 +464,7 @@ int PlayOgg(int fd, int time_pos, int mode)
 		private_ogg.fd = -1;
 		return -1;
 	}
-	if (ov_open((void *) &private_ogg.fd, &private_ogg.vf, NULL, 0) < 0)
+	if (ov_open_callbacks((void *) &private_ogg.fd, &private_ogg.vf, NULL, 0, callbacks) < 0)
 	{
 		mem_close(private_ogg.fd); // mem_close() can too close files from devices
 		private_ogg.fd = -1;
