@@ -678,7 +678,7 @@ s32 WBFS_Ext_RemoveGame(u8 *discid, char *fpath)
 	}
 	dirclose(dir_iter);
 	// remove game subdir
-	//rmdir(path);
+	remove(path);
 	unlink(path);
 	return 0;
 }

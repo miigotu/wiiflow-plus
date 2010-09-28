@@ -103,22 +103,24 @@ void CMenu::_CheatSettings()
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		else if (BTN_MINUS_PRESSED || BTN_LEFT_PRESSED)
+		else if (BTN_MINUS_PRESSED || BTN_LEFT_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_cheatBtnPageM)))
 		{
 			_hideCheatSettings();
 			if (m_cheatSettingsPage == 1)
 				m_cheatSettingsPage = (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE;
 			else if (m_cheatSettingsPage > 1)
 				--m_cheatSettingsPage;
+			if(!m_btnMgr.selected(m_cheatBtnPageM)) m_btnMgr.click(m_cheatBtnPageM);
 			_showCheatSettings();
 		}
-		else if (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED)
+		else if (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_cheatBtnPageP)))
 		{
 			_hideCheatSettings();
 			if (m_cheatSettingsPage == (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
 				m_cheatSettingsPage = 1;
 			else if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
 				++m_cheatSettingsPage;
+			if(!m_btnMgr.selected(m_cheatBtnPageP)) m_btnMgr.click(m_cheatBtnPageP);
 			_showCheatSettings();
 		}
 		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1)!=0)
@@ -133,25 +135,6 @@ void CMenu::_CheatSettings()
 		{
 			if (m_btnMgr.selected(m_cheatBtnBack))
 				break;
-			else if (m_btnMgr.selected(m_cheatBtnPageM))
-			{
-				_hideCheatSettings();
-				if (m_cheatSettingsPage == 1)
-					m_cheatSettingsPage = (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE;
-				else if (m_cheatSettingsPage > 1)
-					--m_cheatSettingsPage;
-				_showCheatSettings();
-			}
-			else if (m_btnMgr.selected(m_cheatBtnPageP))
-			{
-				_hideCheatSettings();
-				if (m_cheatSettingsPage == (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
-					m_cheatSettingsPage = 1;
-				else if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
-					++m_cheatSettingsPage;
-				_showCheatSettings();
-			}
-				
 			for (int i = 0; i < CHEATSPERPAGE; ++i)
 				if (m_btnMgr.selected(m_cheatBtnItem[i]))
 				{

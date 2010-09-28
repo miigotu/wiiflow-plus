@@ -261,13 +261,25 @@ u32 CMenu::wii_btnRepeat()
 	{
 		if (m_wpadADelay == 0 || m_wpadADelay > g_repeatDelay)
 			b |= WPAD_BUTTON_A;
-		++m_wpadADelay;
 		m_btnMgr.noClick(true);
+		++m_wpadADelay;
 	}
 	else
 	{
 		m_btnMgr.noClick();
 		m_wpadADelay = 0;
+	}
+	if ((wii_btnsHeld & WBTN_B) != 0)
+	{
+		if (m_wpadBDelay == 0 || m_wpadBDelay > g_repeatDelay)
+			b |= WPAD_BUTTON_B;
+		m_btnMgr.noClick(true);
+		++m_wpadBDelay;
+	}
+	else
+	{
+		m_btnMgr.noClick();
+		m_wpadBDelay = 0;
 	}
 	return b;
 }
@@ -312,13 +324,25 @@ u32 CMenu::gc_btnRepeat()
 	{
 		if (m_padADelay == 0 || m_padADelay > g_repeatDelay)
 			b |= BTN_A;
-		++m_padADelay;
 		m_btnMgr.noClick(true);
+		++m_padADelay;
 	}
 	else
 	{
 		m_btnMgr.noClick();
 		m_padADelay = 0;
+	}
+	if (gc_btnsHeld & BTN_B)
+	{
+		if (m_padBDelay == 0 || m_padBDelay > g_repeatDelay)
+			b |= BTN_B;
+		m_btnMgr.noClick(true);
+		++m_padBDelay;
+	}
+	else
+	{
+		m_btnMgr.noClick();
+		m_padBDelay = 0;
 	}
 	return b;
 }

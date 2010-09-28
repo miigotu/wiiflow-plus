@@ -351,7 +351,7 @@ void CMenu::_gameSettings(void)
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if (BTN_MINUS_PRESSED || BTN_LEFT_PRESSED)
+		if ((BTN_MINUS_PRESSED || BTN_LEFT_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_gameSettingsBtnPageP)))  && !m_locked)
 		{
 			if (m_gameSettingsPage == 1)
 				m_gameSettingsPage = 5;
@@ -359,9 +359,10 @@ void CMenu::_gameSettings(void)
 				m_gameSettingsPage = 53;
 			else if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 6) || m_gameSettingsPage > 51)
 				--m_gameSettingsPage;
+			if(!m_btnMgr.selected(m_gameSettingsBtnPageM)) m_btnMgr.click(m_gameSettingsBtnPageM);
 			_showGameSettings();
 		}
-		else if (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED)
+		else if ((BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_gameSettingsBtnPageP))) && !m_locked)
 		{
 			if (m_gameSettingsPage == 5)
 				m_gameSettingsPage = 1;
@@ -370,33 +371,13 @@ void CMenu::_gameSettings(void)
 			else if (m_gameSettingsPage < 5 || (m_gameSettingsPage > 5 && m_gameSettingsPage < 53 && m_max_categories > 8)
 				|| (m_gameSettingsPage > 5 && m_gameSettingsPage < 52 && m_max_categories > 5))
 				++m_gameSettingsPage;
+			if(!m_btnMgr.selected(m_gameSettingsBtnPageP)) m_btnMgr.click(m_gameSettingsBtnPageP);
 			_showGameSettings();
 		}
 		else if (BTN_A_PRESSED)
 		{
 			if (m_btnMgr.selected(m_gameSettingsBtnBack))
 				break;
-			else if (m_btnMgr.selected(m_gameSettingsBtnPageM))
-			{
-				if (m_gameSettingsPage == 1)
-					m_gameSettingsPage = 5;
-				else if (m_gameSettingsPage == 51)
-					m_gameSettingsPage = 53;
-				else if ((m_gameSettingsPage > 1 && m_gameSettingsPage < 6) || m_gameSettingsPage > 51)
-					--m_gameSettingsPage;
-				_showGameSettings();
-			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnPageP) && !m_locked)
-			{
-				if (m_gameSettingsPage == 5)
-					m_gameSettingsPage = 1;
-				else if (m_gameSettingsPage == 53)
-					m_gameSettingsPage = 51;
-				else if (m_gameSettingsPage < 5 || (m_gameSettingsPage > 5 && m_gameSettingsPage < 53 && m_max_categories > 8)
-				|| (m_gameSettingsPage > 5 && m_gameSettingsPage < 52 && m_max_categories > 5))
-					++m_gameSettingsPage;
-				_showGameSettings();
-			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnOcarina))
 			{
 				int intoption = loopNum(m_gcfg2.getOptBool(id, "cheat") + 1, 3);

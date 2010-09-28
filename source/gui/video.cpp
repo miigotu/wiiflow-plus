@@ -104,11 +104,36 @@ void CVideo::init(void)
 	VIDEO_Init();
 	m_wide = CONF_GetAspectRatio() == CONF_ASPECT_16_9;
 	m_rmode = VIDEO_GetPreferredMode(NULL);
-	if (m_wide)
+
+	bool pal = false;
+	if (m_rmode == &TVPal528IntDf)
 	{
-		m_rmode->viWidth = 700;
-		m_rmode->viXOrigin = ((VI_MAX_WIDTH_PAL - m_rmode->viWidth) / 2);
+		pal = true;
+		//m_rmode = &TVPal574IntDfScale;
 	}
+
+	if (m_wide)
+		m_rmode->viWidth = 720;
+	else
+		m_rmode->viWidth = 672;
+
+	if (pal)
+	{
+		m_rmode->viHeight = VI_MAX_HEIGHT_PAL;
+		m_rmode->viXOrigin = (VI_MAX_WIDTH_PAL - m_rmode->viWidth) / 2;
+		m_rmode->viYOrigin = (VI_MAX_HEIGHT_PAL - m_rmode->viHeight) / 2;
+	}
+	else
+	{
+		m_rmode->viHeight = VI_MAX_HEIGHT_NTSC;
+		m_rmode->viXOrigin = (VI_MAX_WIDTH_NTSC - m_rmode->viWidth) / 2;
+		m_rmode->viYOrigin = (VI_MAX_HEIGHT_NTSC - m_rmode->viHeight) / 2;
+	}
+
+	s8 hoffset = 0;  //Use horizontal offset set in wii menu.
+	if (CONF_GetDisplayOffsetH(&hoffset) == 0)
+		m_rmode->viXOrigin += hoffset;
+
 	m_frameBuf[0] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(m_rmode));
 	m_frameBuf[1] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(m_rmode));
 	VIDEO_Configure(m_rmode);

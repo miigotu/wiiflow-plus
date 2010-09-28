@@ -1189,16 +1189,3 @@ int CMenu::_titleDownloader(bool missingOnly)
 	m_thrdWorking = false;
 	return 0;
 }
-
-
-int CMenu::_update(CMenu *m)
-{
-	if (!m->m_thrdWorking)
-		return 0;
-	return m->_updateDownloader();
-}
-
-int CMenu::_updateDownloader()
-{
-	return 0;
-}

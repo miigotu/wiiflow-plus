@@ -409,70 +409,69 @@ void CMenu::_cfTheme(void)
 			m_cf.select();
 		if (BTN_A_PRESSED)
 		{
-			if (!m_btnMgr.selected((u32)-1))
+			if (m_btnMgr.selected(m_cfThemeBtnSave))
 			{
-				if (m_btnMgr.selected(m_cfThemeBtnSave))
-				{
-					m_cf.stopPicLoader();
-					m_theme.save();
-					break;
-				}
-				else if (m_btnMgr.selected(m_cfThemeBtnCancel))
-				{
-					m_theme.clear();
-					m_theme.unload();
-					m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), m_cfg.getString("GENERAL", "theme", "defaut").c_str()).c_str());
-					break;
-				}
-				else if (m_btnMgr.selected(m_cfThemeBtnAlt))
-				{
-					cfVersion = 1 + loopNum(cfVersion, m_numCFVersions);
-					_showCFTheme(curParam, cfVersion, wide);
-					_loadCFLayout(cfVersion, true, wide != m_vid.wide());
-					m_cf.applySettings();
-				}
-				else if (m_btnMgr.selected(m_cfThemeBtnSelect))
-				{
-					if (m_cf.selected())
-						m_cf.cancel();
-					else
-						m_cf.select();
-					_showCFTheme(curParam, cfVersion, wide);
-					_loadCFLayout(cfVersion, true, wide != m_vid.wide());
-					m_cf.applySettings();
-				}
-				else if (m_btnMgr.selected(m_cfThemeBtnWide))
-				{
-					wide = !wide;
-					_showCFTheme(curParam, cfVersion, wide);
-					_loadCFLayout(cfVersion, true, wide != m_vid.wide());
-					m_cf.applySettings();
-				}
-				else if (m_btnMgr.selected(m_cfThemeBtnParamM))
-				{
-					curParam = loopNum(curParam - 1, ARRAY_SIZE(CMenu::_cfParams));
-					if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
-						m_cf.select();
-					_showCFTheme(curParam, cfVersion, wide);
-				}
-				else if (m_btnMgr.selected(m_cfThemeBtnParamP))
-				{
-					curParam = loopNum(curParam + 1, ARRAY_SIZE(CMenu::_cfParams));
-					if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
-						m_cf.select();
-					_showCFTheme(curParam, cfVersion, wide);
-				}
+				m_cf.stopPicLoader();
+				m_theme.save();
+				break;
 			}
-			if (BTN_A_REPEAT)
-				for (int i = 0; i < 16; ++i)
-					if (m_btnMgr.selected(m_cfThemeBtnValM[i]) || m_btnMgr.selected(m_cfThemeBtnValP[i]))
-					{
-						_cfParam(m_btnMgr.selected(m_cfThemeBtnValP[i]), i, CMenu::_cfParams[curParam], cfVersion, wide);
-						_showCFTheme(curParam, cfVersion, wide);
-						_loadCFLayout(cfVersion, true, wide != m_vid.wide());
-						m_cf.applySettings();
-						break;
-					}
+			else if (m_btnMgr.selected(m_cfThemeBtnCancel))
+			{
+				m_theme.clear();
+				m_theme.unload();
+				m_theme.load(sfmt("%s/%s.ini", m_themeDir.c_str(), m_cfg.getString("GENERAL", "theme", "defaut").c_str()).c_str());
+				break;
+			}
+			else if (m_btnMgr.selected(m_cfThemeBtnAlt))
+			{
+				cfVersion = 1 + loopNum(cfVersion, m_numCFVersions);
+				_showCFTheme(curParam, cfVersion, wide);
+				_loadCFLayout(cfVersion, true, wide != m_vid.wide());
+				m_cf.applySettings();
+			}
+			else if (m_btnMgr.selected(m_cfThemeBtnSelect))
+			{
+				if (m_cf.selected())
+					m_cf.cancel();
+				else
+					m_cf.select();
+				_showCFTheme(curParam, cfVersion, wide);
+				_loadCFLayout(cfVersion, true, wide != m_vid.wide());
+				m_cf.applySettings();
+			}
+			else if (m_btnMgr.selected(m_cfThemeBtnWide))
+			{
+				wide = !wide;
+				_showCFTheme(curParam, cfVersion, wide);
+				_loadCFLayout(cfVersion, true, wide != m_vid.wide());
+				m_cf.applySettings();
+			}
+			else if (m_btnMgr.selected(m_cfThemeBtnParamM))
+			{
+				curParam = loopNum(curParam - 1, ARRAY_SIZE(CMenu::_cfParams));
+				if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
+					m_cf.select();
+				_showCFTheme(curParam, cfVersion, wide);
+			}
+			else if (m_btnMgr.selected(m_cfThemeBtnParamP))
+			{
+				curParam = loopNum(curParam + 1, ARRAY_SIZE(CMenu::_cfParams));
+				if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
+					m_cf.select();
+				_showCFTheme(curParam, cfVersion, wide);
+			}
+		}
+		if (BTN_A_REPEAT || BTN_A_PRESSED)
+		{
+			for (int i = 0; i < 16; ++i)
+				if (m_btnMgr.selected(m_cfThemeBtnValM[i]) || m_btnMgr.selected(m_cfThemeBtnValP[i]))
+				{
+					_cfParam(m_btnMgr.selected(m_cfThemeBtnValP[i]), i, CMenu::_cfParams[curParam], cfVersion, wide);
+					_showCFTheme(curParam, cfVersion, wide);
+					_loadCFLayout(cfVersion, true, wide != m_vid.wide());
+					m_cf.applySettings();
+					break;
+				}
 		}
 		if (WPadIR_Valid(0) || WPadIR_Valid(1) || WPadIR_Valid(2) || WPadIR_Valid(3))
 			_showCFTheme(curParam, cfVersion, wide);

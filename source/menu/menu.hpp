@@ -455,12 +455,14 @@ private:
 	u8 m_wpadRightDelay;
 	u8 m_wpadUpDelay;
 	u8 m_wpadADelay;
+	u8 m_wpadBDelay;
 	
 	u8 m_padLeftDelay;
 	u8 m_padDownDelay;
 	u8 m_padRightDelay;
 	u8 m_padUpDelay;
 	u8 m_padADelay;
+	u8 m_padBDelay;
 	
 	u32 wii_btnsPressed;
 	u32 wii_btnsHeld;
@@ -747,10 +749,8 @@ private:
 	static int _wiitdbDownloader(CMenu *m);
 	int _wiitdbDownloaderAsync();
 	int _titleDownloader(bool missingOnly);
-	int _updateDownloader(void);
 	static int _titleDownloaderAll(CMenu *m);
 	static int _titleDownloaderMissing(CMenu *m);
-	static int _update(CMenu *m);
 //	static int _initStaticNetwork(CMenu *m);
 	static s32 _networkComplete(s32 result, void *usrData);
 	void _initAsyncNetwork();
