@@ -105,19 +105,15 @@ void CVideo::init(void)
 	m_wide = CONF_GetAspectRatio() == CONF_ASPECT_16_9;
 	m_rmode = VIDEO_GetPreferredMode(NULL);
 
-	bool pal = false;
-	if (m_rmode == &TVPal528IntDf)
-	{
-		pal = true;
-		//m_rmode = &TVPal574IntDfScale;
-	}
+	u32 type = CONF_GetVideo();
 
 	if (m_wide)
 		m_rmode->viWidth = 720;
 	else
 		m_rmode->viWidth = 672;
 
-	if (pal)
+	//CONF_VIDEO_NTSC and CONF_VIDEO_MPAL and m_rmode TVEurgb60Hz480IntDf are the same max height and width.
+	if (type == CONF_VIDEO_PAL && m_rmode != &TVEurgb60Hz480IntDf)
 	{
 		m_rmode->viHeight = VI_MAX_HEIGHT_PAL;
 		m_rmode->viXOrigin = (VI_MAX_WIDTH_PAL - m_rmode->viWidth) / 2;

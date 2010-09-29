@@ -516,6 +516,7 @@ private:
 	wstringEx m_thrdMessage;
 	volatile float m_thrdProgress;
 	volatile bool m_thrdMessageAdded;
+	volatile bool m_gameSelected;
 	SSoundEffect m_gameSound;
 	SSoundEffect m_gameSoundTmp;
 	SSoundEffect m_cameraSound;

@@ -184,6 +184,7 @@ static int GetLanguage(const char *lang)
 
 void CMenu::_hideGame(bool instant)
 {
+	m_gameSelected = false;
 	m_fa.unload();
 	m_cf.showCover();
 	
@@ -205,8 +206,9 @@ void CMenu::_hideGame(bool instant)
 
 void CMenu::_showGame(void)
 {
+	m_gameSelected = true;
 	m_cf.showCover();
-
+	
 	if (m_cfg.getBool("GENERAL", "enable_fanart", true) && m_fa.load(m_fanartDir.c_str(), m_cf.getId().c_str()))
 	{
 		STexture bg, bglq;
@@ -268,6 +270,7 @@ void CMenu::_game(bool launch)
 	if (!launch)
 	{
 		SetupInput();
+		_waitForGameSoundExtract();
 		_playGameSound();
 		_showGame();
 	}
@@ -319,7 +322,7 @@ void CMenu::_game(bool launch)
 				{
 					_setBg(videoBg, videoBg);
 					m_bgCrossFade = 10;
-					_mainLoopCommon(false); // Redraw the background every frame
+					_mainLoopCommon(); // Redraw the background every frame
 				}
 				_showGame();
 				m_video_playing = false;
@@ -438,33 +441,34 @@ void CMenu::_game(bool launch)
 			{
 				m_gameSound.stop();				
 				m_cf.up();
-				_showGame();
 				startGameSound = true;
+				_showGame();
 			}
 			else if (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
 			{
 				m_gameSound.stop();
 				m_cf.right();
-				_showGame();
 				startGameSound = true;
+				_showGame();
 			}
 			else if (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN)
 			{
 				m_gameSound.stop();
 				m_cf.down();
-				_showGame();
 				startGameSound = true;
+				_showGame();
 			}
 			else if (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
 			{
 				m_gameSound.stop();
 				m_cf.left();
-				_showGame();
 				startGameSound = true;
+				_showGame();
 			}
-			else if (!(BTN_LEFT_REPEAT || BTN_RIGHT_REPEAT || BTN_DOWN_REPEAT || BTN_UP_REPEAT) && startGameSound)
+			else if (!(BTN_LEFT_PRESSED || BTN_RIGHT_PRESSED || BTN_DOWN_PRESSED || BTN_UP_PRESSED) && startGameSound)
 			{
 				startGameSound = false;
+				_waitForGameSoundExtract();
 				_playGameSound();
 			}
 		if (m_show_zone_game)
@@ -523,7 +527,6 @@ void CMenu::_game(bool launch)
 	m_gcfg1.unload();
 	
 	free_wdm();
-	
 	_waitForGameSoundExtract();
 	_hideGame();
 }
@@ -1144,32 +1147,18 @@ void CMenu::_loadGameSound(dir_discHdr *hdr)
 
 int CMenu::_loadGameSoundThrd(CMenu *m)
 {
-//	string prevId;
-//	string id;
-//	u64 chantitle;
-
 	dir_discHdr *hdr = m->m_gameSoundHdr;
 
 	LWP_MutexLock(m->m_gameSndMutex);
-//	id = m->m_gameSoundId;
-//	chantitle = m->m_gameSoundTitle;
-//	m->m_gameSoundId.clear();
-//	m->m_gameSoundTitle = 0;
 	m->m_gameSoundHdr = NULL;
-	
 	LWP_MutexUnlock(m->m_gameSndMutex);
-//	while (id != prevId && !id.empty())
-//	{
-//		prevId = id;
-		m->_loadGameSound(hdr);
-		LWP_MutexLock(m->m_gameSndMutex);
-//		id = m->m_gameSoundId;
-//		chantitle = m->m_gameSoundTitle;
-//		m->m_gameSoundId.clear();
-//		m->m_gameSoundTitle = 0;
-		m->m_gameSoundHdr = NULL;
-		LWP_MutexUnlock(m->m_gameSndMutex);
-//	}
+
+	m->_loadGameSound(hdr);
+
+	LWP_MutexLock(m->m_gameSndMutex);
+	m->m_gameSoundHdr = NULL;
+	LWP_MutexUnlock(m->m_gameSndMutex);
+
 	m->m_gameSoundThread = 0;
 	return 0;
 }
@@ -1178,11 +1167,11 @@ void CMenu::_playGameSound(void)
 {
 	if (m_bnrSndVol == 0)
 		return;
+
 	LWP_MutexLock(m_gameSndMutex);
 	m_gameSoundHdr = m_cf.getHdr();
-//	m_gameSoundId = m_cf.getId();
-//	m_gameSoundTitle = m_cf.getChanTitle();
 	LWP_MutexUnlock(m_gameSndMutex);
+
 	m_cf.stopPicLoader();
 	if (m_gameSoundThread == 0)
 		LWP_CreateThread(&m_gameSoundThread, (void *(*)(void *))CMenu::_loadGameSoundThrd, (void *)this, 0, 8 * 1024, 40);

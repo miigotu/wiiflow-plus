@@ -344,14 +344,14 @@ void CMenu::_gameSettings(void)
 	_showGameSettings();
 	while (true)
 	{
-		_mainLoopCommon(false);
+		_mainLoopCommon();
 		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
 			break;
 		else if (BTN_UP_PRESSED)
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		if ((BTN_MINUS_PRESSED || BTN_LEFT_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_gameSettingsBtnPageP)))  && !m_locked)
+		if ((BTN_MINUS_PRESSED || BTN_LEFT_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_gameSettingsBtnPageM))) && !m_locked)
 		{
 			if (m_gameSettingsPage == 1)
 				m_gameSettingsPage = 5;

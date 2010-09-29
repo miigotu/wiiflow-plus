@@ -44,7 +44,7 @@ bool CMenu::_code(char code[4], bool erase)
 		m_btnMgr.show(m_codeBtnErase);
 	while (true)
 	{
-		_mainLoopCommon(wd);
+		_mainLoopCommon();
 		if (BTN_HOME_PRESSED)
 		{
 			break;
