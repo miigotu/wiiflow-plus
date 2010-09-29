@@ -78,6 +78,8 @@ void SSoundEffect::stop(void)
 	voice = -1;
 	loopFlag = 0;
 	ASND_StopVoice(v);
+	length = 0;
+	data.release();
 }
 
 bool SSoundEffect::fromWAVFile(const char *filename)

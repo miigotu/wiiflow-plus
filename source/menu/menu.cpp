@@ -1026,9 +1026,8 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		m_gameSound.play(m_bnrSndVol);
 	}
 	else if (!withCF || !m_gameSelected)
-	{
 		m_gameSound.stop();
-	}
+
 	LWP_MutexUnlock(m_gameSndMutex);
 	if (withCF && m_gameSoundThread == 0)
 		m_cf.startPicLoader();

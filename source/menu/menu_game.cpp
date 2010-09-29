@@ -270,13 +270,12 @@ void CMenu::_game(bool launch)
 	if (!launch)
 	{
 		SetupInput();
-		_waitForGameSoundExtract();
+		//_waitForGameSoundExtract();
 		_playGameSound();
 		_showGame();
 	}
 	
 	bool startGameSound = false;
-
 	while (true)
 	{
 		string id(m_cf.getId());
@@ -439,7 +438,7 @@ void CMenu::_game(bool launch)
 		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 			if (BTN_UP_REPEAT || RIGHT_STICK_UP)
 			{
-				m_gameSound.stop();				
+				m_gameSound.stop();
 				m_cf.up();
 				startGameSound = true;
 				_showGame();
@@ -465,12 +464,12 @@ void CMenu::_game(bool launch)
 				startGameSound = true;
 				_showGame();
 			}
-			else if (!(BTN_LEFT_PRESSED || BTN_RIGHT_PRESSED || BTN_DOWN_PRESSED || BTN_UP_PRESSED) && startGameSound)
-			{
+		if (!(BTN_LEFT_PRESSED || BTN_RIGHT_PRESSED || BTN_DOWN_PRESSED || BTN_UP_PRESSED) && startGameSound)
+		{
 				startGameSound = false;
-				_waitForGameSoundExtract();
+				//_waitForGameSoundExtract();
 				_playGameSound();
-			}
+		}
 		if (m_show_zone_game)
 		{
 			b = m_gcfg1.getBool("FAVORITES", id, false);

@@ -295,7 +295,7 @@ bool CMenu::_isNetworkAvailable()
 	u8 *buf = ISFS_GetFile((u8 *) "/shared2/sys/net/02/config.dat", &size, -1);
 	if (buf && size > 4)
 	{
-		retval = buf[4] == 1; // There is a valid connection defined.
+		retval = buf[4] > 0; // There is a valid connection defined.
 		free(buf);
 	}
 	return retval;

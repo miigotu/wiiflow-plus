@@ -108,7 +108,7 @@ void CVideo::init(void)
 	u32 type = CONF_GetVideo();
 
 	if (m_wide)
-		m_rmode->viWidth = 720;
+		m_rmode->viWidth = 700;
 	else
 		m_rmode->viWidth = 672;
 
