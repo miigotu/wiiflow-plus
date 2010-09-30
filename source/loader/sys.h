@@ -23,6 +23,10 @@ s32  Sys_GetCerts(signed_blob **, u32 *);
 #define IOS_TYPE_HERMES 2
 #define IOS_TYPE_KWIIRK 3
 
+#define HBC_108		0x00010001af1bf516ULL
+#define HBC_JODI	0x0001000148415858ULL
+#define HBC_HAXX	0x000100014a4f4449ULL
+
 int get_ios_type();
 int is_ios_type(int type);
 bool shadow_mload();

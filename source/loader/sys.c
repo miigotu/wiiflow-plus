@@ -83,9 +83,9 @@ void Sys_Exit(int ret)
 
 	if (return_to_menu || return_to_priiloader)
 		Sys_LoadMenu();
-	else if(WII_LaunchTitle(0x00010001af1bf516ULL)<0)//HBC 1.0.8
-			if(WII_LaunchTitle(0x0001000148415858ULL)<0)//HAXX
-				if(WII_LaunchTitle(0x000100014a4f4449ULL)<0)//JODI
+	else if(WII_LaunchTitle(HBC_108)<0)
+			if(WII_LaunchTitle(HBC_HAXX)<0)
+				if(WII_LaunchTitle(HBC_JODI)<0)
 					SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 }
 

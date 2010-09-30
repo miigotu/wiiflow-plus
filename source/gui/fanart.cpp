@@ -32,7 +32,7 @@ bool CFanart::load(Config &m_globalConfig, const char *path, const char *id)
 {
 	bool retval = false;
 
-	if (!m_cfg.getBool("FANART", "enable_fanart", true))
+	if (!m_globalConfig.getBool("FANART", "enable_fanart", true))
 		return retval;
 	
 	unload();

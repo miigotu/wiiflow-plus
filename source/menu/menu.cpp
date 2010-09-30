@@ -894,20 +894,24 @@ void CMenu::_initCF(void)
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
 	for (u32 i = 0; i < m_gameList.size(); ++i)
 	{
-		id = string((const char *)m_gameList[i].hdr.id, m_gameList[i].hdr.id[5] == 0 ? strlen((const char *) m_gameList[i].hdr.id) : sizeof m_gameList[0].hdr.id);
 		chantitle = m_gameList[i].hdr.chantitle;
-		test_id = (m_current_view == COVERFLOW_CHANNEL && chantitle == 281482209522966ULL) ? "JODI" : id;
+		if (m_current_view == COVERFLOW_CHANNEL && chantitle == HBC_108)
+		{
+			strncpy((char *) m_gameList[i].hdr.id, "JODI", 6);
+//			m_gameList[i].hdr.id = "JODI";
+		}
+		id = string((const char *)m_gameList[i].hdr.id, m_gameList[i].hdr.id[5] == 0 ? strlen((const char *) m_gameList[i].hdr.id) : sizeof m_gameList[0].hdr.id);
 		
-		if ((!m_favorites || m_gcfg1.getBool("FAVORITES", test_id, false)) && (!m_locked || !m_gcfg1.getBool("ADULTONLY", test_id, false)) && !m_gcfg1.getBool("HIDDEN", test_id, false))
+		if ((!m_favorites || m_gcfg1.getBool("FAVORITES", id, false)) && (!m_locked || !m_gcfg1.getBool("ADULTONLY", id, false)) && !m_gcfg1.getBool("HIDDEN", id, false))
 		{
 			if (m_category != 0)
 			{
-				const char *categories = m_cat.getString("CATEGORIES", test_id, "").c_str();
+				const char *categories = m_cat.getString("CATEGORIES", id, "").c_str();
 				if (strlen(categories) != 12 || categories[m_category] == '0') { // 12 categories max!
 					continue;
 				}
 			}
-			wstringEx w(titles.getWString("TITLES", test_id));
+			wstringEx w(titles.getWString("TITLES", id));
 			if (w.empty())
 			{
 				if (m_current_view == COVERFLOW_CHANNEL) // Required, since Channel titles are already in wchar_t
@@ -919,15 +923,15 @@ void CMenu::_initCF(void)
 				else
 					w = titles.getWString("TITLES", id.substr(0, 4), string(m_gameList[i].hdr.title, sizeof m_gameList[0].hdr.title));
 			}
-			int playcount = m_gcfg1.getInt("PLAYCOUNT", test_id, 0);
-			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", test_id, 0);
+			int playcount = m_gcfg1.getInt("PLAYCOUNT", id, 0);
+			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
 
 			if (m_current_view == COVERFLOW_CHANNEL && m_gamelistdump)
 				m_dump.setWString("CHANNELS", id.substr(0, 4), w);
 			else if (m_current_view == COVERFLOW_USB && m_gamelistdump)
 				m_dump.setWString("GAMES", id, w);
 
-			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), test_id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), test_id.c_str()).c_str(), playcount, lastPlayed);
+			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
 		}
 	}
 	m_gcfg1.unload();
