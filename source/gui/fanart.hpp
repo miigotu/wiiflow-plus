@@ -63,20 +63,25 @@ public:
 	~CFanart(void);
 	
 	void unload();
-	bool load(const char *path, const char *id);
+	bool load(Config &m_globalConfig, const char *path, const char *id);
 	bool isAnimationComplete();
 	bool isLoaded();
 	
 	void getBackground(STexture &hq, STexture &lq);
 	CColor getTextColor(CColor themeTxtColor = CColor(0xFFFFFFFF));
-	bool hideCover(int global_hide_cover, int global_show_after_animation);
-	void draw(bool allow_front, bool front = true);
+	bool hideCover();
+	void draw(bool front = true);
 	void tick();
 
 private:
 	std::vector<CFanartElement> m_elms;
 
 	bool m_animationComplete;
+	u16 m_delayAfterAnimation;
+	u8 m_globalHideCover;
+	u8 m_globalShowCoverAfterAnimation;
+	u16 m_defaultDelay;
+    bool m_allowArtworkOnTop;
 	bool m_loaded;
 	Config m_cfg;
 

@@ -3,7 +3,7 @@
 #define __MENU_HPP
 
 #define APP_NAME		"WiiFlow"
-#define APP_VERSION		"2.1"
+#define APP_VERSION		"2.2"
 
 #include <wiiuse/wpad.h>
 #include <ogc/pad.h>
@@ -533,9 +533,6 @@ private:
 	
 	u32 m_current_view;
 	u32 m_loaded_ios_base;
-	int m_show_cover_after_animation;
-	int m_hidecover;
-	bool m_allow_fanart_on_top;
 	u32 m_locDol;
 private:
 	enum WBFS_OP { WO_ADD_GAME, WO_REMOVE_GAME, WO_FORMAT };

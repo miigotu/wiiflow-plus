@@ -915,31 +915,42 @@ void CButtonsMgr::draw(void)
 	GX_SetAlphaUpdate(GX_TRUE);
 	GX_SetCullMode(GX_CULL_NONE);
 	GX_SetZMode(GX_DISABLE, GX_LEQUAL, GX_TRUE);
-	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-		for (u32 i = 0; i < m_elts.size(); ++i)
+	
+	for (u32 i = 0; i < m_elts.size(); ++i)
+	{
+		switch (m_elts[i]->t)
 		{
-			switch (m_elts[i]->t)
+			case CButtonsMgr::GUIELT_BUTTON:
 			{
-				case CButtonsMgr::GUIELT_BUTTON:
+				CButtonsMgr::SButton &b = (CButtonsMgr::SButton &)*m_elts[i];
+				
+				bool drawSelected = false;
+				for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 				{
-					CButtonsMgr::SButton &b = (CButtonsMgr::SButton &)*m_elts[i];
-					CButtonsMgr::_drawBtn(b, i == m_selected[chan], false);
-					if (b.click > 0.f)
-						CButtonsMgr::_drawBtn(b, true, true);
-					break;
+					if (i == m_selected[chan])
+					{
+						drawSelected = true;
+						break;
+					}
 				}
-				case CButtonsMgr::GUIELT_LABEL:
-				{
-					CButtonsMgr::SLabel &b = (CButtonsMgr::SLabel &)*m_elts[i];
-					CButtonsMgr::_drawLbl(b);
-					break;
-				}
-				case CButtonsMgr::GUIELT_PROGRESS:
-				{
-					CButtonsMgr::SProgressBar &b = (CButtonsMgr::SProgressBar &)*m_elts[i];
-					CButtonsMgr::_drawPBar(b);
-					break;
-				}
+
+				CButtonsMgr::_drawBtn(b, drawSelected, false);
+				if (b.click > 0.f)
+					CButtonsMgr::_drawBtn(b, true, true);
+				break;
+			}
+			case CButtonsMgr::GUIELT_LABEL:
+			{
+				CButtonsMgr::SLabel &b = (CButtonsMgr::SLabel &)*m_elts[i];
+				CButtonsMgr::_drawLbl(b);
+				break;
+			}
+			case CButtonsMgr::GUIELT_PROGRESS:
+			{
+				CButtonsMgr::SProgressBar &b = (CButtonsMgr::SProgressBar &)*m_elts[i];
+				CButtonsMgr::_drawPBar(b);
+				break;
 			}
 		}
+	}
 }

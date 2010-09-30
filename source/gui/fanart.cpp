@@ -28,11 +28,15 @@ void CFanart::unload()
 	m_elms.clear();
 }
 
-bool CFanart::load(const char *path, const char *id)
+bool CFanart::load(Config &m_globalConfig, const char *path, const char *id)
 {
 	bool retval = false;
-	unload();
+
+	if (!m_cfg.getBool("FANART", "enable_fanart", true))
+		return retval;
 	
+	unload();
+
 	const char *dir = fmt("%s/%s", path, id);
 	STexture fanBg, fanBgLq;
 	
@@ -63,7 +67,12 @@ bool CFanart::load(const char *path, const char *id)
 		
 		m_loaded = true;
 		retval = true;
-	}
+        m_defaultDelay = m_globalConfig.getInt("FANART", "delay_after_animation", 200);
+        m_delayAfterAnimation = m_cfg.getInt("GENERAL", "delay_after_animation", m_defaultDelay);
+        m_allowArtworkOnTop = m_globalConfig.getBool("FANART", "allow_artwork_on_top", true);
+	    m_globalHideCover = m_globalConfig.getOptBool("FANART", "hidecover", 2); // 0 is false, 1 is true, 2 is default
+	    m_globalShowCoverAfterAnimation = m_globalConfig.getOptBool("FANART", "show_cover_after_animation", 2);
+   	}
 	
 	m_bg = fanBg;
 	m_bglq = fanBgLq;
@@ -85,35 +94,40 @@ CColor CFanart::getTextColor(CColor themeTxtColor)
 	return m_loaded ? m_cfg.getColor("GENERAL", "textcolor", CColor(themeTxtColor)) : themeTxtColor;
 }
 
-bool CFanart::hideCover(int global_hide_cover, int global_show_after_animation)
+bool CFanart::hideCover()
 {
 	if (!isLoaded())
 		return false; // If no fanart is loaded, return false
+/*
 
-	if (global_hide_cover != 2)
-		return global_hide_cover == 1; // If hidecover = no, return false, if hidecover = yes, return true
+fanart_hidecover defaults to True
+fanart_showafter defaults to False
 
-	// If globally show after animation is set to false
-	//  then don't hide the cover
-	if (global_show_after_animation == 0)
-		return false;					  
-
-	bool retval = m_cfg.getBool("GENERAL", "hidecover", false);
-		
-	// If the animation is still running
-	// hiding the cover depends on global_show_after_animation
-	if (!isAnimationComplete()) 
-	{			
-		// If global show after animation is set, return false (since the animation is still running)
-		// If fanart show_cover_after_animation is set, return false
-		if (global_show_after_animation == 1 || m_cfg.getBool("GENERAL", "show_cover_after_animation", false))
-		{
-			return true;
-		}
-	}
-	
-	// If all previous checks fail, then show the cover
-	return retval;
+ hideCover | fanart_hideCover | showAfter | fanart_showAfter | animating | hide
+1   True              *             *              *               *       True
+2   False             *             *              *               *       False
+3  default          False           *              *               *       False
+4  default      default/True      True             *             True      True 
+5  default      default/True      True             *             False     False
+6  default      default/True      False            *               *       True
+7  default      default/True     default          True           True      True
+8  default      default/True     default          True           False     False
+9    *                *               *            *               *       True   
+*/
+    // rules 1 and 2
+	if (m_globalHideCover != 2)
+		return m_globalHideCover == 1;
+    // rule 3
+    if (!m_cfg.getBool("GENERAL", "hidecover", true))
+        return false;
+    // rules 4, 5 and 6
+    if (m_globalShowCoverAfterAnimation != 2)
+        return m_globalShowCoverAfterAnimation == 0 || !isAnimationComplete();
+    // rules 7 and 8
+    if (m_cfg.getBool("GENERAL", "show_cover_after_animation", false))
+        return !isAnimationComplete();
+    // rule 9
+    return true;
 }
 
 bool CFanart::isLoaded()
@@ -123,7 +137,7 @@ bool CFanart::isLoaded()
 
 bool CFanart::isAnimationComplete()
 {
-	return m_animationComplete;
+	return m_animationComplete && m_delayAfterAnimation <= 0;
 }
 
 void CFanart::tick()
@@ -137,11 +151,13 @@ void CFanart::tick()
 			m_animationComplete = false;
 		}
 	}
+    if (m_animationComplete && m_delayAfterAnimation > 0)
+        m_delayAfterAnimation--;
 }
 
-void CFanart::draw(bool allow_front, bool front)
+void CFanart::draw(bool front)
 {
-	if (!allow_front && front)
+	if (!m_allowArtworkOnTop && front)
 		return;	// It's not allowed to draw fanart on top, it has already been drawn
 
 	GX_SetNumChans(1);
@@ -162,7 +178,7 @@ void CFanart::draw(bool allow_front, bool front)
 	GX_SetZMode(GX_DISABLE, GX_LEQUAL, GX_TRUE);
 	
 	for (u32 i = 0; i < m_elms.size(); ++i)
-		if (!allow_front || ((front && m_elms[i].ShowOnTop()) || !front))
+		if (!m_allowArtworkOnTop || ((front && m_elms[i].ShowOnTop()) || !front))
 			m_elms[i].draw();
 }
 

@@ -247,9 +247,6 @@ void CMenu::init()
 	//if (m_current_view > COVERFLOW_MAX) m_current_view = COVERFLOW_USB;
 	m_current_view = COVERFLOW_USB;
 	m_loaded_ios_base = get_ios_base();
-	m_show_cover_after_animation = m_cfg.getOptBool("FANART", "show_cover_after_animation", 2); // 0 is false, 1 is true, 2 is default
-	m_hidecover = m_cfg.getOptBool("FANART", "hidecover", 2);
-	m_allow_fanart_on_top = m_cfg.getBool("FANART", "allow_artwork_on_top", true);
 	
 	register_card_provider(m_cfg.getString("GAMERCARD", "wiinnertag_url", WIINNERTAG_URL).c_str(),
 						   m_cfg.getString("GAMERCARD", "wiinnertag_key", "").c_str(),
@@ -961,7 +958,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 
 	_updateBg();
 	
-	if (m_fa.hideCover(m_hidecover, m_show_cover_after_animation))
+	if (m_fa.hideCover())
 		m_cf.hideCover();
 	else
 		m_cf.showCover();
@@ -976,7 +973,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 			m_vid.prepareAAPass(i);
 			m_vid.setup2DProjection(false, true);
 			_drawBg();
-			m_fa.draw(m_allow_fanart_on_top, false);
+			m_fa.draw(false);
 			m_cf.draw();
 			m_vid.setup2DProjection(false, true);
 			m_cf.drawEffect();
@@ -991,7 +988,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		m_vid.prepare();
 		m_vid.setup2DProjection();
 		_drawBg();
-		m_fa.draw(m_allow_fanart_on_top, false);
+		m_fa.draw(false);
 		if (withCF)
 		{
 			m_cf.draw();
@@ -1001,7 +998,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		}
 	}
 	
-	m_fa.draw(m_allow_fanart_on_top);
+	m_fa.draw();
 	
 	m_btnMgr.draw();
 	ScanInput();
