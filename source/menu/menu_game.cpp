@@ -270,19 +270,29 @@ void CMenu::_game(bool launch)
 	if (!launch)
 	{
 		SetupInput();
-		//_waitForGameSoundExtract();
 		_playGameSound();
 		_showGame();
 	}
 	
-	bool startGameSound = false;
+	s8 startGameSound = 1;
 	while (true)
 	{
+		if(startGameSound < 1) startGameSound++;
+
 		string id(m_cf.getId());
 		string title(m_cf.getTitle());
 		u64 chantitle = m_cf.getChanTitle();
 
+		if (startGameSound == -5)
+			_playGameSound();
 		_mainLoopCommon(true);
+
+		if (startGameSound == 0)
+		{
+			_showGame();
+			startGameSound = 1;
+		}
+
 		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
 		{
 			m_gameSound.stop();
@@ -436,39 +446,30 @@ void CMenu::_game(bool launch)
 					m_cf.flip();
 		}
 		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-			if (BTN_UP_REPEAT || RIGHT_STICK_UP)
+			if ((BTN_UP_REPEAT || RIGHT_STICK_UP) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -5))
 			{
-				m_gameSound.stop();
 				m_cf.up();
-				startGameSound = true;
-				_showGame();
+				startGameSound = -10;
 			}
-			else if (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
+			else if ((BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT) && m_gameSoundThread == 0 &&  (startGameSound == 1 || startGameSound < -5))
 			{
-				m_gameSound.stop();
 				m_cf.right();
-				startGameSound = true;
-				_showGame();
+				startGameSound = -10;
 			}
-			else if (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN)
+			else if ((BTN_DOWN_REPEAT || RIGHT_STICK_DOWN) && m_gameSoundThread == 0 &&  (startGameSound == 1 || startGameSound < -5))
 			{
-				m_gameSound.stop();
 				m_cf.down();
-				startGameSound = true;
-				_showGame();
+				startGameSound = -10;
 			}
-			else if (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
+			else if ((BTN_LEFT_REPEAT || RIGHT_STICK_LEFT) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -5))
 			{
-				m_gameSound.stop();
 				m_cf.left();
-				startGameSound = true;
-				_showGame();
+				startGameSound = -10;
 			}
-		if (!(BTN_LEFT_PRESSED || BTN_RIGHT_PRESSED || BTN_DOWN_PRESSED || BTN_UP_PRESSED) && startGameSound)
+		if (startGameSound == -10)
 		{
-				startGameSound = false;
-				//_waitForGameSoundExtract();
-				_playGameSound();
+			m_gameSound.stop();
+			m_gameSelected = false; //Dont copy the tmp sound to main game sound thread.
 		}
 		if (m_show_zone_game)
 		{

@@ -1018,8 +1018,9 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		}
 		Sys_Test();
 	}
+
 	LWP_MutexLock(m_gameSndMutex);
-	if (withCF && m_gameSelected && !!m_gameSoundTmp.data)
+	if (withCF && m_gameSelected && !!m_gameSoundTmp.data && m_gameSoundThread == 0)
 	{
 		m_gameSound.stop();
 		m_gameSound = m_gameSoundTmp;
@@ -1028,8 +1029,8 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	}
 	else if (!withCF || !m_gameSelected)
 		m_gameSound.stop();
-
 	LWP_MutexUnlock(m_gameSndMutex);
+
 	if (withCF && m_gameSoundThread == 0)
 		m_cf.startPicLoader();
 	if (!m_video_playing)
