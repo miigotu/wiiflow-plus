@@ -206,7 +206,6 @@ void CMenu::_hideGame(bool instant)
 
 void CMenu::_showGame(void)
 {
-	m_gameSelected = true;
 	m_cf.showCover();
 	
 	if (m_fa.load(m_cfg, m_fanartDir.c_str(), m_cf.getId().c_str()))
@@ -272,6 +271,7 @@ void CMenu::_game(bool launch)
 		SetupInput();
 		_playGameSound();
 		_showGame();
+		m_gameSelected = true;
 	}
 	
 	s8 startGameSound = 1;
@@ -284,12 +284,15 @@ void CMenu::_game(bool launch)
 		u64 chantitle = m_cf.getChanTitle();
 
 		if (startGameSound == -5)
+		{
 			_playGameSound();
+			_showGame();
+		}
 		_mainLoopCommon(true);
 
 		if (startGameSound == 0)
 		{
-			_showGame();
+			m_gameSelected = true;
 			startGameSound = 1;
 		}
 
@@ -446,22 +449,22 @@ void CMenu::_game(bool launch)
 					m_cf.flip();
 		}
 		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-			if ((BTN_UP_REPEAT || RIGHT_STICK_UP) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -5))
+			if ((BTN_UP_REPEAT || RIGHT_STICK_UP) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -4))
 			{
 				m_cf.up();
 				startGameSound = -10;
 			}
-			else if ((BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT) && m_gameSoundThread == 0 &&  (startGameSound == 1 || startGameSound < -5))
+			else if ((BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -4))
 			{
 				m_cf.right();
 				startGameSound = -10;
 			}
-			else if ((BTN_DOWN_REPEAT || RIGHT_STICK_DOWN) && m_gameSoundThread == 0 &&  (startGameSound == 1 || startGameSound < -5))
+			else if ((BTN_DOWN_REPEAT || RIGHT_STICK_DOWN) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -4))
 			{
 				m_cf.down();
 				startGameSound = -10;
 			}
-			else if ((BTN_LEFT_REPEAT || RIGHT_STICK_LEFT) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -5))
+			else if ((BTN_LEFT_REPEAT || RIGHT_STICK_LEFT) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -4))
 			{
 				m_cf.left();
 				startGameSound = -10;
@@ -469,9 +472,9 @@ void CMenu::_game(bool launch)
 		if (startGameSound == -10)
 		{
 			m_gameSound.stop();
-			m_gameSelected = false; //Dont copy the tmp sound to main game sound thread.
+			m_gameSelected = false;
 		}
-		if (m_show_zone_game)
+		if (m_show_zone_game && m_gameSelected == true)
 		{
 			b = m_gcfg1.getBool("FAVORITES", id, false);
 			m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);

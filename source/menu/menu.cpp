@@ -880,8 +880,11 @@ void CMenu::_initCF(void)
 	string id, test_id;
 	bool cmpr;
 	Config titles;
+	Config custom_titles;
 	u64 chantitle;
 	m_titles_loaded = false;
+	bool custom_titles_loaded = false;
+	
 	if (m_current_view == COVERFLOW_USB) m_gamelistdump = m_cfg.getBool("GENERAL", "dump_gamelist", true);
 	else if (m_current_view == COVERFLOW_CHANNEL) m_gamelistdump = m_cfg.getBool("GENERAL", "dump_chanlist", true);
 	if (m_gamelistdump)
@@ -889,6 +892,8 @@ void CMenu::_initCF(void)
 
 	if (titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str()))
 		m_titles_loaded = true;
+	if (custom_titles.load(sfmt("%s/custom_titles.ini", m_settingsDir.c_str()).c_str()))
+		custom_titles_loaded = true;
 	m_cf.clear();
 	m_cf.reserve(m_gameList.size());
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
@@ -911,7 +916,16 @@ void CMenu::_initCF(void)
 					continue;
 				}
 			}
-			wstringEx w(titles.getWString("TITLES", id));
+			wstringEx w;
+			if (custom_titles_loaded)
+			{
+				w = custom_titles.getWString("TITLES", id);
+				if (w.empty())
+					w = titles.getWString("TITLES", id);
+			}
+			else 
+				w = titles.getWString("TITLES", id);
+
 			if (w.empty())
 			{
 				if (m_current_view == COVERFLOW_CHANNEL) // Required, since Channel titles are already in wchar_t
@@ -921,7 +935,7 @@ void CMenu::_initCF(void)
 					w = titles.getWString("TITLES", id.substr(0, 4), channelname);
 				}
 				else
-					w = titles.getWString("TITLES", id.substr(0, 4), string(m_gameList[i].hdr.title, sizeof m_gameList[0].hdr.title));
+					w = titles.getWString("TITLES", id.substr(0, 6), string(m_gameList[i].hdr.title, sizeof m_gameList[0].hdr.title));
 			}
 			int playcount = m_gcfg1.getInt("PLAYCOUNT", id, 0);
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
