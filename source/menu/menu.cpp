@@ -916,15 +916,7 @@ void CMenu::_initCF(void)
 					continue;
 				}
 			}
-			wstringEx w;
-			if (custom_titles_loaded)
-			{
-				w = custom_titles.getWString("TITLES", id);
-				if (w.empty())
-					w = titles.getWString("TITLES", id);
-			}
-			else 
-				w = titles.getWString("TITLES", id);
+			wstringEx w= custom_titles.getWString("TITLES", id, titles.getWString("TITLES", id));
 
 			if (w.empty())
 			{
@@ -945,7 +937,8 @@ void CMenu::_initCF(void)
 			else if (m_current_view == COVERFLOW_USB && m_gamelistdump)
 				m_dump.setWString("GAMES", id, w);
 
-			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
+			CColor cover = custom_titles.getColor("COVERS", id, titles.getColor("COVERS", id, CColor(0xFFFFFF)));
+			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), cover, playcount, lastPlayed);
 		}
 	}
 	m_gcfg1.unload();
@@ -1368,8 +1361,11 @@ void CMenu::_searchMusic(void)
 		return;
 		
 	if (m_cfg.getBool("GENERAL", "randomize_music", true))
+	{
+		srand(unsigned(time(NULL)));
 		random_shuffle(music_files.begin(), music_files.end());
-		
+	}
+	
 	current_music = music_files.begin();
 }
 

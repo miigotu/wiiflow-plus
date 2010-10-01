@@ -26,33 +26,20 @@ extern int mainIOSRev;
 CMenu *mainMenu;
 extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
 
-void parse_ios_arg(char *arg, int *ios, int *min_rev)
+void parse_ios_arg(int arg, int *ios, int *min_rev)
 {
-	if(strcasestr(arg, "ios=249") != 0)
+	*ios = arg;
+	gprintf("Passed IOS: %i\n", *ios);
+	switch (arg)
 	{
-		*ios = 249;
-		*min_rev = IOS_249_MIN_REV;
+		case 222: *min_rev = IOS_222_MIN_REV; break;
+		case 223: *min_rev = IOS_223_MIN_REV; break;
+		case 224: *min_rev = IOS_224_MIN_REV; break;
+		case 249: *min_rev = IOS_249_MIN_REV; break;
+		case 250: *min_rev = IOS_250_MIN_REV; break;
+		default:  *min_rev = IOS_ODD_MIN_REV; break;
 	}
-	else if(strcasestr(arg, "ios=250") != 0)
-	{
-		*ios = 250;
-		*min_rev = IOS_250_MIN_REV;
-	}
-	else if(strcasestr(arg, "ios=222-mload") != 0)
-	{
-		*ios = 222;
-		*min_rev = IOS_222_MIN_REV;
-	}
-	else if(strcasestr(arg, "ios=223-mload") != 0)
-	{
-		*ios = 223;
-		*min_rev = IOS_223_MIN_REV;
-	}
-	else if(strcasestr(arg, "ios=224-mload") != 0)
-	{
-		*ios = 224;
-		*min_rev = IOS_224_MIN_REV;
-	}
+	gprintf("Passed IOS Minimum Rev: %i\n", *min_rev);
 }
 
 int old_main(int argc, char **argv)
@@ -71,9 +58,13 @@ int old_main(int argc, char **argv)
 	
 	for (int i = 0; i < argc; i++)
 	{
-		if (argv[i] != NULL && strcasestr(argv[i], "ios=") != 0)
+		if (argv[i] != NULL && strcasestr(argv[i], "ios=") != NULL)
 		{
-			parse_ios_arg(argv[i], &mainIOS, &mainIOSminRev);
+			//atoi returns 0 if the first byte is not numeric or whitespace, so move the pointer to the first digit.
+			while(!isdigit(argv[i][0])) argv[i]++;
+			//Dont allow ios reload attempts to slots the wii doesnt have
+			if (atoi(argv[i]) < 254 && atoi(argv[i]) > 0)
+				parse_ios_arg(atoi(argv[i]), &mainIOS, &mainIOSminRev);
 		}
 		else if (strlen(argv[i]) == 6)
 		{

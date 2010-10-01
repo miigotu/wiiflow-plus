@@ -473,8 +473,11 @@ void CMenu::_game(bool launch)
 		{
 			m_gameSound.stop();
 			m_gameSelected = false;
+			m_fa.unload();
+			_setBg(m_mainBg, m_mainBgLQ);
+			
 		}
-		if (m_show_zone_game && m_gameSelected == true)
+		if (m_show_zone_game)
 		{
 			b = m_gcfg1.getBool("FAVORITES", id, false);
 			m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
@@ -500,11 +503,17 @@ void CMenu::_game(bool launch)
 					m_btnMgr.show(m_gameBtnDelete);
 					m_btnMgr.show(m_gameBtnSettings);
 				}
-				if (wdm_count > 1)
+				if (wdm_count > 1 && m_gameSelected == true)
 				{
 					m_btnMgr.show(m_gameLblWdm);
 					m_btnMgr.show(m_gameBtnWdmM);
 					m_btnMgr.show(m_gameBtnWdmP);
+				}
+				else
+				{
+					m_btnMgr.hide(m_gameLblWdm, true);
+					m_btnMgr.hide(m_gameBtnWdmM, true);
+					m_btnMgr.hide(m_gameBtnWdmP, true);
 				}
 			}
 		}
@@ -540,13 +549,9 @@ static u32 stringcompare(const string &s1, const string &s2)
 	while (true)
 	{
 		if (s1[index] == 0 || s2[index] == 0)
-		{
 				return 0;
-		}
 		if (s1[index] != '?' && s2[index] != '?' && toupper((u8)s1[index]) != toupper((u8)s2[index]))
-		{
 				return -1;
-		}
 		index++;
 	}
 }
@@ -852,7 +857,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
 
 	// Reload IOS, if requested
-	if (iosNum != mainIOS || !_networkFix())
+	if ((iosNum != mainIOS && iosNum != 0) || !_networkFix())
 	{
 		gprintf("Reloading IOS into %d\n", iosNum);
 		if (!loadIOS(iosNum, true))
@@ -863,13 +868,29 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		iosLoaded = true;
 	}
 	bool mload = is_ios_type(IOS_TYPE_HERMES);
-	int minIOSRev = mload ? IOS_222_MIN_REV : IOS_249_MIN_REV;
+	int minIOSRev = 0;
+	switch (IOS_GetVersion())
+	{
+		case 222: minIOSRev = IOS_222_MIN_REV; break;
+		case 223: minIOSRev = IOS_223_MIN_REV; break;
+		case 224: minIOSRev = IOS_224_MIN_REV; break;
+		case 249: minIOSRev = IOS_249_MIN_REV; break;
+		case 250: minIOSRev = IOS_250_MIN_REV; break;
+		default:  minIOSRev = IOS_ODD_MIN_REV; break;
+	}
+
 	COVER_clear();
-	if (IOS_GetRevision() < minIOSRev)
+	if (IOS_GetRevision() < minIOSRev && minIOSRev != 0)
 	{
 		error(sfmt("IOS %i rev %i or higher is required.\nPlease install the latest version.", iosNum, minIOSRev));
 		Sys_LoadMenu();
 	}
+	else if (minIOSRev == 0)
+	{
+		error(sfmt("IOS %i is not supported.\nPlease install a supported version.", iosNum));
+		Sys_LoadMenu();
+	}
+
 	bool blockIOSReload = m_gcfg2.getBool((const char *) hdr->hdr.id, "block_ios_reload", false);
 	if (mload && blockIOSReload)
 		disableIOSReload();
@@ -1001,6 +1022,7 @@ void CMenu::_initGameMenu(CMenu::SThemeData &theme)
 	m_gameButtonsZone.y = m_theme.getInt("GAME/ZONES", "buttons_y", 0);
 	m_gameButtonsZone.w = m_theme.getInt("GAME/ZONES", "buttons_w", 640);
 	m_gameButtonsZone.h = m_theme.getInt("GAME/ZONES", "buttons_h", 480);
+	m_gameButtonsZone.hide = m_theme.getBool("GAME/ZONES", "buttons_hide", true);
 
 	// 
 	_setHideAnim(m_gameBtnPlay, "GAME/PLAY_BTN", 200, 0, 1.f, 0.f);

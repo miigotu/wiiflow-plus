@@ -26,7 +26,7 @@ FILE *idx;
 int amount_of_games;
 void *game_idx = NULL;
 
-bool (*callback)(void *, float) = NULL;
+bool (*callback)(void *, float, void *) = NULL;
 void *userdata = NULL;
 f32 progress_step;
 
@@ -552,7 +552,7 @@ int OpenDbFiles(const char *xmlfilepath, bool writing)
 	return (db != NULL && idx != NULL) ? 1 : 0;
 }
 
-void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, int forcejptoen)
+u8 LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, int forcejptoen)
 {
 	int n = 0;
 	char * start;
@@ -572,11 +572,11 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 	// First find the amount of games
 	start = strstr(xmlData, "<WiiTDB");
 	if (start == NULL) {
-		return;
+		return 0;
 	}
 	end = strstr(start, "/>");
 	if (end == NULL) { 
-		return;
+		return 0;
 	}
 	tmp = strndup(start, end-start);
 	
@@ -594,11 +594,6 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 	
 	amount_of_games = atoi(games);
 	progress_step = 1.f / amount_of_games;
-
-	char titlespath[200];
-	sprintf(titlespath, "%s/titles.new", xmlfilepath);
-	FILE *titles = fopen(titlespath, "w");
-	fwrite("[TITLES]\n", 9, 1, titles);
 
 	bool abort = false;
 	while (!abort) {
@@ -667,26 +662,17 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 		// Write game id to idx file
 		fwrite(gameinfo.id, 6, 1, idx);
 		fwrite(&gameinfo, sizeof(struct gameXMLinfo), 1, db);
-		
-		fwrite(gameinfo.id, strlen(gameinfo.id), 1, titles);
-		fwrite("=", 1, 1, titles);
-		fwrite(gameinfo.title, strlen(gameinfo.title), 1, titles);
-		fwrite("\n", 1, 1, titles);
 
 		n++;
 		if (callback != NULL)
 		{
-			abort = !callback(userdata, n * progress_step);
+			abort = !callback(userdata, n * progress_step, &gameinfo);
 		}
 	}
 
 	fflush(idx);
 	fflush(db);
 
-	fclose(titles);
-	titles = NULL;
-	
-	char pathname[200];
 	if (abort && n != amount_of_games)
 	{
 		// Delete intermediate files, if the files are not complete
@@ -702,16 +688,11 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 		sprintf(pathname, "%s/wiitdb.idx", xmlfilepath);
 		remove(pathname);
 		
-		remove(titlespath);
-	}
-	else
-	{
-		sprintf(pathname, "%s/titles.ini", xmlfilepath);
-		// Move titles.new to titles.ini
-		rename(titlespath, pathname);
+		return 0;
 	}
 	
 	OpenDbFiles(xmlfilepath, false);
+	return 1;
 }
 
 /* load renamed titles from proper names and game info XML, needs to be after cfg_load_games */
@@ -774,7 +755,7 @@ bool LoadGameInfoFromXML(char * gameid)
 	return 0;
 }
 
-u8 rebuild_database(const char *xmlfilepath, char *argdblang, bool argJPtoEN, bool (*f)(void *, float), void *ud)
+u8 rebuild_database(const char *xmlfilepath, char *argdblang, bool argJPtoEN, bool (*f)(void *, float, void*), void *ud)
 {
 	callback = f;
 	userdata = ud;
@@ -791,7 +772,7 @@ u8 rebuild_database(const char *xmlfilepath, char *argdblang, bool argJPtoEN, bo
 			return 1;
 		}
 	}
-	LoadTitlesFromXML(xmlfilepath, xmlData, argdblang, argJPtoEN);
+	u8 retval = LoadTitlesFromXML(xmlfilepath, xmlData, argdblang, argJPtoEN);
 	free(xmlData);
 	xmlData = NULL;
 
@@ -800,7 +781,7 @@ u8 rebuild_database(const char *xmlfilepath, char *argdblang, bool argJPtoEN, bo
 	callback = NULL;
 	userdata = NULL;
 	
-	return 0;
+	return retval;
 }
 
 u8 wiitdb_requires_update(const char *xmlfilepath)

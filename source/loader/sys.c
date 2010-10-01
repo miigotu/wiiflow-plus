@@ -207,14 +207,13 @@ int get_ios_type()
 		case 223:
 			if (IOS_GetRevision() == 1)
 				return IOS_TYPE_KWIIRK;
-			else
+			else 
 				return IOS_TYPE_HERMES;
 		case 224:
 			return IOS_TYPE_HERMES;
 		default:
 			return IOS_TYPE_WANIN;	
 	}
-	return IOS_TYPE_UNK;
 }
 
 int is_ios_type(int type)

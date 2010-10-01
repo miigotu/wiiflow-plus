@@ -43,6 +43,7 @@ private:
 		int y;
 		int w;
 		int h;
+		bool hide;
 	};
 	CVideo &m_vid;
 	CCursor m_cursor[WPAD_MAX_WIIMOTES];
@@ -746,6 +747,7 @@ private:
 	static bool _downloadProgress(void *obj, int size, int position);
 	static int _wiitdbDownloader(CMenu *m);
 	int _wiitdbDownloaderAsync();
+
 	int _titleDownloader(bool missingOnly);
 	static int _titleDownloaderAll(CMenu *m);
 	static int _titleDownloaderMissing(CMenu *m);
@@ -771,6 +773,7 @@ private:
 	static u32 _downloadCheatFileAsync(void *obj);
 	static bool _updateProgress(void *obj, float progress);
 	static u32 _updateWiiTDBAsync(void *obj);
+	static bool _updateWiiTDBProgress(void *obj, float progress, void *gameXml);
 	void _updateWiiTDB();
 	// 
 	void _playGameSound(void);

@@ -37,7 +37,7 @@ public:
 	// Cover list management
 	void clear(void);
 	void reserve(u32 capacity);
-	void addItem(dir_discHdr *hdr, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount = 0, unsigned int lastPlayed = 0);
+	void addItem(dir_discHdr *hdr, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, CColor coverColor = CColor(0xFFFFFFFF), int playcount = 0, unsigned int lastPlayed = 0);
 	bool empty(void) const { return m_items.empty(); }
 	// 
 	bool start(const char *id = 0);
@@ -180,13 +180,14 @@ private:
 		std::string picPath;
 		std::string boxPicPath;
 		std::string discPicPath;
+		CColor coverColor;
 		int playcount;
 		unsigned int lastPlayed;
 		STexture texture;
 		volatile bool boxTexture;
 		volatile enum TexState state;
 		// 
-		CItem(dir_discHdr *itemHdr, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed);
+		CItem(dir_discHdr *itemHdr, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, CColor coverColor, int playcount, unsigned int lastPlayed);
 		bool operator<(const CItem &i) const;
 	};
 	struct CCover

@@ -667,18 +667,17 @@ s32 WBFS_Ext_RemoveGame(u8 *discid, char *fpath)
 	if (!dir_iter) return 0;
 	while (dirnext(dir_iter, name, &st) == 0) {
 		if (name[0] == '.') continue;
-		if (name[6] != '_') continue;
+/* 		if (name[6] != '_') continue;
 		if (strncmp(name, (char*)discid, 6) != 0) continue;
 		p = strrchr(name, '.');
 		if (!p) continue;
-		if (strcasecmp(p, ".txt") != 0) continue;
+		if (strcasecmp(p, ".txt") != 0) continue; */
 		snprintf(fname, sizeof(fname), "%s/%s", path, name);
 		remove(fname);
 		break;
 	}
 	dirclose(dir_iter);
 	// remove game subdir
-	remove(path);
 	unlink(path);
 	return 0;
 }

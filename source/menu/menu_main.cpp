@@ -551,22 +551,31 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainPrevZone.y = m_theme.getInt("MAIN/ZONES", "prev_y", -32);
 	m_mainPrevZone.w = m_theme.getInt("MAIN/ZONES", "prev_w", 182);
 	m_mainPrevZone.h = m_theme.getInt("MAIN/ZONES", "prev_h", 382);
+	m_mainPrevZone.hide = m_theme.getBool("MAIN/ZONES", "prev_hide", true);
+	
 	m_mainNextZone.x = m_theme.getInt("MAIN/ZONES", "next_x", 490);
 	m_mainNextZone.y = m_theme.getInt("MAIN/ZONES", "next_y", -32);
 	m_mainNextZone.w = m_theme.getInt("MAIN/ZONES", "next_w", 182);
 	m_mainNextZone.h = m_theme.getInt("MAIN/ZONES", "next_h", 382);
+	m_mainNextZone.hide = m_theme.getBool("MAIN/ZONES", "next_hide", true);
+	
 	m_mainButtonsZone.x = m_theme.getInt("MAIN/ZONES", "buttons_x", -32);
 	m_mainButtonsZone.y = m_theme.getInt("MAIN/ZONES", "buttons_y", 350);
 	m_mainButtonsZone.w = m_theme.getInt("MAIN/ZONES", "buttons_w", 704);
 	m_mainButtonsZone.h = m_theme.getInt("MAIN/ZONES", "buttons_h", 162);
+	m_mainButtonsZone.hide = m_theme.getBool("MAIN/ZONES", "buttons_hide", true);
+
 	m_mainButtonsZone2.x = m_theme.getInt("MAIN/ZONES", "buttons2_x", -32);
 	m_mainButtonsZone2.y = m_theme.getInt("MAIN/ZONES", "buttons2_y", 350);
 	m_mainButtonsZone2.w = m_theme.getInt("MAIN/ZONES", "buttons2_w", 704);
 	m_mainButtonsZone2.h = m_theme.getInt("MAIN/ZONES", "buttons2_h", 162);
+	m_mainButtonsZone2.hide = m_theme.getBool("MAIN/ZONES", "buttons2_hide", true);
+	
 	m_mainButtonsZone3.x = m_theme.getInt("MAIN/ZONES", "buttons3_x", -32);
 	m_mainButtonsZone3.y = m_theme.getInt("MAIN/ZONES", "buttons3_y", 350);
 	m_mainButtonsZone3.w = m_theme.getInt("MAIN/ZONES", "buttons3_w", 704);
 	m_mainButtonsZone3.h = m_theme.getInt("MAIN/ZONES", "buttons3_h", 162);
+	m_mainButtonsZone3.hide = m_theme.getBool("MAIN/ZONES", "buttons3_hide", true);
 	//
 	_setHideAnim(m_mainBtnNext, "MAIN/NEXT_BTN", 0, 0, 0.f, 0.f);
 	_setHideAnim(m_mainBtnPrev, "MAIN/PREV_BTN", 0, 0, 0.f, 0.f);

@@ -47,12 +47,13 @@ CCoverFlow::CCover::CCover(void)
 	targetScale = Vector3D(1.f, 1.f, 1.f);
 }
 
-CCoverFlow::CItem::CItem(dir_discHdr *itemHdr, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed) :
+CCoverFlow::CItem::CItem(dir_discHdr *itemHdr, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, CColor coverColor, int playcount, unsigned int lastPlayed) :
 	hdr(itemHdr),
 	title(itemTitle),
 	chantitle(chantitle),
 	picPath(itemPic),
 	boxPicPath(itemBoxPic),
+	coverColor(coverColor),
 	playcount(playcount),
 	lastPlayed(lastPlayed)
 {
@@ -618,11 +619,11 @@ void CCoverFlow::reserve(u32 capacity)
 	m_items.reserve(capacity);
 }
 
-void CCoverFlow::addItem(dir_discHdr *hdr, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, int playcount, unsigned int lastPlayed)
+void CCoverFlow::addItem(dir_discHdr *hdr, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, CColor coverColor, int playcount, unsigned int lastPlayed)
 {
 	if (!m_covers.empty())
 		return;
-	m_items.push_back(CCoverFlow::CItem(hdr, title, chantitle, picPath, boxPicPath, playcount, lastPlayed));
+	m_items.push_back(CCoverFlow::CItem(hdr, title, chantitle, picPath, boxPicPath, coverColor, playcount, lastPlayed));
 }
 
 // Draws a plane in the Z-Buffer only.
@@ -1306,7 +1307,8 @@ void CCoverFlow::_drawCoverBox(int i, bool mirror, CCoverFlow::DrawMode dm)
 	if (dm == CCoverFlow::CFDR_NORMAL)
 	{ 
 		// set dvd box texture, depending on game
-		if (strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNE01", 6) == 0 || 
+		if (m_items[m_covers[i].index].coverColor == CColor(0xFFFF0000) ||
+			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNE01", 6) == 0 || 
 			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNP01", 6) == 0 || 
 			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNJ01", 6) == 0 ||
 			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNK01", 6) == 0 || 
@@ -1314,7 +1316,8 @@ void CCoverFlow::_drawCoverBox(int i, bool mirror, CCoverFlow::DrawMode dm)
 		{
 			GX_InitTexObj(&texObj, m_dvdSkin_Red.data.get(), m_dvdSkin_Red.width, m_dvdSkin_Red.height, m_dvdSkin_Red.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
 		} 
-		else if (strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "RZZJEL", 6) == 0 || 
+		else if (m_items[m_covers[i].index].coverColor == CColor(0xFF000000) ||
+				 strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "RZZJEL", 6) == 0 || 
 				 strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "RZNJ01", 6) == 0)
 		{
 			GX_InitTexObj(&texObj, m_dvdSkin_Black.data.get(), m_dvdSkin_Black.width, m_dvdSkin_Black.height, m_dvdSkin_Black.format, GX_CLAMP, GX_CLAMP, GX_FALSE);

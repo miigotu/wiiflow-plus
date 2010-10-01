@@ -9,8 +9,19 @@ static const u32 g_repeatDelay = 80;
 
 void CMenu::SetupInput()
 {
-	wii_btnRepeat();
-	gc_btnRepeat();
+	m_wpadLeftDelay = 0;
+	m_wpadUpDelay = 0;
+	m_wpadRightDelay = 0;
+	m_wpadDownDelay = 0;
+	m_wpadADelay = 0;
+	m_wpadBDelay = 0;
+	
+	m_padLeftDelay = 0;
+	m_padUpDelay = 0;
+	m_padRightDelay = 0;
+	m_padDownDelay = 0;
+	m_padADelay = 0;
+	m_padBDelay = 0;
 
 	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
@@ -361,11 +372,16 @@ u32 CMenu::gc_btnRepeat()
 
 void CMenu::ShowZone(SZone zone, bool &showZone)
 {
-	showZone = false;
-	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-		if ((WPadIR_Valid(chan) || m_show_pointer[chan]) && m_cursor[chan].x() >= zone.x && m_cursor[chan].y() >= zone.y
-			&& m_cursor[chan].x() < zone.x + zone.w && m_cursor[chan].y() < zone.y + zone.h)
-			showZone = true;
+	if (zone.hide)
+	{
+		showZone = false;
+		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+			if ((WPadIR_Valid(chan) || m_show_pointer[chan]) && m_cursor[chan].x() >= zone.x && m_cursor[chan].y() >= zone.y
+				&& m_cursor[chan].x() < zone.x + zone.w && m_cursor[chan].y() < zone.y + zone.h)
+				showZone = true;
+	}
+	else
+		showZone = true;
 }
 
 void CMenu::ShowMainZone()

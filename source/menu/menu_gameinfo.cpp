@@ -238,8 +238,6 @@ void CMenu::_showGameInfo(void)
 
 void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 {
-	gprintf("_initGameInfoMenu\n");
-	
 	STexture emptyTex;
 	_addUserLabels(theme, m_gameinfoLblUser, 0, 1, "GAMEINFO");
 	_addUserLabels(theme, m_gameinfoLblUser, 2, 1, "GAMEINFO");
