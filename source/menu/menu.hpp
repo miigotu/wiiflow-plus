@@ -780,7 +780,9 @@ private:
 	void _waitForGameSoundExtract(void);
 	//
 	static int _loadGameSoundThrd(CMenu *m);
-	// 
+	//
+	static void _load_installed_cioses();
+	//
 	struct SOption { const char id[10]; const wchar_t text[16]; };
 	static const string _translations[23];
 	static const SOption _languages[11];
@@ -789,6 +791,7 @@ private:
 	static const SOption _hooktype[8];
 	static const SOption _exitTo[3];
 	static const int _ios[6];
+	static vector<u32> _installed_cios;
 	static int _version[9];
 	static const SCFParamDesc _cfParams[];
 	static const int _nbCfgPages;

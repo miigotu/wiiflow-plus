@@ -247,7 +247,8 @@ void CMenu::init()
 	//if (m_current_view > COVERFLOW_MAX) m_current_view = COVERFLOW_USB;
 	m_current_view = COVERFLOW_USB;
 	m_loaded_ios_base = get_ios_base();
-	
+
+	_load_installed_cioses();	
 	register_card_provider(m_cfg.getString("GAMERCARD", "wiinnertag_url", WIINNERTAG_URL).c_str(),
 						   m_cfg.getString("GAMERCARD", "wiinnertag_key", "").c_str(),
 						   m_cfg.getBool("GAMERCARD", "wiinnertag_enable", false) ? 1 : 0);
@@ -1481,4 +1482,54 @@ bool CMenu::_loadFile(SmartBuf &buffer, u32 &size, const char *path, const char 
 	size = fileSize;
 	
 	return true;
+}
+
+void CMenu::_load_installed_cioses()
+{
+	if (_installed_cios.size() > 0) return;
+	
+	// Do sjizzle
+	u32 count;
+	if (ES_GetNumTitles(&count) > 0)
+	{
+		gprintf("Cannot count...aaaah\n");
+		return;
+	}
+	
+	static u64 title_list[256] ATTRIBUTE_ALIGN(32);
+	if (ES_GetTitles(title_list, count) > 0)
+	{
+		gprintf("Cannot get titles...\n");
+		return;
+	}
+	
+	for (u32 i = 0; i < count; i++)
+	{
+		u32 tmd_size;
+		if (ES_GetStoredTMDSize(title_list[i], &tmd_size) > 0) continue;
+		static u8 tmd_buf[MAX_SIGNED_TMD_SIZE] ATTRIBUTE_ALIGN(32);
+		signed_blob *s_tmd = (signed_blob *) tmd_buf;
+		if (ES_GetStoredTMD(title_list[i], s_tmd, tmd_size) > 0) continue;
+		
+		const tmd *t = (const tmd *) SIGNATURE_PAYLOAD(s_tmd);
+		
+		u32 kind = t->title_id >> 32;
+		
+		if (kind == 1)
+		{
+			u32 title_l = t->title_id & 0xFFFFFFFF;
+			if (title_l == 0 || title_l == 2 || title_l == 0x100 || title_l == 0x101) continue;
+			
+			// We have an ios
+			
+			u32 version = t->title_version;
+			if (tmd_buf[4] == 0 && (version < 100 || version == 0xFFFF)) // Signature is empty
+			{
+				// Probably an cios
+				_installed_cios.push_back(title_l);
+			}
+		}
+	}
+	
+	sort(_installed_cios.begin(), _installed_cios.end());
 }

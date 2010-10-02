@@ -88,17 +88,13 @@ u64* Channels::GetChannelList(u32* count)
 	if (ret || !countall)
 		return NULL;
 
-	u64* titles = (u64*)memalign(32, ALIGN32(countall * sizeof(u64)));
-	if (!titles)
-		return NULL;
-
 	u64* channels = (u64*)malloc(countall * sizeof(u64));
 	if (!channels)
 	{
-		free(titles);
 		return NULL;
 	}
 
+	static u64 titles[256] ATTRIBUTE_ALIGN(32);
 	ret = ES_GetTitles(titles, countall);
 
 	*count = 0;
@@ -115,8 +111,6 @@ u64* Channels::GetChannelList(u32* count)
 			channels[(*count)++] = titles[i];
 		}
 	}
-
-	free(titles);
 
 	return (u64*)realloc(channels, *count * sizeof(u64));
 }

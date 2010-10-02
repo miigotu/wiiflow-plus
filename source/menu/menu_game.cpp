@@ -125,6 +125,8 @@ const CMenu::SOption CMenu::_hooktype[8] = {
 
 const int CMenu::_ios[6] = {0, 249, 250, 222, 223, 224};
 
+vector<u32> CMenu::_installed_cios;
+
 wdm_entry_t *wdm_entry = NULL;
 u32 current_wdm = 0;
 u8 banner_title[84];
@@ -444,9 +446,12 @@ void CMenu::_game(bool launch)
 				wdm_entry = &wdm_entries[current_wdm];
 				m_btnMgr.setText(m_gameLblWdm, wstringEx(wdm_entry->name));
 			}
-			for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-				if (m_cf.mouseOver(m_vid, m_cursor[chan].x(), m_cursor[chan].y()))
-					m_cf.flip();
+			else 
+			{
+				for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+					if (m_cf.mouseOver(m_vid, m_cursor[chan].x(), m_cursor[chan].y()))
+						m_cf.flip();
+			}
 		}
 		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 			if ((BTN_UP_REPEAT || RIGHT_STICK_UP) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -4))
@@ -730,10 +735,21 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	string altdol = m_gcfg2.getString(id, "dol");
 	int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
-	int iosNum = CMenu::_ios[min((u32)m_gcfg2.getInt(id, "ios", 0), ARRAY_SIZE(CMenu::_ios) - 1u)];
-	if (iosNum == 0)
+	
+	int iosIdx = 0;
+	if (m_gcfg2.getInt(id, "ios", &iosIdx) && (u32) iosIdx < ARRAY_SIZE(CMenu::_ios))
+	{
+		// Upgrade to the correct value
+		m_gcfg2.setInt(id, "ios", CMenu::_ios[iosIdx]);
+	}
+	
+	int iosNum = mainIOS;
+	if (m_gcfg2.getInt(id, "ios", &iosNum) &&
+		find(_installed_cios.begin(), _installed_cios.end(), iosNum) == _installed_cios.end())
+	{
 		iosNum = mainIOS;
-
+	}
+	
 	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 1); // hooktype is defined in patchcode.h
 	debuggerselect = m_gcfg2.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
@@ -857,7 +873,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
 
 	// Reload IOS, if requested
-	if ((iosNum != mainIOS && iosNum != 0) || !_networkFix())
+	if ((iosNum != mainIOS) || !_networkFix())
 	{
 		gprintf("Reloading IOS into %d\n", iosNum);
 		if (!loadIOS(iosNum, true))
