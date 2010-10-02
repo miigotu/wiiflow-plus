@@ -43,7 +43,7 @@ int getIndexFromId(char * gameid);
 int getCountPlayers(char * gameid);
 
 u8 wiitdb_requires_update(const char *xmlfilepath);
-u8 rebuild_database(const char *xmlfilepath, char *argdblang, bool argJPtoEN, bool (*f)(void *, float, void *), void *ud);
+u8 rebuild_database(const char *xmlfilepath, char *argdblang, bool argJPtoEN, bool (*f)(void *, float), void *ud);
 
 bool DatabaseLoaded(void);
 int getControllerTypes(char *controller, char * gameid);

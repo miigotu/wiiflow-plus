@@ -773,7 +773,6 @@ private:
 	static u32 _downloadCheatFileAsync(void *obj);
 	static bool _updateProgress(void *obj, float progress);
 	static u32 _updateWiiTDBAsync(void *obj);
-	static bool _updateWiiTDBProgress(void *obj, float progress, void *gameXml);
 	void _updateWiiTDB();
 	// 
 	void _playGameSound(void);

@@ -3,8 +3,6 @@
 #include "xml/xml.h"
 #include "lockMutex.hpp"
 
-Config *titles = NULL;
-
 void CMenu::_hideWiiTDBUpdate(bool instant)
 {
 	m_btnMgr.hide(m_downloadBtnCancel, instant);
@@ -29,24 +27,6 @@ bool CMenu::_updateProgress(void *obj, float progress)
 	return !m->m_thrdStop;
 }
 
-bool CMenu::_updateWiiTDBProgress(void *obj, float progress, void *gameXml)
-{
-	CMenu *m = (CMenu *)obj;
-	LWP_MutexLock(m->m_mutex);
-	m->_setThrdMsg(L"...", progress);
-	
-	gameXMLinfo *xml = (gameXMLinfo *) gameXml;
-	
-	titles->setWString("TITLES", xml->id, wfmt(L"%s", xml->title));
-	if (xml->caseColor != 0xFFFFFF)
-	{
-		titles->setColor("COVERS", xml->id, CColor(xml->caseColor | 0xFF000000));
-	}
-	
-	LWP_MutexUnlock(m->m_mutex);
-	return !m->m_thrdStop;
-}
-
 u32 CMenu::_updateWiiTDBAsync(void *obj)
 {
 	CMenu *m = (CMenu *)obj;
@@ -58,15 +38,7 @@ u32 CMenu::_updateWiiTDBAsync(void *obj)
 	m->_setThrdMsg(m->_t("wtmsg1", L"Creating WiiTDB database..."), 0);
 	LWP_MutexUnlock(m->m_mutex);
 
-	titles = new Config();
-	titles->load(sfmt("%s/titles.ini", m->m_settingsDir.c_str()).c_str());
-
-	if (rebuild_database(m->m_settingsDir.c_str(), (char *) m->m_curLanguage.c_str(), 1, (bool (*)(void *, float, void *)) CMenu::_updateWiiTDBProgress, (void *) m) == 1)
-	{
-		titles->save();
-	}
-	delete titles;
-	titles = NULL;
+	rebuild_database(m->m_settingsDir.c_str(), (char *) m->m_curLanguage.c_str(), 1, (bool (*)(void *, float)) CMenu::_updateProgress, (void *) m);
 	
 	m->m_thrdStop = true;
 	m->m_thrdWorking = false;
