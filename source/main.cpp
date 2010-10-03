@@ -25,6 +25,7 @@ extern int mainIOSRev;
 
 CMenu *mainMenu;
 extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
+extern "C" void HideWaitMessage() {mainMenu->_hideWaitMessage(); }
 
 void parse_ios_arg(int arg, int *ios, int *min_rev)
 {

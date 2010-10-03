@@ -305,13 +305,7 @@ void CMenu::_showCheatSettings(void)
 			// cheat in range?
 			if (((m_cheatSettingsPage-1)*CHEATSPERPAGE + i + 1) <= m_cheatfile.getCnt()) 
 			{
-				//Limit to 70 characters otherwise the Cheatnames overlap
-				char tempcheatname[71];
-				strncpy(tempcheatname, m_cheatfile.getCheatName((m_cheatSettingsPage-1)*CHEATSPERPAGE + i).c_str(),70);
-				tempcheatname[70] = '\0';
-				
-				// cheat avaiable, show elements and text
-				m_btnMgr.setText(m_cheatLblItem[i], wstringEx(tempcheatname));
+				m_btnMgr.setText(m_cheatLblItem[i], wfmt(L"%s", m_cheatfile.getCheatName((m_cheatSettingsPage-1)*CHEATSPERPAGE + i).c_str()));
 				m_btnMgr.setText(m_cheatBtnItem[i], _optBoolToString(m_cheatfile.sCheatSelected[(m_cheatSettingsPage-1)*CHEATSPERPAGE + i]));
 				
 				m_btnMgr.show(m_cheatLblItem[i], true);

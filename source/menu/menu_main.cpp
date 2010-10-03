@@ -63,6 +63,8 @@ void CMenu::_hideMain(bool instant)
 
 void CMenu::_showMain(void)
 {
+	_hideWaitMessage();
+
 	_setBg(m_gameBg, m_gameBgLQ);
 	m_btnMgr.show(m_mainBtnConfig);
 	m_btnMgr.show(m_mainBtnInfo);
@@ -372,7 +374,7 @@ int CMenu::main(void)
 				dir_discHdr hdr;
 				memset(&hdr, 0, sizeof(dir_discHdr));
 				memcpy(&hdr.hdr.id, "dvddvd", 6);
-				m_vid.waitMessage(m_waitMessage);
+				_showWaitMessage();
 				_launchGame(&hdr, true);
 				_showMain();
 			}
@@ -476,7 +478,7 @@ int CMenu::main(void)
 	_stopSounds();
 	if (m_reload)
 	{
-		m_vid.waitMessage(m_waitMessage);
+		_showWaitMessage();
 		return 1;
 	}
 	return 0;

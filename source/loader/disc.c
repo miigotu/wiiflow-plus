@@ -173,6 +173,10 @@ void __Disc_SelectVMode(u8 videoselected)
 
 void __Disc_SetVMode(void)
 {
+	// Stop wait message thread
+	extern void HideWaitMessage();
+	HideWaitMessage();
+
 	/* Set video mode register */
 	*(vu32 *)0x800000CC = vmode_reg;
 
@@ -378,9 +382,6 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	if (ret < 0)
 		return ret;
 
-	/* Set an appropriate video mode */
-	__Disc_SetVMode();
-
 	do_bca_code();
 	if (cheat != 0 && hooktype != 0)
 	{
@@ -390,6 +391,9 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 
 	/* Set time */
 	__Disc_SetTime();
+
+	/* Set an appropriate video mode */
+	__Disc_SetVMode();
 
 	VIDEO_SetBlack(TRUE);
 	VIDEO_Flush();

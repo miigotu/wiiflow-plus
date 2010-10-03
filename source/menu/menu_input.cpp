@@ -5,7 +5,7 @@
 using namespace std;
 
 
-static const u32 g_repeatDelay = 80;
+static const u32 g_repeatDelay = 100;
 
 void CMenu::SetupInput()
 {

@@ -97,7 +97,12 @@ void CMenu::init()
 	u8 defaultMenuLanguage;
 	struct stat dummy;
 	
-	m_waitMessage.fromPNG(wait_png);
+//	m_waitMessages.clear();
+	
+	STexture wait;
+	wait.fromPNG(wait_png);
+	m_waitMessages.push_back(wait);
+	
 	// Data path
 	if (FS_SDAvailable() && FS_USBAvailable())
 	{
@@ -605,7 +610,8 @@ void CMenu::_buildMenus(void)
 	m_mainBgLQ.fromPNG(background_png, GX_TF_CMPR, ALLOC_MEM2, 64, 64);
 	m_gameBgLQ = m_mainBgLQ;
 	
-	m_waitMessage = _texture(theme.texSet, "GENERAL", "waitmessage", m_waitMessage); 
+	m_waitMessages = _textures(theme.texSet, "GENERAL", "waitmessage", m_waitMessages[0]); 
+	m_waitMessageDelay = m_theme.getFloat("GENERAL", "waitmessage_delay", 0.f);
 
 	// Build menus
 	_initMainMenu(theme);
@@ -684,6 +690,41 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 	// Default font
 	fontSet[CMenu::FontDesc(filename, fontSize)] = def;
 	return def;
+}
+
+vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char *key, STexture def)
+{
+	vector<string> filenames;
+	SmartBuf ptrPNG;
+	vector<STexture> textures;
+	CMenu::TexSet::iterator i;
+
+	if (m_theme.loaded())
+	{
+		vector<string> filenames = m_theme.getStrings(domain, key);
+		if (filenames.size() > 0)
+		{
+			for (vector<string>::iterator itr = filenames.begin(); itr != filenames.end(); itr++)
+			{
+				string filename = *itr;
+
+				i = texSet.find(filename);
+				if (i != texSet.end())
+				{
+					textures.push_back(i->second);
+				}
+				STexture tex;
+				if (STexture::TE_OK == tex.fromPNGFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), GX_TF_RGBA8, ALLOC_MEM2))
+				{
+					texSet[filename] = tex;
+					textures.push_back(tex);
+				}
+			}
+			return textures;
+		}
+	}
+	textures.push_back(def);
+	return textures;
 }
 
 STexture CMenu::_texture(CMenu::TexSet &texSet, const char *domain, const char *key, STexture def)
@@ -1532,4 +1573,67 @@ void CMenu::_load_installed_cioses()
 	}
 	
 	sort(_installed_cios.begin(), _installed_cios.end());
+}
+
+void CMenu::_hideWaitMessage()
+{
+	m_showWaitMessage = false;
+	VIDEO_WaitVSync();
+}
+
+void CMenu::_showWaitMessages(CMenu *m)
+{
+	u32 frames = m->m_waitMessageDelay * 50;
+	u32 waitFrames = frames;
+
+	vector<STexture> images = m->m_waitMessages;
+	vector<STexture>::iterator waitItr = images.begin();
+
+	gprintf("Going to show a wait message screen, delay: %d, # images: %d\n", waitFrames, m->m_waitMessages.size());
+
+	m->m_vid.waitMessage(*waitItr);
+	waitItr++;
+	
+	while (m->m_showWaitMessage)
+	{
+		if (waitFrames == 0)
+		{
+			if (waitItr == images.end())
+				waitItr = images.begin();
+			
+			while (!*waitItr->data) 
+			{
+				gprintf("Skipping one image, because loaded data is not valid\n");
+				waitItr++;
+
+				if (waitItr == images.end())
+					waitItr = images.begin();
+			}
+			
+//			gprintf("Showing next image, data is %svalid\n", !!*waitItr->data ? "" : "not ");
+			m->m_vid.waitMessage(*waitItr);
+			waitItr++;
+			
+			waitFrames = frames;
+		}
+		waitFrames--;
+		VIDEO_WaitVSync();
+	}
+	gprintf("Stop showing images\n");
+}
+
+void CMenu::_showWaitMessage()
+{
+	if (m_waitMessages.size() == 1)
+	{
+		m_vid.waitMessage(m_waitMessages[0]);
+	}
+	else if (m_waitMessages.size() > 1)
+	{
+		m_showWaitMessage = true;
+		
+		// Start a thread for this
+		lwp_t thread = LWP_THREAD_NULL;
+		LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_showWaitMessages, (void *)this, 0, 8192, 80);
+	}
 }

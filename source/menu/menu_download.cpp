@@ -334,7 +334,7 @@ int CMenu::_initNetwork()
 
 void CMenu::_deinitNetwork()
 {
-	_networkFix();
+	net_wc24cleanup();
 	net_deinit();
 	
 	m_networkInit = false;

@@ -1,12 +1,11 @@
 
 #include "menu.hpp"
-
+#include "gecko.h"
 
 extern const u8 error_png[];
 
 void CMenu::error(const wstringEx &msg)
 {
-
 	SetupInput();
 	_hideAbout();
 	_hideCode();
@@ -18,10 +17,12 @@ void CMenu::error(const wstringEx &msg)
 	_hideMain();
 	_hideWBFS();
 	_hideGameSettings();
+	_hideWaitMessage();
 	m_btnMgr.setText(m_errorLblMessage, msg, true);
 	_showError();
 	do
 	{
+		gprintf(msg.toUTF8().c_str());
 		_mainLoopCommon();
 	} while ((wii_btnsPressed & (WBTN_HOME | WBTN_A | WBTN_B)) == 0);
 	_hideError(false);

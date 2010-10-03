@@ -354,6 +354,46 @@ string Config::getString(const string &domain, const string &key, const string &
 	return data;
 }
 
+vector<string> Config::getStrings(const string &domain, const string &key, char seperator, const string &defVal)
+{
+	vector<string> retval;
+	
+	if (domain.empty() || key.empty())
+	{
+		if (defVal != std::string())
+			retval.push_back(defVal);
+		return retval;
+	}
+	string &data = m_domains[upperCase(domain)][lowerCase(key)];
+	if (data.empty())
+	{
+		if (defVal != std::string())
+			retval.push_back(defVal);
+		return retval;
+	}
+	// Parse the string into different substrings
+
+	// skip delimiters at beginning.
+	string::size_type lastPos = data.find_first_not_of(seperator, 0);
+
+	// find first "non-delimiter".
+	string::size_type pos = data.find_first_of(seperator, lastPos);
+
+	while (string::npos != pos || string::npos != lastPos)
+	{
+		// found a token, add it to the vector.
+		retval.push_back(data.substr(lastPos, pos - lastPos));
+	
+		// skip delimiters.  Note the "not_of"
+		lastPos = data.find_first_not_of(seperator, pos);
+	
+		// find next "non-delimiter"
+		pos = data.find_first_of(seperator, lastPos);
+	}
+
+	return retval;
+}
+
 bool Config::getBool(const string &domain, const string &key, bool defVal)
 {
 	if (domain.empty() || key.empty())

@@ -73,7 +73,9 @@ private:
 	std::string m_curLanguage;
 	std::string m_curGameId;
 	std::string m_curChanId;
-	STexture m_waitMessage;
+	vector<STexture> m_waitMessages;
+	float m_waitMessageDelay;
+	bool m_showWaitMessage;
 	u8 m_numCFVersions;
 	// 
 	std::string m_themeDataDir;
@@ -715,7 +717,6 @@ private:
 	void _launch(dir_discHdr *hdr);
 	void _launchGame(dir_discHdr *hdr, bool dvd);
 	void _launchChannel(dir_discHdr *hdr);
-	bool _networkFix(void);
 	void _setAA(int aa);
 	void _loadCFCfg(void);
 	void _loadCFLayout(int version, bool forceAA = false, bool otherScrnFmt = false);
@@ -726,6 +727,12 @@ private:
 	void _buildMenus(void);
 	SFont _font(FontSet &fontSet, const char *domain, const char *key, SFont def);
 	STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);
+	vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key, STexture def);
+	void _showWaitMessage();
+public:
+	void _hideWaitMessage();
+private:
+	static void _showWaitMessages(CMenu *m);
 	SSoundEffect _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, SSoundEffect def);
 	u16 _textStyle(const char *domain, const char *key, u16 def);
 	u32 _addButton(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color);

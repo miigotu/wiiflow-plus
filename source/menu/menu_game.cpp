@@ -397,7 +397,7 @@ void CMenu::_game(bool launch)
 				dir_discHdr *hdr = m_cf.getHdr();
 
 				m_cf.clear();
-				m_vid.waitMessage(m_waitMessage);
+				_showWaitMessage();
 
 				if (wdm_count > 1)
 				{
@@ -427,6 +427,7 @@ void CMenu::_game(bool launch)
 
 				gprintf("Launching game\n");
 				_launch(hdr);
+				_hideWaitMessage();
 				launch = false;
 				for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 					WPAD_SetVRes(chan, m_vid.width() + m_cursor[chan].width(), m_vid.height() + m_cursor[chan].height());
@@ -847,7 +848,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	m_cat.save();
 	m_cfg.save();
 	setLanguage(language);
-	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing
 	
 	// Do every disc related action before reloading IOS
 	if (!dvd)
@@ -872,8 +872,12 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 	app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
 
+	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing
+
 	// Reload IOS, if requested
-	if ((iosNum != mainIOS) || !_networkFix())
+	net_wc24cleanup();
+	
+	if ((iosNum != mainIOS))
 	{
 		gprintf("Reloading IOS into %d\n", iosNum);
 		if (!loadIOS(iosNum, true))
@@ -969,23 +973,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir, wdm_entry == NULL ? 1 : wdm_entry->parameter) < 0)
 			Sys_LoadMenu();
 	}
-}
-
-bool CMenu::_networkFix(void)
-{
-    if (!m_networkInit)
-		return true;
-	s32 kd_fd;
-	s32 ret = -1;
-	STACK_ALIGN(u8, kd_buf, 32, 32);
-
-	kd_fd = IOS_Open("/dev/net/kd/request", 0);
-	if (kd_fd >= 0)
-	{
-		ret = IOS_Ioctl(kd_fd, 7, NULL, 0, kd_buf, 32);
-		IOS_Close(kd_fd);
-	}
-	return ret >= 0;
 }
 
 void CMenu::_initGameMenu(CMenu::SThemeData &theme)
