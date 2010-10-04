@@ -73,9 +73,12 @@ private:
 	std::string m_curLanguage;
 	std::string m_curGameId;
 	std::string m_curChanId;
+
 	vector<STexture> m_waitMessages;
 	float m_waitMessageDelay;
 	bool m_showWaitMessage;
+	bool m_WaitMessageThrdStop;
+
 	u8 m_numCFVersions;
 	// 
 	std::string m_themeDataDir;

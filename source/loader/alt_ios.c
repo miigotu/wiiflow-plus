@@ -177,5 +177,17 @@ bool loadIOS(int n, bool init)
 
 u32 get_ios_base()
 {
-	return is_ios_type(IOS_TYPE_WANIN) ? wanin_mload_get_IOS_base() : mload_get_IOS_base();
+	u32 revision = IOS_GetRevision();
+	if (is_ios_type(IOS_TYPE_WANIN) && revision >= 17)
+	{
+		char *info = get_ios_info_from_tmd();
+		if (info)
+			return atoi(info);
+		else 
+			return wanin_mload_get_IOS_base();
+	} 
+	else if (is_ios_type(IOS_TYPE_HERMES) && revision >= 4)
+		return mload_get_IOS_base();
+	else 
+		return 0;
 }

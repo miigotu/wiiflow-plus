@@ -188,12 +188,14 @@ s32 Sys_GetCerts(signed_blob **certs, u32 *len)
 	return ret;
 }
 
+extern u32 get_ios_base();
+
 bool Sys_SupportsExternalModule(bool part_select)
 {
 	u32 revision = IOS_GetRevision();
 	
 	bool retval =  (part_select && is_ios_type(IOS_TYPE_WANIN) && revision >= 17) || (is_ios_type(IOS_TYPE_WANIN) && revision >= 18) || (is_ios_type(IOS_TYPE_HERMES) && revision >= 4);
-	gprintf("IOS Version: %d, Revision %d, returning %d\n", IOS_GetVersion(), revision, retval);
+	gprintf("IOS Version: %d, Revision %d, Base: %d, returning %d\n", IOS_GetVersion(), revision, get_ios_base(), retval);
 	return retval;
 }
 
@@ -355,44 +357,29 @@ out:
     return info;
 }
 
-static char mload_ver_str[40];
-static int mload_ver = 0;
 
 void mk_mload_version()
 {
-	mload_ver_str[0] = 0;
-	mload_ver = 0;
-	if (is_ios_type(IOS_TYPE_HERMES) || (is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 18) )
+	u32 revision = IOS_GetRevision();
+	char mload_ver_str[40];
+
+	if ((is_ios_type(IOS_TYPE_HERMES) && revision > 4) || (is_ios_type(IOS_TYPE_WANIN) && revision >= 18))
 	{
-		if (IOS_GetRevision() >= 4) {
-			if (is_ios_type(IOS_TYPE_WANIN)) {
-				char *info = get_ios_info_from_tmd();
-				if (info) {
-						sprintf(mload_ver_str, "Base: IOS%s ", info);
-				} else {
-						sprintf(mload_ver_str, "Base: IOS?? DI:%d ", wanin_mload_get_IOS_base());
-				}
-			} else {
-				sprintf(mload_ver_str, "Base: IOS%d ", mload_get_IOS_base());
-			}
-		}
-		if (IOS_GetRevision() > 4) {
-			int v, s;
-			v = mload_ver = mload_get_version();
-			s = v & 0x0F;
-			v = v >> 4;
-			sprintf(mload_ver_str + strlen(mload_ver_str), "mload v%d.%d ", v, s);
-		} else {
-			sprintf(mload_ver_str + strlen(mload_ver_str), "mload v%d ", IOS_GetRevision());
-		}
-	}
+		int v, s;
+		v = mload_get_version();
+		s = v & 0x0F;
+		v = v >> 4;
+		sprintf(mload_ver_str, "%d.%d", v, s);
+	} 
+	else
+		sprintf(mload_ver_str, "%d", revision);
 }
 
 bool shadow_mload()
 {
         if (!is_ios_type(IOS_TYPE_HERMES)) return false;
         int v51 = (5 << 4) & 1;
-        if (mload_ver >= v51) {
+        if (mload_get_version() >= v51) {
                 // shadow /dev/mload supported in hermes cios v5.1
                 //IOS_Open("/dev/usb123/OFF",0);// this disables ehc completely
                 IOS_Open("/dev/mload/OFF",0);

@@ -1596,6 +1596,7 @@ void CMenu::_showWaitMessages(CMenu *m)
 	
 	while (m->m_showWaitMessage)
 	{
+		m->m_WaitMessageThrdStop = false;
 		if (waitFrames == 0)
 		{
 			if (waitItr == images.end())
@@ -1620,10 +1621,19 @@ void CMenu::_showWaitMessages(CMenu *m)
 		VIDEO_WaitVSync();
 	}
 	gprintf("Stop showing images\n");
+	m->m_WaitMessageThrdStop = true;
 }
 
 void CMenu::_showWaitMessage()
 {
+	if (!m_WaitMessageThrdStop)
+	{
+		m_showWaitMessage = false;
+		//If you get this, find where the missed _hideWaitMessage() needs to be.
+		gprintf("Wait message thread was not stopped!\nNow waiting until it is finished\n");
+		while(!m_WaitMessageThrdStop){} //Should never happen, unless a _hideWaitMessage() was missed, but saves a dump just in case.
+	}
+
 	if (m_waitMessages.size() == 1)
 	{
 		m_vid.waitMessage(m_waitMessages[0]);

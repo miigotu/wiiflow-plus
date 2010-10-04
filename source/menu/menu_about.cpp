@@ -102,7 +102,7 @@ void CMenu::_textAbout(void)
 	m_btnMgr.setText(m_aboutLblInfo, wfmt(_fmt("about3", L"Thanks to :\n\n%s%s%s\n\n%s\n%s"), translator.toUTF8().c_str(), THANKS, THANKS_SITES, THANKS_CODE), true);
 	if ((is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 18) ||
 		(is_ios_type(IOS_TYPE_HERMES) && IOS_GetRevision() >= 5))
-		m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"IOS%i rev%i, base IOS%i"), mainIOS, mainIOSRev, get_ios_base()), true);
+		m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"IOS%i rev%i, base IOS%i"), mainIOS, mainIOSRev,  m_loaded_ios_base), true);
 	else
 		m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"IOS%i rev%i"), mainIOS, mainIOSRev), true);
 }
