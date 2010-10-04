@@ -618,10 +618,10 @@ void CMenu::_buildMenus(void)
 	_initErrorMenu(theme);
 	_initConfigAdvMenu(theme);
 	_initConfigSndMenu(theme);
-	_initConfig5Menu(theme);
+	_initConfig7Menu(theme);
 	_initConfig4Menu(theme);
+	_initConfigScreenMenu(theme);
 	_initConfig3Menu(theme);
-	_initConfig2Menu(theme);
 	_initConfigMenu(theme);
 	_initGameMenu(theme);
 	_initDownloadMenu(theme);
@@ -1078,6 +1078,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	}
 	else if (!withCF || !m_gameSelected)
 		m_gameSound.stop();
+
 	LWP_MutexUnlock(m_gameSndMutex);
 
 	if (withCF && m_gameSoundThread == 0)
@@ -1234,10 +1235,10 @@ void CMenu::_updateText(void)
 	_textMain();
 	_textError();
 	_textConfig();
-	_textConfig2();
 	_textConfig3();
+	_textConfigScreen();
 	_textConfig4();
-	_textConfig5();
+	_textConfig7();
 	_textConfigSnd();
 	_textConfigAdv();
 	_textDownload();

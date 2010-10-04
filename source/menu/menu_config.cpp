@@ -76,19 +76,19 @@ void CMenu::_config(int page)
 				nextPage = _configAdv();
 				break;
 			case 3:
-				nextPage = _config4();
-				break;
-			case 4:
-				nextPage = _configSnd();
-				break;
-			case 5:
-				nextPage = _config2();
-				break;
-			case 6:
 				nextPage = _config3();
 				break;
+			case 4:
+				nextPage = _config4();
+				break;
+			case 5:
+				nextPage = _configSnd();
+				break;
+			case 6:
+				nextPage = _configScreen();
+				break;
 			case 7:
-				nextPage = _config5();
+				nextPage = _config7();
 				break;
 		}
 	m_cfg.save();
