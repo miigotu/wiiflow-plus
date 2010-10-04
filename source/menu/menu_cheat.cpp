@@ -160,7 +160,7 @@ void CMenu::_CheatSettings()
 				{
 					m_cheatfile.createGCT(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str())); 
 					m_gcfg2.setOptBool(m_cf.getId(), "cheat", 1);
-					m_gcfg2.setInt(m_cf.getId(), "hooktype", m_cfg.getInt(m_cf.getId(), "hooktype", 1));
+					m_gcfg2.setInt(m_cf.getId(), "hooktype", m_gcfg2.getInt(m_cf.getId(), "hooktype", 1));
 				}
 				else
 				{

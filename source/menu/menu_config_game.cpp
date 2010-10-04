@@ -4,6 +4,7 @@
 #include "libwbfs/wiidisc.h"
 #include "menu.hpp"
 #include "loader/fs.h"
+#include "loader/ios_base.h"
 #include "gecko.h"
 
 #define ARRAY_SIZE(a)	(sizeof a / sizeof a[0])
@@ -315,17 +316,20 @@ void CMenu::_showGameSettings(void)
 		m_gcfg2.setInt(id, "ios", CMenu::_ios[iosIdx]);
 	}
 
+	vector<SIOS>::iterator itr = _installed_cios.end();
 	i = mainIOS;
-	if (m_gcfg2.getInt(id, "ios", &i) && 
-		find(_installed_cios.begin(), _installed_cios.end(), i) == _installed_cios.end())
+	if (m_gcfg2.getInt(id, "ios", &i) && (itr = find(_installed_cios.begin(), _installed_cios.end(), i)) == _installed_cios.end())
 	{
 		i = mainIOS;
 	}
 
 	if (i == mainIOS)
 		m_btnMgr.setText(m_gameSettingsLblIOS, _t("def", L"Default"));
+	else if ((*itr).ar_index != 0xFF)
+		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i %sb%s", i, revs[(*itr).ar_index], bases[(*itr).ar_index])));
 	else
 		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i", i)));
+		
 	i = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblPatchVidModesVal, _t(CMenu::_vidModePatch[i].id, CMenu::_vidModePatch[i].text));
 
@@ -464,27 +468,27 @@ void CMenu::_gameSettings(void)
 			else if (m_btnMgr.selected(m_gameSettingsBtnIOSP))
 			{
 				int currentIOS = m_gcfg2.getInt(id, "ios", mainIOS);
-				vector<u32>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
+				vector<SIOS>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
 				if (itr == _installed_cios.end()) // Not found, strange...
 					itr = find(_installed_cios.begin(), _installed_cios.end(), mainIOS);
 				itr++;
 				if (itr == _installed_cios.end())
 					itr = _installed_cios.begin();
 				
-				m_gcfg2.setInt(id, "ios", *itr);
+				m_gcfg2.setInt(id, "ios", (*itr).ios);
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnIOSM))
 			{
 				int currentIOS = m_gcfg2.getInt(id, "ios", mainIOS);
-				vector<u32>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
+				vector<SIOS>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
 				if (itr == _installed_cios.end()) // Not found, strange...
 					itr = find(_installed_cios.begin(), _installed_cios.end(), mainIOS);
 				if (itr == _installed_cios.begin())
 					itr = _installed_cios.end();
 				itr--;
 				
-				m_gcfg2.setInt(id, "ios", *itr);
+				m_gcfg2.setInt(id, "ios", (*itr).ios);
 			
 //				m_gcfg2.setInt(id, "ios", (int)loopNum((u32)m_gcfg2.getInt(id, "ios", 0) - 1, ARRAY_SIZE(CMenu::_ios)));
 				_showGameSettings();

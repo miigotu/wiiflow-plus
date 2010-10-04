@@ -14,6 +14,7 @@
 #include "usbstorage.h"
 #include "mem2.hpp"
 #include "alt_ios.h"
+#include "ios_base.h"
 #include "mload_modules.h"
 #include "sys.h"
 #include "wbfs.h"
@@ -180,9 +181,9 @@ u32 get_ios_base()
 	u32 revision = IOS_GetRevision();
 	if (is_ios_type(IOS_TYPE_WANIN) && revision >= 17)
 	{
-		char *info = get_ios_info_from_tmd();
-		if (info)
-			return atoi(info);
+		u32 index = get_ios_info_from_tmd();
+		if (index != 0xFF)
+			return atoi(bases[index]);
 		else 
 			return wanin_mload_get_IOS_base();
 	} 

@@ -65,6 +65,17 @@ int SSoundEffect::playLoop(SSoundEffect *snd)
 	return snd->play(snd->volume, true);
 }
 
+u8 SSoundEffect::getVolume()
+{
+	return volume;
+}
+
+void SSoundEffect::setVolume(u8 vol)
+{
+	ASND_ChangeVolumeVoice(voice, vol, vol);
+	volume = vol;
+}
+
 void SSoundEffect::stop(void)
 {
 	if (snd_mutex == 0)

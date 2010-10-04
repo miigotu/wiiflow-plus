@@ -295,27 +295,40 @@ s32 brute_tmd(tmd *p_tmd)
 	return -1;
 }
 
-char* get_ios_info_from_tmd()
+u32 get_ios_info_from_tmd()
 {
 	signed_blob *TMD = NULL;
-	tmd *t = NULL;
 	u32 TMD_size = 0;
-	int try_ver = 0;
-	u32 i;
 
 	int ret = GetTMD((((u64)(1) << 32) | (IOS_GetVersion())), &TMD, &TMD_size);
 
-	char *info = NULL;
 	//static char default_info[32];
 	//sprintf(default_info, "IOS%u (Rev %u)", IOS_GetVersion(), IOS_GetRevision());
 	//info = (char *)default_info;
 
-	if (ret != 0) goto out;
+	if (ret != 0) return 0xFF;
 
-	t = (tmd*)SIGNATURE_PAYLOAD(TMD);
-
+	tmd *t = (tmd*)SIGNATURE_PAYLOAD(TMD);
+	
 	// safety check
-	if (t->title_id != TITLE_ID(1, IOS_GetVersion())) goto out;
+	if (t->title_id != TITLE_ID(1, IOS_GetVersion())) return 0xFF;
+
+	u32 index = get_ios_info(TMD, TMD_size);
+	if(TMD != NULL)
+	{
+		free(TMD);
+		TMD = NULL;
+	}	
+	return index;
+}
+
+u32 get_ios_info(signed_blob *TMD, u32 size)
+{
+	int try_ver = 0;
+	u32 i;
+	u32 retval = 0xFF;
+
+	tmd *t = (tmd*)SIGNATURE_PAYLOAD(TMD);
 
 	// patch title id, so hash matches
 	if (t->title_id != TITLE_ID(1, 249)) {
@@ -329,17 +342,17 @@ char* get_ios_info_from_tmd()
 	}
 
 	sha1 hash;
-	SHA1((u8 *)TMD, TMD_size, hash);
+	SHA1((u8 *)TMD, size, hash);
 
 	for (i = 0; i < info_number; i++)
 	{
 		if (memcmp((void *)hash, (u32 *)&hashes[i], sizeof(sha1)) == 0)
 		{
-			info = (char *)&infos[i];
+			retval = i;
 			break;
 		}
 	}
-	if (info == NULL) {
+	if (retval == 0xFF) {
 		// not found, retry lower rev.
 		if (try_ver > 13) {
 			try_ver--;
@@ -348,13 +361,7 @@ char* get_ios_info_from_tmd()
 		}
 	}
 
-out:
-	if(TMD != NULL)
-	{
-		free(TMD);
-		TMD = NULL;
-	}
-    return info;
+    return retval;
 }
 
 

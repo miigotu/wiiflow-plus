@@ -81,6 +81,10 @@ CMenu::CMenu(CVideo &vid) :
 	m_numCFVersions = 0;
 	m_bgCrossFade = 0;
 	m_bnrSndVol = 0;
+	
+	m_musicVol = 0;
+	m_music_fade_mode = 0;
+	
 	m_gameSettingsPage = 0;
 	m_directLaunch = false;
 	m_exit = false;
@@ -244,6 +248,10 @@ void CMenu::init()
 	m_cf.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255));
 	m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
 	m_bnrSndVol = m_cfg.getInt("GENERAL", "sound_volume_bnr", 255);
+	
+	m_musicVol = m_cfg.getInt("GENERAL", "sound_volume_music", 255);
+	m_musicCurrentVol = m_musicVol;
+	
 	if (m_cfg.getBool("GENERAL", "favorites_on_startup", false))
 		m_favorites = m_cfg.getBool("GENERAL", "favorites", false);
 	m_category = m_cat.getInt("GENERAL", "category", 0);//currently selected category
@@ -1067,9 +1075,21 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		}
 		Sys_Test();
 	}
+	
+	// Fade music out when game is selected
+	if (m_gameSelected && m_musicCurrentVol > 0 )
+		m_music_fade_mode = -1;
+	
+	// Fade music back in if banner sound finished
+	if (m_gameSelected && m_musicCurrentVol != m_musicVol && m_gameSound.voice && ASND_StatusVoice(m_gameSound.voice) == SND_UNUSED )
+		m_music_fade_mode = 1;
 
+	// Fade music back in when no game selected
+	if (!m_gameSelected && m_musicCurrentVol != m_musicVol) 
+		m_music_fade_mode = 1;	
+	
 	LWP_MutexLock(m_gameSndMutex);
-	if (withCF && m_gameSelected && !!m_gameSoundTmp.data && m_gameSoundThread == 0)
+	if (withCF && m_gameSelected && !!m_gameSoundTmp.data && m_gameSoundThread == 0 && m_musicCurrentVol == 0)
 	{
 		m_gameSound.stop();
 		m_gameSound = m_gameSoundTmp;
@@ -1389,7 +1409,9 @@ static void listOGGMP3(const char *path, vector<string> &oggFiles)
 			{
 				fileExt = fileName.substr(fileName.size() - 4, 4);
 				if (fileExt == ".OGG" || fileExt == ".MP3")
+				{
 					oggFiles.push_back(fileName);
+				}
 			}
 			dir = readdir(d);
 		}
@@ -1447,10 +1469,15 @@ void CMenu::_startMusic(void)
 	{
 		PlayOgg(mem_open((char *)m_music.get(), m_music_fileSize), 0, OGG_INFINITE_TIME);
 	}
-	SetVolumeOgg(m_cfg.getInt("GENERAL", "sound_volume_music", 255));
-	MP3Player_Volume(m_cfg.getInt("GENERAL", "sound_volume_music", 255));
-	
+
+	_updateMusicVol();
 	current_music++;
+}
+
+void CMenu::_updateMusicVol(void)
+{
+	SetVolumeOgg(m_musicCurrentVol);
+	MP3Player_Volume(m_musicCurrentVol);	
 }
 
 void CMenu::_stopMusic(void)
@@ -1477,15 +1504,66 @@ void CMenu::_resumeMusic(void)
 
 void CMenu::_loopMusic(void)
 {		
-	if((m_music_ismp3 && !MP3Player_IsPlaying()) || StatusOgg() == OGG_STATUS_EOF)
+	int fade_rate = m_cfg.getInt("GENERAL", "music_fade_rate", 8);
+	
+	if (m_music_fade_mode != 0)
 	{
-		_startMusic();
+		if (m_music_fade_mode > 0) 
+		{
+			if (StatusOgg() == OGG_STATUS_PAUSED) PauseOgg(0);
+			if (ASND_StatusVoice(0) == SND_WAITING) ASND_PauseVoice(0, 0);
+		
+			m_musicCurrentVol += fade_rate;
+			if (m_musicCurrentVol >= m_musicVol)
+			{
+				m_musicCurrentVol = m_musicVol;
+				m_music_fade_mode = 0;
+			}
+		}
+		else
+		{	
+			m_musicCurrentVol -= fade_rate;
+			if (m_musicCurrentVol <= 0)
+			{
+				m_musicCurrentVol = 0;
+				m_music_fade_mode = 0;
+				
+				PauseOgg(1);
+				ASND_PauseVoice(0, 1);
+			}
+		}
+		_updateMusicVol();
 	}
+	
+	if((m_music_ismp3 && !MP3Player_IsPlaying()) || StatusOgg() == OGG_STATUS_EOF)
+		_startMusic();
+
 	return;
 }
 
 void CMenu::_stopSounds(void)
 {
+	// Fade out sounds
+	int fade_rate = m_cfg.getInt("GENERAL", "music_fade_rate", 8);
+
+	while (m_musicCurrentVol > 0 || m_gameSound.getVolume() > 0)
+	{
+		gprintf("M: %d, G: %d\n", m_musicCurrentVol, m_gameSound.getVolume());
+
+		if (m_musicCurrentVol > 0)
+		{
+			m_musicCurrentVol -= fade_rate;
+			
+			SetVolumeOgg(m_musicCurrentVol);
+			MP3Player_Volume(m_musicCurrentVol);
+		}
+		
+		if (m_gameSound.getVolume() > 0)
+			m_gameSound.setVolume((m_gameSound.getVolume() <= fade_rate) ? 0 : m_gameSound.getVolume() - fade_rate);
+		VIDEO_WaitVSync();
+	}
+	
+
 	_stopMusic();
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();
@@ -1568,12 +1646,20 @@ void CMenu::_load_installed_cioses()
 			if (tmd_buf[4] == 0 && (version < 100 || version == 0xFFFF)) // Signature is empty
 			{
 				// Probably an cios
-				_installed_cios.push_back(title_l);
+				SIOS s;
+				s.ios = title_l;
+				s.ar_index = get_ios_info(s_tmd, tmd_size);
+				_installed_cios.push_back(s);
 			}
 		}
 	}
 	
-	sort(_installed_cios.begin(), _installed_cios.end());
+	sort(_installed_cios.begin(), _installed_cios.end(), CMenu::_sortByIOS);
+}
+
+bool CMenu::_sortByIOS(SIOS item1, SIOS item2)
+{
+	return item1.ios > item2.ios;
 }
 
 void CMenu::_hideWaitMessage()
@@ -1632,9 +1718,10 @@ void CMenu::_showWaitMessage()
 		m_showWaitMessage = false;
 		//If you get this, find where the missed _hideWaitMessage() needs to be.
 		gprintf("Wait message thread was not stopped!\nNow waiting until it is finished\n");
-		while(!m_WaitMessageThrdStop){} //Should never happen, unless a _hideWaitMessage() was missed, but saves a dump just in case.
+		while(!m_WaitMessageThrdStop){} //Should never happen, unless a _hideWaitMessage() was missed, but prevents a dump just in case.
 	}
 
+	m_WaitMessageThrdStop = true;
 	if (m_waitMessages.size() == 1)
 	{
 		m_vid.waitMessage(m_waitMessages[0]);

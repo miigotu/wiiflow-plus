@@ -530,6 +530,10 @@ private:
 	lwp_t m_gameSoundThread;
 	mutex_t m_gameSndMutex;
 	u8 m_bnrSndVol;
+	int m_musicVol;
+	int m_musicCurrentVol;
+	int m_music_fade_mode; // Represents fade up (> 0),fade down (< 0), or no fade at all (== 0)
+	
 	bool m_music_ismp3;
 	u32 m_music_fileSize;
 	vector<string> music_files;
@@ -776,6 +780,7 @@ private:
 	void _pauseMusic(void);
 	void _resumeMusic(void);
 	void _loopMusic(void);
+	void _updateMusicVol(void);
 	void _stopSounds(void);
 	//
 	static u32 _downloadCheatFileAsync(void *obj);
@@ -799,7 +804,17 @@ private:
 	static const SOption _hooktype[8];
 	static const SOption _exitTo[3];
 	static const int _ios[6];
-	static vector<u32> _installed_cios;
+	struct SIOS 
+	{ 
+		u32 ios; 
+		u32 ar_index; 
+		bool operator==(const u32& i) const
+		{
+			return ios == i;
+		}		
+	};
+	static vector<SIOS> _installed_cios;
+	static bool _sortByIOS(SIOS item1, SIOS item2);
 	static int _version[9];
 	static const SCFParamDesc _cfParams[];
 	static const int _nbCfgPages;

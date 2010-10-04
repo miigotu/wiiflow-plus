@@ -30,7 +30,8 @@ s32  Sys_GetCerts(signed_blob **, u32 *);
 int get_ios_type();
 int is_ios_type(int type);
 void mk_mload_version();
-char* get_ios_info_from_tmd();
+u32 get_ios_info_from_tmd();
+u32 get_ios_info(signed_blob *TMD, u32 size);
 bool shadow_mload();
 
 #ifdef __cplusplus
