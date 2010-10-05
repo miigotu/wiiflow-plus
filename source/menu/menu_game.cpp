@@ -852,22 +852,20 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 			return;
 
 	if (cheat)
-			_loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
+		_loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
 	if (!_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt"))
 	{
 		if (FS_USBAvailable() && !_loadFile(gameconfig, gameconfigSize, "usb:/", "gameconfig.txt"))
 		{
 			if (FS_SDAvailable())
-			{
 				_loadFile(gameconfig, gameconfigSize, "sd:/", "gameconfig.txt");
-			}
 		}
 	}
 	
 	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) &hdr->hdr.id);
 	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) &hdr->hdr.id);
-	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 	app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
+	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 
 	// Reload IOS, if requested
 	net_wc24cleanup();

@@ -1422,15 +1422,19 @@ static void listOGGMP3(const char *path, vector<string> &oggFiles)
 void CMenu::_searchMusic(void)
 {
 	listOGGMP3(m_musicDir.c_str(), music_files);
+	_shuffleMusic();
+}
+
+void CMenu::_shuffleMusic(void)
+{
 	if (music_files.empty())
 		return;
-		
+
 	if (m_cfg.getBool("GENERAL", "randomize_music", true))
 	{
 		srand(unsigned(time(NULL)));
 		random_shuffle(music_files.begin(), music_files.end());
 	}
-	
 	current_music = music_files.begin();
 }
 
@@ -1438,28 +1442,34 @@ void CMenu::_startMusic(void)
 {
 	SmartBuf buffer;
 
-	if (music_files.empty())
-		return;
-		
 	if (current_music == music_files.end())
-		current_music = music_files.begin();
+		_shuffleMusic();
+
+	else if (music_files.empty()) //Not necessary to check this if shuffle was called
+		return;
 
 	_stopMusic();
 
 	ifstream file(sfmt("%s/%s", m_musicDir.c_str(), (*current_music).c_str()).c_str(), ios::in | ios::binary);
 	m_music_ismp3 = (*current_music).substr((*current_music).size() - 4, 4) == ".MP3";
+	current_music++;
+
 	if (!file.is_open())
 		return;
+
 	file.seekg(0, ios::end);
 	m_music_fileSize = file.tellg();
 	file.seekg(0, ios::beg);
+
 	buffer = smartMem2Alloc(m_music_fileSize);
 	if (!buffer)
 		return;
+
 	file.read((char *)buffer.get(), m_music_fileSize);
-	if (file.fail())
-		return;
+	bool fail = file.fail();
 	file.close();
+	if (fail) return;
+
 	m_music = buffer;
 	if(m_music_ismp3)
 		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
@@ -1467,7 +1477,6 @@ void CMenu::_startMusic(void)
 		PlayOgg(mem_open((char *)m_music.get(), m_music_fileSize), 0, OGG_INFINITE_TIME);
 
 	_updateMusicVol();
-	current_music++;
 }
 
 void CMenu::_updateMusicVol(void)
@@ -1712,21 +1721,17 @@ void CMenu::_showWaitMessages(CMenu *m)
 
 void CMenu::_showWaitMessage()
 {
-	if (!m_WaitMessageThrdStop)
-	{
-		m_showWaitMessage = false;
-		//If you get this, find where the missed _hideWaitMessage() needs to be.
-		gprintf("Wait message thread was not stopped!\nNow waiting until it is finished\n");
-		while(!m_WaitMessageThrdStop){} //Should never happen, unless a _hideWaitMessage() was missed, but prevents a dump just in case.
-	}
-
-	m_WaitMessageThrdStop = true;
 	if (m_waitMessages.size() == 1)
-	{
 		m_vid.waitMessage(m_waitMessages[0]);
-	}
 	else if (m_waitMessages.size() > 1)
 	{
+		if (!m_WaitMessageThrdStop)
+		{
+			m_showWaitMessage = false;
+			//If you get this, find where the missed _hideWaitMessage() needs to be.
+			gprintf("Wait message thread was not stopped!\nNow waiting until it is finished\n");
+			while(!m_WaitMessageThrdStop){} //Should never happen, unless a _hideWaitMessage() was missed, but prevents a dump just in case.
+		}
 		m_showWaitMessage = true;
 		
 		// Start a thread for this

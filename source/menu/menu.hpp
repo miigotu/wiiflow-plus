@@ -775,6 +775,7 @@ private:
 	wstringEx _optBoolToString(int b);
 	void _listDOL(std::vector<std::string> &v, const std::string &gameId);
 	void _searchMusic(void);
+	void _shuffleMusic(void);
 	void _startMusic(void);
 	void _stopMusic(void);
 	void _pauseMusic(void);
