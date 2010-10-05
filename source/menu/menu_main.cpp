@@ -475,7 +475,7 @@ int CMenu::main(void)
 	m_cfg.save();
 	m_cat.save();
 //	m_loc.save();
-	_stopSounds();
+	cleanup();
 	if (m_reload)
 	{
 		_showWaitMessage();

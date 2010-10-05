@@ -386,7 +386,8 @@ bool shadow_mload()
 {
         if (!is_ios_type(IOS_TYPE_HERMES)) return false;
         int v51 = (5 << 4) & 1;
-        if (mload_get_version() >= v51) {
+        if (mload_get_version() >= v51)
+		{
                 // shadow /dev/mload supported in hermes cios v5.1
                 //IOS_Open("/dev/usb123/OFF",0);// this disables ehc completely
                 IOS_Open("/dev/mload/OFF",0);

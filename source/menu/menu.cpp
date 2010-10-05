@@ -1462,13 +1462,9 @@ void CMenu::_startMusic(void)
 	file.close();
 	m_music = buffer;
 	if(m_music_ismp3)
-	{
 		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
-	}
 	else
-	{
 		PlayOgg(mem_open((char *)m_music.get(), m_music_fileSize), 0, OGG_INFINITE_TIME);
-	}
 
 	_updateMusicVol();
 	current_music++;
@@ -1482,24 +1478,25 @@ void CMenu::_updateMusicVol(void)
 
 void CMenu::_stopMusic(void)
 {
-	MP3Player_Stop();
+	if(m_music_ismp3 && MP3Player_IsPlaying())
+		MP3Player_Stop();
 	StopOgg();
-	m_music.release();
+	if (!!m_music)
+		m_music.release();
 }
 
 void CMenu::_pauseMusic(void)
 {
 	PauseOgg(1);
-	MP3Player_Stop();
+	if(m_music_ismp3 && MP3Player_IsPlaying())
+		MP3Player_Stop();
 }
 
 void CMenu::_resumeMusic(void)
 {
 	PauseOgg(0);
 	if(m_music_ismp3)
-	{
 		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
-	}	
 }
 
 void CMenu::_loopMusic(void)
@@ -1546,27 +1543,29 @@ void CMenu::_stopSounds(void)
 	// Fade out sounds
 	int fade_rate = m_cfg.getInt("GENERAL", "music_fade_rate", 8);
 
-	while (m_musicCurrentVol > 0 || m_gameSound.getVolume() > 0)
+	while (m_musicCurrentVol > 0 || m_gameSound.volume > 0)
 	{
-		gprintf("M: %d, G: %d\n", m_musicCurrentVol, m_gameSound.getVolume());
 
+		m_music_fade_mode = 0;
 		if (m_musicCurrentVol > 0)
 		{
-			m_musicCurrentVol -= fade_rate;
-			
+			m_musicCurrentVol -= m_musicCurrentVol < fade_rate ? m_musicCurrentVol : fade_rate;
+
 			SetVolumeOgg(m_musicCurrentVol);
 			MP3Player_Volume(m_musicCurrentVol);
-		}
-		
-		if (m_gameSound.getVolume() > 0)
-			m_gameSound.setVolume((m_gameSound.getVolume() <= fade_rate) ? 0 : m_gameSound.getVolume() - fade_rate);
-		VIDEO_WaitVSync();
-	}
-	
+		}	
+		if (m_gameSound.volume > 0)
+			m_gameSound.setVolume(m_gameSound.volume < fade_rate ? 0 : m_gameSound.volume - fade_rate);
 
-	_stopMusic();
+
+		VIDEO_WaitVSync();
+
+		gprintf("M: %d, G: %d\n", m_musicCurrentVol, m_gameSound.volume);
+	}
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();
+
+	_stopMusic();
 	m_gameSound.stop();
 }
 

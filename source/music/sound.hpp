@@ -21,7 +21,6 @@ struct SSoundEffect
 	static int playLoop(SSoundEffect *);
 	void stop(void);
 	void setVolume(u8 vol);
-	u8 getVolume(void);
 	bool fromWAVFile(const char *filename);
 	bool fromWAV(const u8 *buffer, u32 size);
 	bool fromBNS(const u8 *buffer, u32 size);

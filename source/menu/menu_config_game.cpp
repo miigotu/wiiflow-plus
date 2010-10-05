@@ -465,7 +465,7 @@ void CMenu::_gameSettings(void)
 				m_gcfg2.setInt(id, "video_mode", (int)loopNum((u32)m_gcfg2.getInt(id, "video_mode", 0) - 1, ARRAY_SIZE(CMenu::_videoModes)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnIOSP))
+			else if (m_btnMgr.selected(m_gameSettingsBtnIOSM))
 			{
 				int currentIOS = m_gcfg2.getInt(id, "ios", mainIOS);
 				vector<SIOS>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
@@ -478,7 +478,7 @@ void CMenu::_gameSettings(void)
 				m_gcfg2.setInt(id, "ios", (*itr).ios);
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnIOSM))
+			else if (m_btnMgr.selected(m_gameSettingsBtnIOSP))
 			{
 				int currentIOS = m_gcfg2.getInt(id, "ios", mainIOS);
 				vector<SIOS>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
@@ -489,8 +489,6 @@ void CMenu::_gameSettings(void)
 				itr--;
 				
 				m_gcfg2.setInt(id, "ios", (*itr).ios);
-			
-//				m_gcfg2.setInt(id, "ios", (int)loopNum((u32)m_gcfg2.getInt(id, "ios", 0) - 1, ARRAY_SIZE(CMenu::_ios)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP))

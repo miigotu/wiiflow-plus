@@ -47,10 +47,7 @@ bool SSoundEffect::play(u8 vol, bool in_thread)
 				ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length-(length-loopEnd), volume, volume, 0) == SND_OK;
 			if (ret)
 			{
-				//Wait until the loop is needed
 				while(ASND_StatusVoice(voice) == SND_WORKING)	{;;}
-				//Play the loop infinitely
-				
 				LockMutex lock(snd_mutex);
 				if (voice != -1 && loopFlag)
 					ret = ASND_SetInfiniteVoice(voice, format, freq, 0, data.get()+loopStart, length-(length-loopEnd)-loopStart, volume, volume) == SND_OK;
@@ -63,11 +60,6 @@ bool SSoundEffect::play(u8 vol, bool in_thread)
 int SSoundEffect::playLoop(SSoundEffect *snd)
 {
 	return snd->play(snd->volume, true);
-}
-
-u8 SSoundEffect::getVolume()
-{
-	return volume;
 }
 
 void SSoundEffect::setVolume(u8 vol)
@@ -83,7 +75,7 @@ void SSoundEffect::stop(void)
 
 	if (voice < 0)
 		return;
-	
+
 	LockMutex lock(snd_mutex);
 	s8 v = voice;
 	voice = -1;

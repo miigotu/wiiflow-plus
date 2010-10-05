@@ -666,9 +666,6 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 	m_cat.save();
 	m_cfg.save();
 
-	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing
-	cleanup();
-	
 	COVER_clear();
 	WBFS_Close();
 	
@@ -871,8 +868,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) &hdr->hdr.id);
 	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 	app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
-
-	_stopSounds(); // fix: code dump with IOS 222/223 when music is playing
 
 	// Reload IOS, if requested
 	net_wc24cleanup();
