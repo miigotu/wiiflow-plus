@@ -1440,13 +1440,13 @@ void CMenu::_shuffleMusic(void)
 
 void CMenu::_startMusic(void)
 {
+	if (music_files.empty()) //Not necessary to check this if shuffle was called
+		return;
+		
 	SmartBuf buffer;
 
 	if (current_music == music_files.end())
 		_shuffleMusic();
-
-	else if (music_files.empty()) //Not necessary to check this if shuffle was called
-		return;
 
 	_stopMusic();
 
