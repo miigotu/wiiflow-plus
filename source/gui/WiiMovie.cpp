@@ -73,7 +73,7 @@ WiiMovie::~WiiMovie()
     LWP_JoinThread(ReadThread, NULL);
     LWP_MutexDestroy(mutex);
 
-    ASND_StopVoice(0);
+    ASND_StopVoice(10);
 
     for(u8 i = 0; i < 2; i++)
     {
@@ -114,7 +114,7 @@ void WiiMovie::Stop()
 void WiiMovie::SetVolume(int vol)
 {
     volume = 255*vol/100;
-    ASND_ChangeVolumeVoice(0, volume, volume);
+    ASND_ChangeVolumeVoice(10, volume, volume);
 }
 
 void WiiMovie::SetScreenSize(int width, int height, int top, int left)
@@ -179,7 +179,7 @@ extern "C" void THPSoundCallback(int)
     if(soundbuffer[which].size() == 0 || sndsize[which] < MaxSoundSize*(SND_BUFFERS-1))
         return;
 
-    if(ASND_AddVoice(0, (u8*) &soundbuffer[which][0], sndsize[which]) != SND_OK)
+    if(ASND_AddVoice(10, (u8*) &soundbuffer[which][0], sndsize[which]) != SND_OK)
     {
         return;
     }
@@ -229,10 +229,10 @@ void WiiMovie::InternalThreadUpdate()
 
             sndsize[which] += Video->getCurrentBuffer(&soundbuffer[which][sndsize[which]/2])*2*2;
 
-            if(ASND_StatusVoice(0) == SND_UNUSED && sndsize[which] >= MaxSoundSize*(SND_BUFFERS-1))
+            if(ASND_StatusVoice(10) == SND_UNUSED && sndsize[which] >= MaxSoundSize*(SND_BUFFERS-1))
             {
-                ASND_StopVoice(0);
-                ASND_SetVoice(0, SndChannels, SndFrequence, 0, (u8 *) &soundbuffer[which][0], sndsize[which], volume, volume, THPSoundCallback);
+                ASND_StopVoice(10);
+                ASND_SetVoice(10, SndChannels, SndFrequence, 0, (u8 *) &soundbuffer[which][0], sndsize[which], volume, volume, THPSoundCallback);
                 which ^= 1;
             }
         }

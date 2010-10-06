@@ -1077,15 +1077,15 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	}
 	
 	// Fade music out when game is selected
-	if (m_gameSelected && m_musicCurrentVol > 0 )
+	if ((m_gameSelected && m_musicCurrentVol > 0) || m_video_playing)
 		m_music_fade_mode = -1;
 	
 	// Fade music back in if banner sound finished
-	if (m_gameSelected && m_musicCurrentVol != m_musicVol && m_gameSound.voice && ASND_StatusVoice(m_gameSound.voice) == SND_UNUSED )
+	if (m_gameSelected && m_musicCurrentVol != m_musicVol && m_gameSound.voice && ASND_StatusVoice(m_gameSound.voice) == SND_UNUSED  && !m_video_playing)
 		m_music_fade_mode = 1;
 
 	// Fade music back in when no game selected
-	if (!m_gameSelected && m_musicCurrentVol != m_musicVol) 
+	if (!m_gameSelected && m_musicCurrentVol != m_musicVol && !m_video_playing) 
 		m_music_fade_mode = 1;	
 	
 	LWP_MutexLock(m_gameSndMutex);
@@ -1103,7 +1103,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 
 	if (withCF && m_gameSoundThread == 0)
 		m_cf.startPicLoader();
-	if (!m_video_playing)
+	//if (!m_video_playing)
 		_loopMusic();
 	//Take Screenshot
 	if ((gc_btnsPressed & PAD_TRIGGER_Z) != 0)
@@ -1541,7 +1541,7 @@ void CMenu::_loopMusic(void)
 		_updateMusicVol();
 	}
 	
-	if((m_music_ismp3 && !MP3Player_IsPlaying()) || StatusOgg() == OGG_STATUS_EOF)
+	if(((m_music_ismp3 && !MP3Player_IsPlaying()) || StatusOgg() == OGG_STATUS_EOF) && !m_video_playing)
 		_startMusic();
 
 	return;
@@ -1618,12 +1618,13 @@ void CMenu::_load_installed_cioses()
 	
 	// Do sjizzle
 	u32 count;
-	if (ES_GetNumTitles(&count) > 0)
+	u32 ret = ES_GetNumTitles(&count);
+	if (ret || !count)
 	{
 		gprintf("Cannot count...aaaah\n");
 		return;
 	}
-	
+
 	static u64 title_list[256] ATTRIBUTE_ALIGN(32);
 	if (ES_GetTitles(title_list, count) > 0)
 	{
@@ -1638,11 +1639,11 @@ void CMenu::_load_installed_cioses()
 		static u8 tmd_buf[MAX_SIGNED_TMD_SIZE] ATTRIBUTE_ALIGN(32);
 		signed_blob *s_tmd = (signed_blob *) tmd_buf;
 		if (ES_GetStoredTMD(title_list[i], s_tmd, tmd_size) > 0) continue;
-		
+
 		const tmd *t = (const tmd *) SIGNATURE_PAYLOAD(s_tmd);
 		
 		u32 kind = t->title_id >> 32;
-		
+
 		if (kind == 1)
 		{
 			u32 title_l = t->title_id & 0xFFFFFFFF;

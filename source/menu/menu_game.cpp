@@ -322,13 +322,12 @@ void CMenu::_game(bool launch)
 				fclose(fp);
 				
 				_hideGame();
-						
 				WiiMovie movie(videoPath.c_str());
 				movie.SetScreenSize(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480), m_cfg.getInt("GENERAL", "tv_x", 0), m_cfg.getInt("GENERAL", "tv_y", 0));
 				movie.SetVolume(m_cfg.getInt("GENERAL", "sound_volume_bnr", 255));
+				//_stopSounds();		
 				movie.Play();
 				
-				m_gameSound.stop();
 				m_video_playing = true;
 				
 				STexture videoBg;
@@ -340,7 +339,7 @@ void CMenu::_game(bool launch)
 				}
 				_showGame();
 				m_video_playing = false;
-				m_gameSound.play(m_bnrSndVol);
+				//m_gameSound.play(m_bnrSndVol);
 			}
 		}
 		else if (BTN_1_PRESSED)
