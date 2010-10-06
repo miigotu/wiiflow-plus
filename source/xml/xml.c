@@ -675,14 +675,14 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 		{
 			nrCoverColors++;
 			
-			int new_size = nrCoverColors * 18;
+			int new_size = nrCoverColors * 17;
 			
 			char *cc = realloc(coverColors, new_size);
 			if (cc != NULL)
 			{
-				char *ptr = cc + ((nrCoverColors - 1) * 18);
-				memset(ptr, 0, 18);
-				sprintf(ptr, "%s=0x%.6lxff\n", gameinfo.id, gameinfo.caseColor);
+				char *ptr = cc + ((nrCoverColors - 1) * 17);
+				memset(ptr, 0, 17);
+				sprintf(ptr, "%s=#%.6lxff\n", gameinfo.id, gameinfo.caseColor);
 				coverColors = cc;
 			}
 		}

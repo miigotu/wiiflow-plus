@@ -1307,24 +1307,13 @@ void CCoverFlow::_drawCoverBox(int i, bool mirror, CCoverFlow::DrawMode dm)
 	if (dm == CCoverFlow::CFDR_NORMAL)
 	{ 
 		// set dvd box texture, depending on game
-		if (m_items[m_covers[i].index].coverColor == CColor(0xFFFF0000) ||
-			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNE01", 6) == 0 || 
-			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNP01", 6) == 0 || 
-			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNJ01", 6) == 0 ||
-			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNK01", 6) == 0 || 
-			strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "SMNW01", 6) == 0)
-		{
+		if (m_items[m_covers[i].index].coverColor == CColor(0xFFFF0000))
 			GX_InitTexObj(&texObj, m_dvdSkin_Red.data.get(), m_dvdSkin_Red.width, m_dvdSkin_Red.height, m_dvdSkin_Red.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
-		} 
-		else if (m_items[m_covers[i].index].coverColor == CColor(0xFF000000) ||
-				 strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "RZZJEL", 6) == 0 || 
-				 strncmp((char *) &m_items[m_covers[i].index].hdr->hdr.id, "RZNJ01", 6) == 0)
-		{
+		else if (m_items[m_covers[i].index].coverColor == CColor(0xFF000000))
 			GX_InitTexObj(&texObj, m_dvdSkin_Black.data.get(), m_dvdSkin_Black.width, m_dvdSkin_Black.height, m_dvdSkin_Black.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
-		}
-		else {
+		else
 			GX_InitTexObj(&texObj, m_dvdSkin.data.get(), m_dvdSkin.width, m_dvdSkin.height, m_dvdSkin.format, GX_CLAMP, GX_CLAMP, GX_FALSE);	
-		}
+
 		GX_LoadTexObj(&texObj, GX_TEXMAP0);
 	}
 	GX_Begin(GX_QUADS, GX_VTXFMT0, g_boxMeshQSize);

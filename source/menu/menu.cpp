@@ -933,17 +933,15 @@ void CMenu::_initCF(void)
 	Config custom_titles;
 	u64 chantitle;
 	m_titles_loaded = false;
-	bool custom_titles_loaded = false;
 	
-	if (m_current_view == COVERFLOW_USB) m_gamelistdump = m_cfg.getBool("GENERAL", "dump_gamelist", true);
-	else if (m_current_view == COVERFLOW_CHANNEL) m_gamelistdump = m_cfg.getBool("GENERAL", "dump_chanlist", true);
-	if (m_gamelistdump)
-		m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
+	if(m_current_view == COVERFLOW_USB) m_gamelistdump = m_cfg.getBool("GENERAL", "dump_gamelist", true);
+	else if(m_current_view == COVERFLOW_CHANNEL) m_gamelistdump = m_cfg.getBool("GENERAL", "dump_chanlist", true);
+	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
 
 	if (titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str()))
 		m_titles_loaded = true;
-	if (custom_titles.load(sfmt("%s/custom_titles.ini", m_settingsDir.c_str()).c_str()))
-		custom_titles_loaded = true;
+	custom_titles.load(sfmt("%s/custom_titles.ini", m_settingsDir.c_str()).c_str());
+
 	m_cf.clear();
 	m_cf.reserve(m_gameList.size());
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
@@ -982,12 +980,11 @@ void CMenu::_initCF(void)
 			int playcount = m_gcfg1.getInt("PLAYCOUNT", id, 0);
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
 
-			if (m_current_view == COVERFLOW_CHANNEL && m_gamelistdump)
-				m_dump.setWString("CHANNELS", id.substr(0, 4), w);
-			else if (m_current_view == COVERFLOW_USB && m_gamelistdump)
-				m_dump.setWString("GAMES", id, w);
+			if(m_current_view == COVERFLOW_CHANNEL && m_gamelistdump) m_dump.setWString("CHANNELS", id.substr(0, 4), w);
+			else if(m_current_view == COVERFLOW_USB && m_gamelistdump)	m_dump.setWString("GAMES", id, w);
 
 			CColor cover = custom_titles.getColor("COVERS", id, titles.getColor("COVERS", id, CColor(0xFFFFFF)));
+
 			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), cover, playcount, lastPlayed);
 		}
 	}
@@ -996,8 +993,8 @@ void CMenu::_initCF(void)
 	{
 		m_dump.save();
 		m_dump.unload();
-		if (m_current_view == COVERFLOW_USB) m_cfg.setBool("GENERAL", "dump_gamelist", false);
-		else if (m_current_view == COVERFLOW_CHANNEL) m_cfg.setBool("GENERAL", "dump_chanlist", false);
+		if(m_current_view == COVERFLOW_USB) m_cfg.setBool("GENERAL", "dump_gamelist", false);
+		else if(m_current_view == COVERFLOW_CHANNEL) m_cfg.setBool("GENERAL", "dump_chanlist", false);
 	}
 	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode", true));
 	cmpr = m_cfg.getBool("GENERAL", "allow_texture_compression", true);

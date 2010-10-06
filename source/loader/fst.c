@@ -72,9 +72,7 @@ int app_gameconfig_load(u8 *discid, const u8 *gameconfig, u32 tempgameconfsize)
 	{
 		gameconf = malloc(65536);
 		if (gameconf == NULL)
-		{
 			return -1;
-		}
 	}
 	
 	if (gameconfig == NULL || tempgameconfsize == 0)
@@ -144,9 +142,7 @@ int app_gameconfig_load(u8 *discid, const u8 *gameconfig, u32 tempgameconfsize)
 					gameidmatch += strlen(parsebuffer);
 				idmatch:
 					if (gameidmatch > maxgameidmatch2)
-					{
 						maxgameidmatch2 = gameidmatch;
-					}
 				}
 				while ((i != tempgameconfsize) && (tempgameconf[i] != 10 && tempgameconf[i] != 13)) i++;
 			}

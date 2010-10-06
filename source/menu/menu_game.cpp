@@ -624,9 +624,8 @@ void CMenu::_directlaunch(const string &id)
 				strncpy((char *) &hdr.hdr.id, id.c_str(), 6);
 				
 				if (wbfs_part_fs == PART_FS_NTFS || wbfs_part_fs == PART_FS_FAT)
-				{
 					WBFS_Ext_find_fname((u8 *) &hdr.hdr.id, NULL, (char *) &hdr.path, sizeof(hdr.path));
-				}
+
 			
 				// Game found
 				gprintf("Game found on partition %s\n", part);
@@ -642,11 +641,10 @@ void CMenu::_launch(dir_discHdr *hdr)
 {
 	m_gcfg2.load(sfmt("%s/gameconfig2.ini", m_settingsDir.c_str()).c_str());
 	string id2 = string((const char *) &hdr->hdr.id);
-	if (m_current_view == COVERFLOW_CHANNEL) {
-		_launchChannel(hdr);
-	} else {
-		_launchGame(hdr, false);
-	}
+
+	if (m_current_view == COVERFLOW_CHANNEL) _launchChannel(hdr);
+	else _launchGame(hdr, false);
+
 }
 
 void CMenu::_launchChannel(dir_discHdr *hdr)
@@ -735,17 +733,11 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	
 	int iosIdx = 0;
 	if (m_gcfg2.getInt(id, "ios", &iosIdx) && (u32) iosIdx < ARRAY_SIZE(CMenu::_ios))
-	{
-		// Upgrade to the correct value
 		m_gcfg2.setInt(id, "ios", CMenu::_ios[iosIdx]);
-	}
 	
 	int iosNum = mainIOS;
-	if (m_gcfg2.getInt(id, "ios", &iosNum) &&
-		find(_installed_cios.begin(), _installed_cios.end(), iosNum) == _installed_cios.end())
-	{
+	if (m_gcfg2.getInt(id, "ios", &iosNum) && find(_installed_cios.begin(), _installed_cios.end(), iosNum) == _installed_cios.end())
 		iosNum = mainIOS;
-	}
 	
 	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 1); // hooktype is defined in patchcode.h
@@ -802,14 +794,10 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 
 	int rtrnID = 0;
 	if (rtrn != NULL && strlen(rtrn) == 4)
-	{
 		rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
-	}
 	
 	if (m_directLaunch)
-	{
 		rtrnID = 0;
-	}
 
 	SmartBuf cheatFile, gameconfig;
 	u32 cheatSize = 0, gameconfigSize = 0;
@@ -818,10 +806,8 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	bool iosLoaded = false;
 
 	_waitForGameSoundExtract();
-	if (videoMode == 0)
-		videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
-	if (language == 0)
-		language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
+	if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
+	if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
 	if (strcasecmp(altdol.c_str(), "main.dol") == 0)
 		altdol.clear();
 	m_cfg.setString("GENERAL", "current_game", id);
@@ -852,23 +838,19 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 
 	if (cheat)
 		_loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
+
 	if (!_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt"))
-	{
 		if (FS_USBAvailable() && !_loadFile(gameconfig, gameconfigSize, "usb:/", "gameconfig.txt"))
-		{
-			if (FS_SDAvailable())
-				_loadFile(gameconfig, gameconfigSize, "sd:/", "gameconfig.txt");
-		}
-	}
+			if (FS_SDAvailable()) _loadFile(gameconfig, gameconfigSize, "sd:/", "gameconfig.txt");
 	
 	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) &hdr->hdr.id);
 	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) &hdr->hdr.id);
 	app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
 	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 
-	// Reload IOS, if requested
 	net_wc24cleanup();
 	
+	// Reload IOS, if requested
 	if ((iosNum != mainIOS))
 	{
 		gprintf("Reloading IOS into %d\n", iosNum);
@@ -945,17 +927,13 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	{
 		WII_Initialize();
 		if (WII_LaunchTitle(0x0000000100000100ULL)<0)
-		{
 			Sys_LoadMenu();
-		}
 	} 
 	else 
 	{
 		// hide cios devices
  		if (shadow_mload())
-		{
 			disable_ffs_patch();
-		}
 		/*if (ffs_emulation)
 			 if (load_fatffs_module((u8 *)id.c_str()) != -1)
 				enable_ffs(nand_mode); */
