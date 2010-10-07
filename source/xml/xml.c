@@ -472,8 +472,8 @@ void readTitles(struct gameXMLinfo *gameinfo, char * start) {
 	int title = 0;
 	int synopsis = 0;
 	char *locTmp;
-	char *titStart;
-	char *titEnd;
+	char *titleStart;
+	char *titleEnd;
 	while ((locStart = strstr(locEnd, "<locale lang=\"")) != NULL) {
 		strcpy(tmpLang, "");
 		locEnd = strstr(locStart, "</locale>");
@@ -495,21 +495,21 @@ void readTitles(struct gameXMLinfo *gameinfo, char * start) {
 		// 1. else get whatever is found
 		locTmp = strndup(locStart, locEnd-locStart);
 		if (title < found) {
-			titStart = strstr(locTmp, "<title>");
-			if (titStart != NULL) {
-				titEnd = strstr(titStart, "</title>");
-				strncpySafe(gameinfo->title, titStart+7,
-						sizeof(gameinfo->title), titEnd-(titStart+7));
+			titleStart = strstr(locTmp, "<title>");
+			if (titleStart != NULL) {
+				titleEnd = strstr(titleStart, "</title>");
+				strncpySafe(gameinfo->title, titleStart+7,
+						sizeof(gameinfo->title), titleEnd-(titleStart+7));
 				unescape(gameinfo->title, sizeof(gameinfo->title));
 				title = found;
 			}
 		}
 		if (synopsis < found) {
-			titStart = strstr(locTmp, "<synopsis>");
-			if (titStart != NULL) {
-				titEnd = strstr(titStart, "</synopsis>");
-				strncpySafe(gameinfo->synopsis, titStart+10,
-						sizeof(gameinfo->synopsis), titEnd-(titStart+10));
+			titleStart = strstr(locTmp, "<synopsis>");
+			if (titleStart != NULL) {
+				titleEnd = strstr(titleStart, "</synopsis>");
+				strncpySafe(gameinfo->synopsis, titleStart+10,
+						sizeof(gameinfo->synopsis), titleEnd-(titleStart+10));
 				unescape(gameinfo->synopsis,sizeof(gameinfo->synopsis));
 				synopsis = found;
 			}
@@ -713,19 +713,15 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 	fclose(titles);
 	titles = NULL;
 	
+	CloseXMLDatabase();
+	
 	char pathname[200];
-	if (abort && n != amount_of_games)
+	if (abort || n != amount_of_games)
 	{
 abort:
 		gprintf("Aborting wiitdb\n");
 
 		// Delete intermediate files, if the files are not complete
-		fclose(idx);
-		fclose(db);
-		
-		idx = NULL;
-		db = NULL;
-
 		char pathname[200];
 		sprintf(pathname, "%s/wiitdb.db", xmlfilepath);
 		remove(pathname);
@@ -736,13 +732,11 @@ abort:
 	}
 	else
 	{
-		sprintf(pathname, "%s/titles.ini", xmlfilepath);
 		// Move titles.new to titles.ini
+		sprintf(pathname, "%s/titles.ini", xmlfilepath);
 		remove(pathname);
 		rename(titlespath, pathname);
 	}
-	
-	OpenDbFiles(xmlfilepath, false);
 }
 
 /* load renamed titles from proper names and game info XML, needs to be after cfg_load_games */
