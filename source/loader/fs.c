@@ -309,18 +309,3 @@ u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length)
 	}
 	return buf;
 }
-
-void HDD_Wait()
-{
-    bool start = false;
-    bool inserted = false;
-	u32 i = 0;
-    while (!(start && inserted) && i < 40)
-    {
-        start = __io_usbstorage.startup();
-        inserted = __io_usbstorage.isInserted();
-		if (!inserted)
-			__io_usbstorage.shutdown();
-        i++;
-    }
-}

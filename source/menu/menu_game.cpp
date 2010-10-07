@@ -267,7 +267,7 @@ void CMenu::_game(bool launch)
 {
 	bool b;
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
-	wdm_loaded = load_wdm(m_wdmDir.c_str(), m_cf.getId().c_str()) == 0;
+	//wdm_loaded = load_wdm(m_wdmDir.c_str(), m_cf.getId().c_str()) == 0;
 	if (!launch)
 	{
 		SetupInput();
@@ -477,6 +477,7 @@ void CMenu::_game(bool launch)
 		if (startGameSound == -10)
 		{
 			m_gameSound.stop();
+			wdm_count = 0;
 			m_gameSelected = false;
 			m_fa.unload();
 			_setBg(m_mainBg, m_mainBgLQ);
@@ -508,7 +509,7 @@ void CMenu::_game(bool launch)
 					m_btnMgr.show(m_gameBtnDelete);
 					m_btnMgr.show(m_gameBtnSettings);
 				}
-				if (wdm_count > 1 && m_gameSelected == true)
+				if (wdm_count > 1 )//&& m_gameSelected == true)
 				{
 					m_btnMgr.show(m_gameLblWdm);
 					m_btnMgr.show(m_gameBtnWdmM);

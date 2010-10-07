@@ -111,28 +111,35 @@ int old_main(int argc, char **argv)
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		if (!wbfsOK)
 		{
-			// Wait for HDD
+			// Show HDD Wait Screen
 			vid.waitMessage(texWaitHDD);
-			HDD_Wait();
-			for (int i = 0; i < 80; i += 2)
+
+			while(!wbfsOK)
 			{
-				if (__io_usbstorage.isInserted())
+
+				
+				while(!((__io_usbstorage.startup() && __io_usbstorage.isInserted()))) //Wait indefinitely until HDD is there or exit requested.
 				{
-					iosOK = loadIOS(mainIOS, false);
-					if (!iosOK)
-						break;
-					wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
-					if (wbfsOK)
-						break;
-					if (Sys_Exiting())
-						Sys_Exit(0);
+					__io_usbstorage.shutdown();
+
+					WPAD_ScanPads(); PAD_ScanPads();
+					u32 wbtnsPressed = 0, gbtnsPressed = 0;
+					for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+					{
+						wbtnsPressed |= WPAD_ButtonsDown(chan);
+						gbtnsPressed |= PAD_ButtonsDown(chan);
+					}
+
+					if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) != 0 || (gbtnsPressed & BTN_HOME) != 0)
+					Sys_Exit(0);
 				}
-				else
-				{
-					if(!(WBFS_Available() || FS_USBAvailable()))//This should always be true, but check anyway.
-						Mount_Devices();//USB wasnt inserted, try to mount one now.
-					i--;//Increase the timeout since no device was inserted.
-				}
+
+				FS_Unmount_USB();
+				Mount_Devices();
+
+				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
+				if (wbfsOK)
+					break;
 			}
 		}
 	}
