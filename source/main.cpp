@@ -20,8 +20,8 @@ extern const u8 wait_hdd_png[];
 
 extern bool geckoinit;
 extern int mainIOS;
-extern int mainIOSminRev;
 extern int mainIOSRev;
+extern int mainIOSminRev;
 
 CMenu *mainMenu;
 extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
@@ -75,10 +75,9 @@ int old_main(int argc, char **argv)
 					gameid = NULL;
 		}
 	}
-	
 	gprintf("Loading cIOS: %d\n", mainIOS);
 
-	// Load (passed) Custom IOS
+	// Load Custom IOS
 	iosOK = loadIOS(mainIOS, false);
 	mainIOSRev = IOS_GetRevision();
 	iosOK = iosOK && mainIOSRev >= mainIOSminRev;
@@ -91,12 +90,12 @@ int old_main(int argc, char **argv)
 
 	// Init video
 	vid.init();
-	// Init
+
 	STexture texWait;
-	STexture texWaitHDD;
 	texWait.fromPNG(wait_png, GX_TF_RGB565, ALLOC_MALLOC);
 	vid.waitMessage(texWait);
-	texWaitHDD.fromPNG(wait_hdd_png, GX_TF_RGB565, ALLOC_MALLOC);
+
+	// Init
 	Sys_Init();
 	Sys_ExitTo(0);
 	
@@ -112,12 +111,12 @@ int old_main(int argc, char **argv)
 		if (!wbfsOK)
 		{
 			// Show HDD Wait Screen
+			STexture texWaitHDD;
+			texWaitHDD.fromPNG(wait_hdd_png, GX_TF_RGB565, ALLOC_MALLOC);
 			vid.waitMessage(texWaitHDD);
 
 			while(!wbfsOK)
 			{
-
-				
 				while(!((__io_usbstorage.startup() && __io_usbstorage.isInserted()))) //Wait indefinitely until HDD is there or exit requested.
 				{
 					__io_usbstorage.shutdown();
@@ -141,17 +140,15 @@ int old_main(int argc, char **argv)
 				if (wbfsOK)
 					break;
 			}
+			vid.waitMessage(texWait);
+			texWaitHDD.data.release();
 		}
 	}
 	dipOK = Disc_Init() >= 0;
-	vid.waitMessage(texWait);
-	texWait.data.release();
-	texWaitHDD.data.release();
 	MEM2_takeBigOnes(true);
+	texWait.data.release();
 	do
 	{
-		Mount_Devices();
-				
 		gprintf("SD Available: %d\n", FS_SDAvailable());
 		gprintf("USB Available: %d\n", FS_USBAvailable());
 
@@ -162,23 +159,23 @@ int old_main(int argc, char **argv)
 		if (!iosOK)
 			menu.error(sfmt("IOS %i rev%i or later is required", mainIOS, mainIOSminRev));
 		else if (!dipOK)
-			menu.error(L"Could not initialize DIP module!");
+			menu.error(L"Could not initialize the DIP module!");
 		else if (!wbfsOK)
 			menu.error(L"WBFS_Init failed");
 		else
 		{
 			if (gameid != NULL && strlen(gameid) == 6)
-			{
 				menu._directlaunch(gameid);
-			}
 			else
-			{
 				ret = menu.main();
-			}
 		}
 		vid.cleanup();
-		Unmount_All_Devices();
+		//Unmount and mount of USB crashing on 2nd reload?
+		//Just remount SD for now as USB should not be removed while wiiflow is running.
+		FS_Unmount_SD();
+		FS_Mount_SD();
 	} while (ret == 1);
+	Unmount_All_Devices();
 	return ret;
 };
 

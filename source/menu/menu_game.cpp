@@ -641,10 +641,8 @@ void CMenu::_directlaunch(const string &id)
 void CMenu::_launch(dir_discHdr *hdr)
 {
 	m_gcfg2.load(sfmt("%s/gameconfig2.ini", m_settingsDir.c_str()).c_str());
-	string id2 = string((const char *) &hdr->hdr.id);
-
-	if (m_current_view == COVERFLOW_CHANNEL) _launchChannel(hdr);
-	else _launchGame(hdr, false);
+	m_current_view == COVERFLOW_CHANNEL ?
+		_launchChannel(hdr) : _launchGame(hdr, false);
 
 }
 
@@ -1092,12 +1090,8 @@ void CMenu::_loadGameSound(dir_discHdr *hdr)
 	const u8 *soundChunk;
 	u32 soundChunkSize;
 	SmartBuf uncompressed;
-	
-	if (m_current_view == COVERFLOW_CHANNEL) {
-		banner = _extractChannelBnr(hdr->hdr.chantitle);
-	}
-	else if (m_current_view == COVERFLOW_USB)
-		banner = _extractBnr(hdr);
+
+	banner = m_current_view == COVERFLOW_USB ? _extractBnr(hdr) : _extractChannelBnr(hdr->hdr.chantitle);
 
 	if (banner == NULL || !banner->IsValid())
 	{

@@ -51,22 +51,11 @@ void Sys_ExitTo(int option)
 	return_to_priiloader = option == EXIT_TO_PRIILOADER;
 	
 	//magic word to force wii menu in priiloader.
-	if (return_to_hbc)
-	{
-		DCFlushRange((void*)0x8132fffb,4);
-		*(vu32*)0x80001804 = 0x53545542;
-		*(vu32*)0x80001808 = 0x48415858;
-	}
-	else if (return_to_menu)
-	{
-		DCFlushRange((void*)0x8132fffb,4);
+	DCFlushRange((void*)0x8132fffb,4);
+	if (return_to_menu)
 		*(vu32*)0x8132fffb = 0x50756e65;
-	}
 	else if (return_to_priiloader)
-	{
-		DCFlushRange((void*)0x8132fffb,4);
 		*(vu32*)0x8132fffb = 0x4461636f;
-	}
 }
 
 void Sys_Exit(int ret)

@@ -934,8 +934,7 @@ void CMenu::_initCF(void)
 	u64 chantitle;
 	m_titles_loaded = false;
 	
-	if(m_current_view == COVERFLOW_USB) m_gamelistdump = m_cfg.getBool("GENERAL", "dump_gamelist", true);
-	else if(m_current_view == COVERFLOW_CHANNEL) m_gamelistdump = m_cfg.getBool("GENERAL", "dump_chanlist", true);
+	m_gamelistdump = m_cfg.getBool("GENERAL", m_current_view == COVERFLOW_USB ? "dump_gamelist" : "dump_chanlist", true);
 	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
 
 	if (titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str()))
@@ -980,8 +979,8 @@ void CMenu::_initCF(void)
 			int playcount = m_gcfg1.getInt("PLAYCOUNT", id, 0);
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
 
-			if(m_current_view == COVERFLOW_CHANNEL && m_gamelistdump) m_dump.setWString("CHANNELS", id.substr(0, 4), w);
-			else if(m_current_view == COVERFLOW_USB && m_gamelistdump)	m_dump.setWString("GAMES", id, w);
+			if(m_gamelistdump)
+				m_dump.setWString(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", m_current_view == COVERFLOW_CHANNEL ? id.substr(0, 4) : id, w);
 
 			CColor cover = custom_titles.getColor("COVERS", id, titles.getColor("COVERS", id, CColor(0xFFFFFF)));
 
@@ -993,8 +992,7 @@ void CMenu::_initCF(void)
 	{
 		m_dump.save();
 		m_dump.unload();
-		if(m_current_view == COVERFLOW_USB) m_cfg.setBool("GENERAL", "dump_gamelist", false);
-		else if(m_current_view == COVERFLOW_CHANNEL) m_cfg.setBool("GENERAL", "dump_chanlist", false);
+		m_cfg.setBool("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "dump_chanlist" : "dump_gamelist", false);
 	}
 	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode", true));
 	cmpr = m_cfg.getBool("GENERAL", "allow_texture_compression", true);
@@ -1308,11 +1306,7 @@ bool CMenu::_loadChannelList(void)
 
 bool CMenu::_loadList(void)
 {
-	if (m_current_view == COVERFLOW_CHANNEL)
-		return _loadChannelList();
-	else if (m_current_view == COVERFLOW_USB)
-		return _loadGameList();
-	return false;
+	return m_current_view == COVERFLOW_USB ? _loadGameList() : _loadChannelList();
 }
 
 bool CMenu::_loadGameList(void)

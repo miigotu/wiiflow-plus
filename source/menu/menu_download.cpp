@@ -373,16 +373,9 @@ int CMenu::_coverDownloader(bool missingOnly)
 	}
 	savePNG = m_cfg.getBool("GENERAL", "keep_png", true);
 
-	if (m_current_view == COVERFLOW_CHANNEL) 
-	{
-		fmtURLBox = stringToVector(m_cfg.getString("GENERAL", "url_full_covers_id4", FMT_BPIC4_URL), '|');
-		fmtURLFlat = stringToVector(m_cfg.getString("GENERAL", "url_flat_covers_id4", FMT_PIC4_URL), '|');
-	}
-	else
-	{
-		fmtURLBox = stringToVector(m_cfg.getString("GENERAL", "url_full_covers", FMT_BPIC6_URL), '|');
-		fmtURLFlat = stringToVector(m_cfg.getString("GENERAL", "url_flat_covers", FMT_PIC6_URL), '|');
-	}
+	fmtURLBox = stringToVector(m_cfg.getString("GENERAL", "url_full_covers_id4", m_current_view == COVERFLOW_CHANNEL ? FMT_BPIC4_URL : FMT_BPIC6_URL), '|');
+	fmtURLFlat = stringToVector(m_cfg.getString("GENERAL", "url_flat_covers_id4", m_current_view == COVERFLOW_CHANNEL ? FMT_PIC4_URL : FMT_PIC6_URL), '|');
+
 	nbSteps = m_gameList.size();
 	step = 0;
 	if (m_coverDLGameId.empty())
@@ -419,13 +412,24 @@ int CMenu::_coverDownloader(bool missingOnly)
 			return 0;
 		}
 		m_thrdStepLen = dlWeight / (float)nbSteps;
+
+		m_newID.load(sfmt("%s/newid.ini", m_settingsDir.c_str()).c_str());
+		m_newID.setString("CHANNELS", "WFSF", "DWFA");
+
 		for (u32 i = 0; i < coverList.size() && !m_thrdStop; ++i)
 		{
 			// Try to get the full cover
 			success = false;
+			vector<string> newID(1);
 			for (u32 j = 0; !success && j < fmtURLBox.size() && !m_thrdStop; ++j)
 			{
-				url = makeURL(fmtURLBox[j], coverList[i], countryCode(coverList[i]));
+				newID[0] = m_newID.getString(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", coverList[i], coverList[i]);
+				if(strncasecmp(newID[0].c_str(), coverList[i].c_str(), m_current_view == COVERFLOW_CHANNEL ? 4 : 6) == 0)
+					m_newID.remove(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", coverList[i]);
+				else
+					gprintf("old id = %s\nnew id = %s\n", coverList[i].c_str(), newID[0].c_str());
+
+				url = makeURL(fmtURLBox[j], newID[0], countryCode(newID[0]));
 				if (j == 0)
 					++step;
 				m_thrdStep = listWeight + dlWeight * (float)step / (float)nbSteps;
@@ -469,7 +473,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 						break;
 					for (u32 j = 0; !success && j < fmtURLFlat.size() && !m_thrdStop; ++j)
 					{
-						url = makeURL(fmtURLFlat[j], coverList[i], countryCode(coverList[i]));
+						url = makeURL(fmtURLFlat[j], newID[0], countryCode(newID[0]));
 						LWP_MutexLock(m_mutex);
 						_setThrdMsg(wfmt(_fmt("dlmsg8", L"Full cover not found. Downloading from %s"), url.c_str()), listWeight + dlWeight * (float)step / (float)nbSteps);
 						LWP_MutexUnlock(m_mutex);
@@ -501,9 +505,13 @@ int CMenu::_coverDownloader(bool missingOnly)
 					}
 				}
 			}
+			newID.clear();
 			++step;
 		}
+		coverList.clear();
+		m_newID.unload();
 	}
+
 	LWP_MutexLock(m_mutex);
 	if (countFlat == 0)
 		_setThrdMsg(wfmt(_fmt("dlmsg5", L"%i/%i files downloaded."), count, n), 1.f);

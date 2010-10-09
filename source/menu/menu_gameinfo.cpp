@@ -300,8 +300,31 @@ void CMenu::_textGameInfo(void)
 		m_btnMgr.setText(m_gameinfoLblDev, wfmt(_fmt("gameinfo1",L"Developer: %s"), gameinfo.developer), true);
 		m_btnMgr.setText(m_gameinfoLblPublisher, wfmt(_fmt("gameinfo2",L"Publisher: %s"), gameinfo.publisher), true);
 		m_btnMgr.setText(m_gameinfoLblRegion, wfmt(_fmt("gameinfo3",L"Region: %s"), gameinfo.region), true);
-		m_btnMgr.setText(m_gameinfoLblGenre, wfmt(_fmt("gameinfo5",L"Genre: %s"), gameinfo.genre), true);
+
+		string genres = gameinfo.genre;
+		wstringEx wGenres;
+
+		// skip delimiters at beginning.
+		string::size_type lastPos = genres.find_first_not_of(",", 0);
+
+		// find first "non-delimiter".
+		string::size_type pos = genres.find_first_of(",", lastPos);
+
+		while (string::npos != pos || string::npos != lastPos)
+		{
+			string current_genre = ltrim(rtrim(genres.substr(lastPos, pos - lastPos)));
+			
+			wGenres = wfmt(L"%s, %s", wGenres.c_str(), _t(current_genre.c_str(), wfmt(L"%s", current_genre.c_str()).c_str()).c_str());
+
+			// skip delimiters.  Note the "not_of"
+			lastPos = genres.find_first_not_of(",", pos);
 		
+			// find next "non-delimiter"
+			pos = genres.find_first_of(",", lastPos);
+		}
+
+		m_btnMgr.setText(m_gameinfoLblGenre, wfmt(_fmt("gameinfo5",L"Genre: %s"), wGenres.c_str()), true);
+
 		switch(CONF_GetRegion())
 		{
 		case 0:

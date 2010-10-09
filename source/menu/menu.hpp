@@ -61,6 +61,7 @@ private:
 	Config m_theme;
 	Config m_version;
 	Config m_dump;
+	Config m_newID;
 	Channels m_channels;
 	SmartBuf m_music;
 	u8 m_aa;

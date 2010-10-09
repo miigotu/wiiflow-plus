@@ -61,5 +61,7 @@ std::vector<wstringEx> stringToVector(const wstringEx &text, char sep);
 std::vector<std::string> stringToVector(const std::string &text, char sep);
 std::string upperCase(std::string text);
 std::string lowerCase(std::string text);
+std::string ltrim(std::string s);
+std::string rtrim(std::string s);
 
 #endif // !defined(__TEXT_HPP)
