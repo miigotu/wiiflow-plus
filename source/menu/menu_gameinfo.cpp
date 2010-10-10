@@ -83,18 +83,15 @@ void CMenu::_gameinfo(void)
 	{
 		_mainLoopCommon();
 
+		if (amount_of_skips == 0)
+		{
+			m_btnMgr.getDimensions(m_gameinfoLblSynopsis, synopsis_x, synopsis_y, synopsis_w, synopsis_h); // Get original dimensions
+		}
+
 		if ((BTN_DOWN_PRESSED || BTN_DOWN_HELD) && !(m_thrdWorking && m_thrdStop) && page == 1)
 		{
-			if (amount_of_skips == 0)
-			{
-				m_btnMgr.getDimensions(m_gameinfoLblSynopsis, synopsis_x, synopsis_y, synopsis_w, synopsis_h); // Get original dimensions
-			}
-			
 			m_btnMgr.getDimensions(m_gameinfoLblSynopsis, x, y, synopsis_w, synopsis_h); // Get current dimensions
 			
-			gprintf("Variables: synopsis_y: %d, synopsis_h: %d, m_vid.height: %d\n", synopsis_y, synopsis_h, m_vid.height());
-			gprintf("Min Y for scrolling is: %d\n", (int) (synopsis_y - (synopsis_h - (m_vid.height() - 20))));
-			gprintf("Current Y is: %d\n", y);
 			if (y > (int) (synopsis_y - (synopsis_h - (m_vid.height() - 20)))) // 20 pixels from the bottom
 			{
 				// Move the control instead
@@ -113,7 +110,7 @@ void CMenu::_gameinfo(void)
 				amount_of_skips--;
 			}
 		}
-		else if (BTN_RIGHT_PRESSED && !(m_thrdWorking && m_thrdStop) && page == 0)
+		else if (BTN_RIGHT_PRESSED && !(m_thrdWorking && m_thrdStop) && page == 0 && strlen(gameinfo.synopsis) > 0)
 		{
 			page = 1;
 						
@@ -313,8 +310,11 @@ void CMenu::_textGameInfo(void)
 		while (string::npos != pos || string::npos != lastPos)
 		{
 			string current_genre = ltrim(rtrim(genres.substr(lastPos, pos - lastPos)));
-			
-			wGenres = wfmt(L"%s, %s", wGenres.c_str(), _t(current_genre.c_str(), wfmt(L"%s", current_genre.c_str()).c_str()).c_str());
+					
+			if (wGenres.size() > 0)
+				wGenres += L", " + _t(current_genre.c_str(), wfmt(L"%s", current_genre.c_str()).c_str());
+			else
+				wGenres = _t(current_genre.c_str(), wfmt(L"%s", current_genre.c_str()).c_str());
 
 			// skip delimiters.  Note the "not_of"
 			lastPos = genres.find_first_not_of(",", pos);
@@ -323,7 +323,7 @@ void CMenu::_textGameInfo(void)
 			pos = genres.find_first_of(",", lastPos);
 		}
 
-		m_btnMgr.setText(m_gameinfoLblGenre, wfmt(_fmt("gameinfo5",L"Genre: %s"), wGenres.c_str()), true);
+		m_btnMgr.setText(m_gameinfoLblGenre, wfmt(_fmt("gameinfo5",L"Genre: %s"), wGenres.toUTF8().c_str()), true);
 
 		switch(CONF_GetRegion())
 		{

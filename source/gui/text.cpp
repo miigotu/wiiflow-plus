@@ -256,8 +256,6 @@ void CText::setText(SFont font, const wstringEx &t)
 	CText::SWord w;
 	vector<wstringEx> lines;
 
-	totalHeight = 0;
-
 	m_lines.clear();
 	m_font = font;
 	if (!m_font.font)
@@ -291,8 +289,6 @@ void CText::setText(SFont font, const wstringEx &t)
 				i = wstringEx::npos;
 			}
 		}
-		
-		totalHeight += font.font->getHeight(lines[k].c_str());
 	}
 }
 
@@ -336,8 +332,6 @@ void CText::setText(SFont font, const wstringEx &t, u32 startline)
 				i = wstringEx::npos;
 			}
 		}
-		
-		totalHeight += m_font.font->getHeight(lines[k].c_str());
 	}
 }
 
@@ -350,6 +344,8 @@ void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 	float space;
 	float shift;
 	u32 lineBeg;
+
+	totalHeight = 0;
 
 	if (!m_font.font)
 		return;
@@ -393,6 +389,8 @@ void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 		if (!ignoreNewlines && k + 1 < m_lines.size())
 			posX = 9999999.f;
 	}
+	totalHeight = posY;
+	
 	if ((style & (FTGX_JUSTIFY_CENTER | FTGX_JUSTIFY_RIGHT)) != 0)
 	{
 		posX -= space;
@@ -443,13 +441,7 @@ void CText::draw(void)
 
 int CText::getTotalHeight(void)
 {
-	if (m_lines.size() == 0) return m_font.lineSpacing;
-
-	CLine line = m_lines[m_lines.size() - 1];
-	
-	if (line.size() == 0) return m_font.lineSpacing;
-	int height = line[line.size() - 1].targetPos.y;
-	return height + totalHeight;
+	return totalHeight + (m_lines.size() * m_font.lineSpacing);
 }
 
 string upperCase(string text)
