@@ -117,10 +117,9 @@ int old_main(int argc, char **argv)
 
 			while(!wbfsOK)
 			{
-				while(!((__io_usbstorage.startup() && __io_usbstorage.isInserted()))) //Wait indefinitely until HDD is there or exit requested.
+				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
+				while(!FS_Mount_USB()) //Wait indefinitely until HDD is there or exit requested.
 				{
-					__io_usbstorage.shutdown();
-
 					WPAD_ScanPads(); PAD_ScanPads();
 					u32 wbtnsPressed = 0, gbtnsPressed = 0;
 					for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
@@ -132,13 +131,6 @@ int old_main(int argc, char **argv)
 					if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) != 0 || (gbtnsPressed & BTN_HOME) != 0)
 					Sys_Exit(0);
 				}
-
-				FS_Unmount_USB();
-				Mount_Devices();
-
-				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
-				if (wbfsOK)
-					break;
 			}
 			vid.waitMessage(texWait);
 			texWaitHDD.data.release();
@@ -151,11 +143,13 @@ int old_main(int argc, char **argv)
 	{
 		gprintf("SD Available: %d\n", FS_SDAvailable());
 		gprintf("USB Available: %d\n", FS_USBAvailable());
+		Mount_Devices(); //Why the hell does it need to mount devices again when the above gprintf's are both true?  Without this we have a dump
+
 
 		CMenu menu(vid);
 		menu.init();
 		mainMenu = &menu;
-		//
+
 		if (!iosOK)
 			menu.error(sfmt("IOS %i rev%i or later is required", mainIOS, mainIOSminRev));
 		else if (!dipOK)
@@ -170,12 +164,8 @@ int old_main(int argc, char **argv)
 				ret = menu.main();
 		}
 		vid.cleanup();
-		//Unmount and mount of USB crashing on 2nd reload?
-		//Just remount SD for now as USB should not be removed while wiiflow is running.
-		FS_Unmount_SD();
-		FS_Mount_SD();
+		Unmount_All_Devices();
 	} while (ret == 1);
-	Unmount_All_Devices();
 	return ret;
 };
 

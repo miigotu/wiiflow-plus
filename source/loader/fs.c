@@ -78,53 +78,8 @@ void Unmount_All_Devices(void)
 bool Mount_Devices(void)
 {
 	ISFS_Initialize();
-
-	FS_Unmount_SD();
-	FS_Unmount_USB();
-
 	FS_Mount_SD();
-
-    if(!__io_usbstorage.startup() || !__io_usbstorage.isInserted())
-        return false;
-
-	int i;
-	u32 sector = 0;
-	bool ntfs_found = false, fat_found = false;
-
-	s32 ret = InitPartitionList();
-	
-	if (ret || plist.num == 0)
-	{
-		__io_usbstorage.shutdown();
-		return false;
-	}
-
-	for (i=0; i<plist.num; i++)
-	{
- 		switch(plist.pinfo[i].fs_type)
-		{
-			case FS_TYPE_WBFS:
-				continue;
-			case FS_TYPE_NTFS:
-				ntfs_found = true;
-				sector = plist.pentry[i].sector;
-				break;
- 			case FS_TYPE_FAT32:
-			case FS_TYPE_FAT16:
-				fat_found = true;
-				sector = plist.pentry[i].sector;
-				break;
-			default: 
-				continue;
-		}
-		if (fat_found || ntfs_found)
-			break;
-	}
-	bool retval = FS_Mount_USB(sector, ntfs_found);
-	if (!retval)
-		__io_usbstorage.shutdown();
-		
-	return retval;
+	return FS_Mount_USB();
 }
 
 void FS_Unmount_SD(void)
@@ -139,8 +94,12 @@ void FS_Unmount_SD(void)
 		ntfsUnmount("sd:", true);
 		g_ntfs_sdOK = false;
 	}
-	__io_wiisd.shutdown();
-	__io_sdhc.shutdown();	
+
+	if (!(g_fat_sdOK || g_ntfs_sdOK))
+	{
+		__io_wiisd.shutdown();
+		__io_sdhc.shutdown();
+	}
 
 	fs_sd_mount = 0;
 	fs_sd_sec = 0;
@@ -168,64 +127,122 @@ void FS_Unmount_USB(void)
 		__io_usbstorage.shutdown();
 }
 
-bool FS_Mount_USB(u32 sector, bool ntfs)
+bool FS_Mount_USB(void)
 {
-	if (!g_fat_usbOK && !g_ntfs_usbOK && !ntfs)
+	FS_Unmount_USB();
+    if(!__io_usbstorage.startup() || !__io_usbstorage.isInserted())
 	{
-		g_fat_usbOK = fatMount("usb", &__io_usbstorage, sector, CACHE, SECTORS);
+		if (!g_ntfs_usbOK && !g_fat_usbOK && !g_wbfsOK)
+			__io_usbstorage.shutdown();	
+        return false;
 	}
-	if (!g_ntfs_usbOK && !g_fat_usbOK && ntfs)
+
+	int i;
+	u32 sector = 0;
+	bool ntfs_found = false, fat_found = false;
+
+	s32 ret = InitPartitionList();
+	
+	if (ret || plist.num == 0)
 	{
+		if (!g_ntfs_usbOK && !g_fat_usbOK && !g_wbfsOK)
+			__io_usbstorage.shutdown();	
+		
+		return false;
+	}
+
+	for (i=0; i<plist.num; i++)
+	{
+ 		switch(plist.pinfo[i].fs_type)
+		{
+			case FS_TYPE_WBFS:
+				continue;
+			case FS_TYPE_NTFS:
+				ntfs_found = true;
+				sector = plist.pentry[i].sector;
+				break;
+ 			case FS_TYPE_FAT32:
+			case FS_TYPE_FAT16:
+				fat_found = true;
+				sector = plist.pentry[i].sector;
+				break;
+			default: 
+				continue;
+		}
+		if (fat_found || ntfs_found)
+			break;
+	}
+
+	if (!g_ntfs_usbOK && !g_fat_usbOK && !ntfs_found)
+		g_fat_usbOK = fatMount("usb", &__io_usbstorage, sector, CACHE, SECTORS);
+	if (!g_fat_usbOK && !g_ntfs_usbOK && ntfs_found)
 		g_ntfs_usbOK = ntfsMount("usb", &__io_usbstorage, sector, CACHE, SECTORS, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE);
-	} 
-	if (g_fat_usbOK && !ntfs)
+
+	if (g_fat_usbOK && !ntfs_found)
 	{
 		fs_fat_mount = 1;
 		fs_fat_sec = _FAT_startSector;
 	}
-	if (g_ntfs_usbOK && ntfs)
+	if (g_ntfs_usbOK && ntfs_found)
 	{
 		fs_ntfs_mount = 1;
 		fs_ntfs_sec = sector;
 		
 		gprintf("NTFS Mount sector: %d\n", fs_ntfs_sec);
 	}
-		
+
+	if (!g_ntfs_usbOK && !g_fat_usbOK && !g_wbfsOK)
+		__io_usbstorage.shutdown();	
+
 	return g_ntfs_usbOK || g_fat_usbOK;
 }
 
 bool FS_Mount_SD(void)
 {
-	if (!g_ntfs_sdOK && !g_fat_sdOK)
+	FS_Unmount_SD();
+	if (__io_wiisd.startup() && __io_wiisd.isInserted())
 	{
-		__io_wiisd.startup();
 		g_fat_sdOK = fatMount("sd", &__io_wiisd, 0, CACHE, SDHC_SECTOR_SIZE);
+		if (!g_fat_sdOK)
+		{
+			g_ntfs_sdOK = ntfsMount("sd", &__io_wiisd, 0, CACHE, SECTORS, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE);
+
+			if (!g_ntfs_sdOK)
+				__io_wiisd.shutdown();
+		}
 	}
-	if (!g_ntfs_sdOK && !g_fat_sdOK)
-		g_ntfs_sdOK = ntfsMount("sd", &__io_wiisd, 0, CACHE, SECTORS, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE);
+	else
+		__io_wiisd.shutdown();
 
 	if (!g_ntfs_sdOK && !g_fat_sdOK)
+	{
+		if (__io_sdhc.startup() && __io_sdhc.isInserted())
+		{
+			g_fat_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SECTORS);
+			if (!g_fat_sdOK)
+			{
+				g_ntfs_sdOK = ntfsMount("sd", &__io_sdhc, 0, CACHE, SECTORS_SD, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE);
+
+				if (!g_ntfs_sdOK)
+					__io_sdhc.shutdown();
+			}
+		}
+		else
+			__io_sdhc.shutdown();
+	}
+	
+	if (g_fat_sdOK || g_ntfs_sdOK)
+	{
+		fs_sd_mount = 1;
+		fs_sd_sec = g_fat_sdOK ? _FAT_startSector : 0;
+	}
+
+	if (!(g_fat_sdOK || g_ntfs_sdOK))
 	{
 		__io_wiisd.shutdown();
-		__io_sdhc.startup();
-		g_fat_sdOK = fatMount("sd", &__io_sdhc, 0, CACHE, SECTORS);
-	}
-	if (!g_ntfs_sdOK && !g_fat_sdOK)
-		g_ntfs_sdOK = ntfsMount("sd", &__io_sdhc, 0, CACHE, SECTORS_SD, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE);
-
-	if (!g_ntfs_sdOK && !g_fat_sdOK)
 		__io_sdhc.shutdown();
-	
-	if (g_fat_sdOK)
-	{
-		fs_sd_mount = 1;
-		fs_sd_sec = _FAT_startSector;
 	}
-	else if (g_ntfs_sdOK)
-	{
-		fs_sd_mount = 1;
-		fs_sd_sec = 0;
-	}
+
 	return g_fat_sdOK || g_ntfs_sdOK;
 }
 
@@ -235,7 +252,8 @@ bool WBFS_Mount(u32 sector, bool ntfs)
 
 	if (!g_wbfsOK)
 	{
-		__io_usbstorage.startup();
+		if (!g_ntfs_usbOK && !g_fat_usbOK)
+			__io_usbstorage.startup();
 		if (!ntfs)
 			g_wbfsOK = fatMount("wbfs", &__io_usbstorage, sector, CACHE, SECTORS);
 		else
@@ -244,17 +262,12 @@ bool WBFS_Mount(u32 sector, bool ntfs)
 		if (g_wbfsOK)
 		{
 			fs_wbfs_mount = 1;
-			if (!ntfs)
-				fs_wbfs_sec = _FAT_startSector;
-			else {
-				fs_wbfs_sec = sector;
-				gprintf("NTFS Mount (WBFS) sector: %d\n", fs_wbfs_sec);
-			}
+			fs_wbfs_sec = ntfs ? sector : _FAT_startSector;
 		}
-		else
-			__io_usbstorage.shutdown();
 	}
-	
+	if (!(g_fat_usbOK || g_ntfs_usbOK || g_wbfsOK))
+		__io_usbstorage.shutdown();
+
 	return g_wbfsOK;
 }
 

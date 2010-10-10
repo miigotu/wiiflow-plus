@@ -23,7 +23,7 @@ bool FS_USBAvailable(void);
 
 bool FS_USB_isNTFS(void);
 
-bool FS_Mount_USB(u32, bool);
+bool FS_Mount_USB(void);
 void FS_Unmount_USB(void);
 
 bool FS_Mount_SD(void);
