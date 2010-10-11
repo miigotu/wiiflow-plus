@@ -236,7 +236,7 @@ int CMenu::main(void)
 				_initCF();
 			}
 		}
-		else if (BTN_B_PRESSED)
+		if (BTN_B_PRESSED)
 		{
 			//Events to Show Categories
 			if (m_btnMgr.selected(m_mainBtnFavoritesOn) || m_btnMgr.selected(m_mainBtnFavoritesOff))
