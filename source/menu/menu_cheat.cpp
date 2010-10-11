@@ -123,7 +123,7 @@ void CMenu::_CheatSettings()
 			if(!m_btnMgr.selected(m_cheatBtnPageP)) m_btnMgr.click(m_cheatBtnPageP);
 			_showCheatSettings();
 		}
-		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1)!=0)
+		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1))
 		{
 			remove(fmt("%s/%s.gct", m_cheatDir.c_str(), m_cf.getId().c_str()));
 			remove(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));

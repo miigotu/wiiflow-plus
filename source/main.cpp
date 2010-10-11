@@ -128,7 +128,7 @@ int old_main(int argc, char **argv)
 						gbtnsPressed |= PAD_ButtonsDown(chan);
 					}
 
-					if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) != 0 || (gbtnsPressed & BTN_HOME) != 0)
+					if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) != 0 || (gbtnsPressed & GBTN_HOME) != 0)
 					Sys_Exit(0);
 				}
 			}

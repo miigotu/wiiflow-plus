@@ -462,14 +462,14 @@ private:
 	u8 m_wpadRightDelay;
 	u8 m_wpadUpDelay;
 	u8 m_wpadADelay;
-	u8 m_wpadBDelay;
-	
+	//u8 m_wpadBDelay;
+
 	u8 m_padLeftDelay;
 	u8 m_padDownDelay;
 	u8 m_padRightDelay;
 	u8 m_padUpDelay;
 	u8 m_padADelay;
-	u8 m_padBDelay;
+	//u8 m_padBDelay;
 	
 	u32 wii_btnsPressed;
 	u32 wii_btnsHeld;
@@ -486,23 +486,24 @@ private:
 	s32	  wmote_roll_skip[WPAD_MAX_WIIMOTES];
 	bool  enable_wmote_roll;
 
-	u32 wii_btnRepeat();
-	u32 gc_btnRepeat();
-	void ButtonsPressed();
-	void ButtonsHeld();
+	bool wii_btnRepeat(s64 btn);
+	bool gc_btnRepeat(s64 btn);
 
-	void SetupInput();
-	void ScanInput();
+	void ButtonsPressed(void);
+	void ButtonsHeld(void);
+
+	void SetupInput(void);
+	void ScanInput(void);
 	bool WPadIR_Valid(int i);
-	bool WPadIR_ANY();
+	bool WPadIR_ANY(void);
 	
 	void ShowZone(SZone zone, bool &showZone);
-	void ShowMainZone();
-	void ShowMainZone2();
-	void ShowMainZone3();
-	void ShowPrevZone();
-	void ShowNextZone();
-	void ShowGameZone();
+	void ShowMainZone(void);
+	void ShowMainZone2(void);
+	void ShowMainZone3(void);
+	void ShowPrevZone(void);
+	void ShowNextZone(void);
+	void ShowGameZone(void);
 	bool m_show_zone_main;
 	bool m_show_zone_main2;
 	bool m_show_zone_main3;

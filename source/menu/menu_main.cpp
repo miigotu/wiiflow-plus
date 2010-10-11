@@ -136,31 +136,31 @@ int CMenu::main(void)
 		}
 		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 		{
-			if ((BTN_UP_REPEAT || RIGHT_STICK_UP) && (wii_btnsHeld & WBTN_B) == 0)
+			if (!(wii_btnsHeld & WBTN_B) && (BTN_UP_REPEAT || RIGHT_STICK_UP))
 				m_cf.up();
-			if (((BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT) && (wii_btnsHeld & WBTN_B) == 0) || WROLL_RIGHT/*  || (BTN_A_REPEAT && m_btnMgr.selected(m_mainBtnNext)) */)
+			if ((!(wii_btnsHeld & WBTN_B) && (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT))|| WROLL_RIGHT)
 				m_cf.right();
-			if ((BTN_DOWN_REPEAT ||  RIGHT_STICK_DOWN) && (wii_btnsHeld & WBTN_B) == 0)
+			if (!(wii_btnsHeld & WBTN_B) && (BTN_DOWN_REPEAT ||  RIGHT_STICK_DOWN))
 				m_cf.down();
-			if (((BTN_LEFT_REPEAT || RIGHT_STICK_LEFT) && (wii_btnsHeld & WBTN_B) == 0) || WROLL_LEFT/*  || (BTN_A_REPEAT && m_btnMgr.selected(m_mainBtnPrev)) */)
+			if ((!(wii_btnsHeld & WBTN_B) && (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)) || WROLL_LEFT)
 				m_cf.left();
 		}
 		//CF Layout select
-		if (BTN_1_PRESSED && (wii_btnsHeld & WBTN_B) == 0)
+		if (!(wii_btnsHeld & WBTN_B) && BTN_1_PRESSED)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt("GENERAL", "last_cf_mode", cfVersion);
 		}
-		else if (BTN_2_PRESSED && (wii_btnsHeld & WBTN_B) == 0)
+		else if (!(wii_btnsHeld & WBTN_B) && BTN_2_PRESSED)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt("GENERAL", "last_cf_mode", cfVersion);
 		}
-		if (BTN_B_HELD)
+		else if (BTN_B_HELD)
 		{
 			//Search by Alphabet
 			if (BTN_DOWN_PRESSED)
@@ -236,7 +236,7 @@ int CMenu::main(void)
 				_initCF();
 			}
 		}
-		if (BTN_B_PRESSED)
+		else if (BTN_B_PRESSED)
 		{
 			//Events to Show Categories
 			if (m_btnMgr.selected(m_mainBtnFavoritesOn) || m_btnMgr.selected(m_mainBtnFavoritesOff))
@@ -395,7 +395,8 @@ int CMenu::main(void)
 			}
 		}
 		if (m_showtimer > 0)
-			if (--m_showtimer == 0){
+			if (--m_showtimer == 0)
+			{
 				m_btnMgr.hide(m_mainLblLetter);
 				m_btnMgr.hide(m_mainLblNotice);
 			}

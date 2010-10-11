@@ -592,7 +592,7 @@ void CMenu::_gameSettings(void)
 					break;
 				}
 		}
-		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1)!=0)
+		else if ((wii_btnsHeld & WBTN_2) && (wii_btnsHeld & WBTN_1))
 		{	
 			if (m_btnMgr.selected(m_gameSettingsBtnCover))
 			{

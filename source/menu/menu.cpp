@@ -1093,15 +1093,14 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	}
 	else if (!withCF || !m_gameSelected)
 		m_gameSound.stop();
-
 	LWP_MutexUnlock(m_gameSndMutex);
 
 	if (withCF && m_gameSoundThread == 0)
 		m_cf.startPicLoader();
-	//if (!m_video_playing)
-		_loopMusic();
+
+	_loopMusic();
 	//Take Screenshot
-	if ((gc_btnsPressed & PAD_TRIGGER_Z) != 0)
+	if (gc_btnsPressed & PAD_TRIGGER_Z)
 	{
 		time_t rawtime;
 		struct tm * timeinfo;
@@ -1559,8 +1558,6 @@ void CMenu::_stopSounds(void)
 
 
 		VIDEO_WaitVSync();
-
-		gprintf("M: %d, G: %d\n", m_musicCurrentVol, m_gameSound.volume);
 	}
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();

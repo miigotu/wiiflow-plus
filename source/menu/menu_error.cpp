@@ -34,7 +34,7 @@ void CMenu::error(const wstringEx &msg)
 	{
 		gprintf(msg.toUTF8().c_str());
 		_mainLoopCommon();
-	} while ((wii_btnsPressed & (WBTN_HOME | WBTN_A | WBTN_B)) == 0);
+	} while (!BTN_B_PRESSED && !BTN_A_PRESSED && !BTN_HOME_PRESSED);
 	_hideError(false);
 }
 

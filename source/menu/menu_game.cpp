@@ -331,7 +331,7 @@ void CMenu::_game(bool launch)
 				m_video_playing = true;
 				
 				STexture videoBg;
-				while ((wii_btnsPressed & WBTN_B) == 0 && movie.GetNextFrame(&videoBg))
+				while (!BTN_B_PRESSED && !BTN_A_PRESSED && !BTN_HOME_PRESSED && movie.GetNextFrame(&videoBg))
 				{
 					_setBg(videoBg, videoBg);
 					m_bgCrossFade = 10;
@@ -454,26 +454,28 @@ void CMenu::_game(bool launch)
 			}
 		}
 		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-			if ((BTN_UP_REPEAT || RIGHT_STICK_UP) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -4))
+		{
+			if (m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -8) && (BTN_UP_REPEAT || RIGHT_STICK_UP))
 			{
 				m_cf.up();
 				startGameSound = -10;
 			}
-			else if ((BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -4))
+			if (m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -8) && (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT))
 			{
 				m_cf.right();
 				startGameSound = -10;
 			}
-			else if ((BTN_DOWN_REPEAT || RIGHT_STICK_DOWN) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -4))
+			if (m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -8) && (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN))
 			{
 				m_cf.down();
 				startGameSound = -10;
 			}
-			else if ((BTN_LEFT_REPEAT || RIGHT_STICK_LEFT) && m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -4))
+			if (m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -8) && (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT))
 			{
 				m_cf.left();
 				startGameSound = -10;
 			}
+		}
 		if (startGameSound == -10)
 		{
 			m_gameSound.stop();

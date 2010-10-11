@@ -1,5 +1,3 @@
-
-
 #include "menu.hpp"
 #include "svnrev.h"
 #include "loader/sys.h"

@@ -5,24 +5,10 @@
 using namespace std;
 
 
-static const u32 g_repeatDelay = 80;
+static const u32 g_repeatDelay = 100;
 
 void CMenu::SetupInput()
 {
-	m_wpadLeftDelay = 0;
-	m_wpadUpDelay = 0;
-	m_wpadRightDelay = 0;
-	m_wpadDownDelay = 0;
-	m_wpadADelay = 0;
-	m_wpadBDelay = 0;
-	
-	m_padLeftDelay = 0;
-	m_padUpDelay = 0;
-	m_padRightDelay = 0;
-	m_padDownDelay = 0;
-	m_padADelay = 0;
-	m_padBDelay = 0;
-
 	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
 		stickPointer_x[chan] = (m_vid.width() + m_cursor[chan].width())/2;
@@ -227,146 +213,182 @@ bool CMenu::WPadIR_Valid(int i)
 	return false;
 }
 
-bool CMenu::WPadIR_ANY()
+bool CMenu::WPadIR_ANY(void)
 {
 	return (wd[0]->ir.valid || wd[1]->ir.valid || wd[2]->ir.valid || wd[3]->ir.valid);
 }
 
-u32 CMenu::wii_btnRepeat()
+bool CMenu::wii_btnRepeat(s64 btn)
 {
-	u32 b = 0;
+	bool b = false;
 
-	if ((wii_btnsHeld & WBTN_LEFT) != 0)
+	if (btn == WBTN_UP)
 	{
-		if (m_wpadLeftDelay == 0 || m_wpadLeftDelay >= g_repeatDelay)
-			b |= WPAD_BUTTON_LEFT;
-		if (m_wpadLeftDelay < g_repeatDelay) 
-			++m_wpadLeftDelay;
+		if(wii_btnsHeld & WBTN_UP)
+		{
+			if (m_wpadUpDelay == 0 || m_wpadUpDelay >= g_repeatDelay)
+				b = true;
+			if (m_wpadUpDelay < g_repeatDelay) 
+				++m_wpadUpDelay;
+		}
+		else
+			m_wpadUpDelay = 0;
 	}
-	else
-		m_wpadLeftDelay = 0;
-	if ((wii_btnsHeld & WBTN_DOWN) != 0)
+	else if (btn == WBTN_RIGHT)
 	{
-		if (m_wpadDownDelay == 0 || m_wpadDownDelay >= g_repeatDelay)
-			b |= WPAD_BUTTON_DOWN;
-		if (m_wpadDownDelay < g_repeatDelay)
-			++m_wpadDownDelay;
+		if(wii_btnsHeld & WBTN_RIGHT)
+		{
+			if (m_wpadRightDelay == 0 || m_wpadRightDelay >= g_repeatDelay)
+				b = true;
+			if (m_wpadRightDelay < g_repeatDelay) 
+				++m_wpadRightDelay;
+		}
+		else
+			m_wpadRightDelay = 0;
 	}
-	else
-		m_wpadDownDelay = 0;
-	if ((wii_btnsHeld & WBTN_RIGHT) != 0)
+	else if (btn == WBTN_DOWN)
 	{
-		if (m_wpadRightDelay == 0 || m_wpadRightDelay >= g_repeatDelay)
-			b |= WPAD_BUTTON_RIGHT;
-		if (m_wpadRightDelay < g_repeatDelay)
-			++m_wpadRightDelay;
+		if(wii_btnsHeld & WBTN_DOWN)
+		{
+			if (m_wpadDownDelay == 0 || m_wpadDownDelay >= g_repeatDelay)
+				b = true;
+			if (m_wpadDownDelay < g_repeatDelay) 
+				++m_wpadDownDelay;
+		}
+		else
+			m_wpadDownDelay = 0;
 	}
-	else
-		m_wpadRightDelay = 0;
-	if ((wii_btnsHeld & WBTN_UP) != 0)
+	else if (btn == WBTN_LEFT)
 	{
-		if (m_wpadUpDelay == 0 || m_wpadUpDelay >= g_repeatDelay)
-			b |= WPAD_BUTTON_UP;
-		if (m_wpadUpDelay < g_repeatDelay)
-			++m_wpadUpDelay;
+		if(wii_btnsHeld & WBTN_LEFT)
+		{
+			if (m_wpadLeftDelay == 0 || m_wpadLeftDelay >= g_repeatDelay)
+				b = true;
+			if (m_wpadLeftDelay < g_repeatDelay) 
+				++m_wpadLeftDelay;
+		}
+		else
+			m_wpadLeftDelay = 0;
 	}
-	else
-		m_wpadUpDelay = 0;
-	if ((wii_btnsHeld & WBTN_A) != 0)
+	else if (btn == WBTN_A)
 	{
-		if (m_wpadADelay == 0 || m_wpadADelay >= g_repeatDelay)
-			b |= WPAD_BUTTON_A;
-		m_btnMgr.noClick(true);
-		if (m_wpadADelay < g_repeatDelay)
-			++m_wpadADelay;
+		if(wii_btnsHeld & WBTN_A)
+		{
+			m_btnMgr.noClick(true);
+			if (m_wpadADelay == 0 || m_wpadADelay >= g_repeatDelay)
+				b = true;
+			if (m_wpadADelay < g_repeatDelay) 
+				++m_wpadADelay;
+		}
+		else
+		{
+			m_wpadADelay = 0;
+			m_btnMgr.noClick();
+		}
 	}
-	else
+/* 	else if (btn == WBTN_B)
 	{
-		m_btnMgr.noClick();
-		m_wpadADelay = 0;
-	}
-	if ((wii_btnsHeld & WBTN_B) != 0)
-	{
-		if (m_wpadBDelay == 0 || m_wpadBDelay >= g_repeatDelay)
-			b |= WPAD_BUTTON_B;
-		m_btnMgr.noClick(true);
-		if (m_wpadBDelay < g_repeatDelay)
-			++m_wpadBDelay;
-	}
-	else
-	{
-		m_btnMgr.noClick();
-		m_wpadBDelay = 0;
-	}
+		if(wii_btnsHeld & WBTN_B)
+		{
+			m_btnMgr.noClick(true);
+			if (m_wpadBDelay == 0 || m_wpadBDelay >= g_repeatDelay)
+				b = true;
+			if (m_wpadBDelay < g_repeatDelay) 
+				++m_wpadBDelay;
+		}
+		else
+		{
+			m_wpadBDelay = 0;
+			m_btnMgr.noClick();
+		}
+	} */
 	return b;
 }
 
-u32 CMenu::gc_btnRepeat()
+bool CMenu::gc_btnRepeat(s64 btn)
 {
-	u32 b = 0;
+	bool b = false;
+	if (btn == GBTN_UP)
+	{
+		if(gc_btnsHeld & GBTN_UP)
+		{
+			if (m_padUpDelay == 0 || m_padUpDelay >= g_repeatDelay)
+				b = true;
+			if (m_padUpDelay < g_repeatDelay) 
+				++m_padUpDelay;
+		}
+		else
+			m_padUpDelay = 0;
+	}
+	else if (btn == GBTN_RIGHT)
+	{
+		if(gc_btnsHeld & GBTN_RIGHT)
+		{
+			if (m_padRightDelay == 0 || m_padRightDelay >= g_repeatDelay)
+				b = true;
+			if (m_padRightDelay < g_repeatDelay) 
+				++m_padRightDelay;
+		}
+		else
+			m_padRightDelay = 0;
+	}
+	else if (btn == GBTN_DOWN)
+	{
+		if(gc_btnsHeld & GBTN_DOWN)
+		{
+			if (m_padDownDelay == 0 || m_padDownDelay >= g_repeatDelay)
+				b = true;
+			if (m_padDownDelay < g_repeatDelay) 
+				++m_padDownDelay;
+		}
+		else
+			m_padDownDelay = 0;
+	}
+	else if (btn == GBTN_LEFT)
+	{
+		if(gc_btnsHeld & GBTN_LEFT)
+		{
 
-	if ((gc_btnsHeld & BTN_LEFT) != 0)
-	{
-		if (m_padLeftDelay == 0 || m_padLeftDelay >= g_repeatDelay)
-			b |= BTN_LEFT;
-		if (m_padLeftDelay < g_repeatDelay)
-			++m_padLeftDelay;
+			if (m_padLeftDelay == 0 || m_padLeftDelay >= g_repeatDelay)
+				b = true;
+			if (m_padLeftDelay < g_repeatDelay) 
+				++m_padLeftDelay;
+		}
+		else
+			m_padLeftDelay = 0;
 	}
-	else
-		m_padLeftDelay = 0;
-	if (gc_btnsHeld & BTN_DOWN)
+	else if (btn == GBTN_A)
 	{
-		if (m_padDownDelay == 0 || m_padDownDelay >= g_repeatDelay)
-			b |= BTN_DOWN;
-		if (m_padDownDelay < g_repeatDelay)
-		++m_padDownDelay;
+		if(gc_btnsHeld & GBTN_A)
+		{
+			m_btnMgr.noClick(true);
+			if (m_padADelay == 0 || m_padADelay >= g_repeatDelay)
+				b = true;
+			if (m_padADelay < g_repeatDelay) 
+				++m_padADelay;
+		}
+		else
+		{
+			m_padADelay = 0;
+			m_btnMgr.noClick();
+		}
 	}
-	else
-		m_padDownDelay = 0;
-	if (gc_btnsHeld & BTN_RIGHT)
+/* 	else if (btn == GBTN_B)
 	{
-		if (m_padRightDelay == 0 || m_padRightDelay >= g_repeatDelay)
-			b |= BTN_RIGHT;
-		if (m_padRightDelay < g_repeatDelay)
-			++m_padRightDelay;
-	}
-	else
-		m_padRightDelay = 0;
-	if (gc_btnsHeld & BTN_UP)
-	{
-		if (m_padUpDelay == 0 || m_padUpDelay >= g_repeatDelay)
-			b |= BTN_UP;
-		if (m_padUpDelay < g_repeatDelay)
-			++m_padUpDelay;
-	}
-	else
-		m_padUpDelay = 0;
-	if (gc_btnsHeld & BTN_A)
-	{
-		if (m_padADelay == 0 || m_padADelay >= g_repeatDelay)
-			b |= BTN_A;
-		m_btnMgr.noClick(true);
-		if (m_padADelay < g_repeatDelay)
-			++m_padADelay;
-	}
-	else
-	{
-		m_btnMgr.noClick();
-		m_padADelay = 0;
-	}
-	if (gc_btnsHeld & BTN_B)
-	{
-		if (m_padBDelay == 0 || m_padBDelay >= g_repeatDelay)
-			b |= BTN_B;
-		m_btnMgr.noClick(true);
-		if (m_padBDelay < g_repeatDelay)
-			++m_padBDelay;
-	}
-	else
-	{
-		m_btnMgr.noClick();
-		m_padBDelay = 0;
-	}
+		if(gc_btnsHeld & GBTN_B)
+		{
+			m_btnMgr.noClick(true);
+			if (m_padBDelay == 0 || m_padBDelay >= g_repeatDelay)
+				b = true;
+			if (m_padBDelay < g_repeatDelay) 
+				++m_padBDelay;
+		}
+		else
+		{
+			m_padBDelay = 0;
+			m_btnMgr.noClick();
+		}
+	} */
 	return b;
 }
 
