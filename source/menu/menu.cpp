@@ -101,12 +101,6 @@ void CMenu::init()
 	u8 defaultMenuLanguage;
 	struct stat dummy;
 	
-//	m_waitMessages.clear();
-	
-	STexture wait;
-	wait.fromPNG(wait_png);
-	m_waitMessages.push_back(wait);
-	
 	// Data path
 	if (FS_SDAvailable() && FS_USBAvailable())
 	{
@@ -618,9 +612,6 @@ void CMenu::_buildMenus(void)
 	m_mainBgLQ.fromPNG(background_png, GX_TF_CMPR, ALLOC_MEM2, 64, 64);
 	m_gameBgLQ = m_mainBgLQ;
 	
-	m_waitMessages = _textures(theme.texSet, "GENERAL", "waitmessage", m_waitMessages[0]); 
-	m_waitMessageDelay = m_theme.getFloat("GENERAL", "waitmessage_delay", 0.f);
-
 	// Build menus
 	_initMainMenu(theme);
 	_initErrorMenu(theme);
@@ -1663,6 +1654,7 @@ void CMenu::_hideWaitMessage()
 {
 	m_showWaitMessage = false;
 	VIDEO_WaitVSync();
+	m_waitMessages.clear();
 }
 
 void CMenu::_showWaitMessages(CMenu *m)
@@ -1674,6 +1666,7 @@ void CMenu::_showWaitMessages(CMenu *m)
 	vector<STexture>::iterator waitItr = images.begin();
 
 	gprintf("Going to show a wait message screen, delay: %d, # images: %d\n", waitFrames, m->m_waitMessages.size());
+	m->m_waitMessages.clear();
 
 	m->m_vid.waitMessage(*waitItr);
 	waitItr++;
@@ -1705,11 +1698,22 @@ void CMenu::_showWaitMessages(CMenu *m)
 		VIDEO_WaitVSync();
 	}
 	gprintf("Stop showing images\n");
+	images.clear();
 	m->m_WaitMessageThrdStop = true;
 }
 
 void CMenu::_showWaitMessage()
 {
+	WaitMessages theme;
+	m_waitMessages.clear();
+
+	STexture wait;
+	wait.fromPNG(wait_png);
+	m_waitMessages.push_back(wait);
+
+	m_waitMessages = _textures(theme.texSet, "GENERAL", "waitmessage", m_waitMessages[0]); 
+	m_waitMessageDelay = m_theme.getFloat("GENERAL", "waitmessage_delay", 0.f);
+
 	if (m_waitMessages.size() == 1)
 		m_vid.waitMessage(m_waitMessages[0]);
 	else if (m_waitMessages.size() > 1)

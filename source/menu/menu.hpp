@@ -585,6 +585,8 @@ private:
 		SSoundEffect hoverSound;
 		SSoundEffect cameraSound;
 	};
+	struct WaitMessages	{ TexSet texSet;};
+
 	struct SCFParamDesc
 	{
 		enum { PDT_EMPTY, PDT_FLOAT, PDT_V3D, PDT_COLOR, PDT_BOOL, PDT_INT, PDT_TXTSTYLE } paramType[4];

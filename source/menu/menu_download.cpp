@@ -1006,6 +1006,7 @@ fail:
 	goto end;
 	
 end:
+	sleep(3);
 	m_thrdWorking = false;
 	return 0;
 }

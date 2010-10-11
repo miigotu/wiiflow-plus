@@ -129,9 +129,11 @@ int CMenu::_config1(void)
 				break;
 			else if (m_btnMgr.selected(m_configBtnDownload))
 			{
+				m_cf.stopPicLoader(true);
 				_hideConfig();
 				_download();
 				_showConfig();
+				m_cf.startPicLoader();
 			}
 			else if (m_btnMgr.selected(m_configBtnUnlock))
 			{

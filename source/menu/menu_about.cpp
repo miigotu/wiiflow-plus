@@ -29,11 +29,13 @@ void CMenu::_about(void)
 			if (m_btnMgr.selected(m_aboutBtnSystem))
 			{
 				// show system menu
+				m_cf.stopPicLoader(true);
 				_hideAbout(false);
 				_system();
 				remove(m_ver.c_str());
-				 if(m_exit) break;
 				_showAbout();
+				m_cf.startPicLoader();
+				if(m_exit) break;
 			}
 		}
 	} while (true);
