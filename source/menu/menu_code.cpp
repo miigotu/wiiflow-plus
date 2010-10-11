@@ -34,8 +34,6 @@ bool CMenu::_code(char code[4], bool erase)
 	u32 n = 0;
 	wchar_t codeLbl[] = L"_ _ _ _";
 
-	erase = true;
-
 	SetupInput();
 	memset(code, 0, sizeof code);
 	m_btnMgr.setText(m_codeLblTitle, codeLbl);
@@ -59,12 +57,13 @@ bool CMenu::_code(char code[4], bool erase)
 				m_btnMgr.down();
 			if (BTN_A_PRESSED)
 			{
-				if (m_btnMgr.selected(m_codeBtnErase))
+				if (!m_locked && m_btnMgr.selected(m_codeBtnErase))
 				{
 					memset(code, 0, sizeof code);
 					m_cfg.remove("GENERAL", "parent_code");
 					n = 0;
 					m_locked = false;
+					break;
 				}
 				if (m_btnMgr.selected(m_codeBtnBack))
 					break;

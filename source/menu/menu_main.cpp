@@ -131,7 +131,7 @@ int CMenu::main(void)
 		//Check for exit or reload request
 		if (BTN_HOME_PRESSED)
 		{
-			m_reload = BTN_B_HELD;
+			m_reload = (BTN_B_HELD || m_disable_exit);
 			break;
 		}
 		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
@@ -301,8 +301,9 @@ int CMenu::main(void)
 				m_cf.pageUp();
 		 	else if (m_btnMgr.selected(m_mainBtnNext))
 				m_cf.pageDown();
-			else if (m_btnMgr.selected(m_mainBtnQuit)) {
-				Sys_ExitTo(m_cfg.getInt("GENERAL", "exit_to", 0));
+			else if (m_btnMgr.selected(m_mainBtnQuit))
+			{
+				m_reload = (BTN_B_HELD || m_disable_exit);
 				break;
 			}
 			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb))

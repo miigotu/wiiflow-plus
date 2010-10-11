@@ -26,7 +26,7 @@ void CMenu::_about(void)
 			break;
 		if (BTN_A_PRESSED && !(m_thrdWorking && m_thrdStop))
 		{
-			if (m_btnMgr.selected(m_aboutBtnSystem))
+			if (!m_locked && m_btnMgr.selected(m_aboutBtnSystem))
 			{
 				// show system menu
 				m_cf.stopPicLoader(true);

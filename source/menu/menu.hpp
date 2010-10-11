@@ -512,6 +512,7 @@ private:
 	bool m_show_zone_game;
 
 	volatile bool m_exit;
+	volatile bool m_disable_exit;
 	
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;
@@ -807,7 +808,7 @@ private:
 	static const SOption _videoModes[7];
 	static const SOption _vidModePatch[4];
 	static const SOption _hooktype[8];
-	static const SOption _exitTo[3];
+	static const SOption _exitTo[4];
 	static const int _ios[6];
 	struct SIOS 
 	{ 

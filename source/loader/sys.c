@@ -21,6 +21,7 @@
 #define EXIT_TO_MENU 0
 #define EXIT_TO_HBC 1
 #define EXIT_TO_PRIILOADER 2
+#define EXIT_TO_DISABLE 3
 
 /* Variables */
 static const char certs_fs[] ATTRIBUTE_ALIGN(32) = "/sys/cert.sys";
@@ -30,6 +31,7 @@ static bool shutdown = false;
 static bool return_to_hbc = false;
 static bool return_to_menu = false;
 static bool return_to_priiloader = false;
+static bool return_to_disable = false;
 
 bool Sys_Exiting(void)
 {
@@ -49,6 +51,7 @@ void Sys_ExitTo(int option)
 	return_to_hbc = option == EXIT_TO_HBC;
 	return_to_menu = option == EXIT_TO_MENU;
 	return_to_priiloader = option == EXIT_TO_PRIILOADER;
+	return_to_disable = option == EXIT_TO_DISABLE;
 	
 	//magic word to force wii menu in priiloader.
 	DCFlushRange((void*)0x8132fffb,4);
@@ -60,6 +63,8 @@ void Sys_ExitTo(int option)
 
 void Sys_Exit(int ret)
 {
+	if(return_to_disable)
+		return;
 	int i;
 	for (i=0; i<4; i++)
 	{
