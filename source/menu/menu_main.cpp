@@ -117,17 +117,14 @@ int CMenu::main(void)
 
 	lwp_t coverStatus = LWP_THREAD_NULL;
 	LWP_CreateThread(&coverStatus, (void *(*)(void *))CMenu::GetCoverStatusAsync, (void *)this, 0, 8192, 40);
-//	WDVD_GetCoverStatus(&disc_check);
 	
 	while (true)
 	{
 		_mainLoopCommon(true);
 
 		if (m_initialCoverStatusComplete)
-		{
-			//check if Disc was inserted
 			WDVD_GetCoverStatus(&disc_check);
-		}
+
 		//Check for exit or reload request
 		if (BTN_HOME_PRESSED)
 		{

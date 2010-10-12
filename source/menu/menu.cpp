@@ -89,6 +89,7 @@ CMenu::CMenu(CVideo &vid) :
 	m_directLaunch = false;
 	m_exit = false;
 	m_initialCoverStatusComplete = false;
+	m_WaitMessageThrdStop = true;
 }
 
 extern "C" { int makedir(char *newdir); }
@@ -100,7 +101,7 @@ void CMenu::init()
 	const char *wfdrv = "usb";
 	u8 defaultMenuLanguage;
 	struct stat dummy;
-	
+
 	// Data path
 	if (FS_SDAvailable() && FS_USBAvailable())
 	{
@@ -140,7 +141,9 @@ void CMenu::init()
 	m_wdmDir = m_cfg.getString("GENERAL", "dir_wdm", sfmt("%s/wdm", m_txtCheatDir.c_str()));
 	m_wipDir = m_cfg.getString("GENERAL", "dir_wip", sfmt("%s/wip", m_txtCheatDir.c_str()));
 	//
+
 	m_cf.init();
+
 	//Make important folders first.
 	makedir((char *)m_cacheDir.c_str());
 	makedir((char *)m_settingsDir.c_str());
@@ -239,7 +242,6 @@ void CMenu::init()
 	int exit_to = m_cfg.getInt("GENERAL", "exit_to", 0);
 	Sys_ExitTo(exit_to);
 	m_disable_exit = exit_to == 3;
-	gprintf("exit to is %sdisabled\n", m_disable_exit ? "" : "not ");
 
 	LWP_MutexInit(&m_mutex, 0);
 	LWP_MutexInit(&m_gameSndMutex, 0);
@@ -1659,7 +1661,6 @@ void CMenu::_hideWaitMessage()
 {
 	m_showWaitMessage = false;
 	VIDEO_WaitVSync();
-	m_waitMessages.clear();
 }
 
 void CMenu::_showWaitMessages(CMenu *m)
@@ -1675,12 +1676,26 @@ void CMenu::_showWaitMessages(CMenu *m)
 
 	m->m_vid.waitMessage(*waitItr);
 	waitItr++;
-	
-	while (m->m_showWaitMessage)
+
+	WIILIGHT_TurnOn();
+	m->m_lightLevel = 64;
+	bool skip = true, skip2 = true;
+	while (m->m_showWaitMessage || skip2 || skip)
 	{
 		m->m_WaitMessageThrdStop = false;
 		if (waitFrames == 0)
 		{
+			if(skip)
+			{
+				if(skip2)
+					m->m_lightLevel += 128;
+				else
+					m->m_lightLevel -= 128;
+				skip2 = !skip2;
+				WIILIGHT_SetLevel(m->m_lightLevel);
+			}
+			skip = !skip;
+
 			if (waitItr == images.end())
 				waitItr = images.begin();
 			
@@ -1693,7 +1708,6 @@ void CMenu::_showWaitMessages(CMenu *m)
 					waitItr = images.begin();
 			}
 			
-//			gprintf("Showing next image, data is %svalid\n", !!*waitItr->data ? "" : "not ");
 			m->m_vid.waitMessage(*waitItr);
 			waitItr++;
 			
@@ -1702,6 +1716,7 @@ void CMenu::_showWaitMessages(CMenu *m)
 		waitFrames--;
 		VIDEO_WaitVSync();
 	}
+	WIILIGHT_TurnOff();
 	gprintf("Stop showing images\n");
 	images.clear();
 	m->m_WaitMessageThrdStop = true;
@@ -1710,7 +1725,6 @@ void CMenu::_showWaitMessages(CMenu *m)
 void CMenu::_showWaitMessage()
 {
 	WaitMessages theme;
-	m_waitMessages.clear();
 
 	STexture wait;
 	wait.fromPNG(wait_png);
@@ -1720,7 +1734,10 @@ void CMenu::_showWaitMessage()
 	m_waitMessageDelay = m_theme.getFloat("GENERAL", "waitmessage_delay", 0.f);
 
 	if (m_waitMessages.size() == 1)
+	{
+		m_showWaitMessage = false;
 		m_vid.waitMessage(m_waitMessages[0]);
+	}
 	else if (m_waitMessages.size() > 1)
 	{
 		if (!m_WaitMessageThrdStop)

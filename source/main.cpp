@@ -90,23 +90,24 @@ int old_main(int argc, char **argv)
 
 	// Init video
 	vid.init();
+	WIILIGHT_Init();
 
-	STexture texWait;
+ 	STexture texWait;
 	texWait.fromPNG(wait_png, GX_TF_RGB565, ALLOC_MALLOC);
 	vid.waitMessage(texWait);
 
 	// Init
 	Sys_Init();
 	Sys_ExitTo(0);
-	
+
 	WPAD_Init();
 	PAD_Init();
 	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
-	
+
 	if (iosOK)
 	{
 		Mount_Devices();
-				
+		
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		if (!wbfsOK)
 		{
@@ -145,11 +146,9 @@ int old_main(int argc, char **argv)
 		gprintf("USB Available: %d\n", FS_USBAvailable());
 		Mount_Devices(); //Why the hell does it need to mount devices again when the above gprintf's are both true?  Without this we have a dump
 
-
 		CMenu menu(vid);
 		menu.init();
 		mainMenu = &menu;
-
 		if (!iosOK)
 			menu.error(sfmt("IOS %i rev%i or later is required", mainIOS, mainIOSminRev));
 		else if (!dipOK)

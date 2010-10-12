@@ -6,6 +6,7 @@
 #define APP_VERSION		"2.2"
 
 #include <wiiuse/wpad.h>
+#include <wiilight.h>
 #include <ogc/pad.h>
 
 #include <vector>
@@ -18,7 +19,6 @@
 #include "btnmap.h"
 #include "banner.h"
 #include "channels.h"
-
 #include "gct.h"
 
 enum {
@@ -514,6 +514,8 @@ private:
 	volatile bool m_exit;
 	volatile bool m_disable_exit;
 	
+	s16 m_lightLevel;
+
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;
 	volatile bool m_thrdWorking;

@@ -48,27 +48,32 @@ INCLUDES	:=	source \
 				source/libs/libfat \
 				source/libs/libntfs \
 				source/libs/libwbfs
+				
+#---------------------------------------------------------------------------------
+# Default build IOS
+#---------------------------------------------------------------------------------
 ios			:=	249
+
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	 = -g -Os -Wall -Wno-char-subscripts -fno-strict-aliasing $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DMAIN_IOS=249
-CXXFLAGS = -g -Os -Wall -Wno-char-subscripts -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H
+CFLAGS	 =	-g -Os -Wall -Wno-char-subscripts -fno-strict-aliasing $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DMAIN_IOS=249
+CXXFLAGS =	-g -Os -Wall -Wno-char-subscripts -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H
 
-LDFLAGS	 = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000,-wrap,malloc,-wrap,free,-wrap,memalign,-wrap,calloc,-wrap,realloc,-wrap,malloc_usable_size -T../rvl.ld
+LDFLAGS	 =	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000,-wrap,malloc,-wrap,free,-wrap,memalign,-wrap,calloc,-wrap,realloc,-wrap,malloc_usable_size -T../rvl.ld
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=  -lpng -lm -lz -lwiiuse -lbte -lasnd -logc -lfreetype -lvorbisidec -lmad -ljpeg
+LIBS	:=	-lpng -lm -lz -lwiiuse -lbte -lasnd -logc -lfreetype -lvorbisidec -lmad -ljpeg -lwiilight
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(CURDIR) \
-			$(PORTLIBS)
+LIBDIRS	:=	$(CURDIR)/portlibs
+			#$(PORTLIBS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -122,8 +127,9 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
 					-L$(LIBOGC_LIB)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
-.PHONY: $(BUILD) all  clean run
 
+#---------------------------------------------------------------------------------
+.PHONY: $(BUILD) all clean run
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@echo Building for $(ios).
@@ -152,7 +158,6 @@ clean:
 #---------------------------------------------------------------------------------
 run:
 	wiiload $(TARGET).dol
-
 
 #---------------------------------------------------------------------------------
 else

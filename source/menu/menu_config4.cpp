@@ -136,8 +136,6 @@ int CMenu::_config4(void)
 				int exit_to = m_cfg.getInt("GENERAL", "exit_to", 0);
 				Sys_ExitTo(exit_to);
 				m_disable_exit = exit_to == 3;
-				gprintf("exit to is %sdisabled\n", m_disable_exit ? "" : "not ");
-				
 				_showConfig4();
 			}
 			else if (m_btnMgr.selected(m_config4BtnSaveFavMode))
