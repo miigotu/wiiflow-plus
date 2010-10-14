@@ -1433,10 +1433,10 @@ void CMenu::_startMusic(void)
 		
 	SmartBuf buffer;
 
+	_stopMusic();
+
 	if (current_music == music_files.end())
 		_shuffleMusic();
-
-	_stopMusic();
 
 	ifstream file(sfmt("%s/%s", m_musicDir.c_str(), (*current_music).c_str()).c_str(), ios::in | ios::binary);
 	m_music_ismp3 = (*current_music).substr((*current_music).size() - 4, 4) == ".MP3";
@@ -1475,8 +1475,10 @@ void CMenu::_updateMusicVol(void)
 
 void CMenu::_stopMusic(void)
 {
-	if(m_music_ismp3 && MP3Player_IsPlaying())
-		MP3Player_Stop();
+	if (StatusOgg() == OGG_STATUS_PAUSED) PauseOgg(0);
+	ASND_PauseVoice(0, 0);
+
+	MP3Player_Stop();
 	StopOgg();
 	if (!!m_music)
 		m_music.release();
@@ -1484,16 +1486,19 @@ void CMenu::_stopMusic(void)
 
 void CMenu::_pauseMusic(void)
 {
-	PauseOgg(1);
-	if(m_music_ismp3 && MP3Player_IsPlaying())
-		MP3Player_Stop();
+	if (StatusOgg() == OGG_STATUS_RUNNING) PauseOgg(1);
+	MP3Player_Stop();
 }
 
 void CMenu::_resumeMusic(void)
 {
-	PauseOgg(0);
-	if(m_music_ismp3)
+	if(!m_music_ismp3 && !MP3Player_IsPlaying() && StatusOgg() == OGG_STATUS_PAUSED)
+		PauseOgg(0);
+	else if (m_music_ismp3)
+	{
+		if (StatusOgg() == OGG_STATUS_RUNNING) PauseOgg(1);
 		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
+	}
 }
 
 void CMenu::_loopMusic(void)
@@ -1557,6 +1562,7 @@ void CMenu::_stopSounds(void)
 
 		VIDEO_WaitVSync();
 	}
+
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();
 
