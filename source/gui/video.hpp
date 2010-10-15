@@ -8,6 +8,8 @@
 #include "vector.hpp"
 #include "texture.hpp"
 
+#include <vector>
+
 class CTexCoord
 {
 public:
@@ -59,6 +61,9 @@ public:
 	void prepareStencil(void);
 	void renderStencil(void);
 	int stencilVal(int x, int y);
+	void hideWaitMessage();
+	void waitMessage(float delay);
+	void waitMessage(const std::vector<STexture> &tex, float delay, bool useWiiLight = true);
 	void waitMessage(const STexture &tex);
 	s32 TakeScreenshot(const char *);
 	void shiftViewPort(float x, float y);
@@ -85,6 +90,11 @@ private:
 	float m_vpY;
 	float m_vpW;
 	float m_vpH;
+	float m_waitMessageDelay;
+	bool m_showWaitMessage;
+	bool m_waitMessageThrdStop;
+	bool m_useWiiLight;
+	std::vector<STexture> m_waitMessages;
 	// 
 	static const int _stencilWidth;
 	static const int _stencilHeight;
@@ -97,6 +107,7 @@ private:
 private:
 	void _drawAASceneWithAlpha(float w, float h);
 	void _setViewPort(float x, float y, float w, float h);
+	static void _showWaitMessages(CVideo *m);
 private:
 	CVideo(const CVideo &);
 };

@@ -89,7 +89,6 @@ CMenu::CMenu(CVideo &vid) :
 	m_directLaunch = false;
 	m_exit = false;
 	m_initialCoverStatusComplete = false;
-	m_WaitMessageThrdStop = true;
 }
 
 extern "C" { int makedir(char *newdir); }
@@ -698,7 +697,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 	return def;
 }
 
-vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char *key, STexture def)
+vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char *key)
 {
 	vector<string> filenames;
 	SmartBuf ptrPNG;
@@ -726,10 +725,8 @@ vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char
 					textures.push_back(tex);
 				}
 			}
-			return textures;
 		}
 	}
-	textures.push_back(def);
 	return textures;
 }
 
@@ -1665,98 +1662,15 @@ bool CMenu::_sortByIOS(SIOS item1, SIOS item2)
 
 void CMenu::_hideWaitMessage()
 {
-	m_showWaitMessage = false;
-	VIDEO_WaitVSync();
-}
-
-void CMenu::_showWaitMessages(CMenu *m)
-{
-	u32 frames = m->m_waitMessageDelay * 50;
-	u32 waitFrames = frames;
-
-	vector<STexture> images = m->m_waitMessages;
-	vector<STexture>::iterator waitItr = images.begin();
-
-	gprintf("Going to show a wait message screen, delay: %d, # images: %d\n", waitFrames, m->m_waitMessages.size());
-	m->m_waitMessages.clear();
-
-	m->m_vid.waitMessage(*waitItr);
-	waitItr++;
-
-	WIILIGHT_TurnOn();
-	m->m_lightLevel = 64;
-	bool skip = true, skip2 = true;
-	while (m->m_showWaitMessage || skip2 || skip)
-	{
-		m->m_WaitMessageThrdStop = false;
-		if (waitFrames == 0)
-		{
-			if(skip)
-			{
-				if(skip2)
-					m->m_lightLevel += 128;
-				else
-					m->m_lightLevel -= 128;
-				skip2 = !skip2;
-				WIILIGHT_SetLevel(m->m_lightLevel);
-			}
-			skip = !skip;
-
-			if (waitItr == images.end())
-				waitItr = images.begin();
-			
-			while (!*waitItr->data) 
-			{
-				gprintf("Skipping one image, because loaded data is not valid\n");
-				waitItr++;
-
-				if (waitItr == images.end())
-					waitItr = images.begin();
-			}
-			
-			m->m_vid.waitMessage(*waitItr);
-			waitItr++;
-			
-			waitFrames = frames;
-		}
-		waitFrames--;
-		VIDEO_WaitVSync();
-	}
-	WIILIGHT_TurnOff();
-	gprintf("Stop showing images\n");
-	images.clear();
-	m->m_WaitMessageThrdStop = true;
+	m_vid.hideWaitMessage();
 }
 
 void CMenu::_showWaitMessage()
 {
 	WaitMessages theme;
 
-	STexture wait;
-	wait.fromPNG(wait_png);
-	m_waitMessages.push_back(wait);
-
-	m_waitMessages = _textures(theme.texSet, "GENERAL", "waitmessage", m_waitMessages[0]); 
-	m_waitMessageDelay = m_theme.getFloat("GENERAL", "waitmessage_delay", 0.f);
-
-	if (m_waitMessages.size() == 1)
-	{
-		m_showWaitMessage = false;
-		m_vid.waitMessage(m_waitMessages[0]);
-	}
-	else if (m_waitMessages.size() > 1)
-	{
-		if (!m_WaitMessageThrdStop)
-		{
-			m_showWaitMessage = false;
-			//If you get this, find where the missed _hideWaitMessage() needs to be.
-			gprintf("Wait message thread was not stopped!\nNow waiting until it is finished\n");
-			while(!m_WaitMessageThrdStop){} //Should never happen, unless a _hideWaitMessage() was missed, but prevents a dump just in case.
-		}
-		m_showWaitMessage = true;
-		
-		// Start a thread for this
-		lwp_t thread = LWP_THREAD_NULL;
-		LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_showWaitMessages, (void *)this, 0, 8192, 80);
-	}
+	vector<STexture> textures = _textures(theme.texSet, "GENERAL", "waitmessage");
+	float waitMessageDelay = m_theme.getFloat("GENERAL", "waitmessage_delay", 0.f);
+	
+	m_vid.waitMessage(textures, waitMessageDelay, m_theme.getBool("GENERAL", "waitmessage_wiilight", m_cfg.getBool("GENERAL", "waitmessage_wiilight", true)));
 }

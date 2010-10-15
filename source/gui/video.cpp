@@ -1,10 +1,23 @@
 #include "pngu.h"
 #include "video.hpp"
 #include <string.h>
+#include <wiilight.h>
+#include "gecko.h"
 
 #define DEFAULT_FIFO_SIZE	(256 * 1024)
 
 using namespace std;
+
+extern const u8 wait_01_png[];
+extern const u8 wait_02_png[];
+extern const u8 wait_03_png[];
+extern const u8 wait_04_png[];
+extern const u8 wait_05_png[];
+extern const u8 wait_06_png[];
+extern const u8 wait_07_png[];
+extern const u8 wait_08_png[];
+extern const u8 wait_09_png[];
+extern const u8 wait_10_png[];
 
 const float CVideo::_jitter2[2][2] = {
 	{ 0.246490f, 0.249999f },
@@ -59,7 +72,7 @@ CVideo::CVideo(void) :
 	m_rmode(NULL), m_frameBuf(), m_curFB(0), m_fifo(NULL),
 	m_yScale(0.0f), m_xfbHeight(0), m_wide(false),
 	m_width2D(640), m_height2D(480), m_x2D(0), m_y2D(0), m_aa(0), m_aaAlpha(false),
-	m_aaWidth(0), m_aaHeight(0)
+	m_aaWidth(0), m_aaHeight(0), m_waitMessageThrdStop(true)
 {
 	memset(m_frameBuf, 0, sizeof m_frameBuf);
 }
@@ -431,6 +444,146 @@ void CVideo::render(void)
 	VIDEO_WaitVSync();
 	m_curFB ^= 1;
 	GX_InvalidateTexAll();
+}
+
+void CVideo::_showWaitMessages(CVideo *m)
+{
+	u32 frames = m->m_waitMessageDelay * 50;
+	u32 waitFrames = frames;
+	
+	u8 fadeStep = 2 * (u32) (255.f / (waitFrames * m->m_waitMessages.size()));
+	s8 fadeDirection = 1;
+	s16 currentLightLevel = 0;
+
+	vector<STexture>::iterator waitItr = m->m_waitMessages.begin();
+
+	gprintf("Going to show a wait message screen, delay: %d, # images: %d\n", waitFrames, m->m_waitMessages.size());
+
+	m->waitMessage(*waitItr);
+	waitItr++;
+
+	if (m->m_useWiiLight)
+	{
+		WIILIGHT_SetLevel(0);
+		WIILIGHT_TurnOn();
+	}
+	while (m->m_showWaitMessage) // || skip2 || skip)
+	{
+		if (m->m_useWiiLight)
+		{
+			currentLightLevel += (fadeStep * fadeDirection);
+			if (currentLightLevel >= 255) 
+			{
+				currentLightLevel = 255;
+				fadeDirection = -1;
+			}
+			else if (currentLightLevel <= 0)
+			{
+				currentLightLevel = 0;
+				fadeDirection = 1;
+			}
+			WIILIGHT_SetLevel(currentLightLevel);
+		}
+		
+		m->m_waitMessageThrdStop = false;
+		if (waitFrames == 0)
+		{
+			if (waitItr == m->m_waitMessages.end())
+				waitItr = m->m_waitMessages.begin();
+			
+			while (!*waitItr->data) 
+			{
+				gprintf("Skipping one image, because loaded data is not valid\n");
+				waitItr++;
+
+				if (waitItr == m->m_waitMessages.end())
+					waitItr = m->m_waitMessages.begin();
+			}
+			
+			m->waitMessage(*waitItr);
+			waitItr++;
+			
+			waitFrames = frames;
+		}
+		waitFrames--;
+		VIDEO_WaitVSync();
+	}
+	if (m->m_useWiiLight)
+	{
+		WIILIGHT_SetLevel(0);
+		WIILIGHT_TurnOff();
+	}
+	gprintf("Stop showing images\n");
+	m->m_waitMessageThrdStop = true;
+	m->m_waitMessages.clear();
+}
+
+void CVideo::hideWaitMessage()
+{
+	m_showWaitMessage = false;
+	VIDEO_WaitVSync();
+}
+
+void CVideo::waitMessage(float delay)
+{
+	waitMessage(vector<STexture>(), delay);
+}
+
+void CVideo::waitMessage(const vector<STexture> &tex, float delay, bool useWiiLight)
+{
+	if (!m_waitMessageThrdStop && m_waitMessages.size() > 0)
+	{
+		// already running?
+		return;
+	}
+	m_waitMessages.clear();
+	
+	m_useWiiLight = useWiiLight;
+
+	if (tex.size() == 0)
+	{
+		STexture textures[10];
+		textures[0].fromPNG(wait_01_png);
+		textures[1].fromPNG(wait_02_png);
+		textures[2].fromPNG(wait_03_png);
+		textures[3].fromPNG(wait_04_png);
+		textures[4].fromPNG(wait_05_png);
+		textures[5].fromPNG(wait_06_png);
+		textures[6].fromPNG(wait_07_png);
+		textures[7].fromPNG(wait_08_png);
+		textures[8].fromPNG(wait_09_png);
+		textures[9].fromPNG(wait_10_png);
+		for (int i = 0; i < 10; i++)
+			m_waitMessages.push_back(textures[i]);
+
+		m_waitMessageDelay = 0.2f;
+	}
+	else
+	{
+		m_waitMessages = tex;
+		m_waitMessageDelay = delay;
+	}
+	
+	if (m_waitMessages.size() == 1)
+	{
+		m_showWaitMessage = false;
+		waitMessage(m_waitMessages[0]);
+	}
+	else if (m_waitMessages.size() > 1)
+	{
+		if (!m_waitMessageThrdStop)
+		{
+			m_showWaitMessage = false;
+			//If you get this, find where the missed _hideWaitMessage() needs to be.
+			gprintf("Wait message thread was not stopped!\nNow waiting until it is finished\n");
+			while(!m_waitMessageThrdStop){} //Should never happen, unless a _hideWaitMessage() was missed, but prevents a dump just in case.
+		}
+		m_showWaitMessage = true;
+		
+		// Start a thread for this
+		lwp_t thread = LWP_THREAD_NULL;
+		LWP_CreateThread(&thread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, 0, 8192, 80);
+	}
 }
 
 void CVideo::waitMessage(const STexture &tex)

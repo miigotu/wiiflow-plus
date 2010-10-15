@@ -8,6 +8,7 @@
 #include "loader/wbfs.h"
 #include "text.hpp"
 #include <ogc/system.h>
+#include <wiilight.h>
 #include "gecko.h"
 
 extern "C"
@@ -15,7 +16,6 @@ extern "C"
     extern void __exception_setreload(int t);
 }
 
-extern const u8 wait_png[];
 extern const u8 wait_hdd_png[];
 
 extern bool geckoinit;
@@ -92,9 +92,7 @@ int old_main(int argc, char **argv)
 	vid.init();
 	WIILIGHT_Init();
 
- 	STexture texWait;
-	texWait.fromPNG(wait_png, GX_TF_RGB565, ALLOC_MALLOC);
-	vid.waitMessage(texWait);
+	vid.waitMessage(0.2f);
 
 	// Init
 	Sys_Init();
@@ -133,13 +131,12 @@ int old_main(int argc, char **argv)
 					Sys_Exit(0);
 				}
 			}
-			vid.waitMessage(texWait);
+			vid.waitMessage(0.2f);
 			texWaitHDD.data.release();
 		}
 	}
 	dipOK = Disc_Init() >= 0;
 	MEM2_takeBigOnes(true);
-	texWait.data.release();
 	do
 	{
 		gprintf("SD Available: %d\n", FS_SDAvailable());

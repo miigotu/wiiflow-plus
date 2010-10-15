@@ -6,7 +6,6 @@
 #define APP_VERSION		"2.2"
 
 #include <wiiuse/wpad.h>
-#include <wiilight.h>
 #include <ogc/pad.h>
 
 #include <vector>
@@ -74,11 +73,6 @@ private:
 	std::string m_curLanguage;
 	std::string m_curGameId;
 	std::string m_curChanId;
-
-	vector<STexture> m_waitMessages;
-	float m_waitMessageDelay;
-	bool m_showWaitMessage;
-	bool m_WaitMessageThrdStop;
 
 	u8 m_numCFVersions;
 	// 
@@ -514,8 +508,6 @@ private:
 	volatile bool m_exit;
 	volatile bool m_disable_exit;
 	
-	s16 m_lightLevel;
-
 	volatile bool m_networkInit;
 	volatile bool m_thrdStop;
 	volatile bool m_thrdWorking;
@@ -739,7 +731,7 @@ private:
 	void _buildMenus(void);
 	SFont _font(FontSet &fontSet, const char *domain, const char *key, SFont def);
 	STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);
-	vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key, STexture def);
+	vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key);
 	void _showWaitMessage();
 public:
 	void _hideWaitMessage();
