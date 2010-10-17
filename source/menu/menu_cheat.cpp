@@ -103,7 +103,7 @@ void CMenu::_CheatSettings()
 			m_btnMgr.up();
 		else if (BTN_DOWN_PRESSED)
 			m_btnMgr.down();
-		else if (BTN_MINUS_PRESSED || BTN_LEFT_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_cheatBtnPageM)))
+		else if (txtavailable && (BTN_MINUS_PRESSED || BTN_LEFT_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_cheatBtnPageM))))
 		{
 			_hideCheatSettings();
 			if (m_cheatSettingsPage == 1)
@@ -113,7 +113,7 @@ void CMenu::_CheatSettings()
 			if(!m_btnMgr.selected(m_cheatBtnPageM)) m_btnMgr.click(m_cheatBtnPageM);
 			_showCheatSettings();
 		}
-		else if (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_cheatBtnPageP)))
+		else if (txtavailable && (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_cheatBtnPageP))))
 		{
 			_hideCheatSettings();
 			if (m_cheatSettingsPage == (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
@@ -240,8 +240,13 @@ void CMenu::_CheatSettings()
 				}
 				_hideCheatDownload();
 				
-				m_cheatfile.openTxtfile(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));
+				txtavailable = m_cheatfile.openTxtfile(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str()));
 				_showCheatSettings();
+
+				if (txtavailable)
+					m_btnMgr.setText(m_cheatLblTitle,wfmt(L"%s",m_cheatfile.getGameName().c_str()));
+				else 
+					m_btnMgr.setText(m_cheatLblTitle,L"");
 
 				if (m_cheatfile.getCnt() == 0)
 				{

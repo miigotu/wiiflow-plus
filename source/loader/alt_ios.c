@@ -22,8 +22,6 @@
 #include <malloc.h>
 #include <wiiuse/wpad.h>
 
-#include "alt_ios_gen.h"
-
 #include "gecko.h"
 
 extern int __Arena2Lo;

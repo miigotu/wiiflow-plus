@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FILENAME=source/loader/alt_ios_gen.h
+FILENAME=source/loader/alt_ios_gen.c
 GENERATE=0
 VERSION=249
 

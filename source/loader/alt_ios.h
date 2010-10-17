@@ -1,6 +1,8 @@
 #ifndef _ALT_IOS_H_
 #define _ALT_IOS_H_
 
+#include <ogcsys.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,6 +16,9 @@ extern "C" {
 
 bool loadIOS(int n, bool init);
 u32 get_ios_base();
+
+extern int mainIOS;
+extern int mainIOSminRev;
 
 #ifdef __cplusplus
 }
