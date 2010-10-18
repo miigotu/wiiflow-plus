@@ -64,6 +64,9 @@ void CMenu::_hideMain(bool instant)
 void CMenu::_showMain(void)
 {
 	_hideWaitMessage();
+	
+	m_vid.set2DViewport(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480),
+		m_cfg.getInt("GENERAL", "tv_x", 0), m_cfg.getInt("GENERAL", "tv_y", 0));
 
 	_setBg(m_gameBg, m_gameBgLQ);
 	m_btnMgr.show(m_mainBtnConfig);
