@@ -1,1 +1,0 @@
-Compiled with libogc from: http://wiixplorer.googlecode.com/files/libogc_R4332_19-09-2010.zip
