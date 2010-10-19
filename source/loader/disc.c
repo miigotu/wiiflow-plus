@@ -361,11 +361,11 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 		return ret;
 
 	/* Disconnect Wiimotes */
-	int i;
-	for (i=0; i<4; i++)
+	int chan;
+	for(chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
-		WPAD_Flush(i);
-		WPAD_Disconnect(i);
+		WPAD_Flush(chan);
+		WPAD_Disconnect(chan);
 	}
 	WPAD_Shutdown();
 	

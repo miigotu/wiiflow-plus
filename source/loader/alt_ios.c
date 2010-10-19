@@ -54,10 +54,33 @@ static int load_ehc_module_ex(void)
 	if (ehc_cfg)
 	{
 		ehc_cfg += 12;
-		ehc_cfg[0] = 0; // USB Port 0
+		gprintf("EHC Port info = %i\n", ehc_cfg[0]);
+		ehc_cfg[0] = use_port1;
+		DCFlushRange((void *) (((u32)ehc_cfg[0]) & ~31), 32);
 	}
-	
+	if(use_port1)	// release port 0 and use port 1
+	{
+		u32 dat=0;
+		u32 addr;
+
+		// get EHCI base registers
+		mload_getw((void *) 0x0D040000, &addr);
+
+		addr&=0xff;
+		addr+=0x0D040000;
+		
+		mload_getw((void *) (addr+0x44), &dat);
+		if((dat & 0x2001)==1) 
+			mload_setw((void *) (addr+0x44), 0x2000);
+			
+		mload_getw((void *) (addr+0x48), &dat);
+		
+		if((dat & 0x2000)==0x2000)
+			mload_setw((void *) (addr+0x48), 0x1001);
+
+	}
 	load_ehc_module();
+
 	return 0;
 }
 
@@ -102,54 +125,56 @@ void try_hello()
 	gprintf("hello: %d %x %d\n", ret, x, x);
 }
 
-bool loadIOS(int n, bool init)
+bool loadIOS(int n, bool init, bool switch_port)
 {
 	bool iosOK;
-	
 	char partition[6];
+	int chan;
+
+	for(chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+	{
+	WPAD_Flush(chan);
+	WPAD_Disconnect(chan);
+	}
+	WPAD_Shutdown();
+	if(switch_port)sleep(1);
 
 	if (init)
 	{
-		int i;
-		for (i=0; i<4; i++)
-		{
-			WPAD_Flush(i);
-			WPAD_Disconnect(i);
-		}
-		WPAD_Shutdown();
 		Unmount_All_Devices();
-
 		int curIndex = WBFS_GetCurrentPartition();
 		WBFS_GetPartitionName(curIndex, (char *) &partition);
 		WBFS_Close();
 		
 		WDVD_Close();
 		USBStorage_Deinit();
-		
+
 		mload_close();
-		
 		usleep(500000);
 	}
+
 	void *backup = COVER_allocMem1(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
 	if (backup != 0)
 	{
 		memcpy(backup, &__Arena2Lo, 0x200000);
 		DCFlushRange(backup, 0x200000);
 	}
-	
 	usleep(100000);
 	gprintf("Reloading into ios %d...", n);
 	u32 v = IOS_ReloadIOS(n);
 	iosOK = v >= 0;
 	gprintf("ret: %d, current IOS: %d\n", v, IOS_GetVersion());
 	usleep(300000);
+
 	if (!is_ios_type(IOS_TYPE_WANIN)) sleep(1); // Narolez: sleep after IOS reload lets power down/up the harddisk when cIOS 249 is used!
+
 	if (backup != 0)
 	{
 		memcpy(&__Arena2Lo, backup, 0x200000);
 		DCFlushRange(&__Arena2Lo, 0x200000);
 		COVER_free(backup);
 	}
+
 	if (iosOK)
 	{
 		if (is_ios_type(IOS_TYPE_HERMES))
@@ -165,12 +190,14 @@ bool loadIOS(int n, bool init)
 	{
 		Mount_Devices();
 		WBFS_OpenNamed((char *) &partition);
-
 		Disc_Init();
-		WPAD_Init();
-		PAD_Init();
-		WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+
 	}
+
+	WPAD_Init();
+	PAD_Init();
+	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+
 	return iosOK;
 }
 

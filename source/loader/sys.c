@@ -65,11 +65,12 @@ void Sys_Exit(int ret)
 {
 	if(return_to_disable)
 		return;
-	int i;
-	for (i=0; i<4; i++)
+
+	int chan;
+	for(chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
-		WPAD_Flush(i);
-		WPAD_Disconnect(i);
+		WPAD_Flush(chan);
+		WPAD_Disconnect(chan);
 	}
     WPAD_Shutdown();
 
@@ -106,11 +107,11 @@ void Sys_Init(void)
 
 void Sys_Reboot(void)
 {
-	int i;
-	for (i=0; i<4; i++)
+	int chan;
+	for(chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
-		WPAD_Flush(i);
-		WPAD_Disconnect(i);
+		WPAD_Flush(chan);
+		WPAD_Disconnect(chan);
 	}
 	WPAD_Shutdown();
 
@@ -120,11 +121,11 @@ void Sys_Reboot(void)
 
 void Sys_Shutdown(void)
 {
-	int i;
-	for (i=0; i<4; i++)
+	int chan;
+	for(chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
-		WPAD_Flush(i);
-		WPAD_Disconnect(i);
+		WPAD_Flush(chan);
+		WPAD_Disconnect(chan);
 	}
 	WPAD_Shutdown();
 
