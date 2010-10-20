@@ -1,4 +1,4 @@
-
+//Why is your script fuckin up? lol
 #ifndef __MENU_HPP
 #define __MENU_HPP
 

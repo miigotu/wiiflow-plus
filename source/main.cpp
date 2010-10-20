@@ -24,7 +24,7 @@ extern int mainIOSminRev;
 
 CMenu *mainMenu;
 extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
-extern "C" void HideWaitMessage() {mainMenu->_hideWaitMessage(); } //Crashes if used before mainMenu = &menu @ line 163
+extern "C" void HideWaitMessage() {mainMenu->_hideWaitMessage(); }
 
 void parse_ios_arg(int arg, int *ios, int *min_rev)
 {
@@ -62,9 +62,7 @@ int old_main(int argc, char **argv)
 	{
 		if (argv[i] != NULL && strcasestr(argv[i], "ios=") != NULL)
 		{
-			//atoi returns 0 if the first byte is not numeric or whitespace, so move the pointer to the first digit.
 			while(!isdigit(argv[i][0])) argv[i]++;
-			//Dont allow ios reload attempts to slots the wii doesnt have
 			if (atoi(argv[i]) < 254 && atoi(argv[i]) > 0)
 				parse_ios_arg(atoi(argv[i]), &mainIOS, &mainIOSminRev);
 		}
