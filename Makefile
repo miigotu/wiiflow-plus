@@ -50,9 +50,10 @@ INCLUDES	:=	source \
 				source/libs/libwbfs
 				
 #---------------------------------------------------------------------------------
-# Default build IOS
+# Default build shell script options
 #---------------------------------------------------------------------------------
 ios			:=	249
+port		:=	0
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -132,22 +133,22 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 .PHONY: $(BUILD) all clean run
 #---------------------------------------------------------------------------------
 $(BUILD):
-	@echo Building for $(ios).
-	@bash ./buildtype.sh $(ios)
+	@echo Building for  IOS $(ios) Port $(port).
+	@bash ./buildtype.sh $(ios) $(port)
 	@[ -d $@ ] || mkdir -p $@
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
 all:
-	@make ios=224
+	@make ios=224 port=$(port)
 	@cp $(OUTPUT).dol 224.dol
-	@make  ios=223
+	@make  ios=223 port=$(port)
 	@cp $(OUTPUT).dol 223.dol
-	@make  ios=222
+	@make  ios=222 port=$(port)
 	@cp $(OUTPUT).dol 222.dol
-	@make ios=250
+	@make ios=250 port=$(port)
 	@cp $(OUTPUT).dol 250.dol
-	@make ios=249
+	@make ios=249 port=$(port)
 	@cp $(OUTPUT).dol 249.dol
 
 #---------------------------------------------------------------------------------

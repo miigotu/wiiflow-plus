@@ -818,14 +818,29 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if (has_enabled_providers() && _initNetwork() == 0)
 		add_game_to_card(id.c_str());
 
-	s32 current_wdm = -1;
-	m_gcfg1.getInt("WDM", id, (int *) &current_wdm);
-	wdm_entry_t *wdm_entry;
-	if (wdm_count == 1)
-		wdm_entry = &wdm_entries[wdm_count-1];
-	else
-		wdm_entry = current_wdm == -1 || current_wdm > (s32) wdm_count - 1 ? NULL : &wdm_entries[current_wdm];
 
+	if (load_wdm(m_wdmDir.c_str(), id.c_str()) == 0)
+	{
+		wdm_entry_t *wdm_entry = NULL;
+		s32 current_wdm = -1;
+		m_gcfg1.getInt("WDM", id, (int *) &current_wdm);
+		if (wdm_count == 1)
+			wdm_entry = &wdm_entries[wdm_count-1];
+		else
+			wdm_entry = current_wdm == -1 || current_wdm > (s32) wdm_count - 1 ? NULL : &wdm_entries[current_wdm];
+
+		if (wdm_entry != NULL)
+		{
+			gprintf("WDM Entry found, searching for dol with name '%s'\n", wdm_entry->dolname);
+			findDOL(wdm_entry->dolname, altdol, hdr);
+		}
+
+		free_wdm();
+	}
+	
+	if (!altdol.empty())
+		dolFile = extractDOL(altdol.c_str(), dolSize, hdr, m_locDol, dvd);
+	
 	m_gcfg1.save();
 	m_gcfg2.save();
 	m_cat.save();
@@ -890,14 +905,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if (mload && blockIOSReload)
 		disableIOSReload();
 	
-	if (wdm_entry != NULL)
-	{
-		gprintf("WDM Entry found, searching for dol with name '%s'\n", wdm_entry->dolname);
-		findDOL(wdm_entry->dolname, altdol, hdr);
-	}
-	
-	if (!altdol.empty())
-		dolFile = extractDOL(altdol.c_str(), dolSize, hdr, m_locDol, dvd);
 	if (!dvd)
 	{
 		s32 ret = Disc_SetUSB((u8 *) &hdr->hdr.id);

@@ -20,8 +20,6 @@ void enable_ES_ioctlv_vector(void);
 void Set_DIP_BCA_Datas(u8 *bca_data);
 void disableIOSReload(void);
 
-//void test_and_patch_for_port1();
-
 u8 *search_for_ehcmodule_cfg(u8 *p, int size);
 void disable_ffs_patch(void);
 int enable_ffs(int mode);

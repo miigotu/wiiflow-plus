@@ -54,8 +54,8 @@ static int load_ehc_module_ex(void)
 	if (ehc_cfg)
 	{
 		ehc_cfg += 12;
-		gprintf("EHC Port info = %i\n", ehc_cfg[0]);
 		ehc_cfg[0] = use_port1;
+		gprintf("EHC Port info = %i\n", ehc_cfg[0]);
 		DCFlushRange((void *) (((u32)ehc_cfg[0]) & ~31), 32);
 	}
 	if(use_port1)	// release port 0 and use port 1
@@ -129,15 +129,8 @@ bool loadIOS(int n, bool init, bool switch_port)
 {
 	bool iosOK;
 	char partition[6];
-	int chan;
 
-	for(chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-	{
-	WPAD_Flush(chan);
-	WPAD_Disconnect(chan);
-	}
-	WPAD_Shutdown();
-	if(switch_port)sleep(1);
+	Close_Inputs();
 
 	if (init)
 	{
@@ -145,7 +138,7 @@ bool loadIOS(int n, bool init, bool switch_port)
 		int curIndex = WBFS_GetCurrentPartition();
 		WBFS_GetPartitionName(curIndex, (char *) &partition);
 		WBFS_Close();
-		
+
 		WDVD_Close();
 		USBStorage_Deinit();
 
@@ -175,6 +168,8 @@ bool loadIOS(int n, bool init, bool switch_port)
 		COVER_free(backup);
 	}
 
+	Open_Inputs();
+
 	if (iosOK)
 	{
 		if (is_ios_type(IOS_TYPE_HERMES))
@@ -191,12 +186,7 @@ bool loadIOS(int n, bool init, bool switch_port)
 		Mount_Devices();
 		WBFS_OpenNamed((char *) &partition);
 		Disc_Init();
-
 	}
-
-	WPAD_Init();
-	PAD_Init();
-	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
 
 	return iosOK;
 }

@@ -13,6 +13,7 @@
 extern "C"
 {
     extern void __exception_setreload(int t);
+	extern bool use_port1;
 }
 
 extern const u8 wait_hdd_png[];
@@ -42,7 +43,6 @@ void parse_ios_arg(int arg, int *ios, int *min_rev)
 	gprintf("Passed IOS Minimum Rev: %i\n", *min_rev);
 }
 
-bool use_port1 = false; //Set port you want to use here for now.
 
 int old_main(int argc, char **argv)
 {
@@ -66,6 +66,13 @@ int old_main(int argc, char **argv)
 			if (atoi(argv[i]) < 254 && atoi(argv[i]) > 0)
 				parse_ios_arg(atoi(argv[i]), &mainIOS, &mainIOSminRev);
 		}
+		else if (argv[i] != NULL && strcasestr(argv[i], "port=") != NULL)
+		{
+			while(!isdigit(argv[i][0])) argv[i]++;
+			bool port = atoi(argv[i]);
+			if (port <= 1 && port >= 0)
+				use_port1 = port;
+		}
 		else if (strlen(argv[i]) == 6)
 		{
 			gameid = argv[i];
@@ -74,7 +81,7 @@ int old_main(int argc, char **argv)
 					gameid = NULL;
 		}
 	}
-	gprintf("Loading cIOS: %d\n", mainIOS);
+	gprintf("Loading cIOS: %d, Port: %d\n", mainIOS, use_port1);
 
 	// Load Custom IOS
 	iosOK = loadIOS(mainIOS, false, false);
@@ -102,7 +109,7 @@ int old_main(int argc, char **argv)
 		Mount_Devices();
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 
-/*  		if (!wbfsOK && is_ios_type(IOS_TYPE_HERMES) && !FS_Mount_USB()) //Try swapping here first to avoid HDD Wait screen.
+/*    	if (!wbfsOK && is_ios_type(IOS_TYPE_HERMES) && !FS_Mount_USB()) //Try swapping here first to avoid HDD Wait screen.
 		{
 			use_port1 = !use_port1;
 			loadIOS(mainIOS, false, true); //Reload the EHC module.
@@ -111,7 +118,7 @@ int old_main(int argc, char **argv)
 		}
 */		if (!wbfsOK)
 		{
-			//s16 switch_port = -2;
+			s16 switch_port = 50;
 
 			// Show HDD Wait Screen
 			STexture texWaitHDD;
@@ -128,23 +135,31 @@ int old_main(int argc, char **argv)
 					{
 						//switch_port++;
 						WPAD_ScanPads(); PAD_ScanPads();
-						u32 wbtnsPressed = 0, gbtnsPressed = 0;
+
+						u32 wbtnsPressed = 0, gbtnsPressed = 0,
+							wbtnsHeld = 0, gbtnsHeld = 0;
+
 						for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 						{
 							wbtnsPressed |= WPAD_ButtonsDown(chan);
 							gbtnsPressed |= PAD_ButtonsDown(chan);
+
+							wbtnsHeld |= WPAD_ButtonsHeld(chan);
+							gbtnsHeld |= PAD_ButtonsHeld(chan);
 						 }
 
-						if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) != 0 || (gbtnsPressed & GBTN_HOME) != 0)
+						if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) || (gbtnsPressed & GBTN_HOME))
 							Sys_Exit(0);
 
-/* 						if (is_ios_type(IOS_TYPE_HERMES) && (switch_port >= 250 || switch_port == -1))
+//  					if (is_ios_type(IOS_TYPE_HERMES) && switch_port >= 50)
+						if (switch_port == 50 && ((wbtnsHeld & WBTN_B) || (wbtnsHeld & GBTN_B)))
 						{
 							use_port1 = !use_port1;
+							switch_port = 0;
 							loadIOS(mainIOS, false, true);
 						}
-						if (switch_port >= 250)
-							switch_port = 0; */
+						//if (switch_port >= 50)
+ 						//switch_port = 0;
 						VIDEO_WaitVSync();
 					}
 				}
@@ -159,9 +174,9 @@ int old_main(int argc, char **argv)
 	MEM2_takeBigOnes(true);
 	do
 	{
-		gprintf("SD Available: %d\n", FS_SDAvailable());
+		Mount_Devices();
 		gprintf("USB Available: %d\n", FS_USBAvailable());
-		Mount_Devices(); //Why the hell does it need to mount devices again when the above gprintf's are both true?  Without this we have a dump
+		gprintf("SD Available: %d\n", FS_SDAvailable());
 
 		CMenu menu(vid);
 		menu.init();

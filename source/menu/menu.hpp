@@ -486,6 +486,8 @@ private:
 	void ButtonsPressed(void);
 	void ButtonsHeld(void);
 
+	void Open_Inputs(void);
+	void Close_Inputs(void);
 	void SetupInput(void);
 	void ScanInput(void);
 	bool WPadIR_Valid(int i);

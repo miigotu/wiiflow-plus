@@ -33,6 +33,21 @@ static bool return_to_menu = false;
 static bool return_to_priiloader = false;
 static bool return_to_disable = false;
 
+void Open_Inputs()
+{
+	WPAD_Init();
+	PAD_Init();
+	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+}
+
+void Close_Inputs()
+{
+	int chan;
+	WPAD_Flush(WPAD_CHAN_ALL);
+	for(chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)	WPAD_Disconnect(chan);
+	WPAD_Shutdown();
+}
+
 bool Sys_Exiting(void)
 {
 	return reset || shutdown;
@@ -66,14 +81,10 @@ void Sys_Exit(int ret)
 	if(return_to_disable)
 		return;
 
-	int chan;
-	for(chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-	{
-		WPAD_Flush(chan);
-		WPAD_Disconnect(chan);
-	}
-    WPAD_Shutdown();
+	/* Shutdown Inputs */
+	Close_Inputs();
 
+	/* Clear Playlog */
 	Playlog_Delete();
 
 	if (return_to_menu || return_to_priiloader)
@@ -97,9 +108,6 @@ void __Sys_PowerCallback(void)
 
 void Sys_Init(void)
 {
-	/* Initialize video subsytem */
-//	VIDEO_Init();
-
 	/* Set RESET/POWER button callback */
 	SYS_SetResetCallback(__Sys_ResetCallback);
 	SYS_SetPowerCallback(__Sys_PowerCallback);
@@ -107,13 +115,8 @@ void Sys_Init(void)
 
 void Sys_Reboot(void)
 {
-	int chan;
-	for(chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-	{
-		WPAD_Flush(chan);
-		WPAD_Disconnect(chan);
-	}
-	WPAD_Shutdown();
+	/* Shutdown Inputs */
+	Close_Inputs();
 
 	/* Restart console */
 	STM_RebootSystem();
@@ -121,13 +124,8 @@ void Sys_Reboot(void)
 
 void Sys_Shutdown(void)
 {
-	int chan;
-	for(chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-	{
-		WPAD_Flush(chan);
-		WPAD_Disconnect(chan);
-	}
-	WPAD_Shutdown();
+	/* Shutdown Inputs */
+	Close_Inputs();
 
 	/* Poweroff console */
 	if(CONF_GetShutdownMode() == CONF_SHUTDOWN_IDLE)
