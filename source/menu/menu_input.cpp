@@ -5,7 +5,7 @@
 using namespace std;
 
 
-static const u32 g_repeatDelay = 100;
+static const u32 g_repeatDelay = 25;
 
 void CMenu::SetupInput()
 {
@@ -205,10 +205,10 @@ void CMenu::LeftStick()
     }
 }
 
-bool CMenu::WPadIR_Valid(int i)
+bool CMenu::WPadIR_Valid(int chan)
 {
-	wd[i] = WPAD_Data(i);
-	if (wd[i]->ir.valid)
+	wd[chan] = WPAD_Data(chan);
+	if (wd[chan]->ir.valid)
 		return true;
 	return false;
 }
@@ -390,6 +390,78 @@ bool CMenu::gc_btnRepeat(s64 btn)
 		}
 	} */
 	return b;
+}
+bool CMenu::lStick_Up(void)
+{
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if ((LEFT_STICK_ANG_UP && left_stick_mag[chan] > 0.15) || PAD_StickY(chan) > 20)
+			return true;
+	return false;
+}
+bool CMenu::lStick_Right(void)
+{
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if ((LEFT_STICK_ANG_RIGHT && left_stick_mag[chan] > 0.15) || PAD_StickX(chan) > 20)
+			return true;
+	return false;
+}
+bool CMenu::lStick_Down(void)
+{
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if ((LEFT_STICK_ANG_DOWN && left_stick_mag[chan] > 0.15) || PAD_StickY(chan) < -20)
+			return true;
+	return false;
+}
+bool CMenu::lStick_Left(void)
+{
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if ((LEFT_STICK_ANG_LEFT && left_stick_mag[chan] > 0.15) || PAD_StickX(chan) < -20)
+			return true;
+	return false;
+}
+bool CMenu::rStick_Up(void)
+{
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if ((RIGHT_STICK_ANG_UP && right_stick_mag[chan] > 0.15 && right_stick_skip[chan] == 0) || PAD_SubStickY(chan) > 20)
+			return true;
+	return false;
+}
+bool CMenu::rStick_Right(void)
+{
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if ((RIGHT_STICK_ANG_RIGHT && right_stick_mag[chan] > 0.15 && right_stick_skip[chan] == 0) || PAD_SubStickX(chan) > 20)
+			return true;
+	return false;
+}
+bool CMenu::rStick_Down(void)
+{
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if ((RIGHT_STICK_ANG_DOWN && right_stick_mag[chan] > 0.15 && right_stick_skip[chan] == 0) || PAD_SubStickY(chan) < -20)
+			return true;
+	return false;
+}
+bool CMenu::rStick_Left(void)
+{
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if ((RIGHT_STICK_ANG_LEFT && right_stick_mag[chan] > 0.15 && right_stick_skip[chan] == 0) || PAD_SubStickX(chan) < -20)
+			return true;
+	return false;
+}
+
+bool CMenu::wRoll_Left(void)
+{
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if (WBTN_B_HELD && (wmote_roll[chan] < -5) && wmote_roll_skip[chan] == 0)
+			return true;
+	return false;
+}
+
+bool CMenu::wRoll_Right(void)
+{
+	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+		if (WBTN_B_HELD && (wmote_roll[chan] > 5)  && wmote_roll_skip[chan] == 0)
+			return true;
+	return false;
 }
 
 void CMenu::ShowZone(SZone zone, bool &showZone)

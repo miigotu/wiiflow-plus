@@ -480,17 +480,31 @@ private:
 	s32	  wmote_roll_skip[WPAD_MAX_WIIMOTES];
 	bool  enable_wmote_roll;
 
-	bool wii_btnRepeat(s64 btn);
-	bool gc_btnRepeat(s64 btn);
-
-	void ButtonsPressed(void);
-	void ButtonsHeld(void);
-
 	void Open_Inputs(void);
 	void Close_Inputs(void);
 	void SetupInput(void);
 	void ScanInput(void);
-	bool WPadIR_Valid(int i);
+
+	void ButtonsPressed(void);
+	void ButtonsHeld(void);
+
+	bool lStick_Up(void);
+	bool lStick_Right(void);
+	bool lStick_Down(void);
+	bool lStick_Left(void);
+
+	bool rStick_Up(void);
+	bool rStick_Right(void);
+	bool rStick_Down(void);
+	bool rStick_Left(void);
+
+	bool wRoll_Left(void);
+	bool wRoll_Right(void);
+
+	bool wii_btnRepeat(s64 btn);
+	bool gc_btnRepeat(s64 btn);
+
+	bool WPadIR_Valid(int chan);
 	bool WPadIR_ANY(void);
 	
 	void ShowZone(SZone zone, bool &showZone);

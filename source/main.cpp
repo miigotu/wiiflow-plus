@@ -118,7 +118,7 @@ int old_main(int argc, char **argv)
 		}
 */		if (!wbfsOK)
 		{
-			s16 switch_port = 50;
+			//s16 switch_port = 50;
 
 			// Show HDD Wait Screen
 			STexture texWaitHDD;
@@ -152,12 +152,13 @@ int old_main(int argc, char **argv)
 							Sys_Exit(0);
 
 //  					if (is_ios_type(IOS_TYPE_HERMES) && switch_port >= 50)
-						if (switch_port == 50 && ((wbtnsHeld & WBTN_B) || (wbtnsHeld & GBTN_B)))
+// Games fail to load if I do this.  Confirmed by testers.  Disabled until further investigation.
+/* 						if (is_ios_type(IOS_TYPE_HERMES) && switch_port == 50 && ((wbtnsHeld & WBTN_B) || (wbtnsHeld & GBTN_B)))
 						{
 							use_port1 = !use_port1;
 							switch_port = 0;
 							loadIOS(mainIOS, false, true);
-						}
+						} */
 						//if (switch_port >= 50)
  						//switch_port = 0;
 						VIDEO_WaitVSync();

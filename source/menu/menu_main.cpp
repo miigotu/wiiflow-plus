@@ -134,26 +134,23 @@ int CMenu::main(void)
 			m_reload = (BTN_B_HELD || m_disable_exit);
 			break;
 		}
-		for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-		{
-			if (!(wii_btnsHeld & WBTN_B) && (BTN_UP_REPEAT || RIGHT_STICK_UP))
-				m_cf.up();
-			if ((!(wii_btnsHeld & WBTN_B) && (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT))|| WROLL_RIGHT)
-				m_cf.right();
-			if (!(wii_btnsHeld & WBTN_B) && (BTN_DOWN_REPEAT ||  RIGHT_STICK_DOWN))
-				m_cf.down();
-			if ((!(wii_btnsHeld & WBTN_B) && (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)) || WROLL_LEFT)
-				m_cf.left();
-		}
+		if (!BTN_B_HELD && (BTN_UP_REPEAT || RIGHT_STICK_UP))
+			m_cf.up();
+		if ((!BTN_B_HELD && (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT))|| WROLL_RIGHT)
+			m_cf.right();
+		if (!BTN_B_HELD && (BTN_DOWN_REPEAT ||  RIGHT_STICK_DOWN))
+			m_cf.down();
+		if ((!BTN_B_HELD && (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)) || WROLL_LEFT)
+			m_cf.left();
 		//CF Layout select
-		if (!(wii_btnsHeld & WBTN_B) && BTN_1_PRESSED)
+		if (!BTN_B_HELD && BTN_1_PRESSED)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
 			m_cfg.setInt("GENERAL", "last_cf_mode", cfVersion);
 		}
-		else if (!(wii_btnsHeld & WBTN_B) && BTN_2_PRESSED)
+		else if (!BTN_B_HELD && BTN_2_PRESSED)
 		{
 			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
