@@ -105,20 +105,19 @@ int old_main(int argc, char **argv)
 	Sys_ExitTo(0);
 
 	if (iosOK)
-	{
-		Mount_Devices();
+	{	Mount_Devices();
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 
-/*    	if (!wbfsOK && is_ios_type(IOS_TYPE_HERMES) && !FS_Mount_USB()) //Try swapping here first to avoid HDD Wait screen.
+/*      	if (!wbfsOK && is_ios_type(IOS_TYPE_HERMES) && !FS_Mount_USB()) //Try swapping here first to avoid HDD Wait screen.
 		{
 			use_port1 = !use_port1;
 			loadIOS(mainIOS, false, true); //Reload the EHC module.
 			if (FS_Mount_USB())
 				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
-		}
-*/		if (!wbfsOK)
+		} */
+		if (!wbfsOK)
 		{
-			//s16 switch_port = 50;
+			//s16 switch_port = 200;
 
 			// Show HDD Wait Screen
 			STexture texWaitHDD;
@@ -133,7 +132,8 @@ int old_main(int argc, char **argv)
 				{
 					while(!FS_Mount_USB()) //Wait indefinitely until HDD is there or exit requested.
 					{
-						//switch_port++;
+						//if (switch_port < 200) switch_port++;
+
 						WPAD_ScanPads(); PAD_ScanPads();
 
 						u32 wbtnsPressed = 0, gbtnsPressed = 0,
@@ -151,16 +151,12 @@ int old_main(int argc, char **argv)
 						if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) || (gbtnsPressed & GBTN_HOME))
 							Sys_Exit(0);
 
-//  					if (is_ios_type(IOS_TYPE_HERMES) && switch_port >= 50)
-// Games fail to load if I do this.  Confirmed by testers.  Disabled until further investigation.
-/* 						if (is_ios_type(IOS_TYPE_HERMES) && switch_port == 50 && ((wbtnsHeld & WBTN_B) || (wbtnsHeld & GBTN_B)))
+/* 						if (is_ios_type(IOS_TYPE_HERMES) && switch_port >= 2)
 						{
 							use_port1 = !use_port1;
-							switch_port = 0;
 							loadIOS(mainIOS, false, true);
+							switch_port = 0;
 						} */
-						//if (switch_port >= 50)
- 						//switch_port = 0;
 						VIDEO_WaitVSync();
 					}
 				}

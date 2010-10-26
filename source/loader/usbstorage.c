@@ -144,7 +144,11 @@ err:
 		IOS_Close(fd);
 		fd = -1;
 	}
-
+/* 
+	if (hid > 0) {
+		iosDestroyHeap(hid);
+		hid = -1;
+	} */
 	return -1;
 }
 
@@ -155,10 +159,10 @@ void USBStorage_Deinit(void)
 		IOS_Close(fd);
 		fd = -1;
 	}
-	/*if (hid > 0) {
+/* 	if (hid > 0) {
 		iosDestroyHeap(hid);
 		hid = -1;
-	}*/
+	} */
 }
 
 s32 USBStorage_ReadSectors(u32 sector, u32 numSectors, void *buffer)

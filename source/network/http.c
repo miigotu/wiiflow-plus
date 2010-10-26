@@ -1,5 +1,6 @@
 #include "http.h"
 #include <stdlib.h>
+#include <fcntl.h>
 /**
  * Emptyblock is a statically defined variable for functions to return if they are unable
  * to complete a request
@@ -26,6 +27,33 @@ static s32 send_message(s32 server, char *msg) {
 	return 0;
 }
 
+static s32 tcp_socket(void)
+{
+	s32 socket, ret;
+
+	socket = net_socket(PF_INET, SOCK_STREAM, IPPROTO_IP);
+	if (socket < 0) return socket;
+
+	u32 nodelay = 1;
+	net_setsockopt(socket,IPPROTO_TCP,TCP_NODELAY,&nodelay,sizeof(nodelay));
+
+	ret = net_fcntl(socket, F_GETFL, 0);
+	if (ret < 0)
+	{
+		net_close(socket);
+		return ret;
+	}
+
+	ret = net_fcntl(socket, F_SETFL, ret | IOS_O_NONBLOCK);
+	if (ret < 0)
+	{
+		net_close(socket);
+		return ret;
+	}
+
+	return socket;
+}
+
 /**
  * Connect to a remote server via TCP on a specified port
  *
@@ -35,7 +63,7 @@ static s32 send_message(s32 server, char *msg) {
  */
 static s32 server_connect(u32 ipaddress, u32 socket_port) {
 	//Initialize socket
-	s32 connection = net_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+	s32 connection = tcp_socket();
     if (connection < 0) return connection;
 
 	struct sockaddr_in connect_addr;

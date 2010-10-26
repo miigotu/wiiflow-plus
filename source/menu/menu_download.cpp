@@ -910,7 +910,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 					{
 						//Update apps dir succeeded, try to update the data dir.
 						update.data = NULL;
-						update.size = NULL;
+						update.size = 0;
 
 						//memset(&buffer, 0, bufferSize);  should we be clearing the buffer of any possible data before downloading?
 

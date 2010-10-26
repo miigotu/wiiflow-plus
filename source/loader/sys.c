@@ -42,9 +42,7 @@ void Open_Inputs()
 
 void Close_Inputs()
 {
-	int chan;
 	WPAD_Flush(WPAD_CHAN_ALL);
-	for(chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)	WPAD_Disconnect(chan);
 	WPAD_Shutdown();
 }
 
