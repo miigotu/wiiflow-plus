@@ -1,57 +1,38 @@
 #include "http.h"
+#include "gecko.h"
 #include <stdlib.h>
 #include <fcntl.h>
+#include <ogc/lwp_watchdog.h>
+#include <time.h>
 /**
  * Emptyblock is a statically defined variable for functions to return if they are unable
  * to complete a request
  */
 const struct block emptyblock = {0, NULL};
-
-//The maximum amount of bytes to send per net_write() call
-#define NET_BUFFER_SIZE 1024
+#define NET_BUFFER_SIZE 1024 //The maximum amount of bytes to send per net_write() call
+#define TCP_TIMEOUT 	4000 // 4 secs to receive
 
 // Write our message to the server
-static s32 send_message(s32 server, char *msg) {
-	s32 bytes_transferred = 0;
-    s32 remaining = strlen(msg);
-    while (remaining) {
-        if ((bytes_transferred = net_write(server, msg, remaining > NET_BUFFER_SIZE ? NET_BUFFER_SIZE : remaining)) > 0) {
-            remaining -= bytes_transferred;
-			usleep (20 * 1000);
-        } else if (bytes_transferred < 0) {
-            return bytes_transferred;
-        } else {
-            return -ENODATA;
-        }
-    }
-	return 0;
-}
-
-static s32 tcp_socket(void)
+static s32 send_message(s32 server, char *msg)
 {
-	s32 socket, ret;
-
-	socket = net_socket(PF_INET, SOCK_STREAM, IPPROTO_IP);
-	if (socket < 0) return socket;
-
-	u32 nodelay = 1;
-	net_setsockopt(socket,IPPROTO_TCP,TCP_NODELAY,&nodelay,sizeof(nodelay));
-
-	ret = net_fcntl(socket, F_GETFL, 0);
-	if (ret < 0)
+	s32 bytes_transferred = 0, remaining = strlen(msg);
+	s64 t = gettime();
+	while (remaining)
 	{
-		net_close(socket);
-		return ret;
+		if((bytes_transferred = net_write(server, msg, remaining > NET_BUFFER_SIZE ? NET_BUFFER_SIZE : remaining)) > 0)
+		{
+			remaining -= bytes_transferred;
+			usleep (20 * 1000);
+			t = gettime();
+		}
+		else if(bytes_transferred < 0)
+		{
+			return bytes_transferred;
+		}
+		if(ticks_to_millisecs(diff_ticks(t, gettime())) > TCP_TIMEOUT)
+			break;
 	}
-
-	ret = net_fcntl(socket, F_SETFL, ret | IOS_O_NONBLOCK);
-	if (ret < 0)
-	{
-		net_close(socket);
-		return ret;
-	}
-
-	return socket;
+	return 0;
 }
 
 /**
@@ -61,22 +42,48 @@ static s32 tcp_socket(void)
  * @param u32 the port to connect to on the server
  * @return s32 The connection to the server (negative number if connection could not be established)
  */
-static s32 server_connect(u32 ipaddress, u32 socket_port) {
-	//Initialize socket
-	s32 connection = tcp_socket();
-    if (connection < 0) return connection;
+static s32 server_connect(u32 ipaddress, u32 socket_port)
+{
+	fd_set fdset;
+	struct timeval time_val;
+	
+	s32 ret, connection;
+	u32 option = 1;
 
-	struct sockaddr_in connect_addr;
+	//Initialize socket
+	connection = net_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+	if(connection < 0) return connection;
+
+	//Set TCP_NO_DELAY
+	if(net_setsockopt(connection,IPPROTO_TCP,TCP_NODELAY,&option,sizeof(option)) <0)
+		gprintf("\nnet_setsockopt returned with ret = %d\n", ret);
+
+	//Set IOS_O_NONBLOCK
+	if(net_ioctl(connection, 126, &option) < 0)
+		gprintf("\nnet_ioctl returned with ret = %d\n", ret);
+
+
+	//Set the connection parameters for the socket
+ 	struct sockaddr_in connect_addr;
 	memset(&connect_addr, 0, sizeof(connect_addr));
 	connect_addr.sin_family = AF_INET;
 	connect_addr.sin_port = socket_port;
 	connect_addr.sin_addr.s_addr= ipaddress;
 	
-	//Attemt to open the socket
-	if (net_connect(connection, (struct sockaddr*)&connect_addr, sizeof(connect_addr)) == -1) {
-		net_close(connection);
-		return -1;
+	//Attemt to open a connection on the socket
+	ret = net_connect(connection, (struct sockaddr*)&connect_addr, sizeof(connect_addr));
+	if(ret == EINPROGRESS)
+	{
+		time_val.tv_sec = TCP_TIMEOUT;
+		time_val.tv_usec = 0;
+		FD_ZERO(&fdset);
+		FD_SET(connection, &fdset);
+		if(net_select(connection+1, NULL, &fdset, NULL, &time_val) <= 0)
+			return -1;
 	}
+	else if(ret < 0)
+		net_close(connection);
+
 	return connection;
 }
 
@@ -94,61 +101,64 @@ static s32 server_connect(u32 ipaddress, u32 socket_port) {
 static struct block read_message(s32 connection, struct block buffer, bool (*f)(void *, int, int), void *ud)
 {
 	static char tmpHdr[512];
-	bool hdr = false;
-	u32 fileSize = 0;
-	u32 step = 0;
+	bool hdr = false, fail = true;
+	u32 fileSize = 0, step = 0, offset = 0;
+	s64 t = gettime();
 
 	//The offset variable always points to the first byte of memory that is free in the buffer
-	u32 offset = 0;	
 	while (true)
 	{
+		if(ticks_to_millisecs(diff_ticks(t, gettime())) > TCP_TIMEOUT)
+			break;
+
 		//Fill the buffer with a new batch of bytes from the connection,
 		//starting from where we left of in the buffer till the end of the buffer
 		u32 len = buffer.size - offset;
 		s32 bytes_read = net_read(connection, buffer.data + offset, len > HTTP_BUFFER_GROWTH ? HTTP_BUFFER_GROWTH : len);
 		//Anything below 0 is an error in the connection
-		if (bytes_read < 0)
-			return emptyblock;
-		//No more bytes were read into the buffer,
-		//we assume this means the HTTP response is done
-		if (bytes_read == 0)
-			break;
-		offset += bytes_read;
-		// Not enough memory
-		if (buffer.size <= offset)
-			return emptyblock;
-		if (!hdr && offset >= sizeof tmpHdr)
+		if(bytes_read > 0)
 		{
-			hdr = true;
-			memcpy(tmpHdr, buffer.data, sizeof tmpHdr - 1);
-			tmpHdr[sizeof tmpHdr - 1] = 0;
-			const char *p = strstr(tmpHdr, "Content-Length:");
-			if (p != 0)
+			t = gettime ();
+
+			offset += bytes_read;
+			// Not enough memory
+			if(buffer.size <= offset)
+				return emptyblock;
+			if(!hdr && offset >= sizeof tmpHdr)
 			{
-				p += sizeof "Content-Length:";
-				fileSize = strtol(p, 0, 10);
+				hdr = true;
+				memcpy(tmpHdr, buffer.data, sizeof tmpHdr - 1);
+				tmpHdr[sizeof tmpHdr - 1] = 0;
+				const char *p = strstr(tmpHdr, "Content-Length:");
+				if(p != 0)
+				{
+					p += sizeof "Content-Length:";
+					fileSize = strtol(p, 0, 10);
+				}
 			}
-		}
-		if (step * HTTP_BUFFER_GROWTH < offset)
-		{
-			++step;
-			if (f != 0)
+			if(step * HTTP_BUFFER_GROWTH < offset)
 			{
-				if ((fileSize != 0 && !f(ud, fileSize, offset <= fileSize ? offset : fileSize)) ||
-					(fileSize == 0 && !f(ud, buffer.size, offset)))
-					return emptyblock;
+				++step;
+				if(f != 0)
+				{
+					if((fileSize != 0 && !f(ud, fileSize, offset <= fileSize ? offset : fileSize)) ||
+						(fileSize == 0 && !f(ud, buffer.size, offset)))
+						return emptyblock;
+				}
 			}
+			fail = false;
 		}
+		else
+			usleep(100);
 	}
+	if(fail) return emptyblock;
 	//At the end of above loop offset should be precisely the amount of bytes that were read from the connection
 	buffer.size = offset;
 	return buffer;
 }
 
-/**
- * Downloads the contents of a URL to memory
- * This method is not threadsafe (because networking is not threadsafe on the Wii)
- */
+/* Downloads the contents of a URL to memory
+ * This method is not threadsafe (because networking is not threadsafe on the Wii) */
 struct block downloadfile(u8 *buffer, u32 bufferSize, const char *url, bool (*f)(void *, int, int), void *ud)
 {
 	//Check if the url starts with "http://", if not it is not considered a valid url
@@ -219,7 +229,7 @@ struct block downloadfile(u8 *buffer, u32 bufferSize, const char *url, bool (*f)
 		}
 	}
 	
-	if (response.size == 0 || response.data == NULL)
+	if(response.size == 0 || response.data == NULL)
 		return emptyblock;
 	
 	// Check for the headers
@@ -234,7 +244,7 @@ struct block downloadfile(u8 *buffer, u32 bufferSize, const char *url, bool (*f)
 /*
 			{
 			char redirectedTo[255];
-			if (findHeader((char *) response.data, (filestart - response.data), "Location", redirectedTo, 255) == 0) {
+			if(findHeader((char *) response.data, (filestart - response.data), "Location", redirectedTo, 255) == 0) {
 				return downloadfile(buffer, bufferSize, (char *) redirectedTo, f, ud);
 			}
 			return emptyblock;

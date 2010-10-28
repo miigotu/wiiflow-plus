@@ -9,7 +9,6 @@
 #include "sys.h"
 
 #define GECKOURL "http://geckocodes.org/codes/R/%s.txt"
-
 #define CHEATSPERPAGE 4
 
 void CMenu::_hideCheatDownload(bool instant)

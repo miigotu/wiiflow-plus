@@ -12,7 +12,6 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#define IOS_O_NONBLOCK	0x04
 
 /**
  * A simple structure to keep track of the size of a malloc()ated block of memory 

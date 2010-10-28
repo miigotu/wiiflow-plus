@@ -39,6 +39,7 @@ static const char FMT_PIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}
 static const char FMT_PIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
 "|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png";
 
+static block download = { 0, 0 };
 static string countryCode(const string &gameId)
 {
 	switch (gameId[3])
@@ -340,6 +341,9 @@ void CMenu::_deinitNetwork()
 
 int CMenu::_coverDownloader(bool missingOnly)
 {
+ 	download.data = 0;
+ 	download.size = 0;
+
 	u32 n;
 	u32 nbSteps;
 	u32 step;
@@ -350,7 +354,6 @@ int CMenu::_coverDownloader(bool missingOnly)
 	FILE *file = NULL;
 	string url;
 	string path;
-	block png;
 	vector<string> coverList;
 	bool savePNG;
 	bool success;
@@ -434,8 +437,8 @@ int CMenu::_coverDownloader(bool missingOnly)
 				LWP_MutexLock(m_mutex);
 				_setThrdMsg(wfmt(_fmt("dlmsg3", L"Downloading from %s"), url.c_str()), m_thrdStep);
 				LWP_MutexUnlock(m_mutex);
-				png = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
-				if (png.data != NULL)
+				download = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
+				if (download.data != NULL)
 				{
 					if (savePNG)
 					{
@@ -446,7 +449,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 						file = fopen(path.c_str(), "wb");
 						if (file != NULL)
 						{
-							fwrite(png.data, png.size, 1, file);
+							fwrite(download.data, download.size, 1, file);
 							fclose(file);
 						}
 					}
@@ -454,7 +457,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 					LWP_MutexLock(m_mutex);
 					_setThrdMsg(wfmt(_fmt("dlmsg10", L"Making %s"), sfmt("%s.wfc", coverList[i].c_str()).c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
 					LWP_MutexUnlock(m_mutex);
-					if (m_cf.preCacheCover(coverList[i].c_str(), png.data, true))
+					if (m_cf.preCacheCover(coverList[i].c_str(), download.data, true))
 					{
 						++count;
 						success = true;
@@ -475,8 +478,8 @@ int CMenu::_coverDownloader(bool missingOnly)
 						LWP_MutexLock(m_mutex);
 						_setThrdMsg(wfmt(_fmt("dlmsg8", L"Full cover not found. Downloading from %s"), url.c_str()), listWeight + dlWeight * (float)step / (float)nbSteps);
 						LWP_MutexUnlock(m_mutex);
-						png = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
-						if (png.data != NULL)
+						download = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
+						if (download.data != NULL)
 						{
 							if (savePNG)
 							{
@@ -486,7 +489,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 								file = fopen(path.c_str(), "wb");
 								if (file != NULL)
 								{
-									fwrite(png.data, png.size, 1, file);
+									fwrite(download.data, download.size, 1, file);
 									fclose(file);
 								}
 							}
@@ -494,7 +497,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 							LWP_MutexLock(m_mutex);
 							_setThrdMsg(wfmt(_fmt("dlmsg10", L"Making %s"), sfmt("%s.wfc", coverList[i].c_str()).c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
 							LWP_MutexUnlock(m_mutex);
-							if (m_cf.preCacheCover(coverList[i].c_str(), png.data, false))
+							if (m_cf.preCacheCover(coverList[i].c_str(), download.data, false))
 							{
 								++countFlat;
 								success = true;
@@ -681,7 +684,9 @@ s8 CMenu::_versionTxtDownloaderInit(CMenu *m) //Handler to download versions txt
 
 s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 {
-	block vtxt;
+ 	download.data = 0;
+ 	download.size = 0;
+
 	wstringEx ws;
 	SmartBuf buffer;
 	FILE *file = NULL;
@@ -718,8 +723,8 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 		m_thrdStep = 0.2f;
 		m_thrdStepLen = 0.9f - 0.2f;
 		gprintf("TXT update URL: %s\n\n", m_cfg.getString("GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str());
-		vtxt = downloadfile(buffer.get(), bufferSize, m_cfg.getString("GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str(),CMenu::_downloadProgress, this);
-		if (vtxt.data == 0 || vtxt.size < 19)
+		download = downloadfile(buffer.get(), bufferSize, m_cfg.getString("GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str(),CMenu::_downloadProgress, this);
+		if (download.data == 0 || download.size < 19)
 		{
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg20", L"No version information found."), 1.f); // TODO: Check for 16
@@ -736,7 +741,7 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 			sleep(1);
 			if (file != NULL)
 			{
-				fwrite(vtxt.data, 1, vtxt.size, file);
+				fwrite(download.data, 1, download.size, file);
 				fclose(file);
 				// version file valid, check for version with SVN_REV
 				int svnrev = atoi(SVN_REV);
@@ -781,9 +786,8 @@ s8 CMenu::_versionDownloaderInit(CMenu *m) //Handler to download new dol
 
 s8 CMenu::_versionDownloader() // code to download new version
 {
-	block update;
- 	update.data = 0;
-	update.size = 0;
+ 	download.data = 0;
+ 	download.size = 0;
 
 	wstringEx ws;
 	SmartBuf buffer;
@@ -855,18 +859,18 @@ s8 CMenu::_versionDownloader() // code to download new version
 		
 		bool zipfile = true;
 		if(!m_update_dolOnly)
-			update = downloadfile(buffer.get(), bufferSize, m_app_update_url, CMenu::_downloadProgress, this);
-		if (m_update_dolOnly || update.data == 0 || update.size < m_app_update_size)
+			download = downloadfile(buffer.get(), bufferSize, m_app_update_url, CMenu::_downloadProgress, this);
+		if (m_update_dolOnly || download.data == 0 || download.size < m_app_update_size)
 		{
  			// Replace zip with dol
 			strcpy(strrchr(m_app_update_url, '.'), ".dol"); 
 			zipfile = false;
 	
-			update = downloadfile(buffer.get(), bufferSize, m_app_update_url, CMenu::_downloadProgress, this);
-			if (update.data == 0 || update.size < m_dol_update_size)
+			download = downloadfile(buffer.get(), bufferSize, m_app_update_url, CMenu::_downloadProgress, this);
+			if (download.data == 0 || download.size < m_dol_update_size)
 			{
-				update = downloadfile(buffer.get(), bufferSize, m_old_update_url, CMenu::_downloadProgress, this);
-				if (update.data == 0 || update.size < m_dol_update_size)
+				download = downloadfile(buffer.get(), bufferSize, m_old_update_url, CMenu::_downloadProgress, this);
+				if (download.data == 0 || download.size < m_dol_update_size)
 				{
 					LWP_MutexLock(m_mutex);
 					_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
@@ -876,7 +880,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 			}
 		}
 		
-		if (update.data > 0)
+		if (download.data > 0)
 		{
 			// download finished, backup boot.dol and write new files.
 			LWP_MutexLock(m_mutex);
@@ -893,7 +897,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 				file = fopen(m_app_update_zip.c_str(), "wb");
 				if (file != NULL)
 				{
-					fwrite(update.data, 1, update.size, file);
+					fwrite(download.data, 1, download.size, file);
 					fclose(file);
 					
 					LWP_MutexLock(m_mutex);
@@ -909,8 +913,8 @@ s8 CMenu::_versionDownloader() // code to download new version
 					if (ret == UNZ_OK)
 					{
 						//Update apps dir succeeded, try to update the data dir.
-						update.data = NULL;
-						update.size = 0;
+						download.data = NULL;
+						download.size = 0;
 
 						//memset(&buffer, 0, bufferSize);  should we be clearing the buffer of any possible data before downloading?
 
@@ -918,8 +922,8 @@ s8 CMenu::_versionDownloader() // code to download new version
 						_setThrdMsg(_t("dlmsg23", L"Updating data directory..."), 0.2f);
 						LWP_MutexUnlock(m_mutex);
 
-						update = downloadfile(buffer.get(), bufferSize, m_data_update_url, CMenu::_downloadProgress, this);
-						if (update.data == 0 || update.size < m_data_update_size)
+						download = downloadfile(buffer.get(), bufferSize, m_data_update_url, CMenu::_downloadProgress, this);
+						if (download.data == 0 || download.size < m_data_update_size)
 						{
 							LWP_MutexLock(m_mutex);
 							_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
@@ -927,7 +931,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 							goto success;
 						}
 						
-						if (update.data > 0)
+						if (download.data > 0)
 						{
 							// download finished, write new files.
 							LWP_MutexLock(m_mutex);
@@ -939,7 +943,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 							file = fopen(m_data_update_zip.c_str(), "wb");
 							if (file != NULL)
 							{
-								fwrite(update.data, 1, update.size, file);
+								fwrite(download.data, 1, download.size, file);
 								fclose(file);
 								
 								LWP_MutexLock(m_mutex);
@@ -975,7 +979,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 				if (file == NULL)
 					goto fail;
 
-				fwrite(update.data, 1, update.size, file);
+				fwrite(download.data, 1, download.size, file);
 				fclose(file);
 				goto success;
 			}
@@ -1034,7 +1038,9 @@ int CMenu::_wiitdbDownloader(CMenu *m)
 
 int CMenu::_wiitdbDownloaderAsync()
 {
-	block data;
+ 	download.data = 0;
+ 	download.size = 0;
+
 	string langCode;
 	SmartBuf buffer;
 	u32 bufferSize = 0x800000; // 8 MB
@@ -1064,8 +1070,8 @@ int CMenu::_wiitdbDownloaderAsync()
 		LWP_MutexUnlock(m_mutex);
 		m_thrdStep = 0.0f;
 		m_thrdStepLen = 1.0f;
-		data = downloadfile(buffer.get(), bufferSize, sfmt(WIITDB_URL, langCode.c_str()).c_str(), CMenu::_downloadProgress, this);
-		if (data.data == 0)
+		download = downloadfile(buffer.get(), bufferSize, sfmt(WIITDB_URL, langCode.c_str()).c_str(), CMenu::_downloadProgress, this);
+		if (download.data == 0)
 		{
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
@@ -1083,13 +1089,13 @@ int CMenu::_wiitdbDownloaderAsync()
 			}
 			else
 			{
-				fwrite(data.data, data.size, 1, fp);
+				fwrite(download.data, download.size, 1, fp);
 				fclose(fp);
 				fp = NULL;
 			}
 		}
 	}
-	data.data = NULL;
+	download.data = NULL;
 	buffer.release();
 	m_thrdWorking = false;
 	
@@ -1098,7 +1104,9 @@ int CMenu::_wiitdbDownloaderAsync()
 
 int CMenu::_titleDownloader(bool missingOnly)
 {
-	block txt;
+ 	download.data = 0;
+ 	download.size = 0;
+
 	Config titles;
 	string langCode;
 	wstringEx ws;
@@ -1135,8 +1143,8 @@ int CMenu::_titleDownloader(bool missingOnly)
 		LWP_MutexUnlock(m_mutex);
 		m_thrdStep = 0.1f;
 		m_thrdStepLen = 0.9f - 0.1f;
-		txt = downloadfile(buffer.get(), bufferSize, sfmt(TITLES_URL, langCode.c_str()).c_str(), CMenu::_downloadProgress, this);
-		if (txt.data == 0 || txt.size < 42)
+		download = downloadfile(buffer.get(), bufferSize, sfmt(TITLES_URL, langCode.c_str()).c_str(), CMenu::_downloadProgress, this);
+		if (download.data == 0 || download.size < 42)
 		{
 			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
@@ -1144,9 +1152,9 @@ int CMenu::_titleDownloader(bool missingOnly)
 		}
 		else
 		{
-			txt.data[min(txt.size, bufferSize - 1)] = 0;
-			p = (const char *)txt.data;
-			txtEnd = (const char *)txt.data + txt.size;
+			download.data[min(download.size, bufferSize - 1)] = 0;
+			p = (const char *)download.data;
+			txtEnd = (const char *)download.data + download.size;
 			while (p < txtEnd)
 			{
 				len = strcspn((char *)p, "\n");
@@ -1191,7 +1199,7 @@ int CMenu::_titleDownloader(bool missingOnly)
 		_setThrdMsg(_t("dlmsg14", L"Done."), 1.f);
 		LWP_MutexUnlock(m_mutex);
 	}
-	txt.data = NULL;
+	download.data = NULL;
 	buffer.release();
 	m_thrdWorking = false;
 	return 0;
