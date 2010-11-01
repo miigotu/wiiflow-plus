@@ -44,24 +44,9 @@ static s32 send_message(s32 server, char *msg)
  */
 static s32 server_connect(u32 ipaddress, u32 socket_port)
 {
-	fd_set fdset;
-	struct timeval time_val;
-	
-	s32 ret, connection;
-	u32 option = 1;
-
 	//Initialize socket
-	connection = net_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+	s32 connection = net_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if(connection < 0) return connection;
-
-	//Set TCP_NO_DELAY
-	if(net_setsockopt(connection,IPPROTO_TCP,TCP_NODELAY,&option,sizeof(option)) <0)
-		gprintf("\nnet_setsockopt returned with ret = %d\n", ret);
-
-	//Set IOS_O_NONBLOCK
-	if(net_ioctl(connection, 126, &option) < 0)
-		gprintf("\nnet_ioctl returned with ret = %d\n", ret);
-
 
 	//Set the connection parameters for the socket
  	struct sockaddr_in connect_addr;
@@ -69,19 +54,9 @@ static s32 server_connect(u32 ipaddress, u32 socket_port)
 	connect_addr.sin_family = AF_INET;
 	connect_addr.sin_port = socket_port;
 	connect_addr.sin_addr.s_addr= ipaddress;
-	
+
 	//Attemt to open a connection on the socket
-	ret = net_connect(connection, (struct sockaddr*)&connect_addr, sizeof(connect_addr));
-	if(ret == EINPROGRESS)
-	{
-		time_val.tv_sec = TCP_TIMEOUT;
-		time_val.tv_usec = 0;
-		FD_ZERO(&fdset);
-		FD_SET(connection, &fdset);
-		if(net_select(connection+1, NULL, &fdset, NULL, &time_val) <= 0)
-			return -1;
-	}
-	else if(ret < 0)
+	if(net_connect(connection, (struct sockaddr*)&connect_addr, sizeof(connect_addr)) < 0)
 		net_close(connection);
 
 	return connection;
@@ -108,7 +83,7 @@ static struct block read_message(s32 connection, struct block buffer, bool (*f)(
 	//The offset variable always points to the first byte of memory that is free in the buffer
 	while (true)
 	{
-		if(ticks_to_millisecs(diff_ticks(t, gettime())) > TCP_TIMEOUT)
+ 		if(ticks_to_millisecs(diff_ticks(t, gettime())) > TCP_TIMEOUT || buffer.size <= offset)
 			break;
 
 		//Fill the buffer with a new batch of bytes from the connection,
@@ -148,8 +123,6 @@ static struct block read_message(s32 connection, struct block buffer, bool (*f)(
 			}
 			fail = false;
 		}
-		else
-			usleep(100);
 	}
 	if(fail) return emptyblock;
 	//At the end of above loop offset should be precisely the amount of bytes that were read from the connection
