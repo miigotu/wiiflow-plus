@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <malloc.h>
 
+#include "utils.h"
 #include "mem2.hpp"
 
 template <class T> class SmartPtr

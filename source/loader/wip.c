@@ -67,9 +67,9 @@ void wip_reset_counter()
 
 void free_wip()
 {
-        if(CodeList)
-        free(CodeList);
-    CodeList = NULL;
+	if(CodeList)
+        SAFE_FREE(CodeList);
+
     CodesCount = 0;
     ProcessedLength = 0;
 }
@@ -107,16 +107,13 @@ int load_wip_patches(u8 *dir, u8 *gameid)
         u32 srcaddress = (u32) strtoul(line+9, NULL, 16);
         u32 dstaddress = (u32) strtoul(line+18, NULL, 16);
 
-        if(!CodeList)
-            CodeList = malloc(sizeof(WIP_Code));
+        if(!CodeList) CodeList = malloc(sizeof(WIP_Code));
 
         WIP_Code * tmp = realloc(CodeList, (CodesCount+1)*sizeof(WIP_Code));
         if(!tmp)
         {
-            if(CodeList)
-                free(CodeList);
-            CodeList = NULL;
-            fclose(fp);
+            if(CodeList) SAFE_FREE(CodeList);
+            SAFE_CLOSE(fp);
             return -1;
         }
 
@@ -127,7 +124,7 @@ int load_wip_patches(u8 *dir, u8 *gameid)
         CodeList[CodesCount].dstaddress = dstaddress;
         CodesCount++;
     }
-    fclose(fp);
+    SAFE_CLOSE(fp);
     gprintf("\n");
 
 	return 0;

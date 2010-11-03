@@ -241,13 +241,11 @@ int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 	ret_val = 0;
 
 out:
-	if (ret_val) {
-		// error
-		SAFE_FREE(fl);
-	}
+	if (ret_val) SAFE_FREE(fl);
 	SAFE_FREE(fs);
 	SAFE_FREE(fa);
 	SAFE_FREE(fw);
+
 	return ret_val;
 }
 

@@ -113,8 +113,8 @@ u32 getipbynamecached(char *domain)
 			previousnode->nextnode = NULL;
 		}
 		
-		free(node->domain);
-		free(node);
+		SAFE_FREE(node->domain);
+		SAFE_FREE(node);
 		dnsentrycount--;
 	}
 

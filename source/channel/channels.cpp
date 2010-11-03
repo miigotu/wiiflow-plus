@@ -39,6 +39,7 @@
 #include "banner.h"
 #include "wstringEx.hpp"
 #include "gecko.h"
+#include "utils.h"
 #include "fs.h"
 #include "config.hpp"
 #include "text.hpp"
@@ -95,7 +96,7 @@ u64* Channels::GetChannelList(u32* count)
 	u64* channels = (u64*)malloc(countall * sizeof(u64));
 	if (!channels)
 	{
-		free(titles);
+		SAFE_FREE(titles);
 		return NULL;
 	}
 
@@ -116,7 +117,7 @@ u64* Channels::GetChannelList(u32* count)
 		}
 	}
 
-	free(titles);
+	SAFE_FREE(titles);
 
 	return (u64*)realloc(channels, *count * sizeof(u64));
 }
@@ -147,7 +148,7 @@ bool Channels::GetAppNameFromTmd(u64 title, char* app)
 			sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, tmd_file->contents[i].cid);
 			ret = true;
 		}
-		free(data);
+		SAFE_FREE(data);
 	}
 
 	return ret;
@@ -227,7 +228,7 @@ void Channels::Search(u32 channelType, string lang)
 		}
 	}
 
-	free(list);
+	SAFE_FREE(list);
 }
 
 wchar_t * Channels::GetName(int index)

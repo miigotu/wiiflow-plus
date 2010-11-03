@@ -11,9 +11,9 @@
 #include "ios_base.h"
 #include "mload.h"
 
-#define TITLE_ID(x,y)       (((u64)(x) << 32) | (y))
-#define TITLE_HIGH(x)       ((u32)((x) >> 32))
-#define TITLE_LOW(x)        ((u32)(x))
+#define TITLE_ID(x,y)		(((u64)(x) << 32) | (y))
+#define TITLE_HIGH(x)		((u32)((x) >> 32))
+#define TITLE_LOW(x)		((u32)(x))
 
 /* Constants */
 #define CERTS_LEN	0x280
@@ -173,7 +173,7 @@ s32 Sys_GetCerts(signed_blob **certs, u32 *len)
 	if (ret > 0)
 	{
 		*certs = certificates;
-		*len   = sizeof(certificates);
+		*len = sizeof(certificates);
 	}
 
 	return ret;
@@ -185,7 +185,7 @@ bool Sys_SupportsExternalModule(bool part_select)
 {
 	u32 revision = IOS_GetRevision();
 	
-	bool retval =  (part_select && is_ios_type(IOS_TYPE_WANIN) && revision >= 17) || (is_ios_type(IOS_TYPE_WANIN) && revision >= 18) || (is_ios_type(IOS_TYPE_HERMES) && revision >= 4);
+	bool retval = (part_select && is_ios_type(IOS_TYPE_WANIN) && revision >= 17) || (is_ios_type(IOS_TYPE_WANIN) && revision >= 18) || (is_ios_type(IOS_TYPE_HERMES) && revision >= 4);
 	gprintf("IOS Version: %d, Revision %d, Base: %d, returning %d\n", IOS_GetVersion(), revision, get_ios_base(), retval);
 	return retval;
 }
@@ -216,58 +216,57 @@ int is_ios_type(int type)
 
 s32 GetTMD(u64 TicketID, signed_blob **Output, u32 *Length)
 {
-    signed_blob* TMD = NULL;
+	signed_blob* TMD = NULL;
 
-    u32 TMD_Length;
-    s32 ret;
+	u32 TMD_Length;
+	s32 ret;
 
-    /* Retrieve TMD length */
-    ret = ES_GetStoredTMDSize(TicketID, &TMD_Length);
-    if (ret < 0)
-        return ret;
+	/* Retrieve TMD length */
+	ret = ES_GetStoredTMDSize(TicketID, &TMD_Length);
+	if (ret < 0)
+		return ret;
 
-    /* Allocate memory */
-    TMD = (signed_blob*)memalign(32, (TMD_Length+31)&(~31));
-    if (!TMD)
-        return IPC_ENOMEM;
+	/* Allocate memory */
+	TMD = (signed_blob*)memalign(32, (TMD_Length+31)&(~31));
+	if (!TMD) return IPC_ENOMEM;
 
-    /* Retrieve TMD */
-    ret = ES_GetStoredTMD(TicketID, TMD, TMD_Length);
-    if (ret < 0)
-    {
-        free(TMD);
-        return ret;
-    }
+	/* Retrieve TMD */
+	ret = ES_GetStoredTMD(TicketID, TMD, TMD_Length);
+	if (ret < 0)
+	{
+		SAFE_FREE(TMD);
+		return ret;
+	}
 
-    /* Set values */
-    *Output = TMD;
-    *Length = TMD_Length;
+	/* Set values */
+	*Output = TMD;
+	*Length = TMD_Length;
 
-    return 0;
+	return 0;
 }
 
 s32 checkIOS(u32 IOS)
 {
 	signed_blob *TMD = NULL;
-    tmd *t = NULL;
-    u32 TMD_size = 0;
-    u64 title_id = 0;
-    s32 ret = 0;
+	tmd *t = NULL;
+	u32 TMD_size = 0;
+	u64 title_id = 0;
+	s32 ret = 0;
 
-    // Get tmd to determine the version of the IOS
-    title_id = (((u64)(1) << 32) | (IOS));
-    ret = GetTMD(title_id, &TMD, &TMD_size);
+	// Get tmd to determine the version of the IOS
+	title_id = (((u64)(1) << 32) | (IOS));
+	ret = GetTMD(title_id, &TMD, &TMD_size);
 
-    if (ret == 0) {
-        t = (tmd*)SIGNATURE_PAYLOAD(TMD);
+	if (ret == 0) {
+		t = (tmd*)SIGNATURE_PAYLOAD(TMD);
 		if (t->title_version == 65280) {
 			ret = -1;
 		}
-    } else {
+	} else {
 		ret = -2;
 	}
-    free(TMD);
-    return ret;
+	SAFE_FREE(TMD);
+	return ret;
 }
 
 s32 brute_tmd(tmd *p_tmd)
@@ -305,11 +304,9 @@ u32 get_ios_info_from_tmd()
 	if (t->title_id != TITLE_ID(1, IOS_GetVersion())) return 0xFF;
 
 	u32 index = get_ios_info(TMD, TMD_size);
-	if(TMD != NULL)
-	{
-		free(TMD);
-		TMD = NULL;
-	}	
+
+	SAFE_FREE(TMD);
+
 	return index;
 }
 
@@ -352,7 +349,7 @@ u32 get_ios_info(signed_blob *TMD, u32 size)
 		}
 	}
 
-    return retval;
+	return retval;
 }
 
 
@@ -375,14 +372,14 @@ void mk_mload_version()
 
 bool shadow_mload()
 {
-        if (!is_ios_type(IOS_TYPE_HERMES)) return false;
-        int v51 = (5 << 4) & 1;
-        if (mload_get_version() >= v51)
+		if (!is_ios_type(IOS_TYPE_HERMES)) return false;
+		int v51 = (5 << 4) & 1;
+		if (mload_get_version() >= v51)
 		{
-                // shadow /dev/mload supported in hermes cios v5.1
-                //IOS_Open("/dev/usb123/OFF",0);// this disables ehc completely
-                IOS_Open("/dev/mload/OFF",0);
-                return true;
-        }
-        return false;
+				// shadow /dev/mload supported in hermes cios v5.1
+				//IOS_Open("/dev/usb123/OFF",0);// this disables ehc completely
+				IOS_Open("/dev/mload/OFF",0);
+				return true;
+		}
+		return false;
 }

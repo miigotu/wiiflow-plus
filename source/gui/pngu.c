@@ -65,8 +65,7 @@ IMGCTX PNGU_SelectImageFromBuffer (const void *buffer)
 		return NULL;
 
 	ctx = malloc (sizeof (struct _IMGCTX));
-	if (!ctx)
-		return NULL;
+	if (!ctx) return NULL;
 
 	ctx->buffer = (void *) buffer;
 	ctx->source = PNGU_SOURCE_BUFFER;
@@ -88,8 +87,7 @@ IMGCTX PNGU_SelectImageFromDevice (const char *filename)
 		return NULL;
 
 	ctx = malloc (sizeof (struct _IMGCTX));
-	if (!ctx)
-		return NULL;
+	if (!ctx) return NULL;
 
 	ctx->buffer = NULL;
 	ctx->source = PNGU_SOURCE_DEVICE;
@@ -112,8 +110,7 @@ IMGCTX PNGU_SelectImageFromDevice (const char *filename)
 
 void PNGU_ReleaseImageContext (IMGCTX ctx)
 {
-	if (!ctx)
-		return;
+	if (!ctx) return;
 
 	if (ctx->filename)
 		free (ctx->filename);

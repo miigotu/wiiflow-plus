@@ -18,6 +18,7 @@
 #include "config.hpp"
 #include "sound.hpp"
 #include "disc.h"
+#include "utils.h"
 
 enum Sorting
 {

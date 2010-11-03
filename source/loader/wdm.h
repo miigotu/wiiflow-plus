@@ -1,6 +1,8 @@
 #ifndef __WDM_H__
 #define __WDM_H__
 
+#include "utils.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

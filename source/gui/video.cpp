@@ -207,10 +207,8 @@ void CVideo::setup2DProjection(bool setViewPort, bool noScale)
 
 void CVideo::renderToTexture(STexture &tex, bool clear)
 {
-	if (!tex.data)
-		tex.data = smartMem2Alloc(GX_GetTexBufferSize(tex.width, tex.height, tex.format, GX_FALSE, 0));
-	if (!tex.data)
-		return;
+	if (!tex.data) tex.data = smartMem2Alloc(GX_GetTexBufferSize(tex.width, tex.height, tex.format, GX_FALSE, 0));
+	if (!tex.data) return;
 	GX_DrawDone();
 	GX_SetCopyFilter(GX_FALSE, NULL, GX_FALSE, NULL);
 	GX_SetTexCopySrc(0, 0, tex.width, tex.height);
@@ -235,7 +233,7 @@ void CVideo::cleanup(void)
 {
 	for (u32 i = 0; i < sizeof m_aaBuffer / sizeof m_aaBuffer[0]; ++i)
 	{
-		m_aaBuffer[i].release();
+		SMART_FREE(m_aaBuffer[i]);
 		m_aaBufferSize[i] = 0;
 	}
 }
@@ -446,6 +444,8 @@ void CVideo::render(void)
 	GX_InvalidateTexAll();
 }
 
+static STexture m_wTextures[20];
+
 void CVideo::_showWaitMessages(CVideo *m)
 {
 	u32 frames = m->m_waitMessageDelay * 50;
@@ -513,9 +513,11 @@ void CVideo::_showWaitMessages(CVideo *m)
 		WIILIGHT_SetLevel(0);
 		WIILIGHT_TurnOff();
 	}
-	gprintf("Stop showing images\n");
-	m->m_waitMessageThrdStop = true;
+	//STexture struct uses SmartBuf which is not thread safe.
+	for(u8 i = 0; i < 20; i++) SMART_FREE(m_wTextures[i].data);
 	m->m_waitMessages.clear();
+	m->m_waitMessageThrdStop = true;
+	gprintf("Stop showing images\n");
 }
 
 void CVideo::hideWaitMessage()
@@ -536,25 +538,27 @@ void CVideo::waitMessage(const vector<STexture> &tex, float delay, bool useWiiLi
 		// already running?
 		return;
 	}
+
+	//STexture struct uses SmartBuf which is not thread safe.
+	for(u8 i = 0; i < 20; i++) SMART_FREE(m_wTextures[i].data);
 	m_waitMessages.clear();
 	
 	m_useWiiLight = useWiiLight;
 
 	if (tex.size() == 0)
 	{
-		STexture textures[10];
-		textures[0].fromPNG(wait_01_png);
-		textures[1].fromPNG(wait_02_png);
-		textures[2].fromPNG(wait_03_png);
-		textures[3].fromPNG(wait_04_png);
-		textures[4].fromPNG(wait_05_png);
-		textures[5].fromPNG(wait_06_png);
-		textures[6].fromPNG(wait_07_png);
-		textures[7].fromPNG(wait_08_png);
-		textures[8].fromPNG(wait_09_png);
-		textures[9].fromPNG(wait_10_png);
+		m_wTextures[0].fromPNG(wait_01_png);
+		m_wTextures[1].fromPNG(wait_02_png);
+		m_wTextures[2].fromPNG(wait_03_png);
+		m_wTextures[3].fromPNG(wait_04_png);
+		m_wTextures[4].fromPNG(wait_05_png);
+		m_wTextures[5].fromPNG(wait_06_png);
+		m_wTextures[6].fromPNG(wait_07_png);
+		m_wTextures[7].fromPNG(wait_08_png);
+		m_wTextures[8].fromPNG(wait_09_png);
+		m_wTextures[9].fromPNG(wait_10_png);
 		for (int i = 0; i < 10; i++)
-			m_waitMessages.push_back(textures[i]);
+			m_waitMessages.push_back(m_wTextures[i]);
 
 		m_waitMessageDelay = 0.2f;
 	}

@@ -128,9 +128,7 @@ auth_md5Ctx *auth_md5InitCtx( auth_md5Ctx *ctx );
    */
 
 
-auth_md5Ctx *auth_md5SumCtx( auth_md5Ctx *ctx,
-                             const unsigned char *src,
-                             const int    len );
+auth_md5Ctx *auth_md5SumCtx( auth_md5Ctx *ctx, const unsigned char *src, const int len );
   /* ------------------------------------------------------------------------ **
    * Build an MD5 Message Digest within the given context.
    *

@@ -658,8 +658,7 @@ int ocarina_do_code()
 	{
 		memcpy(codelist, code_buf, code_size);
 		DCFlushRange(codelist, (u32)codelistend - (u32)codelist);
-		free(code_buf);
-		code_buf = NULL;
+		SAFE_FREE(code_buf);
 	}
 
 	// TODO What's this???
@@ -702,19 +701,22 @@ u32 load_bca_code(u8 *bcaPath, u8 *gameid)
 			return -1;
 		}
 
-		if (fp) {
+		if (fp)
+		{
 			u32 ret = 0;
 
 			fseek(fp, 0, SEEK_END);
 			filesize = ftell(fp);
 
-			if (filesize == 64) {
+			if (filesize == 64)
+			{
 				fseek(fp, 0, SEEK_SET);
 				ret = fread(bcaCode, 1, 64, fp);
 			}
-			fclose(fp);
+			SAFE_CLOSE(fp);
 
-			if (ret != 64) {
+			if (ret != 64)
+			{
 				// Set default bcaCode
 				memset(bcaCode, 0, 64);
 				bcaCode[0x33] = 1;

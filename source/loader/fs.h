@@ -1,6 +1,8 @@
 #ifndef _FAT_H_
 #define _FAT_H_
 
+#include "utils.h"
+
 #define APPDATA_DIR		"wiiflow"
 #define APPDATA_DIR2	"apps/wiiflow"
 #define CFG_FILENAME	"wiiflow.ini"
@@ -10,9 +12,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
-
-#define ALIGN(x) (((x) + 3) & ~3)
-#define ALIGN32(x) (((x) + 31) & ~31)
 
 /* Prototypes */
 void Unmount_All_Devices(void);

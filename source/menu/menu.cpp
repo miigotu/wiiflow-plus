@@ -74,6 +74,7 @@ CMenu::CMenu(CVideo &vid) :
 	m_favorites = false;
 	m_category = 0;
 	m_networkInit = false;
+	m_thrdNetwork = false;
 	m_mutex = 0;
 	m_showtimer = 0;
 	m_gameSoundThread = 0;
@@ -81,10 +82,8 @@ CMenu::CMenu(CVideo &vid) :
 	m_numCFVersions = 0;
 	m_bgCrossFade = 0;
 	m_bnrSndVol = 0;
-	
 	m_musicVol = 0;
 	m_music_fade_mode = 0;
-	
 	m_gameSettingsPage = 0;
 	m_directLaunch = false;
 	m_exit = false;
@@ -698,7 +697,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char *key)
 {
 	vector<string> filenames;
-	SmartBuf ptrPNG;
+	//SmartBuf ptrPNG;
 	vector<STexture> textures;
 	CMenu::TexSet::iterator i;
 
@@ -731,7 +730,7 @@ vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char
 STexture CMenu::_texture(CMenu::TexSet &texSet, const char *domain, const char *key, STexture def)
 {
 	string filename;
-	SmartBuf ptrPNG;
+	//SmartBuf ptrPNG;
 	STexture tex;
 	CMenu::TexSet::iterator i;
 
@@ -922,8 +921,7 @@ void CMenu::_initCF(void)
 {
 	string id, test_id;
 	bool cmpr;
-	Config titles;
-	Config custom_titles;
+	Config titles, custom_titles;
 	u64 chantitle;
 	m_titles_loaded = false;
 	
@@ -1081,7 +1079,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	{
 		m_gameSound.stop();
 		m_gameSound = m_gameSoundTmp;
-		m_gameSoundTmp.data.release();
+		SMART_FREE(m_gameSoundTmp.data);
 		m_gameSound.play(m_bnrSndVol);
 	}
 	else if (!withCF || !m_gameSelected)
@@ -1134,7 +1132,7 @@ void CMenu::_updateBg(void)
 		return;
 	}
 	if (m_curBg.data.get() == m_prevBg.data.get())
-		m_curBg.data.release();
+		SMART_FREE(m_curBg.data);
 	m_vid.prepare();
 	GX_SetViewport(0.f, 0.f, 640.f, 480.f, 0.f, 1.f);
 	guOrtho(projMtx, 0.f, 480.f, 0.f, 640.f, 0.f, 1000.0f);
@@ -1270,18 +1268,19 @@ bool CMenu::_loadChannelList(void)
 	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
 	
 	m_channels.Init(0, langCode);
-	SmartBuf buffer;
 	u32 count = m_channels.Count();
 	u32 len = count * sizeof m_gameList[0];
-	buffer = smartAnyAlloc(len);
-	if (!buffer)
-		return false;
+
+	SmartBuf buffer = smartAnyAlloc(len);
+	if (!buffer) return false;
+
 	memset(buffer.get(), 0, len);
 
 	m_gameList.clear();
 	m_gameList.reserve(count);
 	dir_discHdr *b = (dir_discHdr *)buffer.get();
-	for (u32 i = 0; i < count; ++i) {
+	for (u32 i = 0; i < count; ++i)
+	{
 		Channel *chan = m_channels.GetChannel(i);
 		
 		if (chan->id == NULL) continue; // Skip invalid channels
@@ -1324,13 +1323,13 @@ bool CMenu::_loadGameList(void)
 		return false;
 	}
 	len = count * sizeof m_gameList[0];
+
 #if 0
+
 	FILE *file = 0;
 	long fileSize = 0;
-
 	file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "hdrdump").c_str(), "rb");
-	if (file == 0)
-		return false;
+	if (file == 0) return false;
 	fseek(file, 0, SEEK_END);
 	fileSize = ftell(file);
 	len = fileSize;
@@ -1341,32 +1340,40 @@ bool CMenu::_loadGameList(void)
 		buffer = smartMemAlign32(fileSize);
 		fread(buffer.get(), 1, fileSize, file);
 	}
-	fclose(file);
-	file = 0;
+	SAFE_CLOSE(file);
+
 #else
+
 	buffer = smartAnyAlloc(len);
-	if (!buffer)
-		return false;
+	if (!buffer) return false;
 	memset(buffer.get(), 0, len);
+
 	ret = WBFS_GetHeaders((dir_discHdr *)buffer.get(), count, sizeof (struct dir_discHdr));
+
 #endif
+
 	if (ret < 0)
 	{
 		error(wfmt(_fmt("wbfs4", L"WBFS_GetHeaders failed : %i"), ret));
 		return false;
 	}
+
 #if 0
+
 	FILE *file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "hdrdump").c_str(), "wb");
 	fwrite(buffer.get(), 1, len, file);
-	fclose(file);
+	SAFE_CLOSE(file);
+
 #endif
 
 	m_gameList.clear();
 	m_gameList.reserve(count);
 	dir_discHdr *b = (dir_discHdr *)buffer.get();
+
 	for (u32 i = 0; i < count; ++i)
 		if (memcmp(b[i].hdr.id, "__CFG_", sizeof b[i].hdr.id) != 0)	// Because of uLoader
 			m_gameList.push_back(b[i]);
+
 	return true;
 }
 
@@ -1425,8 +1432,6 @@ void CMenu::_startMusic(void)
 {
 	if (music_files.empty()) //Not necessary to check this if shuffle was called
 		return;
-		
-	SmartBuf buffer;
 
 	_stopMusic();
 
@@ -1437,16 +1442,14 @@ void CMenu::_startMusic(void)
 	m_music_ismp3 = (*current_music).substr((*current_music).size() - 4, 4) == ".MP3";
 	current_music++;
 
-	if (!file.is_open())
-		return;
+	if (!file.is_open()) return;
 
 	file.seekg(0, ios::end);
 	m_music_fileSize = file.tellg();
 	file.seekg(0, ios::beg);
 
-	buffer = smartMem2Alloc(m_music_fileSize);
-	if (!buffer)
-		return;
+	SmartBuf buffer = smartMem2Alloc(m_music_fileSize);
+	if (!buffer) return;
 
 	file.read((char *)buffer.get(), m_music_fileSize);
 	bool fail = file.fail();
@@ -1454,6 +1457,8 @@ void CMenu::_startMusic(void)
 	if (fail) return;
 
 	m_music = buffer;
+	SMART_FREE(buffer);
+
 	if(m_music_ismp3)
 		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
 	else
@@ -1475,8 +1480,7 @@ void CMenu::_stopMusic(void)
 
 	MP3Player_Stop();
 	StopOgg();
-	if (!!m_music)
-		m_music.release();
+	SMART_FREE(m_music);
 }
 
 void CMenu::_pauseMusic(void)
@@ -1571,12 +1575,11 @@ bool CMenu::_loadFile(SmartBuf &buffer, u32 &size, const char *path, const char 
 	u32 fileSize;
 	SmartBuf fileBuf;
 
-	buffer.release();
+	SMART_FREE(buffer);
 	size = 0;
 	fp = fopen(file == NULL ? path : fmt("%s/%s", path, file), "rb");
 		
-	if (fp == 0)
-		return false;
+	if (fp == 0) return false;
 
 	fseek(fp, 0, SEEK_END);
 	fileSize = ftell(fp);
@@ -1584,18 +1587,19 @@ bool CMenu::_loadFile(SmartBuf &buffer, u32 &size, const char *path, const char 
 	fileBuf = smartCoverAlloc(fileSize);
 	if (!fileBuf)
 	{
-		fclose(fp);
+		SAFE_CLOSE(fp);
 		return false;
 	}
 	if (fread(fileBuf.get(), 1, fileSize, fp) != fileSize)
 	{
-		fclose(fp);
+		SAFE_CLOSE(fp);
 		return false;
 	}
-	fclose(fp);
+	SAFE_CLOSE(fp);
 	buffer = fileBuf;
 	size = fileSize;
-	
+
+	SMART_FREE(fileBuf);
 	return true;
 }
 

@@ -132,43 +132,45 @@ return ret;
 
 int mload_module(void *addr, int len)
 {
-int ret;
-void *buf=NULL;
+	int ret;
+	void *buf = NULL;
 
+	if(mload_init() < 0) return -1;
 
-	if(mload_init()<0) return -1;
-
-    if(hid>=0)
-		{
+    if(hid >= 0)
+	{
 		iosDestroyHeap(hid);
 		hid=-1;
-		}
-
+	}
 	hid = iosCreateHeap(len+0x800);
-    
 	if(hid<0) return hid;
 
 	buf= iosAlloc(hid, len);
-
-	if(!buf) {ret= -1;goto out;}
+	if(!buf)
+	{
+		ret = -1;
+		goto out;
+	}
 
 	
 	memcpy(buf, addr,len);
 
 	ret = IOS_IoctlvFormat(hid, mload_fd, MLOAD_LOAD_MODULE, ":d", buf, len);
-
-	if(ret<0) goto out;
+	if(ret < 0) goto out;
 	
 	ret=IOS_IoctlvFormat(hid, mload_fd, MLOAD_RUN_MODULE, ":");
-
-	if(ret<0) {ret= -666;goto out;}
+	if(ret < 0)
+	{
+		ret= -666;
+		goto out;
+	}
 	
 out:
-	if(hid>=0)
-		{
+	if(hid >= 0)
+	{
 		iosDestroyHeap(hid);
-		hid=-1;
-		}
+		hid = -1;
+	}
 	
 return ret;
 

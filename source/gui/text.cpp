@@ -189,8 +189,8 @@ bool SFont::fromBuffer(const u8 *buffer, u32 bufferSize, u32 size, u32 lspacing)
 	size = min(max(6u, size), 1000u);
 	lspacing = min(max(6u, lspacing), 1000u);
 	lineSpacing = lspacing;
-	font.release();
-	data.release();
+	SMART_FREE(font);
+	SMART_FREE(data);
 	dataSize = 0;
 	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);
 	if (!font)
@@ -206,7 +206,7 @@ bool SFont::newSize(u32 size, u32 lspacing)
 	size = min(max(6u, size), 1000u);
 	lspacing = min(max(6u, lspacing), 1000u);
 	lineSpacing = lspacing;
-	font.release();
+	SMART_FREE(font);
 	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);
 	if (!font)
 		return false;
@@ -221,30 +221,25 @@ bool SFont::fromFile(const char *filename, u32 size, u32 lspacing)
 
 	size = min(max(6u, size), 1000u);
 	lspacing = min(max(6u, lspacing), 1000u);
-	font.release();
-	data.release();
+	SMART_FREE(font);
+	SMART_FREE(data);
 	dataSize = 0;
 	lineSpacing = lspacing;
 	file = fopen(filename, "rb");
-	if (file == NULL)
-		return false;
+	if (file == NULL) return false;
 	fseek(file, 0, SEEK_END);
 	fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
-	if (fileSize == 0)
-		return false;
+	if (fileSize == 0) return false;
 	data = smartMem2Alloc(fileSize);	// Use MEM2 because of big chinese fonts
-	if (!!data)
-		fread(data.get(), 1, fileSize, file);
-	fclose(file);
-	file = NULL;
-	if (!data)
-		return false;
+	if (!!data) fread(data.get(), 1, fileSize, file);
+	SAFE_CLOSE(file);
+	if (!data) return false;
 	dataSize = fileSize;
 	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);
 	if (!font)
 	{
-		data.release();
+		SMART_FREE(data);
 		return false;
 	}
 	font->loadFont(data.get(), dataSize, size, false);

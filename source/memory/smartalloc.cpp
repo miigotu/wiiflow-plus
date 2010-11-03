@@ -29,10 +29,10 @@ SmartBuf smartCoverAlloc(unsigned int size)
 SmartBuf smartAnyAlloc(unsigned int size)
 {
 	SmartBuf p(smartMem2Alloc(size));
-	if (!!p)
-		return p;
+	if (!!p) return p;
+	
 	p = smartCoverAlloc(size);
-	if (!!p)
-		return p;
+	if (!!p) return p;
+
 	return smartMemAlignPad32(size);
 }

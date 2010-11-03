@@ -165,21 +165,9 @@ bool DatabaseLoaded() {
 
 void CloseXMLDatabase()
 {
-	if (db != NULL)
-	{
-		fclose(db);
-		db = NULL;
-	}
-	if (idx != NULL)
-	{
-		fclose(idx);
-		idx = NULL;
-	}
-	if (game_idx != NULL)
-	{
-		free(game_idx);
-		game_idx = NULL;
-	}
+	SAFE_CLOSE(db);
+	SAFE_CLOSE(idx);
+	SAFE_FREE(game_idx);
 	memset(&gameinfo, 0, sizeof(struct gameXMLinfo));
 }
 
@@ -201,14 +189,14 @@ char * OpenXMLFile(char *filename)
 		xmlData = (char*)malloc(size);
 		memset(xmlData, 0, size);
 		if (xmlData == NULL) {
-			fclose(filexml);
+			SAFE_CLOSE(filexml);
 			return NULL;
 		}
 		u32 ret = fread(xmlData, 1, size, filexml);
-		fclose(filexml);
+		SAFE_CLOSE(filexml);
 		if (ret != size)
 		{
-			free(xmlData);
+			SAFE_FREE(xmlData);
 			return NULL;
 		}
 	} 
@@ -389,11 +377,7 @@ void readRatings(struct gameXMLinfo *gameinfo, char * start) {
 				}
 			}
 			tmp = reset;
-			if (tmp != NULL)
-			{
-				free(tmp);
-				tmp = NULL;
-			}
+			SAFE_FREE(tmp);
 		}
 		locStart = strstr(locEnd, "<rating type=\"");
 	}
@@ -455,11 +439,7 @@ void readWifi(struct gameXMLinfo *gameinfo, char * start) {
 				}
 			}
 			tmp = reset;
-			if (tmp != NULL)
-			{
-				free(tmp);
-				tmp = NULL;
-			}
+			SAFE_FREE(tmp);
 		}
 	}
 }
@@ -514,27 +494,15 @@ void readTitles(struct gameXMLinfo *gameinfo, char * start) {
 				synopsis = found;
 			}
 		}
-		if (locTmp != NULL)
-		{
-			free(locTmp);
-			locTmp = NULL;
-		}
+		SAFE_FREE(locTmp);
 		if (synopsis == 3) break;
 	}
 }
 
 int OpenDbFiles(const char *xmlfilepath, bool writing)
 {
-	if (db != NULL)
-	{
-		fclose(db);
-		db = NULL;
-	}
-	if (idx != NULL)
-	{
-		fclose(idx);
-		idx = NULL;
-	}
+	SAFE_CLOSE(db);
+	SAFE_CLOSE(idx);
 
 	char pathname[200];
 	sprintf(pathname, "%s/wiitdb.db", xmlfilepath);
@@ -582,13 +550,13 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 	if (slash != NULL)
 	{
 		slash = strndup(start, slash-tmp);
-		free(tmp);
+		SAFE_FREE(tmp);
 		tmp = slash;
 	}
 	
 	char games[7] = "";
 	readNode(tmp, games, "\" games=\"","\"");
-	free(tmp);
+	SAFE_FREE(tmp);
 	
 	amount_of_games = atoi(games);
 	progress_step = 1.f / amount_of_games;
@@ -614,11 +582,7 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 		readNode(tmp, gameinfo.id, "<id>", "</id>");//ok
 		if (gameinfo.id[0] == '\0') { //WTF? ERROR
 			printf(" ID NULL\n");
-			if(tmp != NULL)
-			{
-				free(tmp);
-				tmp = NULL;
-			}
+			SAFE_FREE(tmp);
 			break;
 		}
 
@@ -656,11 +620,7 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 		readCaseColor(&gameinfo, tmp);
 		readPlayers(&gameinfo, tmp);
 		//ConvertRating(gameinfo.ratingvalue, gameinfo.ratingtype, "ESRB");
-		if (tmp != NULL)
-		{
-			free(tmp);
-			tmp = NULL;
-		}
+		SAFE_FREE(tmp);
 
 		// Write game id to idx file
 		fwrite(gameinfo.id, 6, 1, idx);
@@ -704,15 +664,12 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 		fwrite("\n[COVERS]\n", 10, 1, titles);
 		fwrite(coverColors, strlen(coverColors), 1, titles);
 		
-		ghexdump(coverColors, strlen(coverColors));
+		//ghexdump(coverColors, strlen(coverColors));
 		
-		free(coverColors);
-		coverColors = NULL;
+		SAFE_FREE(coverColors);
 	}
 
-	fclose(titles);
-	titles = NULL;
-	
+	SAFE_CLOSE(titles);
 	CloseXMLDatabase();
 	
 	char pathname[200];
@@ -764,8 +721,7 @@ bool OpenXMLDatabase(const char* xmlfilepath, char* argdblang, bool argJPtoEN)
 	game_idx = malloc(amount_of_games * 6);
 	memset(game_idx, 0, amount_of_games * 6);
 	fread(game_idx, 6, amount_of_games, idx);
-	fclose(idx);
-	idx = NULL;
+	SAFE_CLOSE(idx);
 
 	return 1;
 }
@@ -817,8 +773,7 @@ u8 rebuild_database(const char *xmlfilepath, char *argdblang, bool argJPtoEN, bo
 		}
 	}
 	LoadTitlesFromXML(xmlfilepath, xmlData, argdblang, argJPtoEN);
-	free(xmlData);
-	xmlData = NULL;
+	SAFE_FREE(xmlData);
 
 	OpenXMLDatabase(xmlfilepath, argdblang, argJPtoEN);
 	

@@ -1,6 +1,8 @@
 #ifndef _SYS_H_
 #define _SYS_H_
 
+#include "utils.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

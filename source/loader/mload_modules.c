@@ -235,22 +235,22 @@ int load_fatffs_module(u8 *discid)
 	}
 	else
 	{ */
-		if((global_mount & 3)==0) return 0;
+		if((global_mount & 3) == 0) return 0;
 		if(global_mount & 1) 
 		{
-			fname[0]='s';
-			fname[1]='d';
-			fname[2]=':';
+			fname[0] = 's';
+			fname[1] = 'd';
+			fname[2] = ':';
 		}
 		if(global_mount & 2) 
 		{
-			fname[0]='u';
-			fname[1]='s';
-			fname[2]='b';
-			fname[3]=':';
+			fname[0] = 'u';
+			fname[1] = 's';
+			fname[2] = 'b';
+			fname[3] = ':';
 		}
 	//}
-	usleep(350*1000);
+	usleep(350 * 1000);
 	/* Create heap */
 	if (hid < 0)
 	{
@@ -264,48 +264,45 @@ int load_fatffs_module(u8 *discid)
 	
 	if (fd < 0)
 	{
-		if(hid>=0)
+		if(hid >= 0)
 		{
 			iosDestroyHeap(hid);
-			hid=-1;
+			hid = -1;
 		}
 		return -1;
 	}
   
-	n=30; // try 20 times
-	while(n>0)
+	n = 30; // try 20 times
+	while(n > 0)
 	{
-		if((global_mount & 10)==2) 
+		if((global_mount & 10) == 2) 
 		{
-			ret=IOS_IoctlvFormat(hid, fd, IOCTL_FAT_MOUNTUSB, ":");
-			if(ret==0) 
-				global_mount|=8;
+			ret = IOS_IoctlvFormat(hid, fd, IOCTL_FAT_MOUNTUSB, ":");
+			if(ret == 0) global_mount |= 8;
 		}
 		else 
 		{
-			ret=IOS_IoctlvFormat(hid, fd, IOCTL_FAT_MOUNTSD, ":");
-			if(ret==0) 
-				global_mount|=4;
+			ret = IOS_IoctlvFormat(hid, fd, IOCTL_FAT_MOUNTSD, ":");
+			if(ret == 0) global_mount |= 4;
 		}
 		
-		if ((global_mount & 7)==3 && ret==0) 
+		if ((global_mount & 7) == 3 && ret == 0) 
 		{
-			ret=IOS_IoctlvFormat(hid, fd, IOCTL_FAT_MOUNTSD, ":");
-			if(ret==0) 
-			global_mount|=4;
+			ret = IOS_IoctlvFormat(hid, fd, IOCTL_FAT_MOUNTSD, ":");
+			if(ret == 0) global_mount |= 4;
 		}
 
-		if ((global_mount & 3)==((global_mount>>2) & 3) && (global_mount & 3)) 
+		if ((global_mount & 3) == ((global_mount>>2) & 3) && (global_mount & 3)) 
 		{
-			ret=0;
+			ret = 0;
 			break;
 		}
 		else 
-			ret=-1;
+			ret = -1;
 		
 		//ret=IOS_IoctlvFormat(hid, fd, IOCTL_FAT_MOUNTSD, ":");
 		//if(ret==0) break;
-		usleep(500*1000);
+		usleep(500 * 1000);
 		n--;
 	}
 
@@ -315,10 +312,10 @@ int load_fatffs_module(u8 *discid)
 		fd = -1;
 	}
 	
-	if(hid>=0)
+	if(hid >= 0)
 	{
 		iosDestroyHeap(hid);
-		hid=-1;
+		hid = -1;
 	}
 	
 	return (n==0) ? -1 : 0;
@@ -344,14 +341,14 @@ int enable_ffs(int mode)
 	
 	if (fd < 0)
 	{
-		if(hid>=0)
+		if(hid >= 0)
 		{
 			iosDestroyHeap(hid);
-			hid=-1;
+			hid = -1;
 		}
 		return -1;
 	}
-	ret=IOS_IoctlvFormat(hid, fd, IOCTL_FFS_MODE, "i:", mode);
+	ret = IOS_IoctlvFormat(hid, fd, IOCTL_FFS_MODE, "i:", mode);
 	
     if (fd >= 0) 
 	{
@@ -359,10 +356,10 @@ int enable_ffs(int mode)
 		fd = -1;
 	}
 	
-	if(hid>=0)
+	if(hid >= 0)
 	{
 		iosDestroyHeap(hid);
-		hid=-1;
+		hid = -1;
 	}
 	return ret;
 }
@@ -370,7 +367,7 @@ int enable_ffs(int mode)
 void enable_ES_ioctlv_vector(void)
 {
 	mload_init();
-	patch_datas[0]=*((u32 *) (dip_plugin+16*4));
+	patch_datas[0] = *((u32 *) (dip_plugin+16*4));
 	mload_set_ES_ioctlv_vector((void *) patch_datas[0]);
 	mload_close();
 }

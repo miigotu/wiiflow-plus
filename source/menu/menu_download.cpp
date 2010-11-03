@@ -17,6 +17,9 @@
 #include <fstream>
 #include "lockMutex.hpp"
 
+#include <ogc/lwp_watchdog.h>
+#include <time.h>
+
 #define TAG_GAME_ID		"gameid"
 #define TAG_LOC			"loc"
 #define TAG_REGION		"region"
@@ -273,10 +276,9 @@ static bool checkPNGFile(const char *filename)
 	if (fileSize > 0)
 	{
 		ptrPng = smartCoverAlloc(fileSize);
-		if (!!ptrPng)
-			fread(ptrPng.get(), 1, fileSize, file);
+		if (!!ptrPng) fread(ptrPng.get(), 1, fileSize, file);
 	}
-	fclose(file);
+	SAFE_CLOSE(file);
 	return !ptrPng ? false : checkPNGBuf(ptrPng.get());
 }
 
@@ -312,13 +314,24 @@ s32 CMenu::_networkComplete(s32 ok, void *usrData)
 
 int CMenu::_initNetwork()
 {
-	if (m_networkInit) return 0;
-	if (!_isNetworkAvailable()) return -2;
 
-	while (net_init() == -EBUSY) {}; // Async initialization may be busy, so try again
+	while (net_get_status() == -EBUSY || m_thrdNetwork) {}; // Async initialization may be busy, wait to see if it succeeds.
+	if (m_networkInit)
+	{
+		gprintf("Network already initted!\n");
+		return 0;
+	}
+	if (!_isNetworkAvailable())
+	{
+		gprintf("Network has no configured connection!\n");
+		return -2;
+	}
 
+	gprintf("if_config...");
+	s64 t = gettime();
 	char ip[16];
 	int val = if_config(ip, NULL, NULL, true);
+	gprintf("DONE! %i seconds\n\n", diff_sec(t, gettime()));
 	
 	m_networkInit = !val;
 	return val;
@@ -450,7 +463,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 						if (file != NULL)
 						{
 							fwrite(download.data, download.size, 1, file);
-							fclose(file);
+							SAFE_CLOSE(file);
 						}
 					}
 
@@ -490,7 +503,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 								if (file != NULL)
 								{
 									fwrite(download.data, download.size, 1, file);
-									fclose(file);
+									SAFE_CLOSE(file);
 								}
 							}
 
@@ -512,6 +525,9 @@ int CMenu::_coverDownloader(bool missingOnly)
 		coverList.clear();
 		m_newID.unload();
 	}
+	SMART_FREE(buffer);
+	download.data = NULL;
+	download.size = 0;
 
 	LWP_MutexLock(m_mutex);
 	if (countFlat == 0)
@@ -742,7 +758,8 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 			if (file != NULL)
 			{
 				fwrite(download.data, 1, download.size, file);
-				fclose(file);
+				SAFE_CLOSE(file);
+
 				// version file valid, check for version with SVN_REV
 				int svnrev = atoi(SVN_REV);
 				gprintf("Installed Version: %d\n", svnrev);
@@ -773,6 +790,10 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 
 		}
 	}
+	SMART_FREE(buffer);
+	download.data = NULL;
+	download.size = 0;
+
 	m_thrdWorking = false;
 	return 0;
 }
@@ -898,7 +919,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 				if (file != NULL)
 				{
 					fwrite(download.data, 1, download.size, file);
-					fclose(file);
+					SAFE_CLOSE(file);
 					
 					LWP_MutexLock(m_mutex);
 					_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
@@ -944,7 +965,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 							if (file != NULL)
 							{
 								fwrite(download.data, 1, download.size, file);
-								fclose(file);
+								SAFE_CLOSE(file);
 								
 								LWP_MutexLock(m_mutex);
 								_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
@@ -980,7 +1001,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 					goto fail;
 
 				fwrite(download.data, 1, download.size, file);
-				fclose(file);
+				SAFE_CLOSE(file);
 				goto success;
 			}
 		}
@@ -1010,6 +1031,10 @@ fail:
 	goto end;
 	
 end:
+	SMART_FREE(buffer);
+	download.data = NULL;
+	download.size = 0;
+
 	sleep(3);
 	m_thrdWorking = false;
 	return 0;
@@ -1080,8 +1105,8 @@ int CMenu::_wiitdbDownloaderAsync()
 		else
 		{
 			_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), "WiiTDB.zip"), 1.f);
-			FILE *fp = fopen(sfmt("%s/wiitdb.zip", m_settingsDir.c_str()).c_str(), "wb");
-			if (fp == NULL)
+			FILE *file = fopen(sfmt("%s/wiitdb.zip", m_settingsDir.c_str()).c_str(), "wb");
+			if (file == NULL)
 			{
 				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg15", L"Couldn't save ZIP file"), 1.f);
@@ -1089,16 +1114,16 @@ int CMenu::_wiitdbDownloaderAsync()
 			}
 			else
 			{
-				fwrite(download.data, download.size, 1, fp);
-				fclose(fp);
-				fp = NULL;
+				fwrite(download.data, download.size, 1, file);
+				SAFE_CLOSE(file);
 			}
 		}
 	}
+	SMART_FREE(buffer);
 	download.data = NULL;
-	buffer.release();
+	download.size = 0;
+
 	m_thrdWorking = false;
-	
 	return 0;
 }
 
@@ -1199,8 +1224,10 @@ int CMenu::_titleDownloader(bool missingOnly)
 		_setThrdMsg(_t("dlmsg14", L"Done."), 1.f);
 		LWP_MutexUnlock(m_mutex);
 	}
+	SMART_FREE(buffer);
 	download.data = NULL;
-	buffer.release();
+	download.size = 0;
+
 	m_thrdWorking = false;
 	return 0;
 }

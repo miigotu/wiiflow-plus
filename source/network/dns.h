@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include <unistd.h> //usleep
+#include "utils.h" //SAFE_FREE
 
 u32 getipbyname(char *domain);
 u32 getipbynamecached(char *domain);

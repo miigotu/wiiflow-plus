@@ -60,15 +60,15 @@ int old_main(int argc, char **argv)
 	
 	for (int i = 0; i < argc; i++)
 	{
-		if (argv[i] != NULL && strcasestr(argv[i], "ios=") != NULL)
+		if (argv[i] != NULL && strcasestr(argv[i], "ios=") != NULL && strlen(argv[i]) > 4)
 		{
-			while(!isdigit(argv[i][0])) argv[i]++;
+			while(argv[i][0] && !isdigit(argv[i][0])) argv[i]++;
 			if (atoi(argv[i]) < 254 && atoi(argv[i]) > 0)
 				parse_ios_arg(atoi(argv[i]), &mainIOS, &mainIOSminRev);
 		}
 		else if (argv[i] != NULL && strcasestr(argv[i], "port=") != NULL)
 		{
-			while(!isdigit(argv[i][0])) argv[i]++;
+			while(argv[i][0] && !isdigit(argv[i][0])) argv[i]++;
 			bool port = atoi(argv[i]);
 			if (port <= 1 && port >= 0)
 				use_port1 = port;
@@ -163,7 +163,7 @@ int old_main(int argc, char **argv)
 			}
 			vid.hideWaitMessage();
 			vid.waitMessage(0.2f);
-			texWaitHDD.data.release();
+			SMART_FREE(texWaitHDD.data);
 		}
 	}
 

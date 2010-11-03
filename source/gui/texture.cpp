@@ -225,10 +225,9 @@ STexture::TexErr STexture::fromPNGFile(const char *filename, u8 f, Alloc alloc, 
 		ptrPng = smartAnyAlloc(fileSize);
 		if (!!ptrPng)
 			if (fread(ptrPng.get(), 1, fileSize, file) != fileSize)
-				ptrPng.release();
+				SMART_FREE(ptrPng);
 	}
-	fclose(file);
-	file = 0;
+	SAFE_CLOSE(file);
 	if (!ptrPng)
 		return STexture::TE_NOMEM;
 	return fromPNG(ptrPng.get(), f, alloc, minMipSize, maxMipSize);
@@ -260,10 +259,7 @@ STexture::TexErr STexture::fromRAW(const u8 *buffer, u32 w, u32 h, u8 f, Alloc a
 			tmpData = smartCoverAlloc(GX_GetTexBufferSize(w, h, f, GX_FALSE, 0));
 			break;
 	}
-	if (!tmpData)
-	{
-		return STexture::TE_NOMEM;
-	}
+	if (!tmpData) return STexture::TE_NOMEM;
 
 	format = f;
 	width = w;
@@ -283,6 +279,7 @@ STexture::TexErr STexture::fromRAW(const u8 *buffer, u32 w, u32 h, u8 f, Alloc a
 			break;
 	}
 	DCFlushRange(data.get(), GX_GetTexBufferSize(width, height, format, GX_FALSE, 0));
+
 	return STexture::TE_OK;
 }
 
@@ -356,6 +353,8 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 		if (!tmpData || !tmpData2)
 		{
 			PNGU_ReleaseImageContext(ctx);
+			SMART_FREE(tmpData);
+			SMART_FREE(tmpData2);
 			return STexture::TE_NOMEM;
 		}
 		PNGU_DecodeToRGBA8(ctx, imgProp.imgWidth, imgProp.imgHeight, tmpData2.get(), 0, 0xFF);
@@ -363,7 +362,11 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 		DCFlushRange(tmpData2.get(), imgProp.imgWidth * imgProp.imgHeight * 4);
 		tmpData2 = STexture::_genMipMaps(tmpData2.get(), imgProp.imgWidth, imgProp.imgHeight, maxLODTmp, baseWidth, baseHeight);
 		if (!tmpData2)
+		{
+			SMART_FREE(tmpData);
+			SMART_FREE(tmpData2);
 			return STexture::TE_NOMEM;
+		}
 		nWidth = newWidth;
 		nHeight = newHeight;
 		pSrc = tmpData2.get();
@@ -585,8 +588,7 @@ SmartBuf STexture::_genMipMaps(const u8 *src, u32 width, u32 height, u8 maxLOD, 
 
 	bufSize = fixGX_GetTexBufferSize(lod0Width, lod0Height, GX_TF_RGBA8, GX_TRUE, maxLOD);
 	dst = smartAnyAlloc(bufSize);
-	if (!dst)
-		return dst;
+	if (!dst) return dst;
 	STexture::_resize(dst.get(), lod0Width, lod0Height, src, width, height);
 	DCFlushRange(dst.get(), lod0Width * lod0Height * 4);
 	nWidth = lod0Width;

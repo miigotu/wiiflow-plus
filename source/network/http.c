@@ -123,6 +123,11 @@ static struct block read_message(s32 connection, struct block buffer, bool (*f)(
 			}
 			fail = false;
 		}
+		else
+		{
+			if(bytes_read < 0) fail = true;
+			break; // Need to translate the error messages here instead of just breaking.
+		}
 	}
 	if(fail) return emptyblock;
 	//At the end of above loop offset should be precisely the amount of bytes that were read from the connection

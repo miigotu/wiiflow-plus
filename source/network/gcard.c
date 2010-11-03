@@ -83,10 +83,7 @@ void add_game_to_card(const char *gameid)
 				
 			// Don't kill the thread, leave it running for now...
 
-			if (registering)
-			{
-				LWP_SuspendThread(thread);
-			}
+			if (registering) LWP_SuspendThread(thread);
 
 			thread = LWP_THREAD_NULL;
 		}

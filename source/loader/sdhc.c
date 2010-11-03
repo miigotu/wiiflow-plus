@@ -91,22 +91,22 @@ bool SDHC_ReadSectors(u32 sector, u32 count, void *buffer)
 	s32 ret;
 
 	/* Device not opened */
-	if (fd < 0)
-		return false;
+	if (fd < 0)	return false;
 
 	/* Buffer not aligned */
-	if ((u32)buffer & 0x1F) {
+	if ((u32)buffer & 0x1F)
+	{
 		/* Allocate memory */
 		buf = iosAlloc(hid, len);
-		if (!buf)
-			return false;
+		if (!buf) return false;
 	}
 
 	/* Read data */
 	ret = IOS_IoctlvFormat(hid, fd, IOCTL_SDHC_READ, "ii:d", sector, count, buf, len);
 
 	/* Copy data */
-	if (buf != buffer) {
+	if (buf != buffer)
+	{
 		memcpy(buffer, buf, len);
 		iosFree(hid, buf);
 	}
@@ -122,15 +122,14 @@ bool SDHC_WriteSectors(u32 sector, u32 count, void *buffer)
 	s32 ret;
 
 	/* Device not opened */
-	if (fd < 0)
-		return false;
+	if (fd < 0)	return false;
 
 	/* Buffer not aligned */
-	if ((u32)buffer & 0x1F) {
+	if ((u32)buffer & 0x1F)
+	{
 		/* Allocate memory */
 		buf = iosAlloc(hid, len);
-		if (!buf)
-			return false;
+		if (!buf) return false;
 
 		/* Copy data */
 		memcpy(buf, buffer, len);

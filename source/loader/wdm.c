@@ -12,8 +12,7 @@ u32 wdm_count = 0;
 void free_wdm()
 {
 	if(wdm_entries)
-		free(wdm_entries);
-    wdm_entries = NULL;
+		SAFE_FREE(wdm_entries);
     wdm_count = 0;
 }
 

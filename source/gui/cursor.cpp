@@ -58,8 +58,8 @@ bool CCursor::init(const char *png, bool wideFix, CColor shadowColor, float shad
 			for (u32 yy = 0; yy < m_shadow.height; ++yy)
 				for (u32 xx = 0; xx < m_shadow.width; ++xx)
 					dst[coordsI8(xx, yy, w)] = src[coordsRGBA8(xx, yy, w)];
-			if (blur)
-				_blur();
+
+			if (blur) _blur();
 		}
 	}
 	return ok;

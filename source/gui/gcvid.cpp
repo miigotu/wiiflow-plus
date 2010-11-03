@@ -27,6 +27,7 @@
  ***************************************************************************/
 
 #include "gcvid.h"
+#include "utils.h"
 
 #include <cstdlib> //NULL
 #include <cstring> //memcmp
@@ -36,224 +37,224 @@ using namespace std;
 
 void readThpHeader(FILE* f, ThpHeader& h)
 {
-  fread(&h, sizeof(h), 1, f);
+	fread(&h, sizeof(h), 1, f);
 }
 
 void readThpComponents(FILE* f, ThpComponents& c)
 {
-  fread(&c, sizeof(c), 1, f);
+	fread(&c, sizeof(c), 1, f);
 }
 
 void readThpVideoInfo(FILE* f, ThpVideoInfo& i, bool isVersion11)
 {
-  fread(&i, sizeof(i), 1, f);
-  if(!isVersion11)
-  {
-    i.unknown = 0;
-    fseek(f, -4, SEEK_CUR);
-  }
+	fread(&i, sizeof(i), 1, f);
+	if(!isVersion11)
+	{
+		i.unknown = 0;
+		fseek(f, -4, SEEK_CUR);
+	}
 }
 
 void readThpAudioInfo(FILE* f, ThpAudioInfo& i, bool isVersion11)
 {
-  fread(&i, sizeof(i), 1, f);
-  if(!isVersion11)
-  {
-    i.numData = 1;
-    fseek(f, -4, SEEK_CUR);
-  }
+	fread(&i, sizeof(i), 1, f);
+	if(!isVersion11)
+	{
+		i.numData = 1;
+		fseek(f, -4, SEEK_CUR);
+	}
 }
 
 void readMthHeader(FILE* f, MthHeader& h)
 {
-  fread(&h, sizeof(h), 1, f);
+	fread(&h, sizeof(h), 1, f);
 }
 
 
 struct DecStruct
 {
-  const u8* currSrcByte;
-  u32 blockCount;
-  u8 index;
-  u8 shift;
+	const u8* currSrcByte;
+	u32 blockCount;
+	u8 index;
+	u8 shift;
 };
 
 void thpAudioInitialize(DecStruct& s, const u8* srcStart)
 {
-  s.currSrcByte = srcStart;
-  s.blockCount = 2;
-  s.index = (*s.currSrcByte >> 4) & 0x7;
-  s.shift = *s.currSrcByte & 0xf;
-  ++s.currSrcByte;
+	s.currSrcByte = srcStart;
+	s.blockCount = 2;
+	s.index = (*s.currSrcByte >> 4) & 0x7;
+	s.shift = *s.currSrcByte & 0xf;
+	++s.currSrcByte;
 }
 
 s32 thpAudioGetNewSample(DecStruct& s)
 {
-  //the following if is executed all 14 calls
-  //to thpAudioGetNewSample() (once for each
-  //microblock) because mask & 0xf can contain
-  //16 different values and starts with 2
-  if((s.blockCount & 0xf) == 0)
-  {
-    s.index = (*s.currSrcByte >> 4) & 0x7;
-    s.shift = *s.currSrcByte & 0xf;
-    ++s.currSrcByte;
-    s.blockCount += 2;
-  }
+	//the following if is executed all 14 calls
+	//to thpAudioGetNewSample() (once for each
+	//microblock) because mask & 0xf can contain
+	//16 different values and starts with 2
+	if((s.blockCount & 0xf) == 0)
+	{
+		s.index = (*s.currSrcByte >> 4) & 0x7;
+		s.shift = *s.currSrcByte & 0xf;
+		++s.currSrcByte;
+		s.blockCount += 2;
+	}
 
-  s32 ret;
-  if((s.blockCount & 1) != 0)
-  {
-    s32 t = (*s.currSrcByte  << 28) & 0xf0000000;
-    ret = t >> 28; //this has to be an arithmetic shift
-    ++s.currSrcByte;
-  }
-  else
-  {
-    s32 t = (*s.currSrcByte << 24) & 0xf0000000;
-    ret = t >> 28; //this has to be an arithmetic shift
-  }
+	s32 ret;
+	if((s.blockCount & 1) != 0)
+	{
+		s32 t = (*s.currSrcByte	<< 28) & 0xf0000000;
+		ret = t >> 28; //this has to be an arithmetic shift
+		++s.currSrcByte;
+	}
+	else
+	{
+		s32 t = (*s.currSrcByte << 24) & 0xf0000000;
+		ret = t >> 28; //this has to be an arithmetic shift
+	}
 
-  ++s.blockCount;
-  return ret;
+	++s.blockCount;
+	return ret;
 }
 
 int thpAudioDecode(s16 * destBuffer, const u8* srcBuffer, bool separateChannelsInOutput, bool isInputStereo)
 {
-  if(destBuffer == NULL || srcBuffer == NULL)
-    return 0;
+	if(destBuffer == NULL || srcBuffer == NULL)
+		return 0;
 
-  ThpAudioBlockHeader* head = (ThpAudioBlockHeader*)srcBuffer;
+	ThpAudioBlockHeader* head = (ThpAudioBlockHeader*)srcBuffer;
 
-  u32 channelInSize = head->channelSize;
-  u32 numSamples = head->numSamples;
+	u32 channelInSize = head->channelSize;
+	u32 numSamples = head->numSamples;
 
-  const u8* srcChannel1 = srcBuffer + sizeof(ThpAudioBlockHeader);
-  const u8* srcChannel2 = srcChannel1 + channelInSize;
+	const u8* srcChannel1 = srcBuffer + sizeof(ThpAudioBlockHeader);
+	const u8* srcChannel2 = srcChannel1 + channelInSize;
 
-  s16* table1 = head->table1;
-  s16* table2 = head->table2;
+	s16* table1 = head->table1;
+	s16* table2 = head->table2;
 
-  s16* destChannel1, * destChannel2;
-  u32 delta;
+	s16* destChannel1, * destChannel2;
+	u32 delta;
 
-  if(separateChannelsInOutput)
-  {
-    //separated channels in output
-    destChannel1 = destBuffer;
-    destChannel2 = destBuffer + numSamples;
-    delta = 1;
-  }
-  else
-  {
-    //interleaved channels in output
-    destChannel1 = destBuffer;
-    destChannel2 = destBuffer + 1;
-    delta = 2;
-  }
+	if(separateChannelsInOutput)
+	{
+		//separated channels in output
+		destChannel1 = destBuffer;
+		destChannel2 = destBuffer + numSamples;
+		delta = 1;
+	}
+	else
+	{
+		//interleaved channels in output
+		destChannel1 = destBuffer;
+		destChannel2 = destBuffer + 1;
+		delta = 2;
+	}
 
-  DecStruct s;
-  if(!isInputStereo)
-  {
-    //mono channel in input
+	DecStruct s;
+	if(!isInputStereo)
+	{
+		//mono channel in input
 
-    thpAudioInitialize(s, srcChannel1);
+		thpAudioInitialize(s, srcChannel1);
 
-    s16 prev1 = *(s16*)(srcBuffer + 72);
-    s16 prev2 = *(s16*)(srcBuffer + 74);
+		s16 prev1 = *(s16*)(srcBuffer + 72);
+		s16 prev2 = *(s16*)(srcBuffer + 74);
 
-    for(u32 i = 0; i < numSamples; ++i)
-    {
-      s64 res = (s64)thpAudioGetNewSample(s);
-      res = ((res << s.shift) << 11); //convert to 53.11 fixedpoint
+		for(u32 i = 0; i < numSamples; ++i)
+		{
+			s64 res = (s64)thpAudioGetNewSample(s);
+			res = ((res << s.shift) << 11); //convert to 53.11 fixedpoint
 
-      //these values are 53.11 fixed point numbers
-      s64 val1 = table1[2*s.index];
-      s64 val2 = table1[2*s.index + 1];
+			//these values are 53.11 fixed point numbers
+			s64 val1 = table1[2*s.index];
+			s64 val2 = table1[2*s.index + 1];
 
-      //convert to 48.16 fixed point
-      res = (val1*prev1 + val2*prev2 + res) << 5;
+			//convert to 48.16 fixed point
+			res = (val1*prev1 + val2*prev2 + res) << 5;
 
-      //rounding:
-      u16 decimalPlaces = res & 0xffff;
-      if(decimalPlaces > 0x8000) //i.e. > 0.5
-        //round up
-        ++res;
-      else if(decimalPlaces == 0x8000) //i.e. == 0.5
-        if((res & 0x10000) != 0)
-          //round up every other number
-          ++res;
+			//rounding:
+			u16 decimalPlaces = res & 0xffff;
+			if(decimalPlaces > 0x8000) //i.e. > 0.5
+				//round up
+				++res;
+			else if(decimalPlaces == 0x8000) //i.e. == 0.5
+				if((res & 0x10000) != 0)
+					//round up every other number
+					++res;
 
-      //get nonfractional parts of number, clamp to [-32768, 32767]
-      s32 final = (res >> 16);
-      if(final > 32767) final = 32767;
-      else if(final < -32768) final = -32768;
+			//get nonfractional parts of number, clamp to [-32768, 32767]
+			s32 final = (res >> 16);
+			if(final > 32767) final = 32767;
+			else if(final < -32768) final = -32768;
 
-      prev2 = prev1;
-      prev1 = final;
-      *destChannel1 = (s16)final;
-      *destChannel2 = (s16)final;
-      destChannel1 += delta;
-      destChannel2 += delta;
-    }
-  }
-  else
-  {
-    //two channels in input - nearly the same as for one channel,
-    //so no comments here (different lines are marked with XXX)
+			prev2 = prev1;
+			prev1 = final;
+			*destChannel1 = (s16)final;
+			*destChannel2 = (s16)final;
+			destChannel1 += delta;
+			destChannel2 += delta;
+		}
+	}
+	else
+	{
+		//two channels in input - nearly the same as for one channel,
+		//so no comments here (different lines are marked with XXX)
 
-    thpAudioInitialize(s, srcChannel1);
-    s16 prev1 = *(s16*)(srcBuffer + 72);
-    s16 prev2 = *(s16*)(srcBuffer + 74);
-    for(u32 i = 0; i < numSamples; ++i)
-    {
-      s64 res = (s64)thpAudioGetNewSample(s);
-      res = ((res << s.shift) << 11);
-      s64 val1 = table1[2*s.index];
-      s64 val2 = table1[2*s.index + 1];
-      res = (val1*prev1 + val2*prev2 + res) << 5;
-      u16 decimalPlaces = res & 0xffff;
-      if(decimalPlaces > 0x8000)
-        ++res;
-      else if(decimalPlaces == 0x8000)
-        if((res & 0x10000) != 0)
-          ++res;
-      s32 final = (res >> 16);
-      if(final > 32767) final = 32767;
-      else if(final < -32768) final = -32768;
-      prev2 = prev1;
-      prev1 = final;
-      *destChannel1 = (s16)final;
-      destChannel1 += delta;
-    }
+		thpAudioInitialize(s, srcChannel1);
+		s16 prev1 = *(s16*)(srcBuffer + 72);
+		s16 prev2 = *(s16*)(srcBuffer + 74);
+		for(u32 i = 0; i < numSamples; ++i)
+		{
+			s64 res = (s64)thpAudioGetNewSample(s);
+			res = ((res << s.shift) << 11);
+			s64 val1 = table1[2*s.index];
+			s64 val2 = table1[2*s.index + 1];
+			res = (val1*prev1 + val2*prev2 + res) << 5;
+			u16 decimalPlaces = res & 0xffff;
+			if(decimalPlaces > 0x8000)
+				++res;
+			else if(decimalPlaces == 0x8000)
+				if((res & 0x10000) != 0)
+					++res;
+			s32 final = (res >> 16);
+			if(final > 32767) final = 32767;
+			else if(final < -32768) final = -32768;
+			prev2 = prev1;
+			prev1 = final;
+			*destChannel1 = (s16)final;
+			destChannel1 += delta;
+		}
 
-    thpAudioInitialize(s, srcChannel2);//XXX
-    prev1 = *(s16*)(srcBuffer + 76);//XXX
-    prev2 = *(s16*)(srcBuffer + 78);//XXX
-    for(u32 j = 0; j < numSamples; ++j)
-    {
-      s64 res = (s64)thpAudioGetNewSample(s);
-      res = ((res << s.shift) << 11);
-      s64 val1 = table2[2*s.index];//XXX
-      s64 val2 = table2[2*s.index + 1];//XXX
-      res = (val1*prev1 + val2*prev2 + res) << 5;
-      u16 decimalPlaces = res & 0xffff;
-      if(decimalPlaces > 0x8000)
-        ++res;
-      else if(decimalPlaces == 0x8000)
-        if((res & 0x10000) != 0)
-          ++res;
-      s32 final = (res >> 16);
-      if(final > 32767) final = 32767;
-      else if(final < -32768) final = -32768;
-      prev2 = prev1;
-      prev1 = final;
-      *destChannel2 = (s16)final;
-      destChannel2 += delta;
-    }
-  }
+		thpAudioInitialize(s, srcChannel2);//XXX
+		prev1 = *(s16*)(srcBuffer + 76);//XXX
+		prev2 = *(s16*)(srcBuffer + 78);//XXX
+		for(u32 j = 0; j < numSamples; ++j)
+		{
+			s64 res = (s64)thpAudioGetNewSample(s);
+			res = ((res << s.shift) << 11);
+			s64 val1 = table2[2*s.index];//XXX
+			s64 val2 = table2[2*s.index + 1];//XXX
+			res = (val1*prev1 + val2*prev2 + res) << 5;
+			u16 decimalPlaces = res & 0xffff;
+			if(decimalPlaces > 0x8000)
+				++res;
+			else if(decimalPlaces == 0x8000)
+				if((res & 0x10000) != 0)
+					++res;
+			s32 final = (res >> 16);
+			if(final > 32767) final = 32767;
+			else if(final < -32768) final = -32768;
+			prev2 = prev1;
+			prev1 = final;
+			*destChannel2 = (s16)final;
+			destChannel2 += delta;
+		}
+	}
 
-  return numSamples;
+	return numSamples;
 }
 
 
@@ -266,18 +267,18 @@ VideoFrame::~VideoFrame()
 
 void VideoFrame::resize(int width, int height)
 {
-  if(width == _w && height == _h)
-    return;
+	if(width == _w && height == _h)
+		return;
 
-  dealloc();
-  _w = width;
-  _h = height;
+	dealloc();
+	_w = width;
+	_h = height;
 
-  //24 bpp, 4 byte padding
-  _p = 3*width;
-  _p += (4 - _p%4)%4;
+	//24 bpp, 4 byte padding
+	_p = 3*width;
+	_p += (4 - _p%4)%4;
 
-  _data = (u8 *) malloc(_p * _h);
+	_data = (u8 *) malloc(_p * _h);
 }
 
 int VideoFrame::getWidth() const
@@ -297,65 +298,63 @@ const u8* VideoFrame::getData() const
 
 void VideoFrame::dealloc()
 {
-  if(_data != NULL)
-    free(_data);
-  _data = NULL;
-  _w = _h = _p = 0;
+	SAFE_FREE(_data);
+	_w = _h = _p = 0;
 }
 
 //swaps red and blue channel of a video frame
 void swapRB(VideoFrame& f)
 {
-  u8* currLine = f.getData();
+	u8* currLine = f.getData();
 
-  int hyt = f.getHeight();
-  int pitch = f.getPitch();
+	int hyt = f.getHeight();
+	int pitch = f.getPitch();
 
-  for(int y = 0; y < hyt; ++y)
-  {
-    for(int x = 0, x2 = 2; x < pitch; x += 3, x2 += 3)
-    {
-      u8 t = currLine[x];
-      currLine[x] = currLine[x2];
-      currLine[x2] = t;
-    }
-    currLine += pitch;
-  }
+	for(int y = 0; y < hyt; ++y)
+	{
+		for(int x = 0, x2 = 2; x < pitch; x += 3, x2 += 3)
+		{
+			u8 t = currLine[x];
+			currLine[x] = currLine[x2];
+			currLine[x2] = t;
+		}
+		currLine += pitch;
+	}
 }
 
 enum FILETYPE
 {
-  THP, MTH, JPG,
-    UNKNOWN = -1
+	THP, MTH, JPG,
+	UNKNOWN = -1
 };
 
 FILETYPE getFiletype(FILE* f)
 {
-  long t = ftell(f);
-  fseek(f, 0, SEEK_SET);
+	long t = ftell(f);
+	fseek(f, 0, SEEK_SET);
 
-  u8 buff[4];
-  fread(buff, 1, 4, f);
+	u8 buff[4];
+	fread(buff, 1, 4, f);
 
-  FILETYPE ret = UNKNOWN;
-  if(memcmp("THP\0", buff, 4) == 0)
-    ret = THP;
-  else if(memcmp("MTHP", buff, 4) == 0)
-    ret = MTH;
-  else if(buff[0] == 0xff && buff[1] == 0xd8)
-    ret = JPG;
+	FILETYPE ret = UNKNOWN;
+	if(memcmp("THP\0", buff, 4) == 0)
+		ret = THP;
+	else if(memcmp("MTHP", buff, 4) == 0)
+		ret = MTH;
+	else if(buff[0] == 0xff && buff[1] == 0xd8)
+		ret = JPG;
 
-  fseek(f, t, SEEK_SET);
-  return ret;
+	fseek(f, t, SEEK_SET);
+	return ret;
 }
 
 long getFilesize(FILE* f)
 {
-  long t = ftell(f);
-  fseek(f, 0, SEEK_END);
-  long ret = ftell(f);
-  fseek(f, t, SEEK_SET);
-  return ret;
+	long t = ftell(f);
+	fseek(f, 0, SEEK_END);
+	long ret = ftell(f);
+	fseek(f, t, SEEK_SET);
+	return ret;
 }
 
 void decodeJpeg(const u8* data, int size, VideoFrame& dest);
@@ -367,9 +366,7 @@ VideoFile::VideoFile(FILE* f)
 
 VideoFile::~VideoFile()
 {
-  if(_f != NULL)
-    fclose(_f);
-  _f = NULL;
+	SAFE_CLOSE(_f);
 }
 
 int VideoFile::getWidth() const
@@ -404,40 +401,40 @@ int VideoFile::getCurrentBuffer(s16*) const
 
 void VideoFile::loadFrame(VideoFrame& frame, const u8* data, int size) const
 {
-  decodeJpeg(data, size, frame);
+	decodeJpeg(data, size, frame);
 }
 
 
 ThpVideoFile::ThpVideoFile(FILE* f)
 : VideoFile(f)
 {
-  readThpHeader(f, _head);
+	readThpHeader(f, _head);
 
-  //this is just to find files that have this field != 0, i
-  //have no such a file
-  assert(_head.offsetsDataOffset == 0);
+	//this is just to find files that have this field != 0, i
+	//have no such a file
+	assert(_head.offsetsDataOffset == 0);
 
-  readThpComponents(f, _components);
-  for(u32 i = 0; i < _components.numComponents; ++i)
-  {
-    if(_components.componentTypes[i] == 0) //video
-      readThpVideoInfo(_f, _videoInfo, _head.version == 0x00011000);
-    else if(_components.componentTypes[i] == 1) //audio
-    {
-      readThpAudioInfo(_f, _audioInfo, _head.version == 0x00011000);
-      assert(_head.maxAudioSamples != 0);
-    }
-  }
+	readThpComponents(f, _components);
+	for(u32 i = 0; i < _components.numComponents; ++i)
+	{
+		if(_components.componentTypes[i] == 0) //video
+			readThpVideoInfo(_f, _videoInfo, _head.version == 0x00011000);
+		else if(_components.componentTypes[i] == 1) //audio
+		{
+			readThpAudioInfo(_f, _audioInfo, _head.version == 0x00011000);
+			assert(_head.maxAudioSamples != 0);
+		}
+	}
 
-  _numInts = 3;
-  if(_head.maxAudioSamples != 0)
-    _numInts = 4;
+	_numInts = 3;
+	if(_head.maxAudioSamples != 0)
+		_numInts = 4;
 
-  _currFrameNr = -1;
-  _nextFrameOffset = _head.firstFrameOffset;
-  _nextFrameSize = _head.firstFrameSize;
-  _currFrameData.resize(_head.maxBufferSize); //include some padding
-  loadNextFrame();
+	_currFrameNr = -1;
+	_nextFrameOffset = _head.firstFrameOffset;
+	_nextFrameSize = _head.firstFrameSize;
+	_currFrameData.resize(_head.maxBufferSize); //include some padding
+	loadNextFrame();
 }
 
 int ThpVideoFile::getWidth() const
@@ -457,29 +454,29 @@ int ThpVideoFile::getCurrentFrameNr() const
 
 bool ThpVideoFile::loadNextFrame()
 {
-  ++_currFrameNr;
-  if(_currFrameNr >= (int) _head.numFrames)
-  {
+	++_currFrameNr;
+	if(_currFrameNr >= (int) _head.numFrames)
+	{
 	if (!loop)
 		return false;
 		
-    _currFrameNr = 0;
-    _nextFrameOffset = _head.firstFrameOffset;
-    _nextFrameSize = _head.firstFrameSize;
-  }
+		_currFrameNr = 0;
+		_nextFrameOffset = _head.firstFrameOffset;
+		_nextFrameSize = _head.firstFrameSize;
+	}
 
-  fseek(_f, _nextFrameOffset, SEEK_SET);
-  fread(&_currFrameData[0], 1, _nextFrameSize, _f);
+	fseek(_f, _nextFrameOffset, SEEK_SET);
+	fread(&_currFrameData[0], 1, _nextFrameSize, _f);
 
-  _nextFrameOffset += _nextFrameSize;
-  _nextFrameSize = *(u32*)&_currFrameData[0];
-  return true;
+	_nextFrameOffset += _nextFrameSize;
+	_nextFrameSize = *(u32*)&_currFrameData[0];
+	return true;
 }
 
 void ThpVideoFile::getCurrentFrame(VideoFrame& f) const
 {
-  int size = *(u32*)(&_currFrameData[0] + 8);
-  loadFrame(f, &_currFrameData[0] + 4*_numInts, size);
+	int size = *(u32*)(&_currFrameData[0] + 8);
+	loadFrame(f, &_currFrameData[0] + 4*_numInts, size);
 }
 
 bool ThpVideoFile::hasSound() const
@@ -487,18 +484,18 @@ bool ThpVideoFile::hasSound() const
 
 int ThpVideoFile::getNumChannels() const
 {
-  if(hasSound())
-    return _audioInfo.numChannels;
-  else
-    return 0;
+	if(hasSound())
+		return _audioInfo.numChannels;
+	else
+		return 0;
 }
 
 int ThpVideoFile::getFrequency() const
 {
-  if(hasSound())
-    return _audioInfo.frequency;
-  else
-    return 0;
+	if(hasSound())
+		return _audioInfo.frequency;
+	else
+		return 0;
 }
 
 int ThpVideoFile::getMaxAudioSamples() const
@@ -506,27 +503,27 @@ int ThpVideoFile::getMaxAudioSamples() const
 
 int ThpVideoFile::getCurrentBuffer(s16* data) const
 {
-  if(!hasSound())
-    return 0;
+	if(!hasSound())
+		return 0;
 
-  int jpegSize = *(u32*)(&_currFrameData[0] + 8);
-  const u8* src = &_currFrameData[0] + _numInts*4 + jpegSize;
+	int jpegSize = *(u32*)(&_currFrameData[0] + 8);
+	const u8* src = &_currFrameData[0] + _numInts*4 + jpegSize;
 
-  return thpAudioDecode(data, src, false, _audioInfo.numChannels == 2);
+	return thpAudioDecode(data, src, false, _audioInfo.numChannels == 2);
 }
 
 MthVideoFile::MthVideoFile(FILE* f)
 : VideoFile(f)
 {
-  readMthHeader(f, _head);
+	readMthHeader(f, _head);
 
-  _currFrameNr = -1;
-  _nextFrameOffset = _head.offset;
-  _nextFrameSize = _head.firstFrameSize;
-  _thisFrameSize = 0;
+	_currFrameNr = -1;
+	_nextFrameOffset = _head.offset;
+	_nextFrameSize = _head.firstFrameSize;
+	_thisFrameSize = 0;
 
-  _currFrameData.resize(_head.maxFrameSize);
-  loadNextFrame();
+	_currFrameData.resize(_head.maxFrameSize);
+	loadNextFrame();
 }
 
 
@@ -538,12 +535,12 @@ int MthVideoFile::getHeight() const
 
 float MthVideoFile::getFps() const
 {
-  return (float) 1.0f*_head.fps; //TODO: This has to be in there somewhere
+	return (float) 1.0f*_head.fps; //TODO: This has to be in there somewhere
 }
 
 int MthVideoFile::getFrameCount() const
 {
-  return _head.numFrames;
+	return _head.numFrames;
 }
 
 int MthVideoFile::getCurrentFrameNr() const
@@ -551,42 +548,42 @@ int MthVideoFile::getCurrentFrameNr() const
 
 bool MthVideoFile::loadNextFrame()
 {
-  ++_currFrameNr;
-  if(_currFrameNr >= (int) _head.numFrames)
-  {
+	++_currFrameNr;
+	if(_currFrameNr >= (int) _head.numFrames)
+	{
 	if (!loop)
 		return false;
-    _currFrameNr = 0;
-    _nextFrameOffset = _head.offset;
-    _nextFrameSize = _head.firstFrameSize;
-  }
+		_currFrameNr = 0;
+		_nextFrameOffset = _head.offset;
+		_nextFrameSize = _head.firstFrameSize;
+	}
 
-  fseek(_f, _nextFrameOffset, SEEK_SET);
-  _currFrameData.resize(_nextFrameSize);
-  fread(&_currFrameData[0], 1, _nextFrameSize, _f);
-  _thisFrameSize = _nextFrameSize;
+	fseek(_f, _nextFrameOffset, SEEK_SET);
+	_currFrameData.resize(_nextFrameSize);
+	fread(&_currFrameData[0], 1, _nextFrameSize, _f);
+	_thisFrameSize = _nextFrameSize;
 
-  u32 nextSize;
-  nextSize = *(u32*)(&_currFrameData[0]);
-  _nextFrameOffset += _nextFrameSize;
-  _nextFrameSize = nextSize;
-  return true;
+	u32 nextSize;
+	nextSize = *(u32*)(&_currFrameData[0]);
+	_nextFrameOffset += _nextFrameSize;
+	_nextFrameSize = nextSize;
+	return true;
 }
 
 void MthVideoFile::getCurrentFrame(VideoFrame& f) const
 {
-  int size = _thisFrameSize;
-  loadFrame(f, &_currFrameData[0] + 4, size - 4);
+	int size = _thisFrameSize;
+	loadFrame(f, &_currFrameData[0] + 4, size - 4);
 }
 
 
 JpgVideoFile::JpgVideoFile(FILE* f)
 : VideoFile(f)
 {
-  vector<u8> data(getFilesize(f));
-  fread(&data[0], 1, getFilesize(f), f);
+	vector<u8> data(getFilesize(f));
+	fread(&data[0], 1, getFilesize(f), f);
 
-  loadFrame(_currFrame, &data[0], getFilesize(f));
+	loadFrame(_currFrame, &data[0], getFilesize(f));
 }
 
 int JpgVideoFile::getWidth() const
@@ -600,37 +597,37 @@ int JpgVideoFile::getFrameCount() const
 
 void JpgVideoFile::getCurrentFrame(VideoFrame& f) const
 {
-  f.resize(_currFrame.getWidth(), _currFrame.getHeight());
-  memcpy(f.getData(), _currFrame.getData(),f.getPitch()*f.getHeight());
+	f.resize(_currFrame.getWidth(), _currFrame.getHeight());
+	memcpy(f.getData(), _currFrame.getData(),f.getPitch()*f.getHeight());
 }
 
 VideoFile* openVideo(const string& fileName)
 {
-  FILE* f = fopen(fileName.c_str(), "rb");
-  if(f == NULL)
-    return NULL;
+	FILE* f = fopen(fileName.c_str(), "rb");
+	if(f == NULL)
+		return NULL;
 
-  FILETYPE type = getFiletype(f);
-  switch(type)
-  {
-    case THP:
-      return new ThpVideoFile(f);
-    case MTH:
-      return new MthVideoFile(f);
-    case JPG:
-      return new JpgVideoFile(f);
+	FILETYPE type = getFiletype(f);
+	switch(type)
+	{
+		case THP:
+			return new ThpVideoFile(f);
+		case MTH:
+			return new MthVideoFile(f);
+		case JPG:
+			return new JpgVideoFile(f);
 
-    default:
-      fclose(f);
-      return NULL;
-  }
+		default:
+			SAFE_CLOSE(f);
+			return NULL;
+	}
 }
 
 void closeVideo(VideoFile*& vf)
 {
-  if(vf != NULL)
-    delete vf;
-  vf = NULL;
+	if(vf != NULL)
+		delete vf;
+	vf = NULL;
 }
 
 //as mentioned above, we have to convert 0xff to 0xff 0x00
@@ -649,63 +646,63 @@ u8 endBytesMth[] = { 0xff, 0xd9, 0xff, 0 }; //used in mth files
 
 int countRequiredSize(const u8* data, int size, int& start, int& end)
 {
-  start = 2*size;
-  int count = 0;
+	start = 2*size;
+	int count = 0;
 
-  int j;
-  for(j = size - 1; data[j] == 0; --j)
-    ; //search end of data
+	int j;
+	for(j = size - 1; data[j] == 0; --j)
+		; //search end of data
 
-  if(data[j] == 0xd9) //thp file
-    end = j - 1;
-  else if(data[j] == 0xff) //mth file
-    end = j - 2;
+	if(data[j] == 0xd9) //thp file
+		end = j - 1;
+	else if(data[j] == 0xff) //mth file
+		end = j - 2;
 
-  for(int i = 0; i < end; ++i)
-  {
-    if(data[i] == 0xff)
-    {
-      //if i == srcSize - 1, then this would normally overrun src - that's why 4 padding
-      //bytes are included at the end of src
-      if(data[i + 1] == 0xda && start == 2*size)
-        start = i;
-      if(i > start)
-        ++count;
-    }
-  }
-  return size + count;
+	for(int i = 0; i < end; ++i)
+	{
+		if(data[i] == 0xff)
+		{
+			//if i == srcSize - 1, then this would normally overrun src - that's why 4 padding
+			//bytes are included at the end of src
+			if(data[i + 1] == 0xda && start == 2*size)
+				start = i;
+			if(i > start)
+				++count;
+		}
+	}
+	return size + count;
 }
 
 void convertToRealJpeg(u8* dest, const u8* src, int srcSize, int start, int end)
 {
-  int di = 0;
-  for(int i = 0; i < srcSize; ++i, ++di)
-  {
-    dest[di] = src[i];
-    //if i == srcSize - 1, then this would normally overrun src - that's why 4 padding
-    //bytes are included at the end of src
-    if(src[i] == 0xff && i > start && i < end)
-    {
-      ++di;
-      dest[di] = 0;
-    }
-  }
+	int di = 0;
+	for(int i = 0; i < srcSize; ++i, ++di)
+	{
+		dest[di] = src[i];
+		//if i == srcSize - 1, then this would normally overrun src - that's why 4 padding
+		//bytes are included at the end of src
+		if(src[i] == 0xff && i > start && i < end)
+		{
+			++di;
+			dest[di] = 0;
+		}
+	}
 }
 
 void decodeRealJpeg(const u8* data, int size, VideoFrame& dest);
 
 void decodeJpeg(const u8* data, int size, VideoFrame& dest)
 {
-  //convert format so jpeglib understands it...
-  int start, end;
-  int newSize = countRequiredSize(data, size, start, end);
-  u8* buff = new u8[newSize];
-  convertToRealJpeg(buff, data, size, start, end);
+	//convert format so jpeglib understands it...
+	int start, end;
+	int newSize = countRequiredSize(data, size, start, end);
+	u8* buff = new u8[newSize];
+	convertToRealJpeg(buff, data, size, start, end);
 
-  //...and feed it to jpeglib
-  decodeRealJpeg(buff, newSize, dest);
+	//...and feed it to jpeglib
+	decodeRealJpeg(buff, newSize, dest);
 
-  delete [] buff;
+	delete [] buff;
 }
 
 extern "C"
@@ -726,21 +723,21 @@ void jpegInitSource(j_decompress_ptr)
 
 boolean jpegFillInputBuffer(j_decompress_ptr cinfo)
 {
-  cinfo->src->next_input_byte = g_jpegBuffer;
-  cinfo->src->bytes_in_buffer = g_jpegSize;
-  return TRUE;
+	cinfo->src->next_input_byte = g_jpegBuffer;
+	cinfo->src->bytes_in_buffer = g_jpegSize;
+	return TRUE;
 }
 
 void jpegSkipInputData(j_decompress_ptr cinfo, long num_bytes)
 {
-  cinfo->src->next_input_byte += num_bytes;
-  cinfo->src->bytes_in_buffer -= num_bytes;
+	cinfo->src->next_input_byte += num_bytes;
+	cinfo->src->bytes_in_buffer -= num_bytes;
 }
 
 boolean jpegResyncToRestart(j_decompress_ptr cinfo, int desired)
 {
-  jpeg_resync_to_restart(cinfo, desired);
-  return TRUE;
+	jpeg_resync_to_restart(cinfo, desired);
+	return TRUE;
 }
 
 void jpegTermSource(j_decompress_ptr)
@@ -748,81 +745,81 @@ void jpegTermSource(j_decompress_ptr)
 
 void jpegErrorHandler(j_common_ptr cinfo)
 {
-  char buff[1024];
-  (*cinfo->err->format_message)(cinfo, buff);
-  //MessageBox(g_hWnd, buff, "JpegLib error:", MB_OK);
+	char buff[1024];
+	(*cinfo->err->format_message)(cinfo, buff);
+	//MessageBox(g_hWnd, buff, "JpegLib error:", MB_OK);
 }
 
 void decodeRealJpeg(const u8* data, int size, VideoFrame& dest)
 {
-  if(g_isLoading)
-    return;
-  g_isLoading = true;
+	if(g_isLoading)
+		return;
+	g_isLoading = true;
 
-  //decompressor state
-  jpeg_decompress_struct cinfo;
-  jpeg_error_mgr errorMgr;
+	//decompressor state
+	jpeg_decompress_struct cinfo;
+	jpeg_error_mgr errorMgr;
 
-  //read from memory manager
-  jpeg_source_mgr sourceMgr;
+	//read from memory manager
+	jpeg_source_mgr sourceMgr;
 
-  cinfo.err = jpeg_std_error(&errorMgr);
-  errorMgr.error_exit = jpegErrorHandler;
+	cinfo.err = jpeg_std_error(&errorMgr);
+	errorMgr.error_exit = jpegErrorHandler;
 
-  jpeg_create_decompress(&cinfo);
+	jpeg_create_decompress(&cinfo);
 
-  //setup read-from-memory
-  g_jpegBuffer = data;
-  g_jpegSize = size;
-  sourceMgr.bytes_in_buffer = size;
-  sourceMgr.next_input_byte = data;
-  sourceMgr.init_source = jpegInitSource;
-  sourceMgr.fill_input_buffer = jpegFillInputBuffer;
-  sourceMgr.skip_input_data = jpegSkipInputData;
-  sourceMgr.resync_to_restart = jpegResyncToRestart;
-  sourceMgr.term_source = jpegTermSource;
-  cinfo.src = &sourceMgr;
+	//setup read-from-memory
+	g_jpegBuffer = data;
+	g_jpegSize = size;
+	sourceMgr.bytes_in_buffer = size;
+	sourceMgr.next_input_byte = data;
+	sourceMgr.init_source = jpegInitSource;
+	sourceMgr.fill_input_buffer = jpegFillInputBuffer;
+	sourceMgr.skip_input_data = jpegSkipInputData;
+	sourceMgr.resync_to_restart = jpegResyncToRestart;
+	sourceMgr.term_source = jpegTermSource;
+	cinfo.src = &sourceMgr;
 
-  jpeg_read_header(&cinfo, TRUE);
+	jpeg_read_header(&cinfo, TRUE);
 
 #if 1
-  //set quality/speed parameters to speed:
-  cinfo.do_fancy_upsampling = FALSE;
-  cinfo.do_block_smoothing = FALSE;
+	//set quality/speed parameters to speed:
+	cinfo.do_fancy_upsampling = FALSE;
+	cinfo.do_block_smoothing = FALSE;
 
-  //this actually slows decoding down:
-  //cinfo.dct_method = JDCT_FASTEST;
+	//this actually slows decoding down:
+	//cinfo.dct_method = JDCT_FASTEST;
 #endif
 
-  jpeg_start_decompress(&cinfo);
+	jpeg_start_decompress(&cinfo);
 
-  dest.resize(cinfo.output_width, cinfo.output_height);
+	dest.resize(cinfo.output_width, cinfo.output_height);
 
-  if(cinfo.num_components == 3)
-  {
-    int y = 0;
-    while(cinfo.output_scanline < cinfo.output_height)
-    {
-      //invert image because windows wants it downside up
-      u8* destBuffer =  &dest.getData()[(dest.getHeight() - y - 1)*dest.getPitch()];
+	if(cinfo.num_components == 3)
+	{
+		int y = 0;
+		while(cinfo.output_scanline < cinfo.output_height)
+		{
+			//invert image because windows wants it downside up
+			u8* destBuffer =	&dest.getData()[(dest.getHeight() - y - 1)*dest.getPitch()];
 
-      //NO idea why jpeglib wants a pointer to a pointer
-      jpeg_read_scanlines(&cinfo, &destBuffer, 1);
-      ++y;
-    }
+			//NO idea why jpeglib wants a pointer to a pointer
+			jpeg_read_scanlines(&cinfo, &destBuffer, 1);
+			++y;
+		}
 
-    //jpeglib gives an error in jpeg_finish_decompress() if no all
-    //scanlines are read by the application... :-|
-    //(but because we read all scanlines, it's not really needed)
-    cinfo.output_scanline = cinfo.output_height;
+		//jpeglib gives an error in jpeg_finish_decompress() if no all
+		//scanlines are read by the application... :-|
+		//(but because we read all scanlines, it's not really needed)
+		cinfo.output_scanline = cinfo.output_height;
 
-  }
-  else
-  {
-    //MessageBox(g_hWnd, "Only RGB videos are currently supported.", "oops?", MB_OK);
-  }
+	}
+	else
+	{
+		//MessageBox(g_hWnd, "Only RGB videos are currently supported.", "oops?", MB_OK);
+	}
 
-  jpeg_finish_decompress(&cinfo);
-  jpeg_destroy_decompress(&cinfo);
-  g_isLoading = false;
+	jpeg_finish_decompress(&cinfo);
+	jpeg_destroy_decompress(&cinfo);
+	g_isLoading = false;
 }

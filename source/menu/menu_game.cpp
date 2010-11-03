@@ -316,10 +316,10 @@ void CMenu::_game(bool launch)
 		{
 			string videoPath = sfmt("%s/%.3s.thp", m_videoDir.c_str(), id.c_str());
 		
-			FILE *fp = fopen(videoPath.c_str(), "rb");
-			if (fp)
+			FILE *file = fopen(videoPath.c_str(), "rb");
+			if (file)
 			{
-				fclose(fp);
+				SAFE_CLOSE(file);
 				
 				_hideGame();
 				WiiMovie movie(videoPath.c_str());
@@ -835,8 +835,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		free_wdm();
 	}
 	
-	if (!altdol.empty())
-		dolFile = extractDOL(altdol.c_str(), dolSize, hdr, m_locDol, dvd);
+	if (!altdol.empty()) dolFile = extractDOL(altdol.c_str(), dolSize, hdr, m_locDol, dvd);
 	
 	m_gcfg1.save();
 	m_gcfg2.save();
@@ -849,17 +848,18 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		if (get_frag_list((u8 *) &hdr->hdr.id, (char *)&hdr->path) < 0)
 			return;
 
-	if (cheat)
-		_loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
+	if (cheat)	_loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
 
 	if (!_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt"))
 		if (FS_USBAvailable() && !_loadFile(gameconfig, gameconfigSize, "usb:/", "gameconfig.txt"))
-			if (FS_SDAvailable()) _loadFile(gameconfig, gameconfigSize, "sd:/", "gameconfig.txt");
+			if (FS_SDAvailable() && !_loadFile(gameconfig, gameconfigSize, "sd:/", "gameconfig.txt"))
+				SMART_FREE(gameconfig);
 	
 	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) &hdr->hdr.id);
 	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) &hdr->hdr.id);
-	app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
-	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
+
+	if(!!gameconfig) app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
+	if(!!cheatFile) ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 
 	net_wc24cleanup();
 	
@@ -1053,9 +1053,10 @@ SmartBuf uncompressLZ77(u32 &size, const u8 *inputBuf, u32 inputLength)
 	u32 uncSize = le32(((const u32 *)inputBuf)[1] << 8);
 	const u8 *inBuf = inputBuf + 8;
 	const u8 *inBufEnd = inputBuf + inputLength;
+
 	buffer = smartMem2Alloc(uncSize);
-	if (!buffer)
-		return buffer;
+	if (!buffer) return buffer;
+
 	u8 *bufCur = buffer.get();
 	u8 *bufEnd = buffer.get() + uncSize;
 	while (bufCur < bufEnd && inBuf < inBufEnd)
@@ -1116,10 +1117,12 @@ void CMenu::_loadGameSound(dir_discHdr *hdr)
 	if (sndType == 'LZ77')
 	{
 		u32 uncSize;
+
 		uncompressed = uncompressLZ77(uncSize, soundChunk, soundChunkSize);
-		if (!uncompressed)
-			return;
+		if (!uncompressed) return;
+
 		soundChunk = uncompressed.get();
+		SMART_FREE(uncompressed);
 		soundChunkSize = uncSize;
 		sndType = *(u32 *)soundChunk;
 	}

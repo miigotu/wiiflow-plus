@@ -64,8 +64,8 @@ u32 CMenu::_downloadCheatFileAsync(void *obj)
 		if (file != NULL)
 		{
 			fwrite(cheatfile.data, 1, cheatfile.size, file);
-			fclose(file);
-			
+			SAFE_CLOSE(file);
+			SMART_FREE(buffer);
 			m->m_thrdWorking = false;
 			return 0;
 		}

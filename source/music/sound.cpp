@@ -82,7 +82,7 @@ void SSoundEffect::stop(void)
 	loopFlag = 0;
 	ASND_StopVoice(v);
 	length = 0;
-	data.release();
+	SMART_FREE(data);
 }
 
 bool SSoundEffect::fromWAVFile(const char *filename)
@@ -96,13 +96,14 @@ bool SSoundEffect::fromWAVFile(const char *filename)
 	file.seekg(0, ios::end);
 	fileSize = file.tellg();
 	file.seekg(0, ios::beg);
+
 	buffer = smartMem2Alloc(fileSize);
-	if (!buffer)
-		return false;
+	if (!buffer) return false;
+
 	file.read((char *)buffer.get(), fileSize);
-	if (file.fail())
-		return false;
+	if (file.fail()) return false;
 	file.close();
+
 	return fromWAV(buffer.get(), fileSize);
 }
 
@@ -437,15 +438,15 @@ static void decodeADPCMBlock(s16 *buffer, const BNSADPCMBlock &block, BNSDecObj 
 static SmartBuf decodeBNS(u32 &size, const BNSInfo &bnsInfo, const BNSData &bnsData)
 {
 	static s16 smplBlock[14];
+	s16 *outputBuf;
 	BNSDecObj decObj;
 	int numBlocks = (bnsData.size - 8) / 8;
 	int numSamples = numBlocks * 14;
 	const BNSADPCMBlock *inputBuf = (const BNSADPCMBlock *)&bnsData.data;
-	SmartBuf buffer = smartMem2Alloc(numSamples * sizeof (s16));
-	s16 *outputBuf;
 
-	if (!buffer)
-		return buffer;
+	SmartBuf buffer = smartMem2Alloc(numSamples * sizeof (s16));
+	if (!buffer) return buffer;
+
 	memcpy(decObj.coeff, bnsInfo.coefficients1, sizeof decObj.coeff);
 	memcpy(decObj.prevSamples, bnsInfo.chan1PrevSamples, sizeof decObj.prevSamples);
 	outputBuf = (s16 *)buffer.get();
@@ -483,8 +484,6 @@ static SmartBuf decodeBNS(u32 &size, const BNSInfo &bnsInfo, const BNSData &bnsD
 
 bool SSoundEffect::fromBNS(const u8 *buffer, u32 size)
 {
-	SmartBuf decodedData;
-
 	stop();
 	LockMutex lock(snd_mutex);
 	const BNSHeader &hdr = *(BNSHeader *)buffer;
@@ -529,16 +528,14 @@ bool SSoundEffect::fromBNS(const u8 *buffer, u32 size)
 	if (infoChunk.codecNum == 0)
 	{
 		data = decodeBNS(length, infoChunk, dataChunk);
-		if (infoChunk.loopFlag)
-			gprintf("| Length: %i |\n\n", length);
-		if (!data)
-			return false;
+		if (infoChunk.loopFlag)	gprintf("| Length: %i |\n\n", length);
+		if (!data) return false;
 	}
 	else
 	{
 		data = smartMem2Alloc(dataChunk.size);
-		if (!data)
-			return false;
+		if (!data) return false;
+
 		memcpy(data.get(), &dataChunk.data, dataChunk.size);
 		length = dataChunk.size;
 	}

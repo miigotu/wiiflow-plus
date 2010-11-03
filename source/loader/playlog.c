@@ -40,45 +40,41 @@ playrec_struct playrec_buf;
 // Thanks to Dr. Clipper
 u64 getWiiTime(void)
 {
-	time_t uTime;
-	uTime = time(NULL);
+	time_t uTime = time(NULL);
 	return TICKS_PER_SECOND * (uTime - SECONDS_TO_2000);
 }
 
 int Playlog_Update(const char ID[6], const u8 title[84])
 {
-	s32 ret,playrec_fd;
 	u32 sum = 0;
 	u8 i;
-	u64 stime;
-	playrec_struct playrec_buf;
+
 	//Open play_rec.dat
-	playrec_fd = IOS_Open(PLAYRECPATH, IPC_OPEN_RW);
+	s32 playrec_fd = IOS_Open(PLAYRECPATH, IPC_OPEN_RW);
 	if(playrec_fd == -106)
-		{
+	{
 		gprintf("IOS_Open error ret: %i\n",playrec_fd);
 		IOS_Close(playrec_fd);
 		
 		//In case the play_rec.dat wasn´t found create one and try again
-		int ret = ISFS_CreateFile(PLAYRECPATH,0,3,3,3);
-		if( ret < 0 )
-			goto error_1;
+		if(ISFS_CreateFile(PLAYRECPATH,0,3,3,3) < 0 )
+			goto error_2;
 			
 		playrec_fd = IOS_Open(PLAYRECPATH, IPC_OPEN_RW);
 		if(playrec_fd < 0)
-			goto error_1;
-		}
+			goto error_2;
+	}
 	else if(playrec_fd < 0)
-		goto error_1;
+		goto error_2;
 
-    stime = getWiiTime();
+    u64 stime = getWiiTime();
 	playrec_buf.ticks_boot = stime;
 	playrec_buf.ticks_last = stime;
 
 	//Update channel name and ID
 	memcpy(playrec_buf.name, title, 84);
 	memcpy(playrec_buf.title_id, ID, 6);
-	
+
 	memset(playrec_buf.unknown, 0, 18);
 
 	//Calculate and update checksum
@@ -87,9 +83,8 @@ int Playlog_Update(const char ID[6], const u8 title[84])
 	playrec_buf.checksum=sum;
 
 	//Write play_rec.dat
-	ret = IOS_Write(playrec_fd, &playrec_buf, sizeof(playrec_buf));
-	if(ret!=sizeof(playrec_buf))
-		goto error_2;
+	if(IOS_Write(playrec_fd, &playrec_buf, sizeof(playrec_buf)) != sizeof(playrec_buf))
+		goto error_1;
 
 	IOS_Close(playrec_fd);
 	return 0;
@@ -105,27 +100,23 @@ error_2:
 
 int Playlog_Delete(void) //Make Wiiflow not show in playlog
 {
-	s32 ret,playrec_fd;
-	
 	//Open play_rec.dat
-	playrec_fd = IOS_Open(PLAYRECPATH, IPC_OPEN_RW);
+	s32 playrec_fd = IOS_Open(PLAYRECPATH, IPC_OPEN_RW);
 	if(playrec_fd < 0)
-		goto error_1;
+		goto error_2;
 
 	//Read play_rec.dat
-	ret = IOS_Read(playrec_fd, &playrec_buf, sizeof(playrec_buf));
-	if(ret != sizeof(playrec_buf))
-		goto error_2;
+	if(IOS_Read(playrec_fd, &playrec_buf, sizeof(playrec_buf)) != sizeof(playrec_buf))
+		goto error_1;
 
-	if(IOS_Seek(playrec_fd, 0, 0)<0)
-		goto error_2;
+	if(IOS_Seek(playrec_fd, 0, 0) < 0)
+		goto error_1;
     
 	// invalidate checksum
 	playrec_buf.checksum=0;
 
-	ret = IOS_Write(playrec_fd, &playrec_buf, sizeof(playrec_buf));
-	if(ret!=sizeof(playrec_buf))
-		goto error_2;
+	if(IOS_Write(playrec_fd, &playrec_buf, sizeof(playrec_buf)) != sizeof(playrec_buf))
+		goto error_1;
 
 	IOS_Close(playrec_fd);
 	return 0;

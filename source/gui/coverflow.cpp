@@ -540,7 +540,7 @@ void CCoverFlow::setBlur(u32 blurResolution, u32 blurRadius, float blurFactor)
 	u32 i = min(max(0u, blurResolution), sizeof blurRes / sizeof blurRes[0] - 1u);
 	m_effectTex.width = blurRes[i].x;
 	m_effectTex.height = blurRes[i].y;
-	m_effectTex.data.release();
+	SMART_FREE(m_effectTex.data);
 	m_blurRadius = min(max(1u, blurRadius), 3u);
 	m_blurFactor = min(max(1.f, blurFactor), 2.f);
 }
@@ -588,7 +588,7 @@ void CCoverFlow::stopPicLoader(bool empty)
 	if (empty)
 		for (u32 i = 0; i < m_items.size(); ++i)
 		{
-			m_items[i].texture.data.release();
+			SMART_FREE(m_items[i].texture.data);
 			m_items[i].state = CCoverFlow::STATE_Loading;
 		}
 }
@@ -2256,26 +2256,25 @@ bool CCoverFlow::preCacheCover(const char *id, const u8 *png, bool full)
 		return false;
 	if (STexture::TE_OK != tex.fromPNG(png, textureFmt, ALLOC_COVER, 32))
 		return false;
-	bufSize = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
-	if (m_compressCache)
+	if (!m_cachePath.empty())
 	{
-		zBufferSize = bufSize + bufSize / 100 + 12;
-		zBuffer = smartMem2Alloc(zBufferSize);
-		if (!zBuffer)
-			return false;
-		if (compress(zBuffer.get(), &zBufferSize, tex.data.get(), bufSize) != Z_OK)
-			return false;
+		bufSize = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
+		zBufferSize = m_compressCache ? bufSize + bufSize / 100 + 12 : bufSize;
+		zBuffer = m_compressCache ? smartMem2Alloc(zBufferSize) : tex.data;
+		if (!!zBuffer && (!m_compressCache || compress(zBuffer.get(), &zBufferSize, tex.data.get(), bufSize) == Z_OK))
+		{
+			file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), id).c_str(), "wb");
+			if (file != 0)
+			{
+				SWFCHeader header(tex, full, m_compressCache);
+				fwrite(&header, 1, sizeof header, file);
+				fwrite(zBuffer.get(), 1, zBufferSize, file);
+				SAFE_CLOSE(file);
+				SMART_FREE(zBuffer);
+			}
+		}
 	}
-	file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), id).c_str(), "wb");
-	if (file == 0)
-		return false;
-	SWFCHeader header(tex, full, m_compressCache);
-	fwrite(&header, 1, sizeof header, file);
-	if (m_compressCache)
-		fwrite(zBuffer.get(), 1, zBufferSize, file);
-	else
-		fwrite(tex.data.get(), 1, bufSize, file);
-	fclose(file);
+
 	return true;
 }
 
@@ -2292,7 +2291,7 @@ bool CCoverFlow::fullCoverCached(const char *id)
 			&& header.full != 0 && m_compressTextures == (header.cmpr != 0)
 			&& header.getWidth() >= 8 && header.getHeight() >= 8
 			&& header.getWidth() <= 1024 && header.getHeight() <= 1024;
-		fclose(file);
+		SAFE_CLOSE(file);
 	}
 	return found;
 }
@@ -2332,14 +2331,15 @@ bool CCoverFlow::_loadCoverTexPNG(u32 i, bool box, bool hq)
 				SWFCHeader header(tex, box, m_compressCache);
 				fwrite(&header, 1, sizeof header, file);
 				fwrite(zBuffer.get(), 1, zBufferSize, file);
-				fclose(file);
+				SAFE_CLOSE(file);
+				SMART_FREE(zBuffer);
 				if (m_deletePicsAfterCaching)
 					remove(path);
 			}
 		}
 	}
-	if (!hq)
-		_dropHQLOD(i);
+	if (!hq) _dropHQLOD(i);
+
 	return true;
 }
 
@@ -2383,6 +2383,7 @@ void CCoverFlow::_dropHQLOD(int i)
 	memcpy(newTex.data.get(), prevTex.data.get() + (prevTexLen - newTexLen), newTexLen);
 	DCFlushRange(newTex.data.get(), newTexLen);
 	prevTex = newTex;
+	SMART_FREE(newTex.data);
 }
 
 CCoverFlow::CLRet CCoverFlow::_loadCoverTex(u32 i, bool box, bool hq)
@@ -2419,12 +2420,14 @@ CCoverFlow::CLRet CCoverFlow::_loadCoverTex(u32 i, bool box, bool hq)
 					tex.width = header.getWidth();
 					tex.height = header.getHeight();
 					tex.maxLOD = header.maxLOD;
+
 					bufSize = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
-					if (!hq)
-						CCoverFlow::_calcTexLQLOD(tex);
+					if (!hq) CCoverFlow::_calcTexLQLOD(tex);
 					texLen = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
+					
 					tex.data = smartCoverAlloc(texLen);
 					ptrTex = (header.zipped != 0) ? smartMem2Alloc(bufSize) : tex.data;
+
 					if (!ptrTex || !tex.data)
 						allocFailed = true;
 					else
@@ -2442,8 +2445,7 @@ CCoverFlow::CLRet CCoverFlow::_loadCoverTex(u32 i, bool box, bool hq)
 							uLongf size = bufSize;
 							if (header.zipped == 0 || (uncompress(ptrTex.get(), &size, zBuffer.get(), fileSize - sizeof header) == Z_OK && size == bufSize))
 							{
-								if (header.zipped != 0)
-									memcpy(tex.data.get(), ptrTex.get() + bufSize - texLen, texLen);
+								if (header.zipped != 0)	memcpy(tex.data.get(), ptrTex.get() + bufSize - texLen, texLen);
 								LockMutex lock(m_mutex);
 								m_items[i].texture = tex;
 								DCFlushRange(tex.data.get(), texLen);
@@ -2456,13 +2458,14 @@ CCoverFlow::CLRet CCoverFlow::_loadCoverTex(u32 i, bool box, bool hq)
 				}
 			}
 			//
-			fclose(file);
-			if (success)
-				return CCoverFlow::CL_OK;
+			SAFE_CLOSE(file);
+			SMART_FREE(tex.data);
+			SMART_FREE(ptrTex);
+			SMART_FREE(zBuffer);
+			if (success) return CCoverFlow::CL_OK;
 		}
 	}
-	if (allocFailed)
-		return CCoverFlow::CL_NOMEM;
+	if (allocFailed) return CCoverFlow::CL_NOMEM;
 	// If not found, load the PNG
 	return _loadCoverTexPNG(i, box, hq) ? CCoverFlow::CL_OK : CCoverFlow::CL_ERROR;
 }
@@ -2497,7 +2500,7 @@ int CCoverFlow::_picLoader(CCoverFlow *cf)
 		{
 			i = loopNum((j & 1) != 0 ? firstItem - (j + 1) / 2 : firstItem + j / 2, numItems);
 			LWP_MutexLock(cf->m_mutex);
-			cf->m_items[i].texture.data.release();
+			SMART_FREE(cf->m_items[i].texture.data);
 			cf->m_items[i].state = CCoverFlow::STATE_Loading;
 			LWP_MutexUnlock(cf->m_mutex);
 		}

@@ -85,6 +85,7 @@
 #include <ctype.h>
 
 #include "MD5.h"
+#include "utils.h"
 
 
 /* -------------------------------------------------------------------------- **
@@ -569,9 +570,10 @@ unsigned char * MD5fromFile(unsigned char *dst, const char *src)
 
     unsigned char * buffer = malloc(blksize);
 
-    if(buffer == NULL){
+    if(!!buffer)
+	{
 	    //no memory
-        fclose(file);
+        SAFE_CLOSE(file);
 		return NULL;
 	}
 
@@ -582,8 +584,8 @@ unsigned char * MD5fromFile(unsigned char *dst, const char *src)
 
 	} while(read > 0);
 
-    fclose(file);
-    free(buffer);
+    SAFE_CLOSE(file);
+    SAFE_FREE(buffer);
 
     (void)auth_md5CloseCtx( ctx, dst );       /* Close the context.   */
 

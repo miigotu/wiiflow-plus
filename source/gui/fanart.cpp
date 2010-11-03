@@ -76,6 +76,8 @@ bool CFanart::load(Config &m_globalConfig, const char *path, const char *id)
 	
 	m_bg = fanBg;
 	m_bglq = fanBgLq;
+	SMART_FREE(fanBg.data);
+	SMART_FREE(fanBgLq.data);
 	
 	return retval;
 }
@@ -186,8 +188,7 @@ CFanartElement::CFanartElement(Config &cfg, const char *dir, int artwork)
 	: m_artwork(artwork), m_isValid(false)
 {
 	m_isValid = m_art.fromPNGFile(sfmt("%s/artwork%d.png", dir, artwork).c_str(), GX_TF_RGBA8, ALLOC_MEM2) == STexture::TE_OK;
-	if (!m_isValid)
-		return;
+	if (!m_isValid)	return;
 
 	const char *section = fmt("artwork%d", artwork);
 	
