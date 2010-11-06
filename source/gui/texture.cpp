@@ -19,8 +19,7 @@ static u32 upperPower(u32 width)
 
 u32 fixGX_GetTexBufferSize(u16 wd, u16 ht, u32 fmt, u8 mipmap, u8 maxlod)
 {
-	if (mipmap)
-		return GX_GetTexBufferSize(wd, ht, fmt, mipmap, maxlod + 1);
+	if (mipmap) return GX_GetTexBufferSize(wd, ht, fmt, mipmap, maxlod + 1);
 	return GX_GetTexBufferSize(wd, ht, fmt, mipmap, maxlod);
 }
 
@@ -77,12 +76,10 @@ void STexture::_convertToFlippedRGBA8(u8 *dst, const u8 * src, u32 width, u32 he
 
 void STexture::_convertToRGBA8(u8 *dst, const u8 *src, u32 width, u32 height)
 {
-	u32 i;
-
 	for (u32 y = 0; y < height; ++y)
 		for (u32 x = 0; x < width; ++x)
 		{
-			i = (x + y * width) * 4;
+			u32 i = (x + y * width) * 4;
 			dst[coordsRGBA8(x, y, width) + 1] = src[i];
 			dst[coordsRGBA8(x, y, width) + 32] = src[i + 1];
 			dst[coordsRGBA8(x, y, width) + 33] = src[i + 2];
@@ -92,13 +89,12 @@ void STexture::_convertToRGBA8(u8 *dst, const u8 *src, u32 width, u32 height)
 
 void STexture::_convertToRGB565(u8 *dst, const u8 *src, u32 width, u32 height)
 {
-	u32 i;
 	u16 *dst16 = (u16 *)dst;
 
 	for (u32 y = 0; y < height; ++y)
 		for (u32 x = 0; x < width; ++x)
 		{
-			i = (x + y * width) * 4;
+			u32 i = (x + y * width) * 4;
 			dst16[coordsRGB565(x, y, width)] = ((src[i] & 0xF8) << 8) | ((src[i + 1] & 0xFC) << 3) | (src[i + 2] >> 3);
 		}
 }
@@ -116,8 +112,7 @@ static int colorDistance(const u8 *c0, const u8 *c1)
 static void getBaseColors(u8 *color0, u8 *color1, const u8 *srcBlock)
 {
 	int maxDistance = -1;
-	int i;
-	int j;
+	int i, j;
 
 	for (i = 0; i < 15; ++i)
 		for (j = i + 1; j < 16; ++j)
@@ -184,13 +179,10 @@ void STexture::_convertToCMPR(u8 *dst, const u8 *src, u32 width, u32 height)
 	u8 srcBlock[16 * 4];
 	u8 color0[4];
 	u8 color1[4];
-	u32 ii;
-	u32 jj;
-	u32 k;
 
-	for (jj = 0; jj < height; jj += 8)
-		for (ii = 0; ii < width; ii += 8)
-			for (k = 0; k < 4; ++k)
+	for (u32 jj = 0; jj < height; jj += 8)
+		for (u32 ii = 0; ii < width; ii += 8)
+			for (u32 k = 0; k < 4; ++k)
 			{
 				int i = ii + ((k & 1) << 2);
 				int j = jj + ((k >> 1) << 2);
@@ -210,15 +202,12 @@ void STexture::_convertToCMPR(u8 *dst, const u8 *src, u32 width, u32 height)
 
 STexture::TexErr STexture::fromPNGFile(const char *filename, u8 f, Alloc alloc, u32 minMipSize, u32 maxMipSize)
 {
-	FILE *file = 0;
-	u32 fileSize = 0;
 	SmartBuf ptrPng;
 
-	file = fopen(filename, "rb");
-	if (file == 0)
-		return STexture::TE_ERROR;
+	FILE *file = fopen(filename, "rb");
+	if (file == 0) return STexture::TE_ERROR;
 	fseek(file, 0, SEEK_END);
-	fileSize = ftell(file);
+	u32 fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
 	if (fileSize > 0)
 	{
@@ -228,9 +217,7 @@ STexture::TexErr STexture::fromPNGFile(const char *filename, u8 f, Alloc alloc, 
 				SMART_FREE(ptrPng);
 	}
 	SAFE_CLOSE(file);
-	if (!ptrPng)
-		return STexture::TE_NOMEM;
-	return fromPNG(ptrPng.get(), f, alloc, minMipSize, maxMipSize);
+	return !!ptrPng ? fromPNG(ptrPng.get(), f, alloc, minMipSize, maxMipSize) : STexture::TE_NOMEM;
 }
 
 STexture::TexErr STexture::fromRAW(const u8 *buffer, u32 w, u32 h, u8 f, Alloc alloc)
@@ -285,26 +272,16 @@ STexture::TexErr STexture::fromRAW(const u8 *buffer, u32 w, u32 h, u8 f, Alloc a
 
 STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minMipSize, u32 maxMipSize)
 {
-	IMGCTX ctx;
 	PNGUPROP imgProp;
 	SmartBuf tmpData;
 	SmartBuf tmpData2;
 	u8 maxLODTmp = 0;
 	u8 minLODTmp = 0;
-	u32 pngWidth;
-	u32 pngHeight;
 	u32 baseWidth;
 	u32 baseHeight;
-	u32 newWidth;
-	u32 newHeight;
-	u32 nWidth;
-	u32 nHeight;
-	u8 *pDst;
-	u8 *pSrc;
 
-	ctx = PNGU_SelectImageFromBuffer(buffer);
-	if (ctx == 0)
-		return STexture::TE_ERROR;
+	IMGCTX ctx = PNGU_SelectImageFromBuffer(buffer);
+	if (ctx == 0) return STexture::TE_ERROR;
 	if (PNGU_GetImageProperties(ctx, &imgProp) != PNGU_OK)
 	{
 		PNGU_ReleaseImageContext(ctx);
@@ -324,14 +301,14 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 		default:
 			f = (imgProp.imgColorType == PNGU_COLOR_TYPE_GRAY_ALPHA || imgProp.imgColorType == PNGU_COLOR_TYPE_RGB_ALPHA) ? GX_TF_RGBA8 : GX_TF_RGB565;
 	}
-	pngWidth = imgProp.imgWidth & (f == GX_TF_CMPR ? ~7u : ~3u);
-	pngHeight = imgProp.imgHeight & (f == GX_TF_CMPR ? ~7u : ~3u);
+	u32 pngWidth = imgProp.imgWidth & (f == GX_TF_CMPR ? ~7u : ~3u);
+	u32 pngHeight = imgProp.imgHeight & (f == GX_TF_CMPR ? ~7u : ~3u);
 	if (minMipSize > 0 || maxMipSize > 0)
 		STexture::_calcMipMaps(maxLODTmp, minLODTmp, baseWidth, baseHeight, imgProp.imgWidth, imgProp.imgHeight, minMipSize, maxMipSize);
 	if (maxLODTmp > 0)
 	{
-		newWidth = baseWidth;
-		newHeight = baseHeight;
+		u32 newWidth = baseWidth;
+		u32 newHeight = baseHeight;
 		for (int i = 0; i < minLODTmp; ++i)
 		{
 			newWidth >>= 1;
@@ -367,12 +344,12 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 			SMART_FREE(tmpData2);
 			return STexture::TE_NOMEM;
 		}
-		nWidth = newWidth;
-		nHeight = newHeight;
-		pSrc = tmpData2.get();
+		u32 nWidth = newWidth;
+		u32 nHeight = newHeight;
+		u8 *pSrc = tmpData2.get();
 		if (minLODTmp > 0)
 			pSrc += fixGX_GetTexBufferSize(baseWidth, baseHeight, GX_TF_RGBA8, minLODTmp > 1 ? GX_TRUE : GX_FALSE, minLODTmp - 1);
-		pDst = tmpData.get();
+		u8 *pDst = tmpData.get();
 		for (u8 i = minLODTmp; i <= maxLODTmp; ++i)
 		{
 			switch (f)
@@ -445,26 +422,17 @@ void STexture::_resize(u8 *dst, u32 dstWidth, u32 dstHeight, const u8 *src, u32 
 {
 	float wc = (float)srcWidth / (float)dstWidth;
 	float hc = (float)srcHeight / (float)dstHeight;
-	float ax0;
 	float ax1;
-	float ay0;
 	float ay1;
-	float xf;
-	float yf;
-	u32 x0;
-	u32 y0;
-	u8 *pdst;
-	const u8 *psrc0;
-	const u8 *psrc1;
-
+	
 	for (u32 y = 0; y < dstHeight; ++y)
 	{
 		for (u32 x = 0; x < dstWidth; ++x)
 		{
-			xf = ((float)x + 0.5f) * wc - 0.5f;
-			yf = ((float)y + 0.5f) * hc - 0.5f;
-			x0 = (int)xf;
-			y0 = (int)yf;
+			float xf = ((float)x + 0.5f) * wc - 0.5f;
+			float yf = ((float)y + 0.5f) * hc - 0.5f;
+			u32 x0 = (int)xf;
+			u32 y0 = (int)yf;
 			if (x0 >= srcWidth - 1)
 			{
 				x0 = srcWidth - 2;
@@ -472,7 +440,7 @@ void STexture::_resize(u8 *dst, u32 dstWidth, u32 dstHeight, const u8 *src, u32 
 			}
 			else
 				ax1 = xf - (float)x0;
-			ax0 = 1.f - ax1;
+			float ax0 = 1.f - ax1;
 			if (y0 >= srcHeight - 1)
 			{
 				y0 = srcHeight - 2;
@@ -480,10 +448,10 @@ void STexture::_resize(u8 *dst, u32 dstWidth, u32 dstHeight, const u8 *src, u32 
 			}
 			else
 				ay1 = yf - (float)y0;
-			ay0 = 1.f - ay1;
-			pdst = dst + (x + y * dstWidth) * 4;
-			psrc0 = src + (x0 + y0 * srcWidth) * 4;
-			psrc1 = psrc0 + srcWidth * 4;
+			float ay0 = 1.f - ay1;
+			u8 *pdst = dst + (x + y * dstWidth) * 4;
+			const u8 *psrc0 = src + (x0 + y0 * srcWidth) * 4;
+			const u8 *psrc1 = psrc0 + srcWidth * 4;
 			for (int c = 0; c < 3; ++c)
 				pdst[c] = (u8)((((float)psrc0[c] * ax0) + ((float)psrc0[4 + c] * ax1)) * ay0 + (((float)psrc1[c] * ax0) + ((float)psrc1[4 + c] * ax1)) * ay1 + 0.5f);
 			pdst[3] = 0xFF;	// Alpha not handled, it would require using it in the weights for color channels, easy but slower and useless so far.
@@ -497,13 +465,7 @@ void STexture::_resizeD2x2(u8 *dst, const u8 *src, u32 srcWidth, u32 srcHeight)
 #if 0
 	u32 *dst32 = (u32 *)dst;
 	const u32 *src32 = (const u32 *)src;
-	u32 i = 0;
-	u32 i0 = 0;
-	u32 i1 = 1;
-	u32 i2 = srcWidth;
-	u32 i3 = srcWidth + 1;
-	u32 dstWidth = srcWidth >> 1;
-	u32 dstHeight = srcHeight >> 1;
+	u32 i = 0, i0 = 0, i1 = 1, i2 = srcWidth, i3 = srcWidth + 1, dstWidth = srcWidth >> 1, dstHeight = srcHeight >> 1;
 
 	for (u32 y = 0; y < dstHeight; ++y)
 	{
@@ -525,14 +487,7 @@ void STexture::_resizeD2x2(u8 *dst, const u8 *src, u32 srcWidth, u32 srcHeight)
 		i3 += srcWidth;
 	}
 #else
-	u32 i = 0;
-	u32 i0 = 0;
-	u32 i1 = 4;
-	u32 i2 = srcWidth * 4;
-	u32 i3 = (srcWidth + 1) * 4;
-	u32 dstWidth = srcWidth >> 1;
-	u32 dstHeight = srcHeight >> 1;
-	u32 w4 = srcWidth * 4;
+	u32 i = 0, i0 = 0, i1 = 4, i2 = srcWidth * 4, i3 = (srcWidth + 1) * 4, dstWidth = srcWidth >> 1, dstHeight = srcHeight >> 1, w4 = srcWidth * 4;
 
 	for (u32 y = 0; y < dstHeight; ++y)
 	{
@@ -558,8 +513,7 @@ void STexture::_resizeD2x2(u8 *dst, const u8 *src, u32 srcWidth, u32 srcHeight)
 
 void STexture::_calcMipMaps(u8 &maxLOD, u8 &minLOD, u32 &lod0Width, u32 &lod0Height, u32 width, u32 height, u32 minSize, u32 maxSize)
 {
-	if (minSize < 8)
-		minSize = 8;
+	if (minSize < 8) minSize = 8;
 	lod0Width = upperPower(width);
 	lod0Height = upperPower(height);
 	if (width - (lod0Width >> 1) < lod0Width >> 3 && minSize <= lod0Width >> 1)
@@ -579,24 +533,17 @@ void STexture::_calcMipMaps(u8 &maxLOD, u8 &minLOD, u32 &lod0Width, u32 &lod0Hei
 
 SmartBuf STexture::_genMipMaps(const u8 *src, u32 width, u32 height, u8 maxLOD, u32 lod0Width, u32 lod0Height)
 {
-	SmartBuf dst;
-	u32 nWidth;
-	u32 nHeight;
-	u8 *pSrc;
-	u8 *pDst;
-	u32 bufSize;
-
-	bufSize = fixGX_GetTexBufferSize(lod0Width, lod0Height, GX_TF_RGBA8, GX_TRUE, maxLOD);
-	dst = smartAnyAlloc(bufSize);
+	u32 bufSize = fixGX_GetTexBufferSize(lod0Width, lod0Height, GX_TF_RGBA8, GX_TRUE, maxLOD);
+	SmartBuf dst = smartAnyAlloc(bufSize);
 	if (!dst) return dst;
 	STexture::_resize(dst.get(), lod0Width, lod0Height, src, width, height);
 	DCFlushRange(dst.get(), lod0Width * lod0Height * 4);
-	nWidth = lod0Width;
-	nHeight = lod0Height;
-	pDst = dst.get();
+	u32 nWidth = lod0Width;
+	u32 nHeight = lod0Height;
+	u8 *pDst = dst.get();
 	for (u8 i = 0; i < maxLOD; ++i)
 	{
-		pSrc = pDst;
+		u8 *pSrc = pDst;
 		pDst += nWidth * nHeight * 4;
 		STexture::_resizeD2x2(pDst, pSrc, nWidth, nHeight);
 		DCFlushRange(pDst, nWidth * nWidth);

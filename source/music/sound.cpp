@@ -18,17 +18,14 @@ bool SSoundEffect::play(u8 vol, bool in_thread)
 		LWP_MutexInit(&snd_mutex, false);
 
 	bool ret = false;
-	if (!data || length == 0)
-		return false;
-	if (vol == 0)
-		return true;
+	if (!data || length == 0) return false;
+	if (vol == 0) return true;
 	
 	volume = vol;
 	if (!in_thread)
 		voice = ASND_GetFirstUnusedVoice();
 	
-	if (voice < 0 || voice >= 16)
-		return false;
+	if (voice < 0 || voice >= 16) return false;
 
 	if (!loopFlag && !in_thread)
 		ret = ASND_SetVoice(voice, format, freq, 0, data.get(), length, volume, volume, 0) == SND_OK;
@@ -73,8 +70,7 @@ void SSoundEffect::stop(void)
 	if (snd_mutex == 0)
 		LWP_MutexInit(&snd_mutex, false);
 
-	if (voice < 0)
-		return;
+	if (voice < 0) return;
 
 	LockMutex lock(snd_mutex);
 	s8 v = voice;
@@ -87,17 +83,13 @@ void SSoundEffect::stop(void)
 
 bool SSoundEffect::fromWAVFile(const char *filename)
 {
-	u32 fileSize;
-	SmartBuf buffer;
-
 	ifstream file(filename, ios::in | ios::binary);
-	if (!file.is_open())
-		return false;
+	if (!file.is_open()) return false;
 	file.seekg(0, ios::end);
-	fileSize = file.tellg();
+	u32 fileSize = file.tellg();
 	file.seekg(0, ios::beg);
 
-	buffer = smartMem2Alloc(fileSize);
+	SmartBuf buffer = smartMem2Alloc(fileSize);
 	if (!buffer) return false;
 
 	file.read((char *)buffer.get(), fileSize);

@@ -31,16 +31,22 @@ using namespace std;
 
 static const char FMT_BPIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid6}.png"\
+"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/other/{gameid6}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid6}.png";
+"|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid6}.png"\
+"|http://wiitdb.com/wiitdb/artwork/coverfull/other/{gameid6}.png";
 static const char FMT_BPIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid4}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/other/{gameid4}.png"\
 "|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid4}.png";
+"|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/coverfull/other/{gameid4}.png";
 static const char FMT_PIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid6}.png";
+"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid6}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/other/{gameid6}.png";
 static const char FMT_PIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png";
+"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png"\
+"|http://wiitdb.com/wiitdb/artwork/cover/other/{gameid4}.png";
 
 static block download = { 0, 0 };
 static string countryCode(const string &gameId)
@@ -129,15 +135,12 @@ static string makeURL(const string &format, const string &gameId, const string &
 {
 	string url;
 	string::size_type i = 0;
-	string::size_type j = 0;
-	string k;
 
-	if (format.empty())
-		return string();
+	if (format.empty()) return string();
 	url.reserve(format.size() + 42);
 	while (i != string::npos)
 	{
-		j = format.find_first_of('{', i);
+		string::size_type j = format.find_first_of('{', i);
 		if (j != i)
 			url += format.substr(i, j == string::npos ? string::npos : j - i);
 		i = j;
@@ -149,7 +152,7 @@ static string makeURL(const string &format, const string &gameId, const string &
 				break;
 			if (j > i + 1)
 			{
-				k = format.substr(i, j - i);
+				string k = format.substr(i, j - i);
 				if (k.substr(0, k.size() - 1) == TAG_GAME_ID && k[k.size() - 1] >= '3' && k[k.size() - 1] <= '6')
 					url += gameId.substr(0, (string::size_type)(k[k.size() - 1] - '0'));
 				else if (k == TAG_LOC)
@@ -212,10 +215,8 @@ void CMenu::_showDownload(void)
 
 void CMenu::_setThrdMsg(const wstringEx &msg, float progress)
 {
-	if (m_thrdStop)
-		return;
-	if (msg != L"...")
-		m_thrdMessage = msg;
+	if (m_thrdStop) return;
+	if (msg != L"...") m_thrdMessage = msg;
 	m_thrdMessageAdded = true;
 	m_thrdProgress = progress;
 }
@@ -231,8 +232,7 @@ bool CMenu::_downloadProgress(void *obj, int size, int position)
 
 int CMenu::_coverDownloaderAll(CMenu *m)
 {
-	if (!m->m_thrdWorking)
-		return 0;
+	if (!m->m_thrdWorking) return 0;
 	m->_coverDownloader(false);
 	m->m_thrdWorking = false;
 	return 0;
@@ -240,8 +240,7 @@ int CMenu::_coverDownloaderAll(CMenu *m)
 
 int CMenu::_coverDownloaderMissing(CMenu *m)
 {
-	if (!m->m_thrdWorking)
-		return 0;
+	if (!m->m_thrdWorking) return 0;
 	m->_coverDownloader(true);
 	m->m_thrdWorking = false;
 	return 0;
@@ -249,37 +248,31 @@ int CMenu::_coverDownloaderMissing(CMenu *m)
 
 static bool checkPNGBuf(u8 *data)
 {
-	IMGCTX ctx;
 	PNGUPROP imgProp;
-	int ret;
 
-	ctx = PNGU_SelectImageFromBuffer(data);
+	IMGCTX ctx = PNGU_SelectImageFromBuffer(data);
 	if (ctx == NULL)
 		return false;
-	ret = PNGU_GetImageProperties(ctx, &imgProp);
+	int ret = PNGU_GetImageProperties(ctx, &imgProp);
 	PNGU_ReleaseImageContext(ctx);
 	return ret == PNGU_OK;
 }
 
 static bool checkPNGFile(const char *filename)
 {
-	FILE *file = NULL;
-	long fileSize = 0;
-	SmartBuf ptrPng;
-
-	file = fopen(filename, "rb");
-	if (file == NULL)
-		return false;
+	SmartBuf buffer;
+	FILE *file = fopen(filename, "rb");
+	if (file == NULL) return false;
 	fseek(file, 0, SEEK_END);
-	fileSize = ftell(file);
+	long fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
 	if (fileSize > 0)
 	{
-		ptrPng = smartCoverAlloc(fileSize);
-		if (!!ptrPng) fread(ptrPng.get(), 1, fileSize, file);
+		buffer = smartCoverAlloc(fileSize);
+		if (!!buffer) fread(buffer.get(), 1, fileSize, file);
 	}
 	SAFE_CLOSE(file);
-	return !ptrPng ? false : checkPNGBuf(ptrPng.get());
+	return !buffer ? false : checkPNGBuf(buffer.get());
 }
 
 void CMenu::_initAsyncNetwork()
@@ -316,22 +309,11 @@ int CMenu::_initNetwork()
 {
 
 	while (net_get_status() == -EBUSY || m_thrdNetwork) {}; // Async initialization may be busy, wait to see if it succeeds.
-	if (m_networkInit)
-	{
-		gprintf("Network already initted!\n");
-		return 0;
-	}
-	if (!_isNetworkAvailable())
-	{
-		gprintf("Network has no configured connection!\n");
-		return -2;
-	}
+	if (m_networkInit) return 0;
+	if (!_isNetworkAvailable()) return -2;
 
-	gprintf("if_config...");
-	s64 t = gettime();
 	char ip[16];
 	int val = if_config(ip, NULL, NULL, true);
-	gprintf("DONE! %i seconds\n\n", diff_sec(t, gettime()));
 	
 	m_networkInit = !val;
 	return val;
@@ -348,35 +330,19 @@ void CMenu::_deinitNetwork()
 {
 	net_wc24cleanup();
 	net_deinit();
-	
 	m_networkInit = false;
 }
 
 int CMenu::_coverDownloader(bool missingOnly)
 {
- 	download.data = 0;
- 	download.size = 0;
-
-	u32 n;
-	u32 nbSteps;
-	u32 step;
-	float listWeight = missingOnly ? 0.125f : 0.f;	// 1/8 of the progress bar for testing the PNGs we already have
-	float dlWeight = 1.f - listWeight;
-	int count = 0;
-	int countFlat = 0;
-	FILE *file = NULL;
-	string url;
 	string path;
 	vector<string> coverList;
-	bool savePNG;
-	bool success;
-	vector<string> fmtURLFlat;
-	vector<string> fmtURLBox;
-	u32 bufferSize = 0x280000;	// Maximum download size 2 MB
-	SmartBuf buffer;
+	int count = 0, countFlat = 0;
+	float listWeight = missingOnly ? 0.125f : 0.f;	// 1/8 of the progress bar for testing the PNGs we already have
+	float dlWeight = 1.f - listWeight;
 
-	// Use the cover space as a temporary buffer
-	buffer = smartCoverAlloc(bufferSize);
+	u32 bufferSize = 0x280000;	// Maximum download size 2 MB
+	SmartBuf buffer = smartCoverAlloc(bufferSize);
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
@@ -385,13 +351,13 @@ int CMenu::_coverDownloader(bool missingOnly)
 		m_thrdWorking = false;
 		return 0;
 	}
-	savePNG = m_cfg.getBool("GENERAL", "keep_png", true);
+	bool savePNG = m_cfg.getBool("GENERAL", "keep_png", true);
 
-	fmtURLBox = stringToVector(m_cfg.getString("GENERAL", "url_full_covers_id4", m_current_view == COVERFLOW_CHANNEL ? FMT_BPIC4_URL : FMT_BPIC6_URL), '|');
-	fmtURLFlat = stringToVector(m_cfg.getString("GENERAL", "url_flat_covers_id4", m_current_view == COVERFLOW_CHANNEL ? FMT_PIC4_URL : FMT_PIC6_URL), '|');
+	vector<string> fmtURLBox = stringToVector(m_cfg.getString("GENERAL", "url_full_covers_id4", m_current_view == COVERFLOW_CHANNEL ? FMT_BPIC4_URL : FMT_BPIC6_URL), '|');
+	vector<string> fmtURLFlat = stringToVector(m_cfg.getString("GENERAL", "url_flat_covers_id4", m_current_view == COVERFLOW_CHANNEL ? FMT_PIC4_URL : FMT_PIC6_URL), '|');
 
-	nbSteps = m_gameList.size();
-	step = 0;
+	u32 nbSteps = m_gameList.size();
+	u32 step = 0;
 	if (m_coverDLGameId.empty())
 	{
 		coverList.reserve(m_gameList.size());
@@ -409,7 +375,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 	}
 	else
 		coverList.push_back(m_coverDLGameId);
-	n = coverList.size();
+	u32 n = coverList.size();
 	if (n > 0 && !m_thrdStop)
 	{
 		step = 0;
@@ -433,7 +399,9 @@ int CMenu::_coverDownloader(bool missingOnly)
 		for (u32 i = 0; i < coverList.size() && !m_thrdStop; ++i)
 		{
 			// Try to get the full cover
-			success = false;
+			string url;
+			bool success = false;
+			FILE *file = NULL;
 			vector<string> newID(1);
 			for (u32 j = 0; !success && j < fmtURLBox.size() && !m_thrdStop; ++j)
 			{
@@ -483,8 +451,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 				if (!checkPNGFile(path.c_str()))
 				{
 					// Try to get the front cover
-					if (m_thrdStop)
-						break;
+					if (m_thrdStop) break;
 					for (u32 j = 0; !success && j < fmtURLFlat.size() && !m_thrdStop; ++j)
 					{
 						url = makeURL(fmtURLFlat[j], newID[0], countryCode(newID[0]));
@@ -525,10 +492,6 @@ int CMenu::_coverDownloader(bool missingOnly)
 		coverList.clear();
 		m_newID.unload();
 	}
-	SMART_FREE(buffer);
-	download.data = NULL;
-	download.size = 0;
-
 	LWP_MutexLock(m_mutex);
 	if (countFlat == 0)
 		_setThrdMsg(wfmt(_fmt("dlmsg5", L"%i/%i files downloaded."), count, n), 1.f);
@@ -693,21 +656,14 @@ void CMenu::_textDownload(void)
 
 s8 CMenu::_versionTxtDownloaderInit(CMenu *m) //Handler to download versions txt file
 {
-	if (!m->m_thrdWorking)
-		return 0;
+	if (!m->m_thrdWorking) return 0;
 	return m->_versionTxtDownloader();
 }
 
 s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 {
- 	download.data = 0;
- 	download.size = 0;
-
-	wstringEx ws;
-	SmartBuf buffer;
-	FILE *file = NULL;
-	u32 bufferSize = 1 * 0x001000;	// Maximum download size 4kb
-	buffer = smartCoverAlloc(bufferSize);
+	u32 bufferSize = 0x001000;	// Maximum download size 4kb
+	SmartBuf buffer = smartCoverAlloc(bufferSize);
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
@@ -716,9 +672,7 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 		m_thrdWorking = false;
 		return 0;
 	}
-	
-	// langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
-	
+
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
 	LWP_MutexUnlock(m_mutex);
@@ -753,7 +707,7 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
 			LWP_MutexUnlock(m_mutex);			
 			
-			file = fopen(m_ver.c_str(), "wb");
+			FILE *file = fopen(m_ver.c_str(), "wb");
 			sleep(1);
 			if (file != NULL)
 			{
@@ -790,30 +744,18 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 
 		}
 	}
-	SMART_FREE(buffer);
-	download.data = NULL;
-	download.size = 0;
-
 	m_thrdWorking = false;
 	return 0;
 }
 
 s8 CMenu::_versionDownloaderInit(CMenu *m) //Handler to download new dol
 {
-	if (!m->m_thrdWorking)
-		return 0;
+	if (!m->m_thrdWorking) return 0;
 	return m->_versionDownloader();
 }
 
 s8 CMenu::_versionDownloader() // code to download new version
 {
- 	download.data = 0;
- 	download.size = 0;
-
-	wstringEx ws;
-	SmartBuf buffer;
-	FILE *file = NULL;
-
 	char dol_backup[33];
 	strcpy(dol_backup, m_dol.c_str());
 	strcat(dol_backup, ".backup");
@@ -827,30 +769,37 @@ s8 CMenu::_versionDownloader() // code to download new version
 	if (m_data_update_size == 0) m_data_update_size = 1*0x400000;
 /* 	 if(sizeToBuffer == 2000)  sizeToBuffer = 1*0x400000; */	// Buffer for size of the biggest file.
 
-	u32 bufferSize = 1*0x400000;	// Buffer for size of the biggest file.
 	
 	// check for existing dol
     ifstream filestr;
 	gprintf("DOL Path: %s\n", m_dol.c_str());
     filestr.open(m_dol.c_str());
-
     if (filestr.fail())
 	{
-		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg18", L"boot.dol not found at default path!"), 1.f);
-		LWP_MutexUnlock(m_mutex);
 		filestr.close();
 		rename(dol_backup, m_dol.c_str());
-		goto end;
+		filestr.open(m_dol.c_str());
+		if (filestr.fail())
+		{
+			LWP_MutexLock(m_mutex);
+			_setThrdMsg(_t("dlmsg18", L"boot.dol not found at default path!"), 1.f);
+			LWP_MutexUnlock(m_mutex);
+		}
+		filestr.close();
+		sleep(3);
+		m_thrdWorking = false;
+		return 0;
 	}
     filestr.close();
 
-	buffer = smartAnyAlloc(bufferSize);
+	u32 bufferSize = 0x400000;	// Buffer for size of the biggest file.
+	SmartBuf buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(L"Not enough memory!", 1.f);
 		LWP_MutexUnlock(m_mutex);
+		sleep(3);
 		m_thrdWorking = false;
 		return 0;
 	}
@@ -864,7 +813,9 @@ s8 CMenu::_versionDownloader() // code to download new version
 		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
 		LWP_MutexUnlock(m_mutex);
-		goto end;
+		sleep(3);
+		m_thrdWorking = false;
+		return 0;
 	}
 	else
 	{
@@ -896,7 +847,9 @@ s8 CMenu::_versionDownloader() // code to download new version
 					LWP_MutexLock(m_mutex);
 					_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
 					LWP_MutexUnlock(m_mutex);
-					goto end;
+					sleep(3);
+					m_thrdWorking = false;
+					return 0;
 				}
 			}
 		}
@@ -910,7 +863,8 @@ s8 CMenu::_versionDownloader() // code to download new version
 			
 			remove(dol_backup);
 			rename(m_dol.c_str(), dol_backup);
-			
+
+			FILE *file =  NULL;
 			if (zipfile)
 			{
 				remove(m_app_update_zip.c_str());
@@ -926,8 +880,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 					LWP_MutexUnlock(m_mutex);
 					
 					unzFile unzfile = unzOpen(m_app_update_zip.c_str());
-					if (unzfile == NULL)
-						goto fail;
+					if (unzfile == NULL) goto fail;
 
 					int ret = extractZip(unzfile, 0, 1, NULL, m_appDir.c_str());
 					unzClose(unzfile);
@@ -1022,19 +975,14 @@ success:
     filestr.close();
 
 	m_exit = true;
-	goto end;
+	goto out;
+
 fail:
 	rename(dol_backup, m_dol.c_str());
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
 	LWP_MutexUnlock(m_mutex);
-	goto end;
-	
-end:
-	SMART_FREE(buffer);
-	download.data = NULL;
-	download.size = 0;
-
+out:
 	sleep(3);
 	m_thrdWorking = false;
 	return 0;
@@ -1042,35 +990,28 @@ end:
 
 int CMenu::_titleDownloaderAll(CMenu *m)
 {
-	if (!m->m_thrdWorking)
-		return 0;
+	if (!m->m_thrdWorking) return 0;
 	return m->_titleDownloader(false);
 }
 
 int CMenu::_titleDownloaderMissing(CMenu *m)
 {
-	if (!m->m_thrdWorking)
-		return 0;
+	if (!m->m_thrdWorking) return 0;
 	return m->_titleDownloader(true);
 }
 
 int CMenu::_wiitdbDownloader(CMenu *m)
 {
-	if (!m->m_thrdWorking)
-		return 0;
+	if (!m->m_thrdWorking) return 0;
 	return m->_wiitdbDownloaderAsync();
 }
 
 int CMenu::_wiitdbDownloaderAsync()
 {
- 	download.data = 0;
- 	download.size = 0;
-
 	string langCode;
-	SmartBuf buffer;
+
 	u32 bufferSize = 0x800000; // 8 MB
-	
-	buffer = smartAnyAlloc(bufferSize);
+	SmartBuf buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
@@ -1119,30 +1060,17 @@ int CMenu::_wiitdbDownloaderAsync()
 			}
 		}
 	}
-	SMART_FREE(buffer);
-	download.data = NULL;
-	download.size = 0;
-
 	m_thrdWorking = false;
 	return 0;
 }
 
 int CMenu::_titleDownloader(bool missingOnly)
 {
- 	download.data = 0;
- 	download.size = 0;
-
 	Config titles;
-	string langCode;
-	wstringEx ws;
 	bool ok = false;
-	SmartBuf buffer;
-	const char *p;
-	const char *txtEnd;
-	u32 len;
-	u32 bufferSize = 1 * 0x080000;	// Maximum download size 512kb
 
-	buffer = smartAnyAlloc(bufferSize);
+	u32 bufferSize = 1 * 0x080000;	// Maximum download size 512kb
+	SmartBuf buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
@@ -1150,8 +1078,9 @@ int CMenu::_titleDownloader(bool missingOnly)
 		LWP_MutexUnlock(m_mutex);
 		return 0;
 	}
+
 	titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str());
-	langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
+	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
 	LWP_MutexUnlock(m_mutex);
@@ -1178,11 +1107,11 @@ int CMenu::_titleDownloader(bool missingOnly)
 		else
 		{
 			download.data[min(download.size, bufferSize - 1)] = 0;
-			p = (const char *)download.data;
-			txtEnd = (const char *)download.data + download.size;
+			const char *p = (const char *)download.data;
+			const char *txtEnd = (const char *)download.data + download.size;
 			while (p < txtEnd)
 			{
-				len = strcspn((char *)p, "\n");
+				u32 len = strcspn((char *)p, "\n");
 				if (len > 7)
 				{
 					string l((char *)p, len);
@@ -1224,10 +1153,6 @@ int CMenu::_titleDownloader(bool missingOnly)
 		_setThrdMsg(_t("dlmsg14", L"Done."), 1.f);
 		LWP_MutexUnlock(m_mutex);
 	}
-	SMART_FREE(buffer);
-	download.data = NULL;
-	download.size = 0;
-
 	m_thrdWorking = false;
 	return 0;
 }

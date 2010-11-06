@@ -208,28 +208,29 @@ void CMenu::_showGameInfo(void)
 	_setBg(m_gameinfoBg, m_gameinfoBg);
 	_textGameInfo();
 	
-	if(titlecheck) {
-	m_btnMgr.show(m_gameinfoLblID);
-	m_btnMgr.show(m_gameinfoLblTitle);
-	m_btnMgr.show(m_gameinfoLblRating);
-	m_btnMgr.show(m_gameinfoLblRegion);	
-	m_btnMgr.show(m_gameinfoLblDev);
-	m_btnMgr.show(m_gameinfoLblPublisher);
-	m_btnMgr.show(m_gameinfoLblRlsdate);
-	m_btnMgr.show(m_gameinfoLblGenre);
-	m_btnMgr.show(m_gameinfoLblWifiplayers);
+	if(titlecheck)
+	{
+		m_btnMgr.show(m_gameinfoLblID);
+		m_btnMgr.show(m_gameinfoLblTitle);
+		m_btnMgr.show(m_gameinfoLblRating);
+		m_btnMgr.show(m_gameinfoLblRegion);	
+		m_btnMgr.show(m_gameinfoLblDev);
+		m_btnMgr.show(m_gameinfoLblPublisher);
+		m_btnMgr.show(m_gameinfoLblRlsdate);
+		m_btnMgr.show(m_gameinfoLblGenre);
+		m_btnMgr.show(m_gameinfoLblWifiplayers);
 
-	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblUser); ++i)
-		if (i < ARRAY_SIZE(m_gameinfoLblUser) / 2)
-			m_btnMgr.show(m_gameinfoLblUser[i]);
-	
-	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControlsReq); ++i)
-		if (m_gameinfoLblControlsReq[i] != -1u && i < cnt_controlsreq)
-			m_btnMgr.show(m_gameinfoLblControlsReq[i]);
+		for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblUser); ++i)
+			if (i < ARRAY_SIZE(m_gameinfoLblUser) / 2)
+				m_btnMgr.show(m_gameinfoLblUser[i]);
 		
-	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControls); ++i)
-		if (m_gameinfoLblControls[i] != -1u && i < cnt_controls)
-			m_btnMgr.show(m_gameinfoLblControls[i]);
+		for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControlsReq); ++i)
+			if (m_gameinfoLblControlsReq[i] != -1u && i < cnt_controlsreq)
+				m_btnMgr.show(m_gameinfoLblControlsReq[i]);
+			
+		for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControls); ++i)
+			if (m_gameinfoLblControls[i] != -1u && i < cnt_controls)
+				m_btnMgr.show(m_gameinfoLblControls[i]);
 	}
 }
 
@@ -255,13 +256,15 @@ void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 
 	m_gameinfoLblTitle = _addLabel(theme, "GAMEINFO/TITLE", theme.btnFont, L"", 125, 37, 440, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 
-	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControlsReq); ++i) {
+	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControlsReq); ++i)
+	{
 		string dom(sfmt("GAMEINFO/CONTROLSREQ%i", i + 1));
 		m_gameinfoLblControlsReq[i] = _addLabel(theme, dom.c_str(), theme.thxFont, L"", 40 + (i*60), 310, 60, 40, theme.txtFontColor, 0, emptyTex);
 		_setHideAnim(m_gameinfoLblControlsReq[i], dom.c_str(), 0, -100, 0.f, 0.f);
 	}
 
-	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControls); ++i) {
+	for (u8 i = 0; i < ARRAY_SIZE(m_gameinfoLblControls); ++i)
+	{
 		string dom(sfmt("GAMEINFO/CONTROLS%i", i + 1));
 		m_gameinfoLblControls[i] = _addLabel(theme, dom.c_str(), theme.thxFont, L"", 40 + (i*60), 380, 60, 40, theme.txtFontColor, 0, emptyTex);
 		_setHideAnim(m_gameinfoLblControls[i], dom.c_str(), 0, -100, 0.f, 0.f);
@@ -341,7 +344,8 @@ void CMenu::_textGameInfo(void)
 		}
 		
 		//Ratings
-		switch(ConvertRatingToIndex(gameinfo.ratingtype)) {
+		switch(ConvertRatingToIndex(gameinfo.ratingtype))
+		{
 			case 0:
 				//CERO
 				if(!strcmp(gameinfo.ratingvalue,"A"))
@@ -430,7 +434,8 @@ void CMenu::_textGameInfo(void)
 			wheel=0;
 		
 		//check required controlls
-		for (u8 i=0;i<16;i++) {
+		for (u8 i=0;i<16;i++)
+		{
 			if (strcmp(gameinfo.accessoriesReq[i],"wiimote")==0)
                 wiimote=1;
             if (strcmp(gameinfo.accessoriesReq[i],"nunchuk")==0)
@@ -525,7 +530,8 @@ void CMenu::_textGameInfo(void)
 		microphone=0,
 		wheel=0;
 
-		for (u8 i=0;i<16;i++) {
+		for (u8 i=0;i<16;i++)
+		{
             if (strcmp(gameinfo.accessories[i],"classiccontroller")==0)
                 classiccontroller=1;
             if (strcmp(gameinfo.accessories[i],"nunchuk")==0)

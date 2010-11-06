@@ -30,8 +30,7 @@ bool CMenu::_updateProgress(void *obj, float progress)
 u32 CMenu::_updateWiiTDBAsync(void *obj)
 {
 	CMenu *m = (CMenu *)obj;
-	if (!m->m_thrdWorking)
-		return 0;
+	if (!m->m_thrdWorking) return 0;
 		
 	// Update wiitdb here
 	LWP_MutexLock(m->m_mutex);
@@ -90,10 +89,7 @@ void CMenu::_updateWiiTDB()
 				LockMutex lock(m_mutex);
 				m_thrdMessageAdded = false;
 				m_btnMgr.setProgress(m_downloadPBar, m_thrdProgress);
-				if (m_thrdProgress >= 1.f) {
-					// m_btnMgr.setText(m_downloadBtnCancel, _t("dl2", L"Back"));
-					break;
-				}
+				if (m_thrdProgress >= 1.f) break;
 				if (prevMsg != m_thrdMessage)
 				{
 					prevMsg = m_thrdMessage;
@@ -104,8 +100,7 @@ void CMenu::_updateWiiTDB()
 					m_btnMgr.hide(m_downloadLblMessage[msg], 0, 0, -1.f, -1.f);
 				}
 			}
-			if (m_thrdStop && !m_thrdWorking)
-				break;
+			if (m_thrdStop && !m_thrdWorking) break;
 		}
 		if (thread != LWP_THREAD_NULL)
 		{
@@ -115,7 +110,5 @@ void CMenu::_updateWiiTDB()
 		_hideWiiTDBUpdate();
 	}
 	else
-	{
 		ReloadXMLDatabase(m_settingsDir.c_str(), (char *) m_curLanguage.c_str(), 1);
-	}
 }

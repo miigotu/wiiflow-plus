@@ -84,8 +84,7 @@ CVideo::~CVideo(void)
 
 void CColor::blend(const CColor &src)
 {
-	if (src.a == 0)
-		return;
+	if (src.a == 0) return;
 	r = (u8)(((int)src.r * (int)src.a + (int)r * (0xFF - (int)src.a)) / 0xFF);
 	g = (u8)(((int)src.g * (int)src.a + (int)g * (0xFF - (int)src.a)) / 0xFF);
 	b = (u8)(((int)src.b * (int)src.a + (int)b * (0xFF - (int)src.a)) / 0xFF);
@@ -120,10 +119,7 @@ void CVideo::init(void)
 
 	u32 type = CONF_GetVideo();
 
-	if (m_wide)
-		m_rmode->viWidth = 700;
-	else
-		m_rmode->viWidth = 672;
+	m_rmode->viWidth = m_wide ? 700 : 672;
 
 	//CONF_VIDEO_NTSC and CONF_VIDEO_MPAL and m_rmode TVEurgb60Hz480IntDf are the same max height and width.
 	if (type == CONF_VIDEO_PAL && m_rmode != &TVEurgb60Hz480IntDf)
@@ -467,7 +463,7 @@ void CVideo::_showWaitMessages(CVideo *m)
 		WIILIGHT_SetLevel(0);
 		WIILIGHT_TurnOn();
 	}
-	while (m->m_showWaitMessage) // || skip2 || skip)
+	while (m->m_showWaitMessage)
 	{
 		if (m->m_useWiiLight)
 		{
@@ -513,8 +509,6 @@ void CVideo::_showWaitMessages(CVideo *m)
 		WIILIGHT_SetLevel(0);
 		WIILIGHT_TurnOff();
 	}
-	//STexture struct uses SmartBuf which is not thread safe.
-	for(u8 i = 0; i < 20; i++) SMART_FREE(m_wTextures[i].data);
 	m->m_waitMessages.clear();
 	m->m_waitMessageThrdStop = true;
 	gprintf("Stop showing images\n");
@@ -533,16 +527,11 @@ void CVideo::waitMessage(float delay)
 
 void CVideo::waitMessage(const vector<STexture> &tex, float delay, bool useWiiLight)
 {
-	if (!m_waitMessageThrdStop && m_waitMessages.size() > 0)
-	{
-		// already running?
-		return;
-	}
+	m_showWaitMessage = false;
+	if (!m_waitMessageThrdStop)	while(!m_waitMessageThrdStop){}
 
-	//STexture struct uses SmartBuf which is not thread safe.
-	for(u8 i = 0; i < 20; i++) SMART_FREE(m_wTextures[i].data);
 	m_waitMessages.clear();
-	
+
 	m_useWiiLight = useWiiLight;
 
 	if (tex.size() == 0)
@@ -569,22 +558,10 @@ void CVideo::waitMessage(const vector<STexture> &tex, float delay, bool useWiiLi
 	}
 	
 	if (m_waitMessages.size() == 1)
-	{
-		m_showWaitMessage = false;
 		waitMessage(m_waitMessages[0]);
-	}
 	else if (m_waitMessages.size() > 1)
 	{
-		if (!m_waitMessageThrdStop)
-		{
-			m_showWaitMessage = false;
-			//If you get this, find where the missed _hideWaitMessage() needs to be.
-			gprintf("Wait message thread was not stopped!\nNow waiting until it is finished\n");
-			while(!m_waitMessageThrdStop){} //Should never happen, unless a _hideWaitMessage() was missed, but prevents a dump just in case.
-		}
 		m_showWaitMessage = true;
-		
-		// Start a thread for this
 		lwp_t thread = LWP_THREAD_NULL;
 		LWP_CreateThread(&thread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, 0, 8192, 80);
 	}

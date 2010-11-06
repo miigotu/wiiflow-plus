@@ -15,9 +15,7 @@ u32 getipbyname(char *domain)
 	//TODO: implement some locking mechanism to make below code atomic
 	struct hostent *host = net_gethostbyname(domain);
 	
-	if(host == NULL) {
-		return 0;
-	}
+	if(host == NULL) return 0;
 	
 	u32 *ip = (u32*)host->h_addr_list[0];
 	return *ip;
@@ -72,9 +70,7 @@ u32 getipbynamecached(char *domain)
 	
 	//No cache of this domain could be found, create a cache node and add it to the front of the cache
 	struct dnsentry *newnode = malloc(sizeof(struct dnsentry));
-	if(newnode == NULL) {
-		return ip;
-	}
+	if(newnode == NULL) return ip;
 		
 	newnode->ip = ip;
 	newnode->domain = malloc(strlen(domain)+1);

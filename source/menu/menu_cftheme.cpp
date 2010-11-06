@@ -312,8 +312,6 @@ void CMenu::_cfTheme(void)
 {
 	u32 curParam = 0;
 	int cfVersion = 1;
-	int btnDelay;
-	bool sel = false;
 	bool wide = m_vid.wide();
 	int copyVersion = 0;
 	bool copySelected = false;
@@ -327,7 +325,6 @@ void CMenu::_cfTheme(void)
 	while (true)
 	{
 		_mainLoopCommon(true, false, curParam == 5 || curParam == 6 || curParam == 7);
-		btnDelay = BTN_B_HELD ? 1 : 4;
 		if (BTN_HOME_PRESSED)
 		{
 			m_theme.clear();
@@ -376,7 +373,7 @@ void CMenu::_cfTheme(void)
 				_loadCFLayout(cfVersion, true, wide != m_vid.wide());
 				m_cf.applySettings();
 		}
-		sel = m_cf.selected();
+		bool sel = m_cf.selected();
 		if (BTN_B_HELD)
 		{
 			if (BTN_PLUS_PRESSED)

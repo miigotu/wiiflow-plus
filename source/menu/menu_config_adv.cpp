@@ -79,7 +79,6 @@ static void listThemes(const char * path, vector<string> &themes)
 {
 	DIR *d;
 	struct dirent *dir;
-	string fileName;
 	bool def = false;
 
 	themes.clear();
@@ -89,7 +88,7 @@ static void listThemes(const char * path, vector<string> &themes)
 		dir = readdir(d);
 		while (dir != 0)
 		{
-			fileName = upperCase(dir->d_name);
+			string fileName = upperCase(dir->d_name);
 			def = def || fileName == "DEFAULT.INI";
 			if (fileName.size() > 4 && fileName.substr(fileName.size() - 4, 4) == ".INI")
 				themes.push_back(fileName.substr(0, fileName.size() - 4));
@@ -104,14 +103,12 @@ static void listThemes(const char * path, vector<string> &themes)
 
 int CMenu::_configAdv(void)
 {
-	struct stat langs;
 	int nextPage = 0;
 	vector<string> themes;
-	int curTheme;
 	string prevTheme = m_cfg.getString("GENERAL", "theme");
 
 	listThemes(m_themeDir.c_str(), themes);
-	curTheme = 0;
+	int curTheme = 0;
 	for (u32 i = 0; i < themes.size(); ++i)
 		if (themes[i] == prevTheme)
 		{
@@ -177,6 +174,7 @@ int CMenu::_configAdv(void)
 					{
 						lang = (int)loopNum((u32)lang + 1, ARRAY_SIZE(CMenu::_translations));
 						m_curLanguage = CMenu::_translations[lang];
+						struct stat langs;
 						if (stat(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str(), &langs) == 0)
 							break;
 					}
@@ -199,6 +197,7 @@ int CMenu::_configAdv(void)
 					{
 						lang = (int)loopNum((u32)lang - 1, ARRAY_SIZE(CMenu::_translations));
 						m_curLanguage = CMenu::_translations[lang];
+						struct stat langs;
 						if (stat(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str(), &langs) == 0)
 							break;
 					}

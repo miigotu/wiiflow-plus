@@ -51,7 +51,6 @@ WiiMovie::WiiMovie(const char * filepath)
     Video = openVideo(file);
     if(!Video)
     {
-//        ShowError(tr("Unsupported format!"));
         ExitRequested = true;
 		return;
     }
@@ -90,15 +89,12 @@ WiiMovie::~WiiMovie()
 
 bool WiiMovie::Play(bool loop)
 {
-    if(!Video)
-        return false;
+    if(!Video) return false;
 
     Playing = true;
     PlayTime.reset();
     LWP_ResumeThread(ReadThread);
-
 	LWP_CreateThread(&PlayThread, PlayingThread, this, NULL, 0, 70);
-//    InternalUpdate();
 	
 	Video->loop = loop;	
 	
@@ -113,7 +109,7 @@ void WiiMovie::Stop()
 
 void WiiMovie::SetVolume(int vol)
 {
-    volume = 255*vol/100;
+    volume = 255 * vol/100;
     ASND_ChangeVolumeVoice(10, volume, volume);
 }
 
@@ -127,8 +123,7 @@ void WiiMovie::SetScreenSize(int width, int height, int top, int left)
 
 void WiiMovie::SetFullscreen()
 {
-    if(!Video)
-        return;
+    if(!Video) return;
 
     float newscale = 1000.0f;
 
@@ -157,8 +152,7 @@ void WiiMovie::SetFullscreen()
 
 void WiiMovie::SetFrameSize(int w, int h)
 {
-    if(!Video)
-        return;
+    if(!Video) return;
 
     scaleX = (float) w /(float) width;
     scaleY = (float) h /(float) height;
@@ -166,8 +160,7 @@ void WiiMovie::SetFrameSize(int w, int h)
 
 void WiiMovie::SetAspectRatio(float Aspect)
 {
-    if(!Video)
-        return;
+    if(!Video) return;
 
     float vidwidth = (float) height*scaleY*Aspect;
 
@@ -180,9 +173,7 @@ extern "C" void THPSoundCallback(int)
         return;
 
     if(ASND_AddVoice(10, (u8*) &soundbuffer[which][0], sndsize[which]) != SND_OK)
-    {
         return;
-    }
 
     which ^= 1;
 
@@ -192,9 +183,8 @@ extern "C" void THPSoundCallback(int)
 void * WiiMovie::UpdateThread(void *arg)
 {
 	while(!((WiiMovie *) arg)->ExitRequested)
-	{
         ((WiiMovie *) arg)->InternalThreadUpdate();
-	}
+
 	return NULL;
 }
 
@@ -206,8 +196,7 @@ void * WiiMovie::PlayingThread(void *arg)
 
 void WiiMovie::InternalThreadUpdate()
 {
-    if(!Playing)
-        LWP_SuspendThread(ReadThread);
+    if(!Playing) LWP_SuspendThread(ReadThread);
 
     u32 FramesNeeded = (u32) (PlayTime.elapsed()*Video->getFps());
 
@@ -254,16 +243,16 @@ void WiiMovie::LoadNextFrame()
     Video->getCurrentFrame(VideoF);
     LWP_MutexUnlock(mutex);
 
-    if(!VideoF.getData())
-        return;
+    if(!VideoF.getData()) return;
 
     if(width != VideoF.getWidth())
     {
         width = VideoF.getWidth();
         height = VideoF.getHeight();
-		if (fullScreen) {
+		if (fullScreen)
 			SetFullscreen();
-		} else {
+		else
+		{
 			// Calculate new top and left
 			screenleft = (screenwidth - width) / 2;
 			screentop = (screenheight - height) / 2;
@@ -288,25 +277,9 @@ void WiiMovie::InternalUpdate()
 
 bool WiiMovie::GetNextFrame(STexture *tex)
 {
-	if (!Video || Frames.size() == 0)
-		return false;
+	if (!Video || Frames.size() == 0) return false;
 	
 	*tex = Frames.at(0);
 	Frames.erase(Frames.begin());
 	return true;
-/*	
-	bool retval = false;
-	
-	if (Frames.size() > 3)
-	{
-		*tex = Frames.at(3);
-		retval = true;
-	}
-	
-	if (Frames.size() > 4)
-	{
-		Frames.erase(Frames.begin());
-	}
-	return retval;
-*/
 }

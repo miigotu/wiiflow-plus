@@ -259,15 +259,12 @@ static void setLanguage(int l)
 		configbytes[0] = 0xCD;
 }
 
-extern "C" {
-	bool DatabaseLoaded(void);
-}
+extern "C" { bool DatabaseLoaded(void); }
 
 void CMenu::_game(bool launch)
 {
-	bool b;
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
-	//wdm_loaded = load_wdm(m_wdmDir.c_str(), m_cf.getId().c_str()) == 0;
+
 	if (!launch)
 	{
 		SetupInput();
@@ -484,7 +481,7 @@ void CMenu::_game(bool launch)
 		}
 		if (m_show_zone_game)
 		{
-			b = m_gcfg1.getBool("FAVORITES", id, false);
+			bool b = m_gcfg1.getBool("FAVORITES", id, false);
 			m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
 			m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
 			m_btnMgr.show(m_gameBtnPlay);
@@ -791,23 +788,18 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	}
 
 	int rtrnID = 0;
-	if (rtrn != NULL && strlen(rtrn) == 4)
-		rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
+	if (!m_directLaunch)
+		if (rtrn != NULL && strlen(rtrn) == 4)
+			rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
 	
-	if (m_directLaunch)
-		rtrnID = 0;
 
-	SmartBuf cheatFile, gameconfig;
-	u32 cheatSize = 0, gameconfigSize = 0;
-	SmartBuf dolFile;
-	u32 dolSize = 0;
+	SmartBuf cheatFile, gameconfig, dolFile;
+	u32 cheatSize = 0, gameconfigSize = 0, dolSize = 0;
 	bool iosLoaded = false;
 
 	_waitForGameSoundExtract();
 	if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
 	if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
-	if (strcasecmp(altdol.c_str(), "main.dol") == 0)
-		altdol.clear();
 	m_cfg.setString("GENERAL", "current_game", id);
 	m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg2.getInt("PLAYCOUNT", id, 0) + 1);
 	m_gcfg1.setUInt("LASTPLAYED", id, time(NULL));
@@ -834,6 +826,8 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 
 		free_wdm();
 	}
+	if (strcasecmp(altdol.c_str(), "main.dol") == 0)
+		altdol.clear();
 	
 	if (!altdol.empty()) dolFile = extractDOL(altdol.c_str(), dolSize, hdr, m_locDol, dvd);
 	
@@ -979,6 +973,7 @@ void CMenu::_initGameMenu(CMenu::SThemeData &theme)
 	texDeleteSel.fromPNG(deletes_png);
 	texSettings.fromPNG(btngamecfg_png);
 	texSettingsSel.fromPNG(btngamecfgs_png);
+
 	_addUserLabels(theme, m_gameLblUser, ARRAY_SIZE(m_gameLblUser), "GAME");
 	m_gameBg = _texture(theme.texSet, "GAME/BG", "texture", theme.bg);
 	if (m_theme.loaded() && STexture::TE_OK == bgLQ.fromPNGFile(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GAME/BG", "texture").c_str()).c_str(), GX_TF_CMPR, ALLOC_MEM2, 64, 64))
@@ -1090,15 +1085,8 @@ SmartBuf uncompressLZ77(u32 &size, const u8 *inputBuf, u32 inputLength)
 
 void CMenu::_loadGameSound(dir_discHdr *hdr)
 {
-	Banner *banner = NULL;
-	const u8 *soundBin;
-	u32 sndType;
 	u32 sndSize = 0;
-	const u8 *soundChunk;
-	u32 soundChunkSize;
-	SmartBuf uncompressed;
-
-	banner = m_current_view == COVERFLOW_USB ? _extractBnr(hdr) : _extractChannelBnr(hdr->hdr.chantitle);
+	Banner *banner = m_current_view == COVERFLOW_USB ? _extractBnr(hdr) : _extractChannelBnr(hdr->hdr.chantitle);
 
 	if (banner == NULL || !banner->IsValid())
 	{
@@ -1107,18 +1095,17 @@ void CMenu::_loadGameSound(dir_discHdr *hdr)
 	}
 	_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str()));
 	
-	soundBin = banner->GetFile((char *) "sound.bin", &sndSize);
+	const u8 *soundBin = banner->GetFile((char *) "sound.bin", &sndSize);
 
 	if (soundBin == NULL || ((IMD5Header *)soundBin)->fcc != 'IMD5')
 		return;
-	soundChunk = soundBin + sizeof (IMD5Header);
-	sndType = *(u32 *)soundChunk;
-	soundChunkSize = sndSize - sizeof (IMD5Header);
+	const u8 *soundChunk = soundBin + sizeof (IMD5Header);
+	u32 sndType = *(u32 *)soundChunk;
+	u32 soundChunkSize = sndSize - sizeof (IMD5Header);
 	if (sndType == 'LZ77')
 	{
 		u32 uncSize;
-
-		uncompressed = uncompressLZ77(uncSize, soundChunk, soundChunkSize);
+		SmartBuf uncompressed = uncompressLZ77(uncSize, soundChunk, soundChunkSize);
 		if (!uncompressed) return;
 
 		soundChunk = uncompressed.get();
@@ -1167,8 +1154,7 @@ int CMenu::_loadGameSoundThrd(CMenu *m)
 
 void CMenu::_playGameSound(void)
 {
-	if (m_bnrSndVol == 0)
-		return;
+	if (m_bnrSndVol == 0) return;
 
 	LWP_MutexLock(m_gameSndMutex);
 	m_gameSoundHdr = m_cf.getHdr();

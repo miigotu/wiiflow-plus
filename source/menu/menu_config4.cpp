@@ -78,6 +78,10 @@ void CMenu::_showConfig4(void)
 	m_btnMgr.setText(m_config4BtnSaveFavMode, m_cfg.getBool("GENERAL", "favorites_on_startup") ? _t("on", L"On") : _t("off", L"Off"));
 	m_btnMgr.setText(m_config4BtnCategoryOnBoot, m_cat.getBool("GENERAL", "category_on_start") ? _t("on", L"On") : _t("off", L"Off"));
 
+	Config titles, custom_titles;
+	titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str());
+	custom_titles.load(sfmt("%s/custom_titles.ini", m_settingsDir.c_str()).c_str());
+
 	wstringEx channelName = m_loc.getWString(m_curLanguage, "disabled", L"Disabled");
 
 	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
@@ -91,7 +95,7 @@ void CMenu::_showConfig4(void)
 		{
 			if (currentChanId == m_channels.GetId(i))
 			{
-				channelName = m_channels.GetName(i);
+				channelName = custom_titles.getWString("TITLES", currentChanId, titles.getWString("TITLES", currentChanId, m_channels.GetName(i)));
 				break;
 			}
 		}

@@ -25,10 +25,8 @@ static s32 send_message(s32 server, char *msg)
 			usleep (20 * 1000);
 			t = gettime();
 		}
-		else if(bytes_transferred < 0)
-		{
-			return bytes_transferred;
-		}
+		else if(bytes_transferred < 0) return bytes_transferred;
+
 		if(ticks_to_millisecs(diff_ticks(t, gettime())) > TCP_TIMEOUT)
 			break;
 	}
@@ -97,8 +95,7 @@ static struct block read_message(s32 connection, struct block buffer, bool (*f)(
 
 			offset += bytes_read;
 			// Not enough memory
-			if(buffer.size <= offset)
-				return emptyblock;
+			if(buffer.size <= offset) return emptyblock;
 			if(!hdr && offset >= sizeof tmpHdr)
 			{
 				hdr = true;
@@ -140,27 +137,15 @@ static struct block read_message(s32 connection, struct block buffer, bool (*f)(
 struct block downloadfile(u8 *buffer, u32 bufferSize, const char *url, bool (*f)(void *, int, int), void *ud)
 {
 	//Check if the url starts with "http://", if not it is not considered a valid url
-	if(strncmp(url, "http://", strlen("http://")) != 0)
-	{
-		//printf("URL '%s' doesn't start with 'http://'\n", url);
-		return emptyblock;
-	}
+	if(strncmp(url, "http://", strlen("http://")) != 0) return emptyblock;
 	
 	//Locate the path part of the url by searching for '/' past "http://"
 	char *path = strchr(url + strlen("http://"), '/');
-	
-	//At the very least the url has to end with '/', ending with just a domain is invalid
-	if(path == NULL)
-	{
-		//printf("URL '%s' has no PATH part\n", url);
-		return emptyblock;
-	}
+	if(path == NULL) return emptyblock;
 	
 	//Extract the domain part out of the url
 	int domainlength = path - url - strlen("http://");
-	
-	if(domainlength == 0)
-		return emptyblock;
+	if(domainlength == 0) return emptyblock;
 	
 	char domain[domainlength + 1];
 	strncpy(domain, url + strlen("http://"), domainlength);
@@ -168,14 +153,10 @@ struct block downloadfile(u8 *buffer, u32 bufferSize, const char *url, bool (*f)
 	
 	//Parsing of the URL is done, start making an actual connection
 	u32 ipaddress = getipbynamecached(domain);
-	
-	if(ipaddress == 0)
-		return emptyblock;
+	if(ipaddress == 0) return emptyblock;
 
 	s32 connection = server_connect(ipaddress, 80);
-	
-	if(connection < 0)
-		return emptyblock;
+	if(connection < 0) return emptyblock;
 	
 	//Form a nice request header to send to the webserver
 	char* headerformat = "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: WiiFlow 2.1\r\n\r\n";;
@@ -207,15 +188,15 @@ struct block downloadfile(u8 *buffer, u32 bufferSize, const char *url, bool (*f)
 		}
 	}
 	
-	if(response.size == 0 || response.data == NULL)
-		return emptyblock;
+	if(response.size == 0 || response.data == NULL) return emptyblock;
 	
 	// Check for the headers
 	char httpCode[3];
 	memcpy(httpCode, &response.data[9], 3);
 	int retCode = atoi(httpCode);
 
-	switch(retCode) {
+	switch(retCode)
+	{
 		case 301:
 		case 302:
 		case 307: // Moved
@@ -233,8 +214,7 @@ struct block downloadfile(u8 *buffer, u32 bufferSize, const char *url, bool (*f)
 			return emptyblock;
 	}
 	
-	if(filestart == NULL)
-		return emptyblock;
+	if(filestart == NULL) return emptyblock;
 	
 	//Copy the file part of the response into a new memoryblock to return
 	struct block file;

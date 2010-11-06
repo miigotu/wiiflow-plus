@@ -94,13 +94,10 @@ extern "C" { int makedir(char *newdir); }
 
 void CMenu::init()
 {
-	string themeName;
 	const char *drive = "usb";
 	const char *wfdrv = "usb";
-	u8 defaultMenuLanguage;
 	struct stat dummy;
 
-	// Data path
 	if (FS_SDAvailable() && FS_USBAvailable())
 	{
 		if (stat(sfmt("sd:/%s/boot.dol", APPDATA_DIR2).c_str(), &dummy) == 0)
@@ -110,12 +107,12 @@ void CMenu::init()
 		wfdrv = FS_USBAvailable() ? "usb" : "sd";
 
 	m_appDir = sfmt("%s:/%s", wfdrv, APPDATA_DIR2);
-	gprintf("Wiiflow boot.dol Location: %s\n", m_appDir.c_str());
+	//gprintf("Wiiflow boot.dol Location: %s\n", m_appDir.c_str());
 	m_cfg.load(sfmt("%s/" CFG_FILENAME, m_appDir.c_str()).c_str());
 
 	drive = m_cfg.getBool("GENERAL", "data_on_usb", strcmp(wfdrv, "usb") == 0) ? FS_USBAvailable() ? "usb" : "sd" : FS_SDAvailable() ? "sd" : "usb";
 	m_dataDir = sfmt("%s:/%s", drive, APPDATA_DIR);
-	gprintf("Data Directory: %s\n", m_dataDir.c_str());
+	//gprintf("Data Directory: %s\n", m_dataDir.c_str());
 	
 	m_dol = sfmt("%s/boot.dol", m_appDir.c_str());
 	m_ver = sfmt("%s/versions", m_appDir.c_str());
@@ -162,11 +159,11 @@ void CMenu::init()
 
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
-	themeName = m_cfg.getString("GENERAL", "theme", "DEFAULT");
+	string themeName = m_cfg.getString("GENERAL", "theme", "DEFAULT");
 	m_themeDataDir = sfmt("%s/%s", m_themeDir.c_str(), themeName.c_str());
 	m_theme.load(sfmt("%s.ini", m_themeDataDir.c_str()).c_str());
-	//
-	defaultMenuLanguage = 7; //English
+
+	u8 defaultMenuLanguage = 7; //English
 	switch (CONF_GetLanguage())
 	{
 		case CONF_LANG_JAPANESE:
@@ -200,68 +197,65 @@ void CMenu::init()
 	if (CONF_GetArea() == CONF_AREA_BRA)
 		defaultMenuLanguage = 2; //Brazilian
 
-	int lang = m_cfg.getInt("GENERAL", "language", defaultMenuLanguage);
-	m_curLanguage = CMenu::_translations[lang];
+	m_curLanguage = CMenu::_translations[m_cfg.getInt("GENERAL", "language", defaultMenuLanguage)];
 	if (!m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str()))
 	{
 		m_cfg.setInt("GENERAL", "language", 0);
 		m_curLanguage = CMenu::_translations[0];
 		m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str());
 	}
-	// 
+
 	m_aa = 3;
-	
-	bool pWide;
-	CColor pShadowColor;
-	float pShadowX;
-	float pShadowY;
-	bool pShadowBlur;
-	pWide = m_vid.wide();
-	pShadowColor = m_theme.getColor("GENERAL", "pointer_shadow_color", CColor(0x3F000000));
-	pShadowX = m_theme.getFloat("GENERAL", "pointer_shadow_x", 3.f);
-	pShadowY = m_theme.getFloat("GENERAL", "pointer_shadow_y", 3.f);
-	pShadowBlur = m_theme.getBool("GENERAL", "pointer_shadow_blur", false);
+
+	CColor pShadowColor = m_theme.getColor("GENERAL", "pointer_shadow_color", CColor(0x3F000000));
+	float pShadowX = m_theme.getFloat("GENERAL", "pointer_shadow_x", 3.f);
+	float pShadowY = m_theme.getFloat("GENERAL", "pointer_shadow_y", 3.f);
+	bool pShadowBlur = m_theme.getBool("GENERAL", "pointer_shadow_blur", false);
 
 	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 		m_cursor[chan].init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", sfmt("pointer%i", chan+1).c_str()).c_str()).c_str(),
-			pWide, pShadowColor, pShadowX, pShadowY, pShadowBlur, chan);
+			m_vid.wide(), pShadowColor, pShadowX, pShadowY, pShadowBlur, chan);
 		
 	m_btnMgr.init(m_vid);
 
 	_buildMenus();
 	_loadCFCfg();
+
 	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 		WPAD_SetVRes(chan, m_vid.width() + m_cursor[chan].width(), m_vid.height() + m_cursor[chan].height());
+
 	m_locked = m_cfg.getString("GENERAL", "parent_code", "").size() >= 4;
 	m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble", true));
 
 	int exit_to = m_cfg.getInt("GENERAL", "exit_to", 0);
-	Sys_ExitTo(exit_to);
 	m_disable_exit = exit_to == 3;
+	Sys_ExitTo(exit_to);
 
 	LWP_MutexInit(&m_mutex, 0);
 	LWP_MutexInit(&m_gameSndMutex, 0);
+
 	soundInit();
+
 	m_cf.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255));
 	m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
 	m_bnrSndVol = m_cfg.getInt("GENERAL", "sound_volume_bnr", 255);
-	
-	m_musicVol = m_cfg.getInt("GENERAL", "sound_volume_music", 255);
-	m_musicCurrentVol = m_musicVol;
+	m_musicVol = m_musicCurrentVol = m_cfg.getInt("GENERAL", "sound_volume_music", 255);
 	
 	if (m_cfg.getBool("GENERAL", "favorites_on_startup", false))
 		m_favorites = m_cfg.getBool("GENERAL", "favorites", false);
-	m_category = m_cat.getInt("GENERAL", "category", 0);//currently selected category
-	m_max_categories = m_cat.getInt("GENERAL", "numcategories", 12);//configured amount of categories to use
-	//m_current_view = m_cfg.getInt("GENERAL", "currentview", COVERFLOW_USB);
-	//if (m_current_view > COVERFLOW_MAX) m_current_view = COVERFLOW_USB;
+	m_category = m_cat.getInt("GENERAL", "category", 0);
+	m_max_categories = m_cat.getInt("GENERAL", "numcategories", 12);
+
 	m_current_view = COVERFLOW_USB;
 	m_loaded_ios_base = get_ios_base();
 
 	_load_installed_cioses();	
-	register_card_provider(m_cfg.getString("GAMERCARD", "wiinnertag_url", WIINNERTAG_URL).c_str(),
-						   m_cfg.getString("GAMERCARD", "wiinnertag_key", "").c_str(),
-						   m_cfg.getBool("GAMERCARD", "wiinnertag_enable", false) ? 1 : 0);
+
+	register_card_provider(
+		m_cfg.getString("GAMERCARD", "wiinnertag_url", WIINNERTAG_URL).c_str(),
+		m_cfg.getString("GAMERCARD", "wiinnertag_key", "").c_str(),
+		m_cfg.getBool("GAMERCARD", "wiinnertag_enable", false) ? 1 : 0
+	);
 }
 
 void CMenu::cleanup(void)
@@ -298,12 +292,7 @@ void CMenu::_setAA(int aa)
 
 void CMenu::_loadCFCfg()
 {
-	string texLoading;
-	string texNoCover;
-	string texLoadingFlat;
-	string texNoCoverFlat;
 	SFont font;
-	string filename;
 	const char *domain = "_COVERFLOW";
 	SSoundEffect cfFlipSnd;
 	SSoundEffect cfHoverSnd;
@@ -312,7 +301,7 @@ void CMenu::_loadCFCfg()
 
 	m_cf.setCachePath(m_cacheDir.c_str(), !m_cfg.getBool("GENERAL", "keep_png", true), m_cfg.getBool("GENERAL", "compress_cache", false));
 	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
-	filename = m_theme.getString(domain, "sound_flip");
+	string filename = m_theme.getString(domain, "sound_flip");
 	cfFlipSnd.fromWAVFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str());
 	filename = m_theme.getString(domain, "sound_hover");
 	cfHoverSnd.fromWAVFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str());
@@ -322,10 +311,10 @@ void CMenu::_loadCFCfg()
 	cfCancelSnd.fromWAVFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str());
 	m_cf.setSounds(cfFlipSnd, cfHoverSnd, cfSelectSnd, cfCancelSnd);
 	// Textures
-	texLoading = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "loading_cover_box").c_str());
-	texNoCover = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "missing_cover_box").c_str());
-	texLoadingFlat = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "loading_cover_flat").c_str());
-	texNoCoverFlat = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "missing_cover_flat").c_str());
+	string texLoading = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "loading_cover_box").c_str());
+	string texNoCover = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "missing_cover_box").c_str());
+	string texLoadingFlat = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "loading_cover_flat").c_str());
+	string texNoCoverFlat = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "missing_cover_flat").c_str());
 	m_cf.setTextures(texLoading, texLoadingFlat, texNoCover, texNoCoverFlat);
 	// Font
 	filename = m_theme.getString(domain, "font");
@@ -402,6 +391,7 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 		_setAA(m_theme.getInt(domain, "max_fsaa", 3));
 	else
 		_setAA(min(m_theme.getInt(domain, "max_fsaa", 3), m_cfg.getInt("GENERAL", "max_fsaa", 5)));
+
 	m_cf.setTextureQuality(
 		m_theme.getFloat(domain, "tex_lod_bias", -3.f),
 		m_theme.getInt(domain, "tex_aniso", 2),
@@ -641,13 +631,7 @@ void CMenu::_buildMenus(void)
 SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, SFont def)
 {
 	string filename;
-	string fontSizeKey;
-	string lineSpacingKey;
-	SFont retFont;
 	u32 fontSize = 0;
-	u32 lineSpacing = 0;
-	CMenu::FontSet::iterator i;
-	CMenu::FontSet::iterator j;
 
 	if (m_theme.loaded())
 	{
@@ -655,16 +639,18 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 		for (u32 c = 0; c < filename.size(); ++c)
 			if (filename[c] >= 'A' && filename[c] <= 'Z')
 				filename[c] |= 0x20;
-		fontSizeKey = key;
+		string fontSizeKey = key;
 		fontSizeKey += "_size";
 		fontSize = min(max(6u, (u32)m_theme.getInt(domain, fontSizeKey)), 300u);
-		lineSpacingKey = key;
+		string lineSpacingKey = key;
 		lineSpacingKey += "_line_height";
-		lineSpacing = min(max(6u, (u32)m_theme.getInt(domain, lineSpacingKey)), 300u);
+		u32 lineSpacing = min(max(6u, (u32)m_theme.getInt(domain, lineSpacingKey)), 300u);
+
+		SFont retFont;
 		if (!filename.empty())
 		{
 			// Try to find the same font with the same size
-			i = fontSet.find(CMenu::FontDesc(filename, fontSize));
+			CMenu::FontSet::iterator i = fontSet.find(CMenu::FontDesc(filename, fontSize));
 			if (i != fontSet.end())
 			{
 				retFont = i->second;
@@ -696,10 +682,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 
 vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char *key)
 {
-	vector<string> filenames;
-	//SmartBuf ptrPNG;
 	vector<STexture> textures;
-	CMenu::TexSet::iterator i;
 
 	if (m_theme.loaded())
 	{
@@ -710,7 +693,7 @@ vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char
 			{
 				string filename = *itr;
 
-				i = texSet.find(filename);
+				CMenu::TexSet::iterator i = texSet.find(filename);
 				if (i != texSet.end())
 				{
 					textures.push_back(i->second);
@@ -730,18 +713,17 @@ vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char
 STexture CMenu::_texture(CMenu::TexSet &texSet, const char *domain, const char *key, STexture def)
 {
 	string filename;
-	//SmartBuf ptrPNG;
-	STexture tex;
-	CMenu::TexSet::iterator i;
 
 	if (m_theme.loaded())
 	{
 		filename = m_theme.getString(domain, key);
 		if (!filename.empty())
 		{
-			i = texSet.find(filename);
+			CMenu::TexSet::iterator i = texSet.find(filename);
 			if (i != texSet.end())
 				return i->second;
+
+			STexture tex;
 			if (STexture::TE_OK == tex.fromPNGFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), GX_TF_RGBA8, ALLOC_MEM2))
 			{
 				texSet[filename] = tex;
@@ -755,7 +737,6 @@ STexture CMenu::_texture(CMenu::TexSet &texSet, const char *domain, const char *
 
 SSoundEffect CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, SSoundEffect def)
 {
-	CMenu::SoundSet::iterator i;
 	string filename;
 	SSoundEffect sound;
 
@@ -765,7 +746,8 @@ SSoundEffect CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const 
 	for (u32 c = 0; c < filename.size(); ++c)
 		if (filename[c] >= 'A' && filename[c] <= 'Z')
 			filename[c] |= 0x20;
-	i = soundSet.find(filename);
+
+	CMenu::SoundSet::iterator i = soundSet.find(filename);
 	if (i == soundSet.end())
 	{
 		sound.fromWAVFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str());
@@ -800,8 +782,6 @@ u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, 
 {
 	SButtonTextureSet btnTexSet;
 	CColor c(color);
-	SSoundEffect clickSound;
-	SSoundEffect hoverSound;
 
 	c = m_theme.getColor(domain, "color", c);
 	x = m_theme.getInt(domain, "x", x);
@@ -815,26 +795,21 @@ u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, 
 	btnTexSet.rightSel = _texture(theme.texSet, domain, "texture_right_selected", theme.btnTexRS);
 	btnTexSet.centerSel = _texture(theme.texSet, domain, "texture_center_selected", theme.btnTexCS);
 	font = _font(theme.fontSet, domain, "font", font);
-	clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
-	hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
+	SSoundEffect clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
+	SSoundEffect hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
 	return m_btnMgr.addButton(font, text, x, y, width, height, c, btnTexSet, clickSound, hoverSound);
 }
 
 u32 CMenu::_addPicButton(CMenu::SThemeData &theme, const char *domain, STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height)
 {
-	STexture tex1;
-	STexture tex2;
-	SSoundEffect clickSound;
-	SSoundEffect hoverSound;
-
 	x = m_theme.getInt(domain, "x", x);
 	y = m_theme.getInt(domain, "y", y);
 	width = m_theme.getInt(domain, "width", width);
 	height = m_theme.getInt(domain, "height", height);
-	tex1 = _texture(theme.texSet, domain, "texture_normal", texNormal);
-	tex2 = _texture(theme.texSet, domain, "texture_selected", texSelected);
-	clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
-	hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
+	STexture tex1 = _texture(theme.texSet, domain, "texture_normal", texNormal);
+	STexture tex2 = _texture(theme.texSet, domain, "texture_selected", texSelected);
+	SSoundEffect clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
+	SSoundEffect hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
 	return m_btnMgr.addPicButton(tex1, tex2, x, y, width, height, clickSound, hoverSound);
 }
 
@@ -854,8 +829,6 @@ u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, c
 
 u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, STexture &bg)
 {
-	STexture texBg;
-	SButtonTextureSet btnTexSet;
 	CColor c(color);
 
 	c = m_theme.getColor(domain, "color", c);
@@ -864,7 +837,7 @@ u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, c
 	width = m_theme.getInt(domain, "width", width);
 	height = m_theme.getInt(domain, "height", height);
 	font = _font(theme.fontSet, domain, "font", font);
-	texBg = _texture(theme.texSet, domain, "background_texture", bg);
+	STexture texBg = _texture(theme.texSet, domain, "background_texture", bg);
 	style = _textStyle(domain, "style", style);
 	return m_btnMgr.addLabel(font, text, x, y, width, height, c, style, texBg);
 }
@@ -919,10 +892,7 @@ void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 start, u32 si
 
 void CMenu::_initCF(void)
 {
-	string id, test_id;
-	bool cmpr;
 	Config titles, custom_titles;
-	u64 chantitle;
 	m_titles_loaded = false;
 	
 	m_gamelistdump = m_cfg.getBool("GENERAL", m_current_view == COVERFLOW_USB ? "dump_gamelist" : "dump_chanlist", true);
@@ -937,13 +907,11 @@ void CMenu::_initCF(void)
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
 	for (u32 i = 0; i < m_gameList.size(); ++i)
 	{
-		chantitle = m_gameList[i].hdr.chantitle;
+		u64 chantitle = m_gameList[i].hdr.chantitle;
 		if (m_current_view == COVERFLOW_CHANNEL && chantitle == HBC_108)
-		{
 			strncpy((char *) m_gameList[i].hdr.id, "JODI", 6);
-//			m_gameList[i].hdr.id = "JODI";
-		}
-		id = string((const char *)m_gameList[i].hdr.id, m_gameList[i].hdr.id[5] == 0 ? strlen((const char *) m_gameList[i].hdr.id) : sizeof m_gameList[0].hdr.id);
+
+		string id = string((const char *)m_gameList[i].hdr.id, m_gameList[i].hdr.id[5] == 0 ? strlen((const char *) m_gameList[i].hdr.id) : sizeof m_gameList[0].hdr.id);
 		
 		if ((!m_favorites || m_gcfg1.getBool("FAVORITES", id, false)) && (!m_locked || !m_gcfg1.getBool("ADULTONLY", id, false)) && !m_gcfg1.getBool("HIDDEN", id, false))
 		{
@@ -986,8 +954,7 @@ void CMenu::_initCF(void)
 		m_cfg.setBool("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "dump_chanlist" : "dump_gamelist", false);
 	}
 	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode", true));
-	cmpr = m_cfg.getBool("GENERAL", "allow_texture_compression", true);
-	m_cf.setCompression(cmpr);
+	m_cf.setCompression(m_cfg.getBool("GENERAL", "allow_texture_compression", true));
 	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
 	if (m_cf.setSorting((Sorting)m_cfg.getInt("GENERAL", "sort", 0)))
 		if (m_curGameId.empty() || !m_cf.findId(m_curGameId.c_str(), true))
@@ -1044,7 +1011,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 			m_cf.drawText(adjusting);
 		}
 	}
-	
+
 	m_fa.draw();
 	
 	m_btnMgr.draw();
@@ -1109,8 +1076,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 void CMenu::_setBg(const STexture &tex, const STexture &lqTex)
 {
 	m_lqBg = lqTex;
-	if (tex.data.get() == m_nextBg.data.get())
-		return;
+	if (tex.data.get() == m_nextBg.data.get()) return;
 	m_prevBg = m_curBg;
 	m_nextBg = tex;
 	m_bgCrossFade = 0xFF;
@@ -1123,8 +1089,7 @@ void CMenu::_updateBg(void)
 	GXTexObj texObj2;
 	Mtx44 projMtx;
 
-	if (m_bgCrossFade == 0)
-		return;
+	if (m_bgCrossFade == 0) return;
 	m_bgCrossFade = max(0, (int)m_bgCrossFade - 14);
 	if (m_bgCrossFade == 0)
 	{
@@ -1302,7 +1267,6 @@ bool CMenu::_loadList(void)
 
 bool CMenu::_loadGameList(void)
 {
-	s32 ret;
 	u32 len;
 	SmartBuf buffer;
 	u32 count;
@@ -1310,7 +1274,7 @@ bool CMenu::_loadGameList(void)
 	char part[6];
 	WBFS_GetPartitionName(0, (char *) &part);
 	
-	ret = WBFS_OpenNamed((char *) m_cfg.getString("GENERAL", "partition", part).c_str());
+	s32 ret = WBFS_OpenNamed((char *) m_cfg.getString("GENERAL", "partition", part).c_str());
  	if (ret < 0)
 	{
 		gprintf("Open partition failed : %i\n", ret);
@@ -1381,8 +1345,6 @@ static void listOGGMP3(const char *path, vector<string> &oggFiles)
 {
 	DIR *d;
 	struct dirent *dir;
-	string fileName;
-	string fileExt;
 
 	oggFiles.clear();
 	d = opendir(path);
@@ -1391,13 +1353,13 @@ static void listOGGMP3(const char *path, vector<string> &oggFiles)
 		dir = readdir(d);
 		while (dir != 0)
 		{
-			fileName = dir->d_name;
+			string fileName = dir->d_name;
 			for (u32 i = 0; i < fileName.size(); ++i)
 				if (fileName[i] >= 'a' && fileName[i] <= 'z')
 					fileName[i] &= 0xDF;
 			if (fileName.size() > 4)
 			{
-				fileExt = fileName.substr(fileName.size() - 4, 4);
+				string fileExt = fileName.substr(fileName.size() - 4, 4);
 				if (fileExt == ".OGG" || fileExt == ".MP3")
 				{
 					oggFiles.push_back(fileName);
@@ -1417,8 +1379,7 @@ void CMenu::_searchMusic(void)
 
 void CMenu::_shuffleMusic(void)
 {
-	if (music_files.empty())
-		return;
+	if (music_files.empty()) return;
 
 	if (m_cfg.getBool("GENERAL", "randomize_music", true))
 	{
@@ -1430,8 +1391,7 @@ void CMenu::_shuffleMusic(void)
 
 void CMenu::_startMusic(void)
 {
-	if (music_files.empty()) //Not necessary to check this if shuffle was called
-		return;
+	if (music_files.empty()) return;
 
 	_stopMusic();
 
@@ -1571,20 +1531,16 @@ void CMenu::_stopSounds(void)
 
 bool CMenu::_loadFile(SmartBuf &buffer, u32 &size, const char *path, const char *file)
 {
-	FILE *fp = 0;
-	u32 fileSize;
-	SmartBuf fileBuf;
-
 	SMART_FREE(buffer);
 	size = 0;
-	fp = fopen(file == NULL ? path : fmt("%s/%s", path, file), "rb");
+	FILE *fp = fopen(file == NULL ? path : fmt("%s/%s", path, file), "rb");
 		
 	if (fp == 0) return false;
 
 	fseek(fp, 0, SEEK_END);
-	fileSize = ftell(fp);
+	u32 fileSize = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
-	fileBuf = smartCoverAlloc(fileSize);
+	SmartBuf fileBuf = smartCoverAlloc(fileSize);
 	if (!fileBuf)
 	{
 		SAFE_CLOSE(fp);
@@ -1598,7 +1554,6 @@ bool CMenu::_loadFile(SmartBuf &buffer, u32 &size, const char *path, const char 
 	SAFE_CLOSE(fp);
 	buffer = fileBuf;
 	size = fileSize;
-
 	SMART_FREE(fileBuf);
 	return true;
 }
@@ -1669,10 +1624,10 @@ void CMenu::_hideWaitMessage()
 
 void CMenu::_showWaitMessage()
 {
-	WaitMessages theme;
-
-	vector<STexture> textures = _textures(theme.texSet, "GENERAL", "waitmessage");
-	float waitMessageDelay = m_theme.getFloat("GENERAL", "waitmessage_delay", 0.f);
-	
-	m_vid.waitMessage(textures, waitMessageDelay, m_theme.getBool("GENERAL", "waitmessage_wiilight", m_cfg.getBool("GENERAL", "waitmessage_wiilight", true)));
+	TexSet texSet;
+	m_vid.waitMessage(
+		_textures(texSet, "GENERAL", "waitmessage"),
+		m_theme.getFloat("GENERAL", "waitmessage_delay", 0.f),
+		m_theme.getBool("GENERAL", "waitmessage_wiilight",	m_cfg.getBool("GENERAL", "waitmessage_wiilight", true))
+	);
 }

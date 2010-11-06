@@ -14,10 +14,9 @@ const char *fmt(const char *format, ...)
 	};
 
 	static char buffer[MAX_USES][MAX_MSG_SIZE];
-	static int currentStr = 0;
 	va_list va;
 
-	currentStr = (currentStr + 1) % MAX_USES;
+	static int currentStr = (currentStr + 1) % MAX_USES;
 	va_start(va, format);
 	vsnprintf(buffer[currentStr], MAX_MSG_SIZE, format, va);
 	buffer[currentStr][MAX_MSG_SIZE - 1] = '\0';
@@ -25,22 +24,17 @@ const char *fmt(const char *format, ...)
 	return buffer[currentStr];
 }
 
-// 
 string sfmt(const char *format, ...)
 {
 	va_list va;
-	u32 length;
-	char *tmp;
-	string s;
-
 	va_start(va, format);
-	length = vsnprintf(0, 0, format, va) + 1;
+	u32 length = vsnprintf(0, 0, format, va) + 1;
 	va_end(va);
-	tmp = new char[length + 1];
+	char *tmp = new char[length + 1];
 	va_start(va, format);
 	vsnprintf(tmp, length, format, va);
 	va_end(va);
-	s = tmp;
+	string s = tmp;
 	delete[] tmp;
 	return s;
 }
@@ -101,13 +95,10 @@ wstringEx wfmt(const wstringEx &format, ...)
 	// Don't care about performance
 	va_list va;
 	string f(format.toUTF8());
-	u32 length;
-	char *tmp;
-
 	va_start(va, format);
-	length = vsnprintf(0, 0, f.c_str(), va) + 1;
+	u32 length = vsnprintf(0, 0, f.c_str(), va) + 1;
 	va_end(va);
-	tmp = new char[length + 1];
+	char *tmp = new char[length + 1];
 	va_start(va, format);
 	vsnprintf(tmp, length, f.c_str(), va);
 	va_end(va);
@@ -120,7 +111,6 @@ wstringEx wfmt(const wstringEx &format, ...)
 wstringEx vectorToString(const vector<wstringEx> &vect, char sep)
 {
 	wstringEx s;
-
 	for (u32 i = 0; i < vect.size(); ++i)
 	{
 		if (i > 0)
@@ -133,8 +123,7 @@ wstringEx vectorToString(const vector<wstringEx> &vect, char sep)
 vector<string> stringToVector(const string &text, char sep)
 {
 	vector<string> v;
-	if (text.empty())
-		return v;
+	if (text.empty()) return v;
 	u32 count = 1;
 	for (u32 i = 0; i < text.size(); ++i)
 		if (text[i] == sep)
@@ -160,8 +149,7 @@ vector<string> stringToVector(const string &text, char sep)
 vector<wstringEx> stringToVector(const wstringEx &text, char sep)
 {
 	vector<wstringEx> v;
-	if (text.empty())
-		return v;
+	if (text.empty()) return v;
 	u32 count = 1;
 	for (u32 i = 0; i < text.size(); ++i)
 		if (text[i] == sep)
@@ -193,42 +181,37 @@ bool SFont::fromBuffer(const u8 *buffer, u32 bufferSize, u32 size, u32 lspacing)
 	SMART_FREE(data);
 	dataSize = 0;
 	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);
-	if (!font)
-		return false;
+	if (!font) return false;
 	font->loadFont(buffer, bufferSize, size, false);
 	return true;
 }
 
 bool SFont::newSize(u32 size, u32 lspacing)
 {
-	if (!data)
-		return false;
+	if (!data) return false;
 	size = min(max(6u, size), 1000u);
 	lspacing = min(max(6u, lspacing), 1000u);
 	lineSpacing = lspacing;
 	SMART_FREE(font);
 	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);
-	if (!font)
-		return false;
+	if (!font) return false;
 	font->loadFont(data.get(), dataSize, size, false);
 	return true;
 }
 
 bool SFont::fromFile(const char *filename, u32 size, u32 lspacing)
 {
-	FILE *file;
-	u32 fileSize;
-
 	size = min(max(6u, size), 1000u);
 	lspacing = min(max(6u, lspacing), 1000u);
 	SMART_FREE(font);
 	SMART_FREE(data);
 	dataSize = 0;
 	lineSpacing = lspacing;
-	file = fopen(filename, "rb");
+
+	FILE *file = fopen(filename, "rb");
 	if (file == NULL) return false;
 	fseek(file, 0, SEEK_END);
-	fileSize = ftell(file);
+	u32 fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
 	if (fileSize == 0) return false;
 	data = smartMem2Alloc(fileSize);	// Use MEM2 because of big chinese fonts
@@ -249,16 +232,13 @@ bool SFont::fromFile(const char *filename, u32 size, u32 lspacing)
 void CText::setText(SFont font, const wstringEx &t)
 {
 	CText::SWord w;
-	vector<wstringEx> lines;
-
 	m_lines.clear();
 	m_font = font;
-	if (!m_font.font)
-		return;
+	if (!m_font.font) return;
 
 	firstLine = 0;
 	// Don't care about performance
-	lines = stringToVector(t, L'\n');
+	vector<wstringEx> lines = stringToVector(t, L'\n');
 	m_lines.reserve(lines.size());
 	// 
 	for (u32 k = 0; k < lines.size(); ++k)
@@ -290,18 +270,15 @@ void CText::setText(SFont font, const wstringEx &t)
 void CText::setText(SFont font, const wstringEx &t, u32 startline)
 {
 	CText::SWord w;
-	vector<wstringEx> lines;
-
 	totalHeight = 0;
 
 	m_lines.clear();
 	m_font = font;
-	if (!m_font.font)
-		return;
+	if (!m_font.font) return;
 
 	firstLine = startline;
 	// Don't care about performance
-	lines = stringToVector(t, L'\n');
+	vector<wstringEx> lines = stringToVector(t, L'\n');
 	m_lines.reserve(lines.size());
 	// 
 	for (u32 k = 0; k < lines.size(); ++k)
@@ -333,24 +310,19 @@ void CText::setText(SFont font, const wstringEx &t, u32 startline)
 
 void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 {
-	float posX;
-	float posY;
 	float wordWidth;
-	float space;
 	float shift;
-	u32 lineBeg;
 
 	totalHeight = 0;
 
-	if (!m_font.font)
-		return;
-	space = m_font.font->getWidth(L" ");
-	posX = 0.f;
-	posY = 0.f;
-	lineBeg = 0;
+	if (!m_font.font) return;
 
-	if(firstLine > m_lines.size())
-		firstLine = 0;
+	float space = m_font.font->getWidth(L" ");
+	float posX = 0.f;
+	float posY = 0.f;
+	u32 lineBeg = 0;
+
+	if(firstLine > m_lines.size()) firstLine = 0;
 
 	for (u32 k = firstLine; k < m_lines.size(); ++k)
 	{
@@ -422,8 +394,7 @@ void CText::tick(void)
 
 void CText::draw(void)
 {
-	if (!m_font.font)
-		return;
+	if (!m_font.font) return;
 
 	for (u32 k = firstLine; k < m_lines.size(); ++k)
 		for (u32 i = 0; i < m_lines[k].size(); ++i)
@@ -442,7 +413,6 @@ int CText::getTotalHeight(void)
 string upperCase(string text)
 {
 	char c;
-
 	for (string::size_type i = 0; i < text.size(); ++i)
 	{
 		c = text[i];
@@ -456,7 +426,6 @@ string upperCase(string text)
 string lowerCase(string text)
 {
 	char c;
-
 	for (string::size_type i = 0; i < text.size(); ++i)
 	{
 		c = text[i];
@@ -467,13 +436,15 @@ string lowerCase(string text)
 }
 
 // trim from start
-string ltrim(string s) {
+string ltrim(string s)
+{
 	s.erase(s.begin(), find_if(s.begin(), s.end(), not1(ptr_fun<int, int>(isspace))));
 	return s;
 }
 
 // trim from end
-string rtrim(string s) {
+string rtrim(string s)
+{
 	s.erase(find_if(s.rbegin(), s.rend(), not1(ptr_fun<int, int>(isspace))).base(), s.end());
 	return s;
 }

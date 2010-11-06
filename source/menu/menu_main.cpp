@@ -119,7 +119,7 @@ int CMenu::main(void)
 
 	lwp_t coverStatus = LWP_THREAD_NULL;
 	LWP_CreateThread(&coverStatus, (void *(*)(void *))CMenu::GetCoverStatusAsync, (void *)this, 0, 8192, 40);
-	
+
 	while (true)
 	{
 		_mainLoopCommon(true);
@@ -462,14 +462,14 @@ int CMenu::main(void)
 			else
 				m_cf.mouse(m_vid, chan, -1, -1);		
 	}
-	// 
+	//
 	GX_InvVtxCache();
 	GX_InvalidateTexAll();
 	m_cf.clear();
 	m_cfg.save();
 	m_cat.save();
 //	m_loc.save();
-	cleanup();
+	while(!m_initialCoverStatusComplete){}
 	if (m_reload)
 	{
 		_showWaitMessage();

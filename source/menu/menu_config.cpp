@@ -62,33 +62,31 @@ void CMenu::_showConfig(void)
 
 void CMenu::_config(int page)
 {
-	int nextPage = page;
-
 	m_curGameId = m_cf.getId();
 	m_cf.clear();
-	while (nextPage > 0 && nextPage <= CMenu::_nbCfgPages)
-		switch (nextPage)
+	while (page > 0 && page <= CMenu::_nbCfgPages)
+		switch (page)
 		{
 			case 1:
-				nextPage = _config1();
+				page = _config1();
 				break;
 			case 2:
-				nextPage = _configAdv();
+				page = _configAdv();
 				break;
 			case 3:
-				nextPage = _config3();
+				page = _config3();
 				break;
 			case 4:
-				nextPage = _config4();
+				page = _config4();
 				break;
 			case 5:
-				nextPage = _configSnd();
+				page = _configSnd();
 				break;
 			case 6:
-				nextPage = _configScreen();
+				page = _configScreen();
 				break;
 			case 7:
-				nextPage = _config7();
+				page = _config7();
 				break;
 		}
 	m_cfg.save();

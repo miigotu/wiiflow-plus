@@ -29,8 +29,7 @@ void CMenu::_showCheatDownload(void)
 u32 CMenu::_downloadCheatFileAsync(void *obj)
 {
 	CMenu *m = (CMenu *)obj;
-	if (!m->m_thrdWorking)
-		return 0;
+	if (!m->m_thrdWorking) return 0;
 
 	m->m_thrdStop = false;
 
@@ -38,34 +37,31 @@ u32 CMenu::_downloadCheatFileAsync(void *obj)
 	m->_setThrdMsg(m->_t("cfgg23", L"Downloading cheat file..."), 0);
 	LWP_MutexUnlock(m->m_mutex);
 
-	u32 bufferSize = 0x080000;	// Maximum download size 512kb
-	SmartBuf buffer;
-	block cheatfile;
-	FILE *file;
 	
-	if (m->_initNetwork() < 0) {
+	if (m->_initNetwork() < 0)
+	{
 		m->m_thrdWorking = false;
 		return -1;
 	}
 	
-	buffer = smartCoverAlloc(bufferSize);
+	u32 bufferSize = 0x080000;	// Maximum download size 512kb
+	SmartBuf buffer = smartCoverAlloc(bufferSize);
 	if (!buffer)
 	{
 		m->m_thrdWorking = false;
 		return -2;
 	}
 	
-	cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m->m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, m);
+	block cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m->m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, m);
 
 	if (cheatfile.data != NULL && cheatfile.size > 65 && cheatfile.data[0] != '<') {
 		// cheat file was downloaded (404's will now return emptybuffer)
-		file = fopen(fmt("%s/%s.txt", m->m_txtCheatDir.c_str(), m->m_cf.getId().c_str()), "wb");
+			FILE *file = fopen(fmt("%s/%s.txt", m->m_txtCheatDir.c_str(), m->m_cf.getId().c_str()), "wb");
 				
 		if (file != NULL)
 		{
 			fwrite(cheatfile.data, 1, cheatfile.size, file);
 			SAFE_CLOSE(file);
-			SMART_FREE(buffer);
 			m->m_thrdWorking = false;
 			return 0;
 		}
@@ -79,11 +75,8 @@ void CMenu::_CheatSettings()
 {
 	SetupInput();
 
-	// try to load cheat file
-	int txtavailable=0;
-	m_cheatSettingsPage = 1; // init page
-	
-	txtavailable = m_cheatfile.openTxtfile(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str())); 
+	m_cheatSettingsPage = 1;
+	int txtavailable = m_cheatfile.openTxtfile(fmt("%s/%s.txt", m_txtCheatDir.c_str(), m_cf.getId().c_str())); 
 	
 	_showCheatSettings();
 	_textCheatSettings();
@@ -281,10 +274,6 @@ void CMenu::_hideCheatSettings(bool instant)
 			m_btnMgr.hide(m_cheatLblUser[i], instant);
 }
 
-// CheatMenu
-// check for cheat txt file
-// if it exists, load it and show cheat texts on screen
-// if it does not exist, show download button
 void CMenu::_showCheatSettings(void)
 {
 	_setBg(m_cheatBg, m_cheatBg);
@@ -295,8 +284,8 @@ void CMenu::_showCheatSettings(void)
 		if (m_cheatLblUser[i] != -1u)
 			m_btnMgr.show(m_cheatLblUser[i]);
 
-	if (m_cheatfile.getCnt() > 0) {
-
+	if (m_cheatfile.getCnt() > 0)
+	{
 		// cheat found, show apply
 		m_btnMgr.show(m_cheatBtnApply);
 		m_btnMgr.show(m_cheatLblPage);
@@ -305,7 +294,8 @@ void CMenu::_showCheatSettings(void)
 		m_btnMgr.setText(m_cheatLblPage, wfmt(L"%i / %i", m_cheatSettingsPage, (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)); 
 		
 		// Show cheats if available, else hide
-		for (u32 i=0; i < CHEATSPERPAGE; ++i) {
+		for (u32 i=0; i < CHEATSPERPAGE; ++i)
+		{
 			// cheat in range?
 			if (((m_cheatSettingsPage-1)*CHEATSPERPAGE + i + 1) <= m_cheatfile.getCnt()) 
 			{
@@ -322,8 +312,6 @@ void CMenu::_showCheatSettings(void)
 				m_btnMgr.hide(m_cheatBtnItem[i], true);
 			}
 		}
-
-
 	}
 	else
 	{

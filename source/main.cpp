@@ -51,11 +51,8 @@ int old_main(int argc, char **argv)
 
 	SYS_SetArena1Hi((void *)0x81200000);	// See loader/apploader.c
 	CVideo vid;
-	bool iosOK = false;
-	bool dipOK = false;
+
 	bool wbfsOK = false;
-	int ret = 0;
-	
 	char *gameid = NULL;
 	
 	for (int i = 0; i < argc; i++)
@@ -84,7 +81,7 @@ int old_main(int argc, char **argv)
 	gprintf("Loading cIOS: %d, Port: %d\n", mainIOS, use_port1);
 
 	// Load Custom IOS
-	iosOK = loadIOS(mainIOS, false, false);
+	bool iosOK = loadIOS(mainIOS, false, false);
 	mainIOSRev = IOS_GetRevision();
 	iosOK = iosOK && mainIOSRev >= mainIOSminRev;
 
@@ -167,8 +164,9 @@ int old_main(int argc, char **argv)
 		}
 	}
 
-	dipOK = Disc_Init() >= 0;
+	bool dipOK = Disc_Init() >= 0;
 	MEM2_takeBigOnes(true);
+	int ret = 0;
 	do
 	{
 		Mount_Devices();

@@ -1,4 +1,3 @@
-//Why is your script fuckin up? lol
 #ifndef __MENU_HPP
 #define __MENU_HPP
 
@@ -469,7 +468,7 @@ private:
 	u32 wii_btnsHeld;
 	u32 gc_btnsPressed;
 	u32 gc_btnsHeld;
-	
+
 	bool m_show_pointer[WPAD_MAX_WIIMOTES];
 	float left_stick_angle[WPAD_MAX_WIIMOTES];
 	float left_stick_mag[WPAD_MAX_WIIMOTES];
@@ -596,8 +595,6 @@ private:
 		SSoundEffect hoverSound;
 		SSoundEffect cameraSound;
 	};
-	struct WaitMessages	{ TexSet texSet;};
-
 	struct SCFParamDesc
 	{
 		enum { PDT_EMPTY, PDT_FLOAT, PDT_V3D, PDT_COLOR, PDT_BOOL, PDT_INT, PDT_TXTSTYLE } paramType[4];
