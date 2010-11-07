@@ -314,6 +314,7 @@ int CMenu::main(void)
 					m_current_view = COVERFLOW_USB;
 					m_category = m_cat.getInt("GENERAL", "category", 0);
 				}
+				_showWaitMessage();
 				_hideMain();
 				//m_cfg.setInt("GENERAL", "currentview", m_current_view);
 				_loadList();

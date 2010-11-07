@@ -148,8 +148,7 @@ static string makeURL(const string &format, const string &gameId, const string &
 		{
 			++i;
 			j = format.find_first_of('}', i);
-			if (j == string::npos)
-				break;
+			if (j == string::npos) break;
 			if (j > i + 1)
 			{
 				string k = format.substr(i, j - i);
@@ -353,8 +352,12 @@ int CMenu::_coverDownloader(bool missingOnly)
 	}
 	bool savePNG = m_cfg.getBool("GENERAL", "keep_png", true);
 
-	vector<string> fmtURLBox = stringToVector(m_cfg.getString("GENERAL", "url_full_covers_id4", m_current_view == COVERFLOW_CHANNEL ? FMT_BPIC4_URL : FMT_BPIC6_URL), '|');
-	vector<string> fmtURLFlat = stringToVector(m_cfg.getString("GENERAL", "url_flat_covers_id4", m_current_view == COVERFLOW_CHANNEL ? FMT_PIC4_URL : FMT_PIC6_URL), '|');
+	vector<string> fmtURLBox = stringToVector(
+									m_cfg.getString("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "url_full_covers_id4" : "url_full_covers_id6",
+									m_current_view == COVERFLOW_CHANNEL ? FMT_BPIC4_URL : FMT_BPIC6_URL), '|');
+	vector<string> fmtURLFlat = stringToVector(
+									m_cfg.getString("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "url_flat_covers_id4" : "url_flat_covers_id6",
+									m_current_view == COVERFLOW_CHANNEL ? FMT_PIC4_URL : FMT_PIC6_URL), '|');
 
 	u32 nbSteps = m_gameList.size();
 	u32 step = 0;
@@ -375,6 +378,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 	}
 	else
 		coverList.push_back(m_coverDLGameId);
+
 	u32 n = coverList.size();
 	if (n > 0 && !m_thrdStop)
 	{
@@ -402,18 +406,19 @@ int CMenu::_coverDownloader(bool missingOnly)
 			string url;
 			bool success = false;
 			FILE *file = NULL;
+
 			vector<string> newID(1);
+			newID[0] = m_newID.getString(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", coverList[i], coverList[i]);
+
+ 			if(!newID[0].empty() && strncasecmp(newID[0].c_str(), coverList[i].c_str(), m_current_view == COVERFLOW_CHANNEL ? 4 : 6) == 0)
+				m_newID.remove(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", coverList[i]);
+			else if(!newID[0].empty()) gprintf("old id = %s\nnew id = %s\n", coverList[i].c_str(), newID[0].c_str());
+
 			for (u32 j = 0; !success && j < fmtURLBox.size() && !m_thrdStop; ++j)
 			{
-				newID[0] = m_newID.getString(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", coverList[i], coverList[i]);
-				if(strncasecmp(newID[0].c_str(), coverList[i].c_str(), m_current_view == COVERFLOW_CHANNEL ? 4 : 6) == 0)
-					m_newID.remove(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", coverList[i]);
-				else
-					gprintf("old id = %s\nnew id = %s\n", coverList[i].c_str(), newID[0].c_str());
 
 				url = makeURL(fmtURLBox[j], newID[0], countryCode(newID[0]));
-				if (j == 0)
-					++step;
+				if (j == 0) ++step;
 				m_thrdStep = listWeight + dlWeight * (float)step / (float)nbSteps;
 				LWP_MutexLock(m_mutex);
 				_setThrdMsg(wfmt(_fmt("dlmsg3", L"Downloading from %s"), url.c_str()), m_thrdStep);

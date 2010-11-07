@@ -390,7 +390,7 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 	if (forceAA)
 		_setAA(m_theme.getInt(domain, "max_fsaa", 3));
 	else
-		_setAA(min(m_theme.getInt(domain, "max_fsaa", 3), m_cfg.getInt("GENERAL", "max_fsaa", 5)));
+		_setAA(min(m_theme.getInt(domain, "max_fsaa", 3), m_cfg.getInt("GENERAL", "max_fsaa", 3)));
 
 	m_cf.setTextureQuality(
 		m_theme.getFloat(domain, "tex_lod_bias", -3.f),
