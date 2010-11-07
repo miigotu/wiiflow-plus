@@ -1,4 +1,3 @@
-
 #include "gui.hpp"
 #include <algorithm>
 
@@ -532,7 +531,6 @@ void CButtonsMgr::setTexture(u32 id, STexture &bg, int width, int height)
 
 void CButtonsMgr::setProgress(u32 id, float f, bool instant)
 {
-
 	if (m_elts[id]->t == CButtonsMgr::GUIELT_PROGRESS)
 	{
 		CButtonsMgr::SProgressBar *b = (CButtonsMgr::SProgressBar *)m_elts[id].get();

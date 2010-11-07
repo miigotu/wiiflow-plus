@@ -737,12 +737,9 @@ STexture CMenu::_texture(CMenu::TexSet &texSet, const char *domain, const char *
 
 SSoundEffect CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, SSoundEffect def)
 {
-	string filename;
-	SSoundEffect sound;
+	string filename = m_theme.getString(domain, key);
+	if (filename.empty()) return def;
 
-	filename = m_theme.getString(domain, key);
-	if (filename.empty())
-		return def;
 	for (u32 c = 0; c < filename.size(); ++c)
 		if (filename[c] >= 'A' && filename[c] <= 'Z')
 			filename[c] |= 0x20;
@@ -750,6 +747,7 @@ SSoundEffect CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const 
 	CMenu::SoundSet::iterator i = soundSet.find(filename);
 	if (i == soundSet.end())
 	{
+		SSoundEffect sound;
 		sound.fromWAVFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str());
 		soundSet[filename] = sound;
 		return sound;
@@ -761,8 +759,8 @@ u16 CMenu::_textStyle(const char *domain, const char *key, u16 def)
 {
 	u16 textStyle = 0;
 	string style(m_theme.getString(domain, key));
-	if (style.empty())
-		return def;
+	if (style.empty()) return def;
+
 	if (style.find_first_of("Cc") != string::npos)
 		textStyle |= FTGX_JUSTIFY_CENTER;
 	else if (style.find_first_of("Rr") != string::npos)
@@ -875,13 +873,13 @@ void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 size, const c
 
 void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 start, u32 size, const char *domain)
 {
-	STexture emptyTex;
 
 	for (u32 i = start; i < start + size; ++i)
 	{
 		string dom(sfmt("%s/USER%i", domain, i + 1));
 		if (m_theme.hasDomain(dom))
 		{
+			STexture emptyTex;
 			ids[i] = _addLabel(theme, dom.c_str(), theme.lblFont, L"", 40, 200, 64, 64, CColor(0xFFFFFFFF), 0, emptyTex);
 			_setHideAnim(ids[i], dom.c_str(), -50, 0, 0.f, 0.f);
 		}
@@ -963,8 +961,7 @@ void CMenu::_initCF(void)
 
 void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 {
-	if (withCF)
-		m_cf.tick();
+	if (withCF) m_cf.tick();
 	m_btnMgr.tick();
 	m_fa.tick();
 	m_cf.setFanartPlaying(m_fa.isLoaded());
@@ -972,13 +969,9 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 
 	_updateBg();
 	
-	if (m_fa.hideCover())
-		m_cf.hideCover();
-	else
-		m_cf.showCover();
+	m_fa.hideCover() ? 	m_cf.hideCover() : m_cf.showCover();
 
-	if (withCF)
-		m_cf.makeEffectTexture(m_vid, m_lqBg);
+	if (withCF) m_cf.makeEffectTexture(m_vid, m_lqBg);
 	if (withCF && m_aa > 0)
 	{
 		m_vid.setAA(m_aa, true);
@@ -1033,12 +1026,9 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	if ((m_gameSelected && m_musicCurrentVol > 0) || m_video_playing)
 		m_music_fade_mode = -1;
 	
-	// Fade music back in if banner sound finished
-	if (m_gameSelected && m_musicCurrentVol != m_musicVol && m_gameSound.voice && ASND_StatusVoice(m_gameSound.voice) == SND_UNUSED  && !m_video_playing)
-		m_music_fade_mode = 1;
-
-	// Fade music back in when no game selected
-	if (!m_gameSelected && m_musicCurrentVol != m_musicVol && !m_video_playing) 
+	// Fade music back in when no game selected or if banner sound finished
+	if (m_musicCurrentVol != m_musicVol && !m_video_playing
+		&& (!m_gameSelected || (m_gameSelected && m_gameSound.voice && ASND_StatusVoice(m_gameSound.voice) == SND_UNUSED)))
 		m_music_fade_mode = 1;	
 	
 	LWP_MutexLock(m_gameSndMutex);
@@ -1223,8 +1213,7 @@ void CMenu::_updateText(void)
 const wstringEx CMenu::_fmt(const char *key, const wchar_t *def)
 {
 	wstringEx ws = m_loc.getWString(m_curLanguage, key, def);
-	if (checkFmt(def, ws))
-		return ws;
+	if (checkFmt(def, ws)) return ws;
 	return def;
 }
 
@@ -1267,9 +1256,8 @@ bool CMenu::_loadList(void)
 
 bool CMenu::_loadGameList(void)
 {
-	u32 len;
 	SmartBuf buffer;
-	u32 count;
+	u32 len, count;
 
 	char part[6];
 	WBFS_GetPartitionName(0, (char *) &part);
@@ -1554,7 +1542,6 @@ bool CMenu::_loadFile(SmartBuf &buffer, u32 &size, const char *path, const char 
 	SAFE_CLOSE(fp);
 	buffer = fileBuf;
 	size = fileSize;
-	SMART_FREE(fileBuf);
 	return true;
 }
 

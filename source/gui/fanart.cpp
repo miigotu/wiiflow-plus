@@ -1,5 +1,3 @@
-// Fan Art
-
 #include "fanart.hpp"
 #include "pngu.h"
 #include "boxmesh.hpp"
@@ -76,8 +74,6 @@ bool CFanart::load(Config &m_globalConfig, const char *path, const char *id)
 	
 	m_bg = fanBg;
 	m_bglq = fanBgLq;
-	SMART_FREE(fanBg.data);
-	SMART_FREE(fanBgLq.data);
 	
 	return retval;
 }

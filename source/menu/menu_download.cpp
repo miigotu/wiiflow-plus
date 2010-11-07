@@ -708,7 +708,6 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 			LWP_MutexUnlock(m_mutex);			
 			
 			FILE *file = fopen(m_ver.c_str(), "wb");
-			sleep(1);
 			if (file != NULL)
 			{
 				fwrite(download.data, 1, download.size, file);

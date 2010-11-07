@@ -339,9 +339,7 @@ s32 WDVD_SetUSBMode(u32 mode, const u8 *id, s32 partition)
         ret = IOS_Ioctl(di_fd, DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
     }
 
-    if (ret < 0)
-        return ret;
-
+    if (ret < 0) return ret;
     return (ret == 1) ? 0 : -ret;
 }
 

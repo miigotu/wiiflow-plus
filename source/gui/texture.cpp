@@ -1,4 +1,3 @@
-
 #include <string.h>
 #include <stdio.h>
 #include <ogcsys.h>
@@ -112,10 +111,8 @@ static int colorDistance(const u8 *c0, const u8 *c1)
 static void getBaseColors(u8 *color0, u8 *color1, const u8 *srcBlock)
 {
 	int maxDistance = -1;
-	int i, j;
-
-	for (i = 0; i < 15; ++i)
-		for (j = i + 1; j < 16; ++j)
+	for (int i = 0; i < 15; ++i)
+		for (int j = i + 1; j < 16; ++j)
 		{
 			int distance = colorDistance(srcBlock + i * 4, srcBlock + j * 4);
 			if (distance > maxDistance)

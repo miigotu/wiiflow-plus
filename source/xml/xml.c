@@ -265,12 +265,9 @@ char *VerifyLangCode(char *languagetxt)
 char ConvertRatingToIndex(char *ratingtext)
 {
 	int type = -1;
-	if (!strcmp(ratingtext,"CERO"))
-	{ type = 0; }
-	if (!strcmp(ratingtext,"ESRB"))
-	{ type = 1; }
-	if (!strcmp(ratingtext,"PEGI"))
-	{ type = 2; }
+	if (!strcmp(ratingtext,"CERO")) { type = 0; }
+	if (!strcmp(ratingtext,"ESRB")) { type = 1; }
+	if (!strcmp(ratingtext,"PEGI")) { type = 2; }
 	return type;
 }
 
@@ -512,10 +509,10 @@ void readTitles(struct gameXMLinfo *gameinfo, char * start)
 		// 1. else get whatever is found
 		char *locTmp = strndup(locStart, locEnd-locStart);
 		if (title < found)
-	{
+		{
 			titleStart = strstr(locTmp, "<title>");
 			if (titleStart != NULL)
-	{
+			{
 				titleEnd = strstr(titleStart, "</title>");
 				strncpySafe(gameinfo->title, titleStart+7,
 						sizeof(gameinfo->title), titleEnd-(titleStart+7));
@@ -738,9 +735,8 @@ bool OpenXMLDatabase(const char* xmlfilepath, char* argdblang, bool argJPtoEN)
 	{
 		CloseXMLDatabase();
 		OpenDbFiles(xmlfilepath, false);
+		if (db == NULL || idx == NULL) return 0;
 	}
-
-	if (db == NULL || idx == NULL) return 0;
 
 	fseek(idx, 0, SEEK_END);
 	amount_of_games = ftell(idx) / 6;

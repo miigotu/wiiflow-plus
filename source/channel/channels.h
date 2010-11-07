@@ -74,7 +74,6 @@ class Channels
 		static int GetLanguage(const char *lang);
 		u64* GetChannelList(u32* count);
 		static bool GetAppNameFromTmd(u64 title, char* app);
-		static bool GetBnr(SmartBuf &bnr, u32 &size, u64 title, s32 length);
 		static bool GetChannelNameFromApp(u64 title, wchar_t* name, int language);
 		void Search(u32 channelType, string lang);
 };

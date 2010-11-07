@@ -1418,11 +1418,10 @@ u64 CCoverFlow::getChanTitle(void) const
 
 bool CCoverFlow::select(void)
 {
-	LockMutex lock(m_mutex);
-
 	if (m_covers.empty() || m_jump != 0) return false;
 	if (m_selected) return true;
 
+	LockMutex lock(m_mutex);
 	int curPos = (int)m_range / 2;
 	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 		if ((u32)m_mouse[chan] < m_range && m_mouse[chan] != curPos)

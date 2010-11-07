@@ -264,7 +264,6 @@ extern "C" { bool DatabaseLoaded(void); }
 void CMenu::_game(bool launch)
 {
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
-
 	if (!launch)
 	{
 		SetupInput();
@@ -791,7 +790,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if (!m_directLaunch)
 		if (rtrn != NULL && strlen(rtrn) == 4)
 			rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
-	
+
 
 	SmartBuf cheatFile, gameconfig, dolFile;
 	u32 cheatSize = 0, gameconfigSize = 0, dolSize = 0;
@@ -842,18 +841,16 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		if (get_frag_list((u8 *) &hdr->hdr.id, (char *)&hdr->path) < 0)
 			return;
 
-	if (cheat)	_loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
+	if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
 
 	if (!_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt"))
 		if (FS_USBAvailable() && !_loadFile(gameconfig, gameconfigSize, "usb:/", "gameconfig.txt"))
-			if (FS_SDAvailable() && !_loadFile(gameconfig, gameconfigSize, "sd:/", "gameconfig.txt"))
-				SMART_FREE(gameconfig);
+			if (FS_SDAvailable()) _loadFile(gameconfig, gameconfigSize, "sd:/", "gameconfig.txt");
 	
 	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) &hdr->hdr.id);
 	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) &hdr->hdr.id);
-
-	if(!!gameconfig) app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
-	if(!!cheatFile) ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
+	app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
+	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 
 	net_wc24cleanup();
 	
@@ -973,7 +970,6 @@ void CMenu::_initGameMenu(CMenu::SThemeData &theme)
 	texDeleteSel.fromPNG(deletes_png);
 	texSettings.fromPNG(btngamecfg_png);
 	texSettingsSel.fromPNG(btngamecfgs_png);
-
 	_addUserLabels(theme, m_gameLblUser, ARRAY_SIZE(m_gameLblUser), "GAME");
 	m_gameBg = _texture(theme.texSet, "GAME/BG", "texture", theme.bg);
 	if (m_theme.loaded() && STexture::TE_OK == bgLQ.fromPNGFile(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GAME/BG", "texture").c_str()).c_str(), GX_TF_CMPR, ALLOC_MEM2, 64, 64))
@@ -1086,6 +1082,7 @@ SmartBuf uncompressLZ77(u32 &size, const u8 *inputBuf, u32 inputLength)
 void CMenu::_loadGameSound(dir_discHdr *hdr)
 {
 	u32 sndSize = 0;
+
 	Banner *banner = m_current_view == COVERFLOW_USB ? _extractBnr(hdr) : _extractChannelBnr(hdr->hdr.chantitle);
 
 	if (banner == NULL || !banner->IsValid())
@@ -1102,14 +1099,14 @@ void CMenu::_loadGameSound(dir_discHdr *hdr)
 	const u8 *soundChunk = soundBin + sizeof (IMD5Header);
 	u32 sndType = *(u32 *)soundChunk;
 	u32 soundChunkSize = sndSize - sizeof (IMD5Header);
+	SmartBuf uncompressed;
 	if (sndType == 'LZ77')
 	{
 		u32 uncSize;
-		SmartBuf uncompressed = uncompressLZ77(uncSize, soundChunk, soundChunkSize);
+		uncompressed = uncompressLZ77(uncSize, soundChunk, soundChunkSize);
 		if (!uncompressed) return;
 
 		soundChunk = uncompressed.get();
-		SMART_FREE(uncompressed);
 		soundChunkSize = uncSize;
 		sndType = *(u32 *)soundChunk;
 	}
