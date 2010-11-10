@@ -13,14 +13,16 @@ const char *fmt(const char *format, ...)
 		MAX_USES		= 8
 	};
 
-	static char buffer[MAX_USES][MAX_MSG_SIZE];
-	va_list va;
+	static int currentStr = 0;
+	currentStr = (currentStr + 1) % MAX_USES;
 
-	static int currentStr = (currentStr + 1) % MAX_USES;
+	va_list va;
 	va_start(va, format);
+	static char buffer[MAX_USES][MAX_MSG_SIZE];
 	vsnprintf(buffer[currentStr], MAX_MSG_SIZE, format, va);
 	buffer[currentStr][MAX_MSG_SIZE - 1] = '\0';
 	va_end(va);
+
 	return buffer[currentStr];
 }
 
@@ -310,7 +312,6 @@ void CText::setText(SFont font, const wstringEx &t, u32 startline)
 
 void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 {
-	float wordWidth;
 	float shift;
 
 	totalHeight = 0;
@@ -331,7 +332,7 @@ void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 			posY += (float)m_font.lineSpacing;
 		for (u32 i = 0; i < words.size(); ++i)
 		{
-			wordWidth = m_font.font->getWidth(words[i].text.c_str());
+			float wordWidth = m_font.font->getWidth(words[i].text.c_str());
 			if (posX == 0.f || posX + (float)wordWidth <= width)
 			{
 				words[i].targetPos = Vector3D(posX, posY, 0.f);
