@@ -394,23 +394,18 @@ void CMenu::_game(bool launch)
 				m_cf.clear();
 				_showWaitMessage();
 
-				if (wdm_count > 1)
-				{
-					m_gcfg1.setInt("WDM", id, current_wdm);
-				}
+				if (wdm_count > 1) m_gcfg1.setInt("WDM", id, current_wdm);
 
 				if (m_cfg.getBool("GENERAL", "write_playlog", true))
 				{
 					if (banner_title[0] == 0) // No title set?
 					{					
 						// Get banner_title
-						Banner * banner = (m_current_view == COVERFLOW_CHANNEL) ? _extractChannelBnr(chantitle) : _extractBnr(hdr);
+						Banner * banner = m_current_view == COVERFLOW_CHANNEL ? _extractChannelBnr(chantitle) : m_current_view == COVERFLOW_USB ? _extractBnr(hdr) : NULL;
 						if (banner != NULL)
 						{						
 							if (banner->IsValid())
-							{
 								_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str()));
-							}
 							delete banner;
 						}
 						banner = NULL;
@@ -636,9 +631,16 @@ void CMenu::_directlaunch(const string &id)
 void CMenu::_launch(dir_discHdr *hdr)
 {
 	m_gcfg2.load(sfmt("%s/gameconfig2.ini", m_settingsDir.c_str()).c_str());
-	m_current_view == COVERFLOW_CHANNEL ?
-		_launchChannel(hdr) : _launchGame(hdr, false);
-
+	switch(m_current_view)
+	{
+		case COVERFLOW_CHANNEL:
+			_launchChannel(hdr);
+			break;
+		case COVERFLOW_USB:
+		default:
+			_launchGame(hdr, false);
+			break;
+	}
 }
 
 void CMenu::_launchChannel(dir_discHdr *hdr)
@@ -1083,7 +1085,7 @@ void CMenu::_loadGameSound(dir_discHdr *hdr)
 {
 	u32 sndSize = 0;
 
-	Banner *banner = m_current_view == COVERFLOW_USB ? _extractBnr(hdr) : _extractChannelBnr(hdr->hdr.chantitle);
+	Banner *banner = m_current_view == COVERFLOW_USB ? _extractBnr(hdr) : m_current_view == COVERFLOW_CHANNEL ? _extractChannelBnr(hdr->hdr.chantitle) : NULL;
 
 	if (banner == NULL || !banner->IsValid())
 	{

@@ -48,19 +48,14 @@ bool CFanart::load(Config &m_globalConfig, const char *path, const char *id)
 	if (texErr == STexture::TE_OK)
 	{
 		m_cfg.load(sfmt("%s/%s.ini", dir, id).c_str());
-		if (!m_cfg.loaded())
-		{
-			m_cfg.load(sfmt("%s/%.3s.ini", dir, id).c_str());
-		}
+		if (!m_cfg.loaded()) m_cfg.load(sfmt("%s/%.3s.ini", dir, id).c_str());
+
 		fanBgLq.fromPNGFile(sfmt("%s/background_lq.png", dir).c_str(), GX_TF_RGBA8, ALLOC_MEM2);
 		
 		for (int i = 1; i <= 6; i++)
 		{
 			CFanartElement elm(m_cfg, dir, i);
-			if (elm.IsValid())
-			{
-				m_elms.push_back(elm);
-			}
+			if (elm.IsValid()) m_elms.push_back(elm);
 		}
 		
 		m_loaded = true;
@@ -145,9 +140,7 @@ void CFanart::tick()
 	{
 		m_elms[i].tick();
 		if (!m_elms[i].IsAnimationComplete())
-		{
 			m_animationComplete = false;
-		}
 	}
     if (m_animationComplete && m_delayAfterAnimation > 0)
         m_delayAfterAnimation--;
@@ -262,16 +255,11 @@ void CFanartElement::tick()
 
 void CFanartElement::draw()
 {
-	if (m_delay > 0) return;
+	if (m_event_alpha == 0 || m_event_scaleX == 0.f || m_event_scaleY == 0.f || m_delay > 0)
+		return;
 	
 	GXTexObj artwork;
 	Mtx modelViewMtx, idViewMtx, rotViewMtxZ;
-
-	float w;
-	float h;
-	
-	if (m_event_alpha == 0 || m_event_scaleX == 0.f || m_event_scaleY == 0.f) // Nothing to draw here
-		return;
 
 	guMtxIdentity(idViewMtx);
 	guMtxScaleApply(idViewMtx, idViewMtx, m_event_scaleX, m_event_scaleY, 1.f);
@@ -285,8 +273,8 @@ void CFanartElement::draw()
 	GX_InitTexObj(&artwork, m_art.data.get(), m_art.width, m_art.height, m_art.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
 	GX_LoadTexObj(&artwork, GX_TEXMAP0);
 	
-	w = (float)(m_art.width / 2); // * m_event_scaleX;
-	h = (float)(m_art.height / 2); // * m_event_scaleY;
+	float w = (float)(m_art.width / 2); // * m_event_scaleX;
+	float h = (float)(m_art.height / 2); // * m_event_scaleY;
 
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 	

@@ -892,12 +892,12 @@ void CMenu::_initCF(void)
 {
 	Config titles, custom_titles;
 	m_titles_loaded = false;
-	
+
+	m_gamelistdump = false;
 	m_gamelistdump = m_cfg.getBool("GENERAL", m_current_view == COVERFLOW_USB ? "dump_gamelist" : "dump_chanlist", true);
 	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
 
-	if (titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str()))
-		m_titles_loaded = true;
+	m_titles_loaded = titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str());
 	custom_titles.load(sfmt("%s/custom_titles.ini", m_settingsDir.c_str()).c_str());
 
 	m_cf.clear();
@@ -920,7 +920,7 @@ void CMenu::_initCF(void)
 					continue;
 				}
 			}
-			wstringEx w= custom_titles.getWString("TITLES", id, titles.getWString("TITLES", id));
+			wstringEx w = custom_titles.getWString("TITLES", id, titles.getWString("TITLES", id));
 
 			if (w.empty())
 			{
@@ -1251,7 +1251,14 @@ bool CMenu::_loadChannelList(void)
 
 bool CMenu::_loadList(void)
 {
-	return m_current_view == COVERFLOW_USB ? _loadGameList() : _loadChannelList();
+	switch(m_current_view)
+	{
+		case COVERFLOW_CHANNEL:
+			return _loadChannelList();
+		case COVERFLOW_USB:
+		default:
+			return _loadGameList();
+	}
 }
 
 bool CMenu::_loadGameList(void)

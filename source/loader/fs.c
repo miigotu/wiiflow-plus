@@ -147,7 +147,6 @@ bool FS_Mount_USB(void)
 	{
 		if (!g_ntfs_usbOK && !g_fat_usbOK && !g_wbfsOK)
 			__io_usbstorage.shutdown();	
-		
 		return false;
 	}
 

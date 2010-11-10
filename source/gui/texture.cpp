@@ -327,20 +327,15 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 		if (!tmpData || !tmpData2)
 		{
 			PNGU_ReleaseImageContext(ctx);
-			SMART_FREE(tmpData);
-			SMART_FREE(tmpData2);
 			return STexture::TE_NOMEM;
 		}
 		PNGU_DecodeToRGBA8(ctx, imgProp.imgWidth, imgProp.imgHeight, tmpData2.get(), 0, 0xFF);
 		PNGU_ReleaseImageContext(ctx);
 		DCFlushRange(tmpData2.get(), imgProp.imgWidth * imgProp.imgHeight * 4);
+
 		tmpData2 = STexture::_genMipMaps(tmpData2.get(), imgProp.imgWidth, imgProp.imgHeight, maxLODTmp, baseWidth, baseHeight);
-		if (!tmpData2)
-		{
-			SMART_FREE(tmpData);
-			SMART_FREE(tmpData2);
-			return STexture::TE_NOMEM;
-		}
+		if (!tmpData2) return STexture::TE_NOMEM;
+
 		u32 nWidth = newWidth;
 		u32 nHeight = newHeight;
 		u8 *pSrc = tmpData2.get();

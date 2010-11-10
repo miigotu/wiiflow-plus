@@ -125,14 +125,14 @@ void try_hello()
 	gprintf("hello: %d %x %d\n", ret, x, x);
 }
 
-bool loadIOS(int n, bool init, bool switch_port)
+bool loadIOS(int n, bool launch_game, bool switch_port)
 {
 	bool iosOK;
 	char partition[6];
 
 	Close_Inputs();
 
-	if (init)
+	if (launch_game)
 	{
 		Unmount_All_Devices();
 		int curIndex = WBFS_GetCurrentPartition();
@@ -168,7 +168,6 @@ bool loadIOS(int n, bool init, bool switch_port)
 		COVER_free(backup);
 	}
 
-	Open_Inputs();
 
 	if (iosOK)
 	{
@@ -181,12 +180,14 @@ bool loadIOS(int n, bool init, bool switch_port)
 //			try_hello();
 		}
 	}
-	if (init)
+
+ 	if (launch_game)
 	{
 		Mount_Devices();
 		WBFS_OpenNamed((char *) &partition);
 		Disc_Init();
 	}
+	else Open_Inputs();
 
 	return iosOK;
 }

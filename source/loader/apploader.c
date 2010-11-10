@@ -66,8 +66,7 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 	SYS_SetArena1Hi((void *)0x816FFFF0);
 	/* Read apploader header */
 	ret = WDVD_Read(buffer, 0x20, APPLDR_OFFSET);
-	if (ret < 0)
-		return ret;
+	if (ret < 0) return ret;
 
 	/* Calculate apploader length */
 	appldr_len = buffer[5] + buffer[6];
@@ -75,8 +74,8 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 	/* Read apploader code */
 	// Either you limit memory usage or you don't touch the heap after that, because this is writing at 0x1200000
 	ret = WDVD_Read(appldr, appldr_len, APPLDR_OFFSET + 0x20);
-	if (ret < 0)
-		return ret;
+	if (ret < 0) return ret;
+
 	DCFlushRange(appldr, appldr_len);
 
 	/* Set apploader entry function */
@@ -102,15 +101,6 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 	}
 	PrinceOfPersiaPatch();
 
-    //this patch should be run on the entire dol at 1 time
-	if (!altdol && rtrn)
-	{
-		if (PatchReturnTo((void *) dolStart, dolEnd - dolStart, rtrn))
-		{
-			DCFlushRange((void *) dolStart, dolEnd - dolStart);
-		}
-	}
-
 	/* Alternative dol */
 	if (altdol != 0)
 	{
@@ -125,22 +115,22 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 		patchCfg.patchVidModes = patchVidModes;
 		patchCfg.patchDiscCheck = patchDiscCheck;
 		void *altEntry = (void *)load_dol(altdol, altdolLen, dolPatches, &patchCfg);
-		if (altEntry == 0)
-			return -1;
+		if (altEntry == 0) return -1;
 		*entry = altEntry;
 		
-		if(rtrn && PatchReturnTo((void *) altdol, altdolLen, rtrn))
-		{
-			DCFlushRange((void *) altdol, altdolLen);
-		}
+		if(rtrn) PatchReturnTo((void *) altdol, altdolLen, rtrn);
 	}
 	else
+	{
 		/* Set entry point from apploader */
 		*entry = appldr_final();
 
+		/* This patch should be run on the entire dol at 1 time */
+		if (rtrn) PatchReturnTo((void *) dolStart, dolEnd - dolStart, rtrn);
+	}
+
 	/* ERROR 002 fix (WiiPower) */
-	if (error002Fix)
-		*(u32 *)0x80003140 = *(u32 *)0x80003188;
+	if (error002Fix) *(u32 *)0x80003140 = *(u32 *)0x80003188;
 			
 	DCFlushRange((void*)0x80000000, 0x3f00);
 
@@ -157,8 +147,8 @@ static void dolPatches(void *dst, int len, void *params)
 
 static void PatchCountryStrings(void *Address, int Size)
 {
-	u8 SearchPattern[4] = { 0x00, 0x00, 0x00, 0x00 };
-	u8 PatchData[4] = { 0x00, 0x00, 0x00, 0x00 };
+	u8 SearchPattern[4] = {0x00, 0x00, 0x00, 0x00};
+	u8 PatchData[4] = {0x00, 0x00, 0x00, 0x00};
 	u8 *Addr = (u8*)Address;
 	int wiiregion = CONF_GetRegion();
 
@@ -232,23 +222,22 @@ static void PatchCountryStrings(void *Address, int Size)
 
 static void patch_NoDiscinDrive(void *buffer, u32 len)
 {
-	static const u8 oldcode[] = { 0x54, 0x60, 0xF7, 0xFF, 0x40, 0x82, 0x00, 0x0C, 0x54, 0x60, 0x07, 0xFF, 0x41, 0x82, 0x00, 0x0C };
-	static const u8 newcode[] = { 0x54, 0x60, 0xF7, 0xFF, 0x40, 0x82, 0x00, 0x0C, 0x54, 0x60, 0x07, 0xFF, 0x48, 0x00, 0x00, 0x0C };
+	static const u8 oldcode[] = {0x54, 0x60, 0xF7, 0xFF, 0x40, 0x82, 0x00, 0x0C, 0x54, 0x60, 0x07, 0xFF, 0x41, 0x82, 0x00, 0x0C};
+	static const u8 newcode[] = {0x54, 0x60, 0xF7, 0xFF, 0x40, 0x82, 0x00, 0x0C, 0x54, 0x60, 0x07, 0xFF, 0x48, 0x00, 0x00, 0x0C};
 	int n;
 
    /* Patch cover register */
 	for (n = 0; n < len - sizeof oldcode; n += 4) // n is not 4 aligned here, so you can get an out of buffer thing
 	{
 		if (memcmp(buffer + n, (void *)oldcode, sizeof oldcode) == 0)
-		{
 			memcpy(buffer + n, (void *)newcode, sizeof newcode);
-		}
 	}
 }
 
 static bool PrinceOfPersiaPatch()
 {
-    if (memcmp("SPX", (char *)0x80000000, 3) == 0 || memcmp("RPW", (char *)0x80000000, 3) == 0) {
+    if (memcmp("SPX", (char *)0x80000000, 3) == 0 || memcmp("RPW", (char *)0x80000000, 3) == 0)
+	{
         u8 *p = (u8 *)0x807AEB6A;
         *p++ = 0x6F;
         *p++ = 0x6A;
@@ -275,7 +264,7 @@ static bool PrinceOfPersiaPatch()
         *p++ = 0x82;
         *p++ = 0x80;
         return true;
-    }
+	}
     return false;
 }
 
@@ -283,23 +272,23 @@ bool NewSuperMarioBrosPatch(void *Address, int Size)
 {
 	if (memcmp("SMN", (char *)0x80000000, 3) == 0)
 	{
-		u8 SearchPattern1[32] = { // PAL
+		u8 SearchPattern1[32] = {// PAL
 			0x94, 0x21, 0xFF, 0xD0, 0x7C, 0x08, 0x02, 0xA6,
 			0x90, 0x01, 0x00, 0x34, 0x39, 0x61, 0x00, 0x30,
 			0x48, 0x12, 0xD9, 0x39, 0x7C, 0x7B, 0x1B, 0x78,
-			0x7C, 0x9C, 0x23, 0x78, 0x7C, 0xBD, 0x2B, 0x78 };
-		u8 SearchPattern2[32] = { // NTSC
+			0x7C, 0x9C, 0x23, 0x78, 0x7C, 0xBD, 0x2B, 0x78};
+		u8 SearchPattern2[32] = {// NTSC
 			0x94, 0x21, 0xFF, 0xD0, 0x7C, 0x08, 0x02, 0xA6,
 			0x90, 0x01, 0x00, 0x34, 0x39, 0x61, 0x00, 0x30,
 			0x48, 0x12, 0xD7, 0x89, 0x7C, 0x7B, 0x1B, 0x78,
-			0x7C, 0x9C, 0x23, 0x78, 0x7C, 0xBD, 0x2B, 0x78 };
-		u8 PatchData[4] = { 0x4E, 0x80, 0x00, 0x20 };
+			0x7C, 0x9C, 0x23, 0x78, 0x7C, 0xBD, 0x2B, 0x78};
+		u8 PatchData[4] = {0x4E, 0x80, 0x00, 0x20};
 	
 		void *Addr = Address;
 		void *Addr_end = Address+Size;
 		while (Addr <= Addr_end-sizeof(SearchPattern1))
 		{
-			if (   memcmp(Addr, SearchPattern1, sizeof(SearchPattern1))==0
+			if (  memcmp(Addr, SearchPattern1, sizeof(SearchPattern1))==0
 				|| memcmp(Addr, SearchPattern2, sizeof(SearchPattern2))==0)
 			{
 				memcpy(Addr,PatchData,sizeof(PatchData));
@@ -323,16 +312,11 @@ static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeOb
 	
 	patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
 
-	if (cheat)
-		dogamehooks(dst, len);
-	if (vipatch)
-		vidolpatcher(dst, len);
-	if (configbytes[0] != 0xCD)
-		langpatcher(dst, len);
-	if (err002fix && ((IOS_GetVersion() == 249 && IOS_GetRevision() < 13) || IOS_GetVersion() == 250))
-		Anti_002_fix(dst, len);
-	if (countryString) // Country Patch by WiiPower
-		PatchCountryStrings(dst, len);
+	if (cheat) dogamehooks(dst, len);
+	if (vipatch) vidolpatcher(dst, len);
+	if (configbytes[0] != 0xCD) langpatcher(dst, len);
+	if (err002fix && ((IOS_GetVersion() == 249 && IOS_GetRevision() < 13) || IOS_GetVersion() == 250)) Anti_002_fix(dst, len);
+	if (countryString) PatchCountryStrings(dst, len); // Country Patch by WiiPower
 
 	Remove_001_Protection(dst, len);
 	
@@ -346,8 +330,8 @@ static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeOb
 
 static bool Remove_001_Protection(void *Address, int Size)
 {
-	static const u8 SearchPattern[] = { 0x40, 0x82, 0x00, 0x0C, 0x38, 0x60, 0x00, 0x01, 0x48, 0x00, 0x02, 0x44, 0x38, 0x61, 0x00, 0x18 };
-	static const u8 PatchData[] = 	{ 0x40, 0x82, 0x00, 0x04, 0x38, 0x60, 0x00, 0x01, 0x48, 0x00, 0x02, 0x44, 0x38, 0x61, 0x00, 0x18 };
+	static const u8 SearchPattern[] = {0x40, 0x82, 0x00, 0x0C, 0x38, 0x60, 0x00, 0x01, 0x48, 0x00, 0x02, 0x44, 0x38, 0x61, 0x00, 0x18};
+	static const u8 PatchData[] = {0x40, 0x82, 0x00, 0x04, 0x38, 0x60, 0x00, 0x01, 0x48, 0x00, 0x02, 0x44, 0x38, 0x61, 0x00, 0x18};
 	u8 *Addr_end = Address + Size;
 	u8 *Addr;
 
@@ -362,8 +346,8 @@ static bool Remove_001_Protection(void *Address, int Size)
 
 static void Anti_002_fix(void *Address, int Size)
 {
-	static const u8 SearchPattern[] = { 0x2C, 0x00, 0x00, 0x00, 0x48, 0x00, 0x02, 0x14, 0x3C, 0x60, 0x80, 0x00 };
-	static const u8 PatchData[] = 	{ 0x2C, 0x00, 0x00, 0x00, 0x40, 0x82, 0x02, 0x14, 0x3C, 0x60, 0x80, 0x00 };
+	static const u8 SearchPattern[] = {0x2C, 0x00, 0x00, 0x00, 0x48, 0x00, 0x02, 0x14, 0x3C, 0x60, 0x80, 0x00};
+	static const u8 PatchData[] = 	{0x2C, 0x00, 0x00, 0x00, 0x40, 0x82, 0x02, 0x14, 0x3C, 0x60, 0x80, 0x00};
 	void *Addr = Address;
 	void *Addr_end = Address + Size;
 

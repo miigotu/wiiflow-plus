@@ -555,7 +555,7 @@ int OpenDbFiles(const char *xmlfilepath, bool writing)
 void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, int forcejptoen)
 {
 	int n = 0;
-		char * coverColors = NULL;
+	char * coverColors = NULL;
 	int nrCoverColors = 0;
 	if (strcmp(langtxt,""))
 		strcpy(xmlCfgLang, (strlen(langtxt) == 2) ? VerifyLangCode(langtxt) : ConvertLangTextToCode(langtxt)); // convert language text into ISO 639 two-letter language code
@@ -599,15 +599,11 @@ void LoadTitlesFromXML(const char *xmlfilepath, char *xmlData, char *langtxt, in
 	while (!abort)
 	{
 		start = strstr(xmlData, "<game");
-		if (start == NULL)
-	{
-			break;
-		}
+		if (start == NULL) break;
+
 		end = strstr(start, "</game");
-		if (end == NULL)
-	{
-			break;
-		}
+		if (end == NULL) break;
+
 		tmp = strndup(start, end-start);
 		xmlData = end;
 		memset(&gameinfo, 0, sizeof(struct gameXMLinfo));

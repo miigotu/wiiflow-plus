@@ -33,17 +33,23 @@ static bool return_to_menu = false;
 static bool return_to_priiloader = false;
 static bool return_to_disable = false;
 
+static bool wpads_On = false;
+
 void Open_Inputs()
 {
+	if(wpads_On) return;
 	WPAD_Init();
 	PAD_Init();
 	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+	wpads_On = true;
 }
 
 void Close_Inputs()
 {
+	if(!wpads_On) return;
 	WPAD_Flush(WPAD_CHAN_ALL);
 	WPAD_Shutdown();
+	wpads_On = false;
 }
 
 bool Sys_Exiting(void)
@@ -53,10 +59,10 @@ bool Sys_Exiting(void)
 
 void Sys_Test(void)
 {
-	if (reset)
-		Sys_Reboot();
-	else if (shutdown)
-		Sys_Shutdown();
+	if(reset || shutdown) Close_Inputs();
+
+	if (reset) Sys_Reboot();
+	else if (shutdown) Sys_Shutdown();
 }
 
 void Sys_ExitTo(int option)
@@ -67,17 +73,19 @@ void Sys_ExitTo(int option)
 	return_to_disable = option == EXIT_TO_DISABLE;
 	
 	//magic word to force wii menu in priiloader.
-	DCFlushRange((void*)0x8132fffb,4);
-	if (return_to_menu)
-		*(vu32*)0x8132fffb = 0x50756e65;
-	else if (return_to_priiloader)
-		*(vu32*)0x8132fffb = 0x4461636f;
+	if(return_to_menu)
+	{
+		Write32(0x8132fffb, 0x50756e65);
+	}
+	else if(return_to_priiloader)
+	{
+		Write32(0x8132fffb,0x4461636f);
+	}
 }
 
 void Sys_Exit(int ret)
 {
-	if(return_to_disable)
-		return;
+	if(return_to_disable) return;
 
 	/* Shutdown Inputs */
 	Close_Inputs();
@@ -85,8 +93,7 @@ void Sys_Exit(int ret)
 	/* Clear Playlog */
 	Playlog_Delete();
 
-	if (return_to_menu || return_to_priiloader)
-		Sys_LoadMenu();
+	if (return_to_menu || return_to_priiloader) Sys_LoadMenu();
 	else if(WII_LaunchTitle(HBC_108)<0)
 			if(WII_LaunchTitle(HBC_HAXX)<0)
 				if(WII_LaunchTitle(HBC_JODI)<0)
@@ -113,18 +120,12 @@ void Sys_Init(void)
 
 void Sys_Reboot(void)
 {
-	/* Shutdown Inputs */
-	Close_Inputs();
-
 	/* Restart console */
 	STM_RebootSystem();
 }
 
 void Sys_Shutdown(void)
 {
-	/* Shutdown Inputs */
-	Close_Inputs();
-
 	/* Poweroff console */
 	if(CONF_GetShutdownMode() == CONF_SHUTDOWN_IDLE)
 	{
@@ -319,11 +320,12 @@ u32 get_ios_info(signed_blob *TMD, u32 size)
 	tmd *t = (tmd*)SIGNATURE_PAYLOAD(TMD);
 
 	// patch title id, so hash matches
-	if (t->title_id != TITLE_ID(1, 249)) {
+	if (t->title_id != TITLE_ID(1, 249))
+	{
 		t->title_id = TITLE_ID(1,249);
-		if (t->title_version >= 65530) { // for 250
+		if (t->title_version >= 65530)
 			try_ver = t->title_version = 20;
-		}
+
 		retry_ver:
 		// fake sign it
 		brute_tmd(t);
@@ -340,9 +342,11 @@ u32 get_ios_info(signed_blob *TMD, u32 size)
 			break;
 		}
 	}
-	if (retval == 0xFF) {
+	if (retval == 0xFF)
+	{
 		// not found, retry lower rev.
-		if (try_ver > 13) {
+		if (try_ver > 13)
+		{
 			try_ver--;
 			t->title_version = try_ver;
 			goto retry_ver;
