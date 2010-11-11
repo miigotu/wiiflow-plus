@@ -130,7 +130,6 @@ bool loadIOS(int n, bool launch_game, bool switch_port)
 	bool iosOK;
 	char partition[6];
 
-	Close_Inputs();
 
 	if (launch_game)
 	{
@@ -145,6 +144,7 @@ bool loadIOS(int n, bool launch_game, bool switch_port)
 		mload_close();
 		usleep(500000);
 	}
+	else Close_Inputs(); //closed in disc.c so no need to do that here if game is booting.
 
 	void *backup = COVER_allocMem1(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
 	if (backup != 0)
@@ -167,7 +167,6 @@ bool loadIOS(int n, bool launch_game, bool switch_port)
 		DCFlushRange(&__Arena2Lo, 0x200000);
 		COVER_free(backup);
 	}
-
 
 	if (iosOK)
 	{
@@ -198,13 +197,12 @@ u32 get_ios_base()
 	if (is_ios_type(IOS_TYPE_WANIN) && revision >= 17)
 	{
 		u32 index = get_ios_info_from_tmd();
-		if (index != 0xFF)
-			return atoi(bases[index]);
-		else 
-			return wanin_mload_get_IOS_base();
+
+		if (index != 0xFF) return atoi(bases[index]);
+		else return wanin_mload_get_IOS_base();
 	} 
 	else if (is_ios_type(IOS_TYPE_HERMES) && revision >= 4)
 		return mload_get_IOS_base();
-	else 
-		return 0;
+
+	return 0;
 }

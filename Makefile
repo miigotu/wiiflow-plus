@@ -58,7 +58,6 @@ port		:=	0
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-
 CFLAGS	 =	-g -Os -Wall -Wno-char-subscripts -fno-strict-aliasing $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DMAIN_IOS=249
 CXXFLAGS =	-g -Os -Wall -Wno-char-subscripts -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H
 
@@ -74,7 +73,6 @@ LIBS	:=	-lpng -lm -lz -lwiiuse -lbte -lasnd -logc -lfreetype -lvorbisidec -lmad 
 # include and lib
 #---------------------------------------------------------------------------------
 LIBDIRS	:=	$(CURDIR)/portlibs
-			#$(PORTLIBS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -82,7 +80,6 @@ LIBDIRS	:=	$(CURDIR)/portlibs
 #---------------------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
-
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
@@ -99,6 +96,9 @@ CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+PNGFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.png)))
+DOLFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.dol)))
+ELFFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.elf)))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -111,7 +111,9 @@ endif
 
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
-					$(sFILES:.s=.o) $(SFILES:.S=.o)
+					$(sFILES:.s=.o) $(SFILES:.S=.o) \
+					$(PNGFILES:.png=.png.o) $(addsuffix .o,$(DOLFILES)) \
+					$(addsuffix .o,$(ELFFILES))
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
@@ -179,8 +181,6 @@ $(OUTPUT).elf: $(OFILES)
 	@echo $(notdir $<)
 	@bin2s -a 32 $< | $(AS) -o $(@)
 
--include $(DEPENDS)
-
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .ttf extension
 #---------------------------------------------------------------------------------
@@ -188,8 +188,6 @@ $(OUTPUT).elf: $(OFILES)
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	@bin2s -a 32 $< | $(AS) -o $(@)
-
--include $(DEPENDS)
 
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .wav extension
@@ -199,12 +197,26 @@ $(OUTPUT).elf: $(OFILES)
 	@echo $(notdir $<)
 	@bin2s -a 32 $< | $(AS) -o $(@)
 
--include $(DEPENDS)
-
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .bin extension
 #---------------------------------------------------------------------------------
 %.bin.o	:	%.bin
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@bin2s -a 32 $< | $(AS) -o $(@)
+
+#---------------------------------------------------------------------------------
+# This rule links in binary data with the .dol extension
+#---------------------------------------------------------------------------------
+%.dol.o : %.dol
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@bin2s -a 32 $< | $(AS) -o $(@)
+
+#---------------------------------------------------------------------------------
+# This rule links in binary data with the .elf extension
+#---------------------------------------------------------------------------------
+%.elf.o : %.elf
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	@bin2s -a 32 $< | $(AS) -o $(@)

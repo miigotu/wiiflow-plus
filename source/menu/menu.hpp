@@ -22,6 +22,7 @@
 enum {
 	COVERFLOW_USB,
 	COVERFLOW_CHANNEL,
+	COVERFLOW_HOMEBREW,
 	COVERFLOW_MAX
 };
 
@@ -147,9 +148,10 @@ private:
 	u32 m_mainBtnNext;
 	u32 m_mainBtnPrev;
 	u32 m_mainBtnQuit;
-	u32 m_mainBtnChannel;
 	u32 m_mainBtnDVD;
 	u32 m_mainBtnUsb;
+	u32 m_mainBtnChannel;
+	u32 m_mainBtnHomebrew;
 	u32 m_mainBtnInit;
 	u32 m_mainBtnInit2;
 	u32 m_mainLblInit;
@@ -479,8 +481,6 @@ private:
 	s32	  wmote_roll_skip[WPAD_MAX_WIIMOTES];
 	bool  enable_wmote_roll;
 
-	void Open_Inputs(void);
-	void Close_Inputs(void);
 	void SetupInput(void);
 	void ScanInput(void);
 
@@ -609,6 +609,7 @@ private:
 	// 
 	bool _loadChannelList(void);
 	bool _loadList(void);
+	bool _loadHomebrewList(char *);
 	bool _loadGameList(void);
 	void _initCF(void);
 	// 
@@ -734,6 +735,7 @@ private:
 	void _launch(dir_discHdr *hdr);
 	void _launchGame(dir_discHdr *hdr, bool dvd);
 	void _launchChannel(dir_discHdr *hdr);
+	void _launchHomebrew(dir_discHdr *);
 	void _setAA(int aa);
 	void _loadCFCfg(void);
 	void _loadCFLayout(int version, bool forceAA = false, bool otherScrnFmt = false);

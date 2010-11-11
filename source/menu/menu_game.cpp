@@ -27,8 +27,16 @@
 #include "channels.h"
 
 #include "gecko.h"
+#include "dolloader.h"
+#include "sys.h"
 
 using namespace std;
+
+typedef void (*entrypoint) (void);
+extern "C" {extern void __exception_closeall();}
+
+extern const u8 app_booter_dol[];
+extern const u32 app_booter_dol_size;
 
 extern const u8 btngamecfg_png[];
 extern const u8 btngamecfgs_png[];
@@ -633,6 +641,9 @@ void CMenu::_launch(dir_discHdr *hdr)
 	m_gcfg2.load(sfmt("%s/gameconfig2.ini", m_settingsDir.c_str()).c_str());
 	switch(m_current_view)
 	{
+		case COVERFLOW_HOMEBREW:
+			_launchHomebrew(hdr);
+			break;
 		case COVERFLOW_CHANNEL:
 			_launchChannel(hdr);
 			break;
@@ -641,6 +652,83 @@ void CMenu::_launch(dir_discHdr *hdr)
 			_launchGame(hdr, false);
 			break;
 	}
+}
+
+void CMenu::_launchHomebrew(dir_discHdr *hdr)
+{
+ 	m_gcfg1.save();
+	m_gcfg2.save();
+	m_cat.save();
+	m_cfg.save();
+	//IOS_ReloadIOS(mainIOS);
+
+	char argIOS[15];
+	char filepath[256];
+
+	strncpy(filepath, (char *)&hdr->path, sizeof(hdr->path));
+
+	FILE *exeFile = fopen(filepath ,"rb");
+	if(!exeFile) return;
+
+	fseek(exeFile, 0, SEEK_END);
+	u32 exeSize = ftell(exeFile);
+	rewind(exeFile);
+
+	void *exeBuffer = (void *)EXECUTABLE_MEM_ADDR;
+	if(fread(exeBuffer, 1, exeSize, exeFile) != exeSize)
+	{
+		fclose(exeFile);
+		return;
+	}
+	fclose(exeFile);
+	DCFlushRange(exeBuffer, exeSize);
+
+ 	Close_Inputs();
+	Playlog_Delete();
+
+//	_hideWaitMessage();
+
+	COVER_clear();
+	WBFS_Close();
+
+	Unmount_All_Devices();
+	cleanup();
+	USBStorage_Deinit();
+
+	// load entry point //
+	struct __argv args;
+	bzero(&args, sizeof(args));
+	args.argvMagic = ARGV_MAGIC;
+
+	args.length = strlen(filepath) + strlen(argIOS) + 2;
+	SmartBuf argBuf = smartAnyAlloc(args.length);
+	args.commandLine = (char*)argBuf.get();
+	if (!args.commandLine) return;
+
+	strcpy(args.commandLine, filepath);
+	strcpy(&args.commandLine[strlen(filepath) + 1], argIOS);
+	args.commandLine[strlen(filepath)] = '\0';
+	args.commandLine[args.length - 1] = '\0';
+	args.argc = 2;
+	args.argv = &args.commandLine;
+	args.endARGV = args.argv + 1;
+
+	u32 exeEntryPointAddress = load_dol_image((void*)app_booter_dol, &args);
+
+	if(exeEntryPointAddress == 0) return;
+	entrypoint exeEntryPoint = (entrypoint) exeEntryPointAddress;
+
+	VIDEO_SetBlack(TRUE);
+	VIDEO_Flush();
+	VIDEO_WaitVSync();
+	VIDEO_WaitVSync();
+
+	u32 level;
+	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
+	_CPU_ISR_Disable(level);
+	__exception_closeall();
+	exeEntryPoint();
+	_CPU_ISR_Restore(level);
 }
 
 void CMenu::_launchChannel(dir_discHdr *hdr)

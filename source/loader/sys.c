@@ -35,7 +35,7 @@ static bool return_to_disable = false;
 
 static bool wpads_On = false;
 
-void Open_Inputs()
+void Open_Inputs(void)
 {
 	if(wpads_On) return;
 	WPAD_Init();
@@ -44,7 +44,7 @@ void Open_Inputs()
 	wpads_On = true;
 }
 
-void Close_Inputs()
+void Close_Inputs(void)
 {
 	if(!wpads_On) return;
 	WPAD_Flush(WPAD_CHAN_ALL);
@@ -354,24 +354,6 @@ u32 get_ios_info(signed_blob *TMD, u32 size)
 	}
 
 	return retval;
-}
-
-
-void mk_mload_version()
-{
-	u32 revision = IOS_GetRevision();
-	char mload_ver_str[40];
-
-	if ((is_ios_type(IOS_TYPE_HERMES) && revision > 4) || (is_ios_type(IOS_TYPE_WANIN) && revision >= 18))
-	{
-		int v, s;
-		v = mload_get_version();
-		s = v & 0x0F;
-		v = v >> 4;
-		sprintf(mload_ver_str, "%d.%d", v, s);
-	} 
-	else
-		sprintf(mload_ver_str, "%d", revision);
 }
 
 bool shadow_mload()

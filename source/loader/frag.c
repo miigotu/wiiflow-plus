@@ -263,25 +263,18 @@ int get_frag_list(u8 *id, char *path)
 int set_frag_list(u8 *id)
 {
 	if (wbfs_part_fs == PART_FS_WBFS) return 1;
-	if (frag_list == NULL) {
-		return -2;
-	}
+	if (frag_list == NULL) return -2;
 
 	// (+1 for header which is same size as fragment)
 	int size = sizeof(Fragment) * (frag_list->num + 1);
-	int ret;
 	DCFlushRange(frag_list, size);
 
 	gprintf("Calling WDVD_SetFragList, frag list size %d\n", size);
-	if (size > 400)
-		ghexdump(frag_list, 400);
-	else
-		ghexdump(frag_list, size);
-	ret = WDVD_SetFragList(wbfsDev, frag_list, size);
+	if (size > 400) ghexdump(frag_list, 400);
+	else ghexdump(frag_list, size);
 
-	if (ret) {
-		return ret;
-	}
+	int ret = WDVD_SetFragList(wbfsDev, frag_list, size);
+	if (ret) return ret;
 
 	// verify id matches
 	char discid[8];

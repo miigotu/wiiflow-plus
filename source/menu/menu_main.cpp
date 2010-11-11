@@ -46,6 +46,7 @@ void CMenu::_hideMain(bool instant)
 	m_btnMgr.hide(m_mainBtnConfig, instant);
 	m_btnMgr.hide(m_mainBtnInfo, instant);
 	m_btnMgr.hide(m_mainBtnQuit, instant);
+	m_btnMgr.hide(m_mainBtnHomebrew, instant);
 	m_btnMgr.hide(m_mainBtnChannel, instant);
 	m_btnMgr.hide(m_mainBtnUsb, instant);
 	m_btnMgr.hide(m_mainBtnDVD, instant);
@@ -75,12 +76,16 @@ void CMenu::_showMain(void)
 
 	switch(m_current_view)
 	{
+		case COVERFLOW_HOMEBREW:
+			m_btnMgr.show(m_mainBtnUsb);
+			break;
 		case COVERFLOW_CHANNEL:
-			m_btnMgr.show(m_mainBtnChannel);
+			m_btnMgr.show(m_mainBtnUsb);
+			//m_btnMgr.show(m_mainBtnHomebrew);
 			break;
 		case COVERFLOW_USB:
 		default:
-			m_btnMgr.show(m_mainBtnUsb);
+			m_btnMgr.show(m_mainBtnChannel);
 			break;
 	}
 
@@ -310,8 +315,9 @@ int CMenu::main(void)
 				m_reload = (BTN_B_HELD || m_disable_exit);
 				break;
 			}
-			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb))
+			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb) || m_btnMgr.selected(m_mainBtnHomebrew))
 			{
+				//disabled loading of hb list for now.
 				if (m_btnMgr.selected(m_mainBtnChannel)) 
 				{
 					m_current_view = COVERFLOW_CHANNEL;
@@ -322,9 +328,13 @@ int CMenu::main(void)
 					m_current_view = COVERFLOW_USB;
 					m_category = m_cat.getInt("GENERAL", "category", 0);
 				}
+				else if (m_btnMgr.selected(m_mainBtnHomebrew))
+				{
+					m_current_view = COVERFLOW_HOMEBREW;
+					m_category = 0;
+				}
 				_showWaitMessage();
 				_hideMain();
-				//m_cfg.setInt("GENERAL", "currentview", m_current_view);
 				_loadList();
 				_initCF();
 				_showMain();
@@ -441,12 +451,16 @@ int CMenu::main(void)
 		{
 			switch(m_current_view)
 			{
+				case COVERFLOW_HOMEBREW:
+					m_btnMgr.show(m_mainBtnUsb);
+					break;
 				case COVERFLOW_CHANNEL:
-					m_btnMgr.show(m_mainBtnChannel);
+					//m_btnMgr.show(m_mainBtnHomebrew);
+					m_btnMgr.show(m_mainBtnUsb);
 					break;
 				case COVERFLOW_USB:
 				default:
-					m_btnMgr.show(m_mainBtnUsb);
+					m_btnMgr.show(m_mainBtnChannel);
 					break;
 			}
 			m_btnMgr.show(m_mainLblUser[2]);
@@ -454,6 +468,7 @@ int CMenu::main(void)
 		}
 		else
 		{
+			m_btnMgr.hide(m_mainBtnHomebrew);
 			m_btnMgr.hide(m_mainBtnChannel);
 			m_btnMgr.hide(m_mainBtnUsb);
 			m_btnMgr.hide(m_mainLblUser[2]);
@@ -503,12 +518,14 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	STexture texInfoS;
 	STexture texConfig;
 	STexture texConfigS;
-	STexture texChannel;
-	STexture texChannels;
 	STexture texDVD;
 	STexture texDVDs;
 	STexture texUsb;
 	STexture texUsbs;
+	STexture texChannel;
+	STexture texChannels;
+	STexture texHomebrew;
+	STexture texHomebrews;
 	STexture texPrev;
 	STexture texPrevS;
 	STexture texNext;
@@ -523,18 +540,21 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainBg = _texture(theme.texSet, "MAIN/BG", "texture", theme.bg);
 	if (m_theme.loaded() && STexture::TE_OK == bgLQ.fromPNGFile(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("MAIN/BG", "texture").c_str()).c_str(), GX_TF_CMPR, ALLOC_MEM2, 64, 64))
 		m_mainBgLQ = bgLQ;
+
 	texQuit.fromPNG(btnquit_png);
 	texQuitS.fromPNG(btnquits_png);
 	texInfo.fromPNG(btninfo_png);
 	texInfoS.fromPNG(btninfos_png);
 	texConfig.fromPNG(btnconfig_png);
 	texConfigS.fromPNG(btnconfigs_png);
-	texChannel.fromPNG(btnchannel_png);
-	texChannels.fromPNG(btnchannels_png);
 	texDVD.fromPNG(btndvd_png);
 	texDVDs.fromPNG(btndvds_png);
 	texUsb.fromPNG(btnusb_png);
 	texUsbs.fromPNG(btnusbs_png);
+	texChannel.fromPNG(btnchannel_png);
+	texChannels.fromPNG(btnchannels_png);
+	texHomebrew.fromPNG(favoriteson_png);
+	texHomebrews.fromPNG(favoritesons_png);
 	texPrev.fromPNG(btnprev_png);
 	texPrevS.fromPNG(btnprevs_png);
 	texNext.fromPNG(btnnext_png);
@@ -543,13 +563,16 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	texFavOnS.fromPNG(favoritesons_png);
 	texFavOff.fromPNG(favoritesoff_png);
 	texFavOffS.fromPNG(favoritesoffs_png);
+
 	_addUserLabels(theme, m_mainLblUser, ARRAY_SIZE(m_mainLblUser), "MAIN");
+
 	m_mainBtnInfo = _addPicButton(theme, "MAIN/INFO_BTN", texInfo, texInfoS, 20, 412, 48, 48);
 	m_mainBtnConfig = _addPicButton(theme, "MAIN/CONFIG_BTN", texConfig, texConfigS, 70, 412, 48, 48);
 	m_mainBtnQuit = _addPicButton(theme, "MAIN/QUIT_BTN", texQuit, texQuitS, 570, 412, 48, 48);
 	m_mainBtnChannel = _addPicButton(theme, "MAIN/CHANNEL_BTN", texChannel, texChannels, 520, 412, 48, 48);
-	m_mainBtnDVD = _addPicButton(theme, "MAIN/DVD_BTN", texDVD, texDVDs, 470, 412, 48, 48);
+	m_mainBtnHomebrew = _addPicButton(theme, "MAIN/HOMEBREW_BTN", texHomebrew, texHomebrews, 520, 412, 48, 48);
 	m_mainBtnUsb = _addPicButton(theme, "MAIN/USB_BTN", texUsb, texUsbs, 520, 412, 48, 48);
+	m_mainBtnDVD = _addPicButton(theme, "MAIN/DVD_BTN", texDVD, texDVDs, 470, 412, 48, 48);
 	m_mainBtnNext = _addPicButton(theme, "MAIN/NEXT_BTN", texNext, texNextS, 540, 146, 80, 80);
 	m_mainBtnPrev = _addPicButton(theme, "MAIN/PREV_BTN", texPrev, texPrevS, 20, 146, 80, 80);
 	m_mainBtnInit = _addButton(theme, "MAIN/BIG_SETTINGS_BTN", theme.titleFont, L"", 72, 180, 496, 96, CColor(0xFFFFFFFF));
@@ -596,8 +619,9 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_mainBtnInfo, "MAIN/INFO_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnQuit, "MAIN/QUIT_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnChannel, "MAIN/CHANNEL_BTN", 0, 40, 0.f, 0.f);
-	_setHideAnim(m_mainBtnDVD, "MAIN/DVD_BTN", 0, 40, 0.f, 0.f);
+	_setHideAnim(m_mainBtnHomebrew, "MAIN/HOMEBREW_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnUsb, "MAIN/USB_BTN", 0, 40, 0.f, 0.f);
+	_setHideAnim(m_mainBtnDVD, "MAIN/DVD_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnFavoritesOn, "MAIN/FAVORITES_ON", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnFavoritesOff, "MAIN/FAVORITES_OFF", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnInit, "MAIN/BIG_SETTINGS_BTN", 0, 0, -2.f, 0.f);
