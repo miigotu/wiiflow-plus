@@ -891,8 +891,7 @@ void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 start, u32 si
 void CMenu::_initCF(void)
 {
 	Config titles, custom_titles;
-	m_titles_loaded = false;
-	
+
 	m_gamelistdump = m_cfg.getBool("GENERAL", m_current_view == COVERFLOW_USB ? "dump_gamelist" : "dump_chanlist", true);
 	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
 
