@@ -102,7 +102,7 @@ void CMenu::_CheatSettings()
 				m_cheatSettingsPage = (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE;
 			else if (m_cheatSettingsPage > 1)
 				--m_cheatSettingsPage;
-			if(!m_btnMgr.selected(m_cheatBtnPageM)) m_btnMgr.click(m_cheatBtnPageM);
+			if(BTN_LEFT_PRESSED || BTN_MINUS_PRESSED) m_btnMgr.click(m_cheatBtnPageM);
 			_showCheatSettings();
 		}
 		else if (txtavailable && (BTN_PLUS_PRESSED || BTN_RIGHT_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_cheatBtnPageP))))
@@ -112,7 +112,7 @@ void CMenu::_CheatSettings()
 				m_cheatSettingsPage = 1;
 			else if (m_cheatSettingsPage < (m_cheatfile.getCnt()+CHEATSPERPAGE-1)/CHEATSPERPAGE)
 				++m_cheatSettingsPage;
-			if(!m_btnMgr.selected(m_cheatBtnPageP)) m_btnMgr.click(m_cheatBtnPageP);
+			if(BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED) m_btnMgr.click(m_cheatBtnPageP);
 			_showCheatSettings();
 		}
 		else if ((WBTN_2_HELD && WBTN_1_PRESSED) || (WBTN_1_HELD && WBTN_2_PRESSED))

@@ -85,6 +85,7 @@ bool SSoundEffect::fromWAVFile(const char *filename)
 {
 	ifstream file(filename, ios::in | ios::binary);
 	if (!file.is_open()) return false;
+
 	file.seekg(0, ios::end);
 	u32 fileSize = file.tellg();
 	file.seekg(0, ios::beg);
@@ -161,24 +162,21 @@ bool SSoundEffect::fromWAV(const u8 *buffer, u32 size)
 	LockMutex lock(snd_mutex);
 	const u8 *bufEnd = buffer + size;
 	const SWaveHdr &hdr = *(SWaveHdr *)buffer;
-	if (size < sizeof hdr)
-		return false;
-	if (hdr.fccRIFF != 'RIFF')
-		return false;
-	if (size < le32(hdr.size) + sizeof hdr.fccRIFF + sizeof hdr.size)
-		return false;
-	if (hdr.fccWAVE != 'WAVE')
-		return false;
+
+	if (size < sizeof hdr) return false;
+	if (hdr.fccRIFF != 'RIFF') return false;
+	if (size < le32(hdr.size) + sizeof hdr.fccRIFF + sizeof hdr.size) return false;
+	if (hdr.fccWAVE != 'WAVE') return false;
+
 	// Find fmt
 	const SWaveChunk *chunk = (const SWaveChunk *)(buffer + sizeof hdr);
 	while (&chunk->data < bufEnd && chunk->fcc != 'fmt ')
 		chunk = (const SWaveChunk *)(&chunk->data + le32(chunk->size));
-	if (&chunk->data >= bufEnd)
-		return false;
+	if (&chunk->data >= bufEnd) return false;
 	const SWaveFmtChunk &fmtChunk = *(const SWaveFmtChunk *)chunk;
+
 	// Check format
-	if (le16(fmtChunk.format) != 1)
-		return false;
+	if (le16(fmtChunk.format) != 1) return false;
 	format = (u8)-1;
 	if (le16(fmtChunk.channels) == 1 && le16(fmtChunk.bps) == 8 && le16(fmtChunk.alignment) <= 1)
 		format = VOICE_MONO_8BIT;
@@ -188,8 +186,8 @@ bool SSoundEffect::fromWAV(const u8 *buffer, u32 size)
 		format = VOICE_STEREO_8BIT;
 	else if (le16(fmtChunk.channels) == 2 && le16(fmtChunk.bps) == 16 && le16(fmtChunk.alignment) <= 4)
 		format = VOICE_STEREO_16BIT;
-	if (format == (u8)-1)
-		return false;
+	if (format == (u8)-1) return false;
+
 	freq = le32(fmtChunk.freq);
 	loopFlag = 0;
 	// Find data
@@ -200,8 +198,7 @@ bool SSoundEffect::fromWAV(const u8 *buffer, u32 size)
 		return false;
 	// Data found
 	data = smartMem2Alloc(le32(chunk->size));
-	if (!data)
-		return false;
+	if (!data) return false;
 	memcpy(data.get(), &chunk->data, le32(chunk->size));
 	length = le32(chunk->size);
 	// Endianness
@@ -300,8 +297,8 @@ bool SSoundEffect::fromAIFF(const u8 *buffer, u32 size)
 	// Data found
 	const SAIFFSSndChunk &dataChunk = *(const SAIFFSSndChunk *)chunk;
 	data = smartMem2Alloc(dataChunk.size - 8);
-	if (!data)
-		return false;
+	if (!data) return false;
+
 	memcpy(data.get(), &dataChunk.data, dataChunk.size - 8);
 	length = dataChunk.size - 8;
 	return true;
@@ -479,10 +476,9 @@ bool SSoundEffect::fromBNS(const u8 *buffer, u32 size)
 	stop();
 	LockMutex lock(snd_mutex);
 	const BNSHeader &hdr = *(BNSHeader *)buffer;
-	if (size < sizeof hdr)
-		return false;
-	if (hdr.fccBNS != 'BNS ')
-		return false;
+	if (size < sizeof hdr) return false;
+	if (hdr.fccBNS != 'BNS ') return false;
+
 	// Find info and data
 	BNSInfo infoChunk;
 	loadBNSInfo(infoChunk, buffer + hdr.infoOffset);
@@ -494,15 +490,14 @@ bool SSoundEffect::fromBNS(const u8 *buffer, u32 size)
 		|| infoChunk.size != hdr.infoSize || dataChunk.size != hdr.dataSize)
 		return false;
 	// Check format
-	if (infoChunk.codecNum != 0)	// Only codec i've found : 0 = ADPCM. Maybe there's also 1 and 2 for PCM 8 or 16 bits ?
-		return false;
+	if (infoChunk.codecNum != 0) return false;	// Only codec i've found : 0 = ADPCM. Maybe there's also 1 and 2 for PCM 8 or 16 bits ?
+
 	format = (u8)-1;
 	if (infoChunk.chanCount == 1 && infoChunk.codecNum == 0)
 		format = VOICE_MONO_16BIT;
 	else if (infoChunk.chanCount == 2 && infoChunk.codecNum == 0)
 		format = VOICE_STEREO_16BIT;
-	if (format == (u8)-1)
-		return false;
+	if (format == (u8)-1) return false;
 	
 	freq = infoChunk.freq;
 	loopFlag = infoChunk.loopFlag;
