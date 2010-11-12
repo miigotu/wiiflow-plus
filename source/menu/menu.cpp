@@ -218,6 +218,9 @@ void CMenu::init()
 		
 	m_btnMgr.init(m_vid);
 
+	_load_installed_cioses();	
+	m_loaded_ios_base = get_ios_base();
+
 	_buildMenus();
 	_loadCFCfg();
 
@@ -247,9 +250,6 @@ void CMenu::init()
 	m_max_categories = m_cat.getInt("GENERAL", "numcategories", 12);
 
 	m_current_view = COVERFLOW_USB;
-	m_loaded_ios_base = get_ios_base();
-
-	_load_installed_cioses();	
 
 	register_card_provider(
 		m_cfg.getString("GAMERCARD", "wiinnertag_url", WIINNERTAG_URL).c_str(),

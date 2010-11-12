@@ -130,6 +130,7 @@ bool loadIOS(int n, bool launch_game, bool switch_port)
 	bool iosOK;
 	char partition[6];
 
+	Close_Inputs(); // Need to do that here, even when you launch a game. IOS will not be properly reloaded if this is not done
 
 	if (launch_game)
 	{
@@ -144,7 +145,6 @@ bool loadIOS(int n, bool launch_game, bool switch_port)
 		mload_close();
 		usleep(500000);
 	}
-	else Close_Inputs(); //closed in disc.c so no need to do that here if game is booting.
 
 	void *backup = COVER_allocMem1(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
 	if (backup != 0)
