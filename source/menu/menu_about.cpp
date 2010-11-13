@@ -33,9 +33,13 @@ void CMenu::_about(void)
 				_hideAbout(false);
 				_system();
 				remove(m_ver.c_str());
+				if(m_exit)
+				{
+					_launchHomebrew(m_dol.c_str(), m_homebrewArgs);
+					break;
+				}
 				_showAbout();
 				m_cf.startPicLoader();
-				if(m_exit) break;
 			}
 		}
 	} while (true);

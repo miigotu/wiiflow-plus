@@ -601,7 +601,7 @@ void CCoverFlow::startPicLoader(void)
 
 void CCoverFlow::clear(void)
 {
-	stopPicLoader();
+	stopPicLoader(true);
 	m_covers.clear();
 	m_items.clear();
 	m_waitingToClear = false;

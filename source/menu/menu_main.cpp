@@ -405,6 +405,7 @@ int CMenu::main(void)
 				{
 					_hideMain();
 					_game(BTN_B_HELD);
+					if(m_exit) break;
 					m_cf.cancel();
 					_showMain();
 				}

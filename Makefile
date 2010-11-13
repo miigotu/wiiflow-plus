@@ -23,6 +23,7 @@ SOURCES		:=	source \
 				source/gui \
 				source/loader \
 				source/channel \
+				source/homebrew \
 				source/memory \
 				source/menu \
 				source/music \
@@ -38,6 +39,7 @@ INCLUDES	:=	source \
 				source/gui \
 				source/loader \
 				source/channel \
+				source/homebrew \
 				source/memory \
 				source/menu \
 				source/music \

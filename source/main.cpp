@@ -8,6 +8,7 @@
 #include "text.hpp"
 #include <ogc/system.h>
 #include <wiilight.h>
+#include "homebrew.h"
 #include "gecko.h"
 
 extern "C"
@@ -19,9 +20,11 @@ extern "C"
 extern const u8 wait_hdd_png[];
 
 extern bool geckoinit;
+extern bool bootHB;
 extern int mainIOS;
 extern int mainIOSRev;
 extern int mainIOSminRev;
+
 
 CMenu *mainMenu;
 extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
@@ -191,6 +194,7 @@ int old_main(int argc, char **argv)
 		}
 		vid.cleanup();
 		Unmount_All_Devices();
+		if (bootHB)	BootHomebrew();
 	} while (ret == 1);
 	return ret;
 };

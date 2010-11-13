@@ -27,16 +27,10 @@
 #include "channels.h"
 
 #include "gecko.h"
-#include "dolloader.h"
+#include "homebrew.h"
 #include "sys.h"
 
 using namespace std;
-
-typedef void (*entrypoint) (void);
-extern "C" {extern void __exception_closeall();}
-
-extern const u8 app_booter_dol[];
-extern const u32 app_booter_dol_size;
 
 extern const u8 btngamecfg_png[];
 extern const u8 btngamecfgs_png[];
@@ -51,6 +45,8 @@ extern const u8 favoritesoffs_png[];
 extern const u8 delete_png[];
 extern const u8 deletes_png[];
 extern int mainIOS;
+
+bool bootHB = false;
 
 const string CMenu::_translations[23] = {
 	"Default",
@@ -404,7 +400,7 @@ void CMenu::_game(bool launch)
 
 				if (wdm_count > 1) m_gcfg1.setInt("WDM", id, current_wdm);
 
-				if (m_cfg.getBool("GENERAL", "write_playlog", true))
+				if (!m_current_view == COVERFLOW_HOMEBREW && m_cfg.getBool("GENERAL", "write_playlog", true))
 				{
 					if (banner_title[0] == 0) // No title set?
 					{					
@@ -425,6 +421,8 @@ void CMenu::_game(bool launch)
 
 				gprintf("Launching game\n");
 				_launch(hdr);
+				if(m_exit || bootHB)
+					break;
 				_hideWaitMessage();
 				launch = false;
 				for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
@@ -642,7 +640,7 @@ void CMenu::_launch(dir_discHdr *hdr)
 	switch(m_current_view)
 	{
 		case COVERFLOW_HOMEBREW:
-			_launchHomebrew(hdr);
+			_launchHomebrew((char *)&hdr->path, m_homebrewArgs);
 			break;
 		case COVERFLOW_CHANNEL:
 			_launchChannel(hdr);
@@ -654,81 +652,35 @@ void CMenu::_launch(dir_discHdr *hdr)
 	}
 }
 
-void CMenu::_launchHomebrew(dir_discHdr *hdr)
+void CMenu::_launchHomebrew(const char *filepath, std::vector<std::string> arguments)
 {
- 	m_gcfg1.save();
-	m_gcfg2.save();
-	m_cat.save();
-	m_cfg.save();
-	//IOS_ReloadIOS(mainIOS);
-
-	char argIOS[15];
-	char filepath[256];
-
-	strncpy(filepath, (char *)&hdr->path, sizeof(hdr->path));
-
-	FILE *exeFile = fopen(filepath ,"rb");
-	if(!exeFile) return;
-
-	fseek(exeFile, 0, SEEK_END);
-	u32 exeSize = ftell(exeFile);
-	rewind(exeFile);
-
-	void *exeBuffer = (void *)EXECUTABLE_MEM_ADDR;
-	if(fread(exeBuffer, 1, exeSize, exeFile) != exeSize)
-	{
-		fclose(exeFile);
-		return;
-	}
-	fclose(exeFile);
-	DCFlushRange(exeBuffer, exeSize);
-
- 	Close_Inputs();
-	Playlog_Delete();
-
-//	_hideWaitMessage();
-
 	COVER_clear();
-	WBFS_Close();
+	if(LoadHomebrew(filepath))
+	{
+		m_gcfg1.save();
+		m_gcfg2.save();
+		m_cat.save();
+		m_cfg.save();
 
-	Unmount_All_Devices();
-	cleanup();
-	USBStorage_Deinit();
+		AddBootArgument(filepath);
+		for(u32 i = 0; i < arguments.size(); ++i)
+			AddBootArgument(arguments[i].c_str());
 
-	// load entry point //
-	struct __argv args;
-	bzero(&args, sizeof(args));
-	args.argvMagic = ARGV_MAGIC;
+		Close_Inputs();
+		Playlog_Delete();
 
-	args.length = strlen(filepath) + strlen(argIOS) + 2;
-	SmartBuf argBuf = smartAnyAlloc(args.length);
-	args.commandLine = (char*)argBuf.get();
-	if (!args.commandLine) return;
+		//_hideWaitMessage();
+		WBFS_Close();
 
-	strcpy(args.commandLine, filepath);
-	strcpy(&args.commandLine[strlen(filepath) + 1], argIOS);
-	args.commandLine[strlen(filepath)] = '\0';
-	args.commandLine[args.length - 1] = '\0';
-	args.argc = 2;
-	args.argv = &args.commandLine;
-	args.endARGV = args.argv + 1;
-
-	u32 exeEntryPointAddress = load_dol_image((void*)app_booter_dol, &args);
-
-	if(exeEntryPointAddress == 0) return;
-	entrypoint exeEntryPoint = (entrypoint) exeEntryPointAddress;
-
-	VIDEO_SetBlack(TRUE);
-	VIDEO_Flush();
-	VIDEO_WaitVSync();
-	VIDEO_WaitVSync();
-
-	u32 level;
-	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
-	_CPU_ISR_Disable(level);
-	__exception_closeall();
-	exeEntryPoint();
-	_CPU_ISR_Restore(level);
+		Unmount_All_Devices();
+		cleanup();
+		USBStorage_Deinit();
+		//IOS_ReloadIOS(58);
+		//MEM2_cleanup();
+		bootHB = true;
+		//BootHomebrew();
+	}
+	m_exit = true;
 }
 
 void CMenu::_launchChannel(dir_discHdr *hdr)

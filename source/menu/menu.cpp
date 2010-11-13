@@ -19,6 +19,8 @@
 #include "gecko.h"
 #include "channels.h"
 
+#define FREEZEDBG
+
 // Sounds
 extern const u8 click_wav[];
 extern const u32 click_wav_size;
@@ -890,7 +892,13 @@ void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 start, u32 si
 
 void CMenu::_initCF(void)
 {
+	#ifdef FREEZEDBG
+	gprintf("\n//- _initCF -//\n");
+	#endif
 	Config titles, custom_titles;
+
+	m_cf.clear();
+	m_cf.reserve(m_gameList.size());
 
 	m_gamelistdump = m_cfg.getBool("GENERAL", m_current_view == COVERFLOW_USB ? "dump_gamelist" : "dump_chanlist", true);
 	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
@@ -898,8 +906,6 @@ void CMenu::_initCF(void)
 	m_titles_loaded = titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str());
 	custom_titles.load(sfmt("%s/custom_titles.ini", m_settingsDir.c_str()).c_str());
 
-	m_cf.clear();
-	m_cf.reserve(m_gameList.size());
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
 	for (u32 i = 0; i < m_gameList.size(); ++i)
 	{
@@ -955,6 +961,10 @@ void CMenu::_initCF(void)
 	if (m_cf.setSorting((Sorting)m_cfg.getInt("GENERAL", "sort", 0)))
 		if (m_curGameId.empty() || !m_cf.findId(m_curGameId.c_str(), true))
 			m_cf.findId(m_cfg.getString("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "current_channel" : "current_game").c_str(), true);
+
+	#ifdef FREEZEDBG
+	gprintf("\n//- DONE -//\n");
+	#endif
 }
 
 void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
@@ -1254,7 +1264,7 @@ bool CMenu::_loadList(void)
 		case COVERFLOW_CHANNEL:
 			return _loadChannelList();
 		case COVERFLOW_HOMEBREW:
-			return _loadHomebrewList(NULL);
+			return _loadHomebrewList();
 		case COVERFLOW_USB:
 		default:
 			return _loadGameList();

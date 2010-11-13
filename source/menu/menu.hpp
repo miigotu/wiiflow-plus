@@ -63,6 +63,7 @@ private:
 	Config m_newID;
 	Channels m_channels;
 	SmartBuf m_music;
+	std::vector<std::string> m_homebrewArgs;
 	u8 m_aa;
 	bool m_directLaunch;
 	bool m_gamelistdump;
@@ -609,7 +610,7 @@ private:
 	// 
 	bool _loadChannelList(void);
 	bool _loadList(void);
-	bool _loadHomebrewList(char *);
+	bool _loadHomebrewList(char *device = NULL);
 	bool _loadGameList(void);
 	void _initCF(void);
 	// 
@@ -735,7 +736,7 @@ private:
 	void _launch(dir_discHdr *hdr);
 	void _launchGame(dir_discHdr *hdr, bool dvd);
 	void _launchChannel(dir_discHdr *hdr);
-	void _launchHomebrew(dir_discHdr *);
+	void _launchHomebrew(const char *filepath, std::vector<std::string> arguments);
 	void _setAA(int aa);
 	void _loadCFCfg(void);
 	void _loadCFLayout(int version, bool forceAA = false, bool otherScrnFmt = false);
