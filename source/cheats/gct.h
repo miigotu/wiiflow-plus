@@ -86,6 +86,9 @@ public:
 	//!Check if string is a code
     //!\return 0=ok, 1="X", 2=no code
 	int IsCodeEx(const std::string& s);
+private:
+	//!Resets the internal state, as if no file was loaded
+	void Reset();
 };
 
 #endif  /* _GCT_H */

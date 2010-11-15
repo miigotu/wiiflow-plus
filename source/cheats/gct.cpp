@@ -8,9 +8,7 @@
 
 GCTCheats::GCTCheats(void)
 {
-	iCntCheats = 0;
-	for (int i=0;i<MAXCHEATS;++i) 
-		sCheatSelected[i] = false;
+	Reset();
 }
 
 GCTCheats::~GCTCheats(void)
@@ -225,16 +223,16 @@ int GCTCheats::createTXT(const char * filename)
 
 int GCTCheats::openTxtfile(const char * filename)
 {
+	Reset();
+
 	ifstream filestr;
 	filestr.open(filename);
 	if (filestr.fail()) return 0;
 
 	int i = 0;
-	iCntCheats = 0;
 	string str;
 	int codestatus;
 	bool codedynamic = false; // cheat contains X-Codes?
-
 
 	filestr.seekg(0,ios_base::end);
 	int size = filestr.tellg();
@@ -355,4 +353,11 @@ int GCTCheats::IsCodeEx(const std::string& str)
 		return status;
 	}
 	return 0; // no code
+}
+
+void GCTCheats::Reset()
+{
+	iCntCheats = 0;
+	for (int i=0;i<MAXCHEATS;++i) 
+		sCheatSelected[i] = false;
 }
