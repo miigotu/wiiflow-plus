@@ -19,8 +19,6 @@
 #include "gecko.h"
 #include "channels.h"
 
-#define FREEZEDBG
-
 // Sounds
 extern const u8 click_wav[];
 extern const u32 click_wav_size;
@@ -1274,7 +1272,7 @@ bool CMenu::_loadList(void)
 bool CMenu::_loadGameList(void)
 {
 	SmartBuf buffer;
-	u32 len, count;
+	u32 count;
 
 	char part[6];
 	WBFS_GetPartitionName(0, (char *) &part);
@@ -1291,19 +1289,16 @@ bool CMenu::_loadGameList(void)
 		error(wfmt(_fmt("wbfs3", L"WBFS_GetCount failed : %i"), ret));
 		return false;
 	}
-	len = count * sizeof m_gameList[0];
+	u32 len = count * sizeof m_gameList[0];
 
-#if 0
-
-	FILE *file = 0;
-	long fileSize = 0;
-	file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "hdrdump").c_str(), "rb");
-	if (file == 0) return false;
+#ifdef USEHDRDUMP
+	FILE *file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "hdrdump").c_str(), "rb");
+	if (!file) return false;
 	fseek(file, 0, SEEK_END);
-	fileSize = ftell(file);
-	len = fileSize;
-	count = len / sizeof m_gameList[0];
+	u64 fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
+	len = fileSize;
+	ret = count = len / sizeof m_gameList[0];
 	if (fileSize > 0)
 	{
 		buffer = smartMemAlign32(fileSize);
@@ -1316,9 +1311,7 @@ bool CMenu::_loadGameList(void)
 	buffer = smartAnyAlloc(len);
 	if (!buffer) return false;
 	memset(buffer.get(), 0, len);
-
 	ret = WBFS_GetHeaders((dir_discHdr *)buffer.get(), count, sizeof (struct dir_discHdr));
-
 #endif
 
 	if (ret < 0)
@@ -1327,12 +1320,10 @@ bool CMenu::_loadGameList(void)
 		return false;
 	}
 
-#if 0
-
+#ifdef DUMPHDRS
 	FILE *file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "hdrdump").c_str(), "wb");
 	fwrite(buffer.get(), 1, len, file);
 	SAFE_CLOSE(file);
-
 #endif
 
 	m_gameList.clear();

@@ -400,7 +400,7 @@ void CMenu::_game(bool launch)
 
 				if (wdm_count > 1) m_gcfg1.setInt("WDM", id, current_wdm);
 
-				if (!m_current_view == COVERFLOW_HOMEBREW && m_cfg.getBool("GENERAL", "write_playlog", true))
+				if (m_current_view != COVERFLOW_HOMEBREW && m_cfg.getBool("GENERAL", "write_playlog", true))
 				{
 					if (banner_title[0] == 0) // No title set?
 					{					
@@ -415,18 +415,21 @@ void CMenu::_game(bool launch)
 						banner = NULL;
 					}
 
-					if (Playlog_Update(id.c_str(), banner_title)<0)
+					if (Playlog_Update(id.c_str(), banner_title) < 0)
 						Playlog_Delete();
 				}
 
 				gprintf("Launching game\n");
 				_launch(hdr);
-				if(m_exit || bootHB)
-					break;
+
+				if(m_exit || bootHB) break;
+
 				_hideWaitMessage();
 				launch = false;
+
 				for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 					WPAD_SetVRes(chan, m_vid.width() + m_cursor[chan].width(), m_vid.height() + m_cursor[chan].height());
+
 				_showGame();
 				_initCF();
 				m_cf.select();
