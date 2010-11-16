@@ -19,7 +19,9 @@ TARGET		:=	boot
 BUILD		:=	build
 SOURCES		:=	source \
 				source/cheats \
+				source/config \
 				source/data \
+				source/gecko \
 				source/gui \
 				source/loader \
 				source/channel \
@@ -30,12 +32,15 @@ SOURCES		:=	source \
 				source/network \
 				source/unzip \
 				source/xml \
+				source/wstringEx \
 				source/libs/libfat \
 				source/libs/libntfs \
 				source/libs/libwbfs
 DATA		:=	data  
 INCLUDES	:=	source \
 				source/cheats \
+				source/config \
+				source/gecko \
 				source/gui \
 				source/loader \
 				source/channel \
@@ -45,8 +50,8 @@ INCLUDES	:=	source \
 				source/music \
 				source/network \
 				source/unzip \
+				source/wstringEx \
 				source/xml \
-				source/libs \
 				source/libs/libfat \
 				source/libs/libntfs \
 				source/libs/libwbfs
@@ -63,7 +68,7 @@ port		:=	0
 CFLAGS	 =	-g -Os -Wall -Wno-char-subscripts -fno-strict-aliasing $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DMAIN_IOS=249
 CXXFLAGS =	-g -Os -Wall -Wno-char-subscripts -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H
 
-LDFLAGS	 =	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000,-wrap,malloc,-wrap,free,-wrap,memalign,-wrap,calloc,-wrap,realloc,-wrap,malloc_usable_size -T../rvl.ld
+LDFLAGS	 =	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000,-wrap,malloc,-wrap,free,-wrap,memalign,-wrap,calloc,-wrap,realloc,-wrap,malloc_usable_size -T../scripts/rvl.ld
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
@@ -92,7 +97,7 @@ export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 #---------------------------------------------------------------------------------
 # automatically build a list of object files for our project
 #---------------------------------------------------------------------------------
-SVNREV		:=	$(shell bash ./svnrev.sh)
+SVNREV		:=	$(shell bash ./scripts/svnrev.sh)
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
@@ -138,7 +143,7 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@echo Building for  IOS $(ios) Port $(port).
-	@bash ./buildtype.sh $(ios) $(port)
+	@bash ./scripts/buildtype.sh $(ios) $(port)
 	@[ -d $@ ] || mkdir -p $@
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 

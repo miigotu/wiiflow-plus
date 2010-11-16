@@ -3,7 +3,7 @@
 #ifndef _WBFS_Ext_H
 #define _WBFS_Ext_H
 
-#include "libwbfs/libwbfs.h"
+#include "libwbfs.h"
 
 #ifdef __cplusplus
 extern "C" {

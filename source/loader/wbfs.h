@@ -1,7 +1,7 @@
 #ifndef _WBFS_H_
 #define _WBFS_H_
 
-#include "libwbfs/libwbfs.h"
+#include "libwbfs.h"
 #include "utils.h"
 
 #ifdef __cplusplus

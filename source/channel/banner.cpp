@@ -38,7 +38,7 @@
 #include "MD5.h"
 #include "loader/fs.h"
 #include "loader/utils.h"
-#include "../gecko.h"
+#include "gecko.h"
 
 #define IMET_OFFSET			0x40
 #define IMET_SIGNATURE		0x494d4554

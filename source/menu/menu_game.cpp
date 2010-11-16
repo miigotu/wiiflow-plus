@@ -17,7 +17,7 @@
 #include "loader/wbfs.h"
 #include "loader/wbfs_ext.h"
 #include "loader/usbstorage.h"
-#include "libwbfs/wiidisc.h"
+#include "wiidisc.h"
 #include "loader/frag.h"
 #include "loader/fst.h"
 #include "loader/wdm.h"

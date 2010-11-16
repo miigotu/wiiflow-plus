@@ -12,7 +12,7 @@
 #include <sys/statvfs.h>
 #include <ctype.h>
 
-#include "libwbfs/libwbfs.h"
+#include "libwbfs.h"
 #include "sdhc.h"
 #include "usbstorage.h"
 #include "wbfs.h"

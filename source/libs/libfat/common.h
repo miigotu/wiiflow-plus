@@ -32,7 +32,7 @@
 #define BYTES_PER_READ 512
 #include <stddef.h>
 #include <stdint.h>
-#include "libfat/fat.h"
+#include "fat.h"
 
 // When compiling for NDS, make sure NDS is defined
 #ifndef NDS

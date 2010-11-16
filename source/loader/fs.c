@@ -2,9 +2,9 @@
 #include <ogcsys.h>
 #include <locale.h>
 #include <ogc/isfs.h>
-#include "libfat/fat.h"
-#include "libntfs/ntfs.h"
-#include "libwbfs/libwbfs.h"
+#include "fat.h"
+#include "ntfs.h"
+#include "libwbfs.h"
 #include "usbstorage.h"
 #include "sdhc.h"
 #include "fs.h"

@@ -4,10 +4,10 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "libntfs/ntfs.h"
+#include "ntfs.h"
 
 #include "fs.h"
-#include "libwbfs/libwbfs.h"
+#include "libwbfs.h"
 #include "wbfs.h"
 #include "wbfs_ext.h"
 #include "usbstorage.h"
