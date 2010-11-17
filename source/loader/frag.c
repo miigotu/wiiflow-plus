@@ -7,7 +7,7 @@
 #include "ntfs.h"
 
 #include "fs.h"
-#include "libwbfs.h"
+#include "libwbfs/libwbfs.h"
 #include "wbfs.h"
 #include "wbfs_ext.h"
 #include "usbstorage.h"

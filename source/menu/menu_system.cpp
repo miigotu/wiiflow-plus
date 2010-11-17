@@ -1,7 +1,6 @@
 #include "svnrev.h"
 #include "menu.hpp"
 #include "fs.h"
-#include "libs/libfat/file_allocation_table.h"
 #include "loader/sys.h"
 #include "loader/wbfs.h"
 #include "loader/ios_base.h"

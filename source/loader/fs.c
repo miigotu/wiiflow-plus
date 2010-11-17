@@ -4,7 +4,7 @@
 #include <ogc/isfs.h>
 #include "fat.h"
 #include "ntfs.h"
-#include "libwbfs.h"
+#include "libwbfs/libwbfs.h"
 #include "usbstorage.h"
 #include "sdhc.h"
 #include "fs.h"

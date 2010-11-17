@@ -13,7 +13,7 @@
 #include <ctype.h>
 #include <sdcard/wiisd_io.h>
 
-#include "libwbfs.h"
+#include "libwbfs/libwbfs.h"
 #include "sdhc.h"
 #include "usbstorage.h"
 #include "utils.h"

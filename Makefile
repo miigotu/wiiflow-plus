@@ -33,10 +33,10 @@ SOURCES		:=	source \
 				source/unzip \
 				source/xml \
 				source/wstringEx \
-				source/libs/libfat \
-				source/libs/libntfs \
-				source/libs/libwbfs
-DATA		:=	data  
+				source/loader/libwbfs \
+
+DATA		:=	data
+
 INCLUDES	:=	source \
 				source/cheats \
 				source/config \
@@ -52,9 +52,6 @@ INCLUDES	:=	source \
 				source/unzip \
 				source/wstringEx \
 				source/xml \
-				source/libs/libfat \
-				source/libs/libntfs \
-				source/libs/libwbfs
 				
 #---------------------------------------------------------------------------------
 # Default build shell script options
@@ -73,7 +70,7 @@ LDFLAGS	 =	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lpng -lm -lz -lwiiuse -lbte -lasnd -logc -lfreetype -lvorbisidec -lmad -ljpeg -lwiilight
+LIBS	:=	-lpng -lm -lz -lwiiuse -lbte -lasnd -logc -lfreetype -lvorbisidec -lmad -ljpeg -lwiilight -lntfs -lfat
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
