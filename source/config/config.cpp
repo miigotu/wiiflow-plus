@@ -332,9 +332,9 @@ string Config::getString(const string &domain, const string &key, const string &
 	return data;
 }
 
-vector<string> Config::getStrings(const string &domain, const string &key, char seperator, const string &defVal)
+safe_vector<string> Config::getStrings(const string &domain, const string &key, char seperator, const string &defVal)
 {
-	vector<string> retval;
+	safe_vector<string> retval;
 	
 	if (domain.empty() || key.empty())
 	{

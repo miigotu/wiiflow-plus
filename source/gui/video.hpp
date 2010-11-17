@@ -8,7 +8,7 @@
 #include "vector.hpp"
 #include "texture.hpp"
 
-#include <vector>
+#include "safe_vector.hpp"
 
 class CTexCoord
 {
@@ -63,7 +63,7 @@ public:
 	int stencilVal(int x, int y);
 	void hideWaitMessage();
 	void waitMessage(float delay);
-	void waitMessage(const std::vector<STexture> &tex, float delay, bool useWiiLight = true);
+	void waitMessage(const safe_vector<STexture> &tex, float delay, bool useWiiLight = true);
 	void waitMessage(const STexture &tex);
 	s32 TakeScreenshot(const char *);
 	void shiftViewPort(float x, float y);
@@ -94,7 +94,7 @@ private:
 	bool m_showWaitMessage;
 	bool m_waitMessageThrdStop;
 	bool m_useWiiLight;
-	std::vector<STexture> m_waitMessages;
+	safe_vector<STexture> m_waitMessages;
 	// 
 	static const int _stencilWidth;
 	static const int _stencilHeight;

@@ -35,7 +35,7 @@
 #define SND_BUFFERS     20
 
 static u8 which = 0;
-static vector<s16> soundbuffer[2];
+static safe_vector<s16> soundbuffer[2];
 static u16 sndsize[2] = {0, 0};
 static u16 MaxSoundSize = 0;
 

@@ -29,7 +29,7 @@
 #ifndef _CHANNELS_H_
 #define _CHANNELS_H_
 
-#include <vector>
+#include "safe_vector.hpp"
 #include <string>
 
 #include "smartptr.hpp"
@@ -69,7 +69,7 @@ class Channels
 		string langCode;
 		bool isIdentified;
 		
-		std::vector<Channel> channels;
+		safe_vector<Channel> channels;
 		
 		static int GetLanguage(const char *lang);
 		u64* GetChannelList(u32* count);

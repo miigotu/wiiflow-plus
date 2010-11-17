@@ -6,7 +6,7 @@
 #include <ogcsys.h>
 #include <gccore.h>
 #include <string>
-#include <vector>
+#include "safe_vector.hpp"
 
 #include "config.hpp"
 #include "texture.hpp"
@@ -74,7 +74,7 @@ public:
 	void tick();
 
 private:
-	std::vector<CFanartElement> m_elms;
+	safe_vector<CFanartElement> m_elms;
 
 	bool m_animationComplete;
 	u16 m_delayAfterAnimation;

@@ -680,16 +680,16 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 	return def;
 }
 
-vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char *key)
+safe_vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char *key)
 {
-	vector<STexture> textures;
+	safe_vector<STexture> textures;
 
 	if (m_theme.loaded())
 	{
-		vector<string> filenames = m_theme.getStrings(domain, key);
+		safe_vector<string> filenames = m_theme.getStrings(domain, key);
 		if (filenames.size() > 0)
 		{
-			for (vector<string>::iterator itr = filenames.begin(); itr != filenames.end(); itr++)
+			for (safe_vector<string>::iterator itr = filenames.begin(); itr != filenames.end(); itr++)
 			{
 				string filename = *itr;
 
@@ -1337,7 +1337,7 @@ bool CMenu::_loadGameList(void)
 	return true;
 }
 
-std::vector<dir_discHdr> list_homebrew(std::vector<dir_discHdr> hb_list, char *mountname)
+safe_vector<dir_discHdr> list_homebrew(safe_vector<dir_discHdr> hb_list, char *mountname)
 {
 	dir_discHdr b;
 	bool skip = false;
@@ -1413,7 +1413,7 @@ std::vector<dir_discHdr> list_homebrew(std::vector<dir_discHdr> hb_list, char *m
 
 bool CMenu::_loadHomebrewList(char *device)
 {
-	std::vector<dir_discHdr> hb_list;
+	safe_vector<dir_discHdr> hb_list;
 	if(!device)
 	{
 		char mountname[3][6] = {"sd", "usb", "wbfs"};
@@ -1432,7 +1432,7 @@ bool CMenu::_loadHomebrewList(char *device)
 	return true;
 }
 
-static void listOGGMP3(const char *path, vector<string> &oggFiles)
+static void listOGGMP3(const char *path, safe_vector<string> &oggFiles)
 {
 	DIR *d;
 	struct dirent *dir;

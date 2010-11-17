@@ -316,7 +316,7 @@ void CMenu::_showGameSettings(void)
 		m_gcfg2.setInt(id, "ios", CMenu::_ios[iosIdx]);
 	}
 
-	vector<SIOS>::iterator itr = _installed_cios.end();
+	safe_vector<SIOS>::iterator itr = _installed_cios.end();
 	i = mainIOS;
 	if (m_gcfg2.getInt(id, "ios", &i) && (itr = find(_installed_cios.begin(), _installed_cios.end(), i)) == _installed_cios.end())
 	{
@@ -356,7 +356,7 @@ void CMenu::_gameSettings(void)
 {
 	m_gcfg2.load(sfmt("%s/gameconfig2.ini", m_settingsDir.c_str()).c_str());
 	bool dolsListed = false;
-	vector<string> dols;
+	safe_vector<string> dols;
 	string id(m_cf.getId());
 
 	m_gameSettingsPage = 1;
@@ -468,7 +468,7 @@ void CMenu::_gameSettings(void)
 			else if (m_btnMgr.selected(m_gameSettingsBtnIOSM))
 			{
 				int currentIOS = m_gcfg2.getInt(id, "ios", mainIOS);
-				vector<SIOS>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
+				safe_vector<SIOS>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
 				if (itr == _installed_cios.end()) // Not found, strange...
 					itr = find(_installed_cios.begin(), _installed_cios.end(), mainIOS);
 				itr++;
@@ -481,7 +481,7 @@ void CMenu::_gameSettings(void)
 			else if (m_btnMgr.selected(m_gameSettingsBtnIOSP))
 			{
 				int currentIOS = m_gcfg2.getInt(id, "ios", mainIOS);
-				vector<SIOS>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
+				safe_vector<SIOS>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
 				if (itr == _installed_cios.end()) // Not found, strange...
 					itr = find(_installed_cios.begin(), _installed_cios.end(), mainIOS);
 				if (itr == _installed_cios.begin())
@@ -800,11 +800,11 @@ void CMenu::_textGameSettings(void)
 
 static void addDolToList(void *o, const char *fileName)
 {
-	vector<string> &v = *(vector<string> *)o;
+	safe_vector<string> &v = *(safe_vector<string> *)o;
 	v.push_back(fileName);
 }
 
-void CMenu::_listDOL(vector<string> &v, const string &gameId)
+void CMenu::_listDOL(safe_vector<string> &v, const string &gameId)
 {
 	dir_discHdr *hdr = m_cf.getHdr();
 	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str(), (char *) hdr->path);

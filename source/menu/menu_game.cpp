@@ -129,7 +129,7 @@ const CMenu::SOption CMenu::_hooktype[8] = {
 
 const int CMenu::_ios[6] = {0, 249, 250, 222, 223, 224};
 
-vector<CMenu::SIOS> CMenu::_installed_cios;
+safe_vector<CMenu::SIOS> CMenu::_installed_cios;
 
 wdm_entry_t *wdm_entry = NULL;
 u32 current_wdm = 0;
@@ -575,13 +575,13 @@ static SmartBuf extractDOL(const char *dolName, u32 &size, dir_discHdr *hdr, s32
 
 static void addDolToList(void *o, const char *fileName)
 {
-	vector<string> &v = *(vector<string> *)o;
+	safe_vector<string> &v = *(safe_vector<string> *)o;
 	v.push_back(fileName);
 }
 
 static bool findDOL(const char *dolNameToMatch, string &altdol, dir_discHdr *hdr)
 {
-	vector<string> dols;
+	safe_vector<string> dols;
 	dols.push_back("main.dol");
 
 	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)hdr->hdr.id, (char *)hdr->path);
@@ -591,7 +591,7 @@ static bool findDOL(const char *dolNameToMatch, string &altdol, dir_discHdr *hdr
 	WBFS_CloseDisc(disc);
 	
 	// Now loop through the dols, and find the correct name
-	for (vector<string>::iterator itr = dols.begin(); itr != dols.end(); itr++)
+	for (safe_vector<string>::iterator itr = dols.begin(); itr != dols.end(); itr++)
 	{
 		if (stringcompare(dolNameToMatch, (*itr)) == 0)
 		{
@@ -655,7 +655,7 @@ void CMenu::_launch(dir_discHdr *hdr)
 	}
 }
 
-void CMenu::_launchHomebrew(const char *filepath, std::vector<std::string> arguments)
+void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> arguments)
 {
 	COVER_clear();
 	if(LoadHomebrew(filepath))

@@ -335,7 +335,7 @@ void CMenu::_deinitNetwork()
 int CMenu::_coverDownloader(bool missingOnly)
 {
 	string path;
-	vector<string> coverList;
+	safe_vector<string> coverList;
 	int count = 0, countFlat = 0;
 	float listWeight = missingOnly ? 0.125f : 0.f;	// 1/8 of the progress bar for testing the PNGs we already have
 	float dlWeight = 1.f - listWeight;
@@ -352,10 +352,10 @@ int CMenu::_coverDownloader(bool missingOnly)
 	}
 	bool savePNG = m_cfg.getBool("GENERAL", "keep_png", true);
 
-	vector<string> fmtURLBox = stringToVector(
+	safe_vector<string> fmtURLBox = stringToVector(
 									m_cfg.getString("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "url_full_covers_id4" : "url_full_covers_id6",
 									m_current_view == COVERFLOW_CHANNEL ? FMT_BPIC4_URL : FMT_BPIC6_URL), '|');
-	vector<string> fmtURLFlat = stringToVector(
+	safe_vector<string> fmtURLFlat = stringToVector(
 									m_cfg.getString("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "url_flat_covers_id4" : "url_flat_covers_id6",
 									m_current_view == COVERFLOW_CHANNEL ? FMT_PIC4_URL : FMT_PIC6_URL), '|');
 
@@ -407,7 +407,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 			bool success = false;
 			FILE *file = NULL;
 
-			vector<string> newID(1);
+			safe_vector<string> newID(1);
 			newID[0] = m_newID.getString(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", coverList[i], coverList[i]);
 
  			if(!newID[0].empty() && strncasecmp(newID[0].c_str(), coverList[i].c_str(), m_current_view == COVERFLOW_CHANNEL ? 4 : 6) == 0)

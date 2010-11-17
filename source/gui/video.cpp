@@ -451,7 +451,7 @@ void CVideo::_showWaitMessages(CVideo *m)
 	s8 fadeDirection = 1;
 	s16 currentLightLevel = 0;
 
-	vector<STexture>::iterator waitItr = m->m_waitMessages.begin();
+	safe_vector<STexture>::iterator waitItr = m->m_waitMessages.begin();
 
 	gprintf("Going to show a wait message screen, delay: %d, # images: %d\n", waitFrames, m->m_waitMessages.size());
 
@@ -522,10 +522,10 @@ void CVideo::hideWaitMessage()
 
 void CVideo::waitMessage(float delay)
 {
-	waitMessage(vector<STexture>(), delay);
+	waitMessage(safe_vector<STexture>(), delay);
 }
 
-void CVideo::waitMessage(const vector<STexture> &tex, float delay, bool useWiiLight)
+void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool useWiiLight)
 {
 	m_showWaitMessage = false;
 	if (!m_waitMessageThrdStop)	while(!m_waitMessageThrdStop){}

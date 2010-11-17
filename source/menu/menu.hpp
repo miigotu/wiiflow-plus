@@ -7,7 +7,7 @@
 #include <wiiuse/wpad.h>
 #include <ogc/pad.h>
 
-#include <vector>
+#include "safe_vector.hpp"
 #include <map>
 #include "cursor.hpp"
 #include "gui.hpp"
@@ -50,7 +50,7 @@ private:
 
 	CCoverFlow m_cf;
 	CFanart m_fa;
-	std::vector<dir_discHdr> m_gameList;
+	safe_vector<dir_discHdr> m_gameList;
 	Config m_cfg;
 	Config m_loc;
 	Config m_loclist;
@@ -63,7 +63,7 @@ private:
 	Config m_newID;
 	Channels m_channels;
 	SmartBuf m_music;
-	std::vector<std::string> m_homebrewArgs;
+	safe_vector<std::string> m_homebrewArgs;
 	u8 m_aa;
 	bool m_directLaunch;
 	bool m_gamelistdump;
@@ -549,8 +549,8 @@ private:
 	
 	bool m_music_ismp3;
 	u32 m_music_fileSize;
-	vector<string> music_files;
-	vector<string>::iterator current_music;
+	safe_vector<string> music_files;
+	safe_vector<string>::iterator current_music;
 	bool m_video_playing;
 	
 	u32 m_current_view;
@@ -736,7 +736,7 @@ private:
 	void _launch(dir_discHdr *hdr);
 	void _launchGame(dir_discHdr *hdr, bool dvd);
 	void _launchChannel(dir_discHdr *hdr);
-	void _launchHomebrew(const char *filepath, std::vector<std::string> arguments);
+	void _launchHomebrew(const char *filepath, safe_vector<std::string> arguments);
 	void _setAA(int aa);
 	void _loadCFCfg(void);
 	void _loadCFLayout(int version, bool forceAA = false, bool otherScrnFmt = false);
@@ -747,7 +747,7 @@ private:
 	void _buildMenus(void);
 	SFont _font(FontSet &fontSet, const char *domain, const char *key, SFont def);
 	STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);
-	vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key);
+	safe_vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key);
 	void _showWaitMessage();
 public:
 	void _hideWaitMessage();
@@ -788,7 +788,7 @@ private:
 	static void _addDiscProgress(int status, int total, void *user_data);
 	static int _gameInstaller(void *obj);
 	wstringEx _optBoolToString(int b);
-	void _listDOL(std::vector<std::string> &v, const std::string &gameId);
+	void _listDOL(safe_vector<std::string> &v, const std::string &gameId);
 	void _searchMusic(void);
 	void _shuffleMusic(void);
 	void _startMusic(void);
@@ -829,7 +829,7 @@ private:
 			return ios == i;
 		}		
 	};
-	static vector<SIOS> _installed_cios;
+	static safe_vector<SIOS> _installed_cios;
 	static bool _sortByIOS(SIOS item1, SIOS item2);
 	static int _version[9];
 	static const SCFParamDesc _cfParams[];

@@ -110,7 +110,7 @@ wstringEx wfmt(const wstringEx &format, ...)
 	return ws;
 }
 
-wstringEx vectorToString(const vector<wstringEx> &vect, char sep)
+wstringEx vectorToString(const safe_vector<wstringEx> &vect, char sep)
 {
 	wstringEx s;
 	for (u32 i = 0; i < vect.size(); ++i)
@@ -122,9 +122,9 @@ wstringEx vectorToString(const vector<wstringEx> &vect, char sep)
 	return s;
 }
 
-vector<string> stringToVector(const string &text, char sep)
+safe_vector<string> stringToVector(const string &text, char sep)
 {
-	vector<string> v;
+	safe_vector<string> v;
 	if (text.empty()) return v;
 	u32 count = 1;
 	for (u32 i = 0; i < text.size(); ++i)
@@ -148,9 +148,9 @@ vector<string> stringToVector(const string &text, char sep)
 	return v;
 }
 
-vector<wstringEx> stringToVector(const wstringEx &text, char sep)
+safe_vector<wstringEx> stringToVector(const wstringEx &text, char sep)
 {
-	vector<wstringEx> v;
+	safe_vector<wstringEx> v;
 	if (text.empty()) return v;
 	u32 count = 1;
 	for (u32 i = 0; i < text.size(); ++i)
@@ -240,7 +240,7 @@ void CText::setText(SFont font, const wstringEx &t)
 
 	firstLine = 0;
 	// Don't care about performance
-	vector<wstringEx> lines = stringToVector(t, L'\n');
+	safe_vector<wstringEx> lines = stringToVector(t, L'\n');
 	m_lines.reserve(lines.size());
 	// 
 	for (u32 k = 0; k < lines.size(); ++k)
@@ -280,7 +280,7 @@ void CText::setText(SFont font, const wstringEx &t, u32 startline)
 
 	firstLine = startline;
 	// Don't care about performance
-	vector<wstringEx> lines = stringToVector(t, L'\n');
+	safe_vector<wstringEx> lines = stringToVector(t, L'\n');
 	m_lines.reserve(lines.size());
 	// 
 	for (u32 k = 0; k < lines.size(); ++k)

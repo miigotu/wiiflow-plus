@@ -2,7 +2,7 @@
 #ifndef __TEXT_HPP
 #define __TEXT_HPP
 
-#include <vector>
+#include "safe_vector.hpp"
 #include <string>
 
 #include "wstringEx.hpp"
@@ -43,8 +43,8 @@ private:
 		Vector3D targetPos;
 	};
 private:
-	typedef std::vector<SWord> CLine;
-	std::vector<CLine> m_lines;
+	typedef safe_vector<SWord> CLine;
+	safe_vector<CLine> m_lines;
 	SFont m_font;
 	CColor m_color;
 	u32 firstLine;
@@ -56,9 +56,9 @@ const char *fmt(const char *format, ...);
 std::string sfmt(const char *format, ...);
 wstringEx wfmt(const wstringEx &format, ...);
 bool checkFmt(const wstringEx &ref, const wstringEx &format);
-wstringEx vectorToString(const std::vector<wstringEx> &vect, char sep);
-std::vector<wstringEx> stringToVector(const wstringEx &text, char sep);
-std::vector<std::string> stringToVector(const std::string &text, char sep);
+wstringEx vectorToString(const safe_vector<wstringEx> &vect, char sep);
+safe_vector<wstringEx> stringToVector(const wstringEx &text, char sep);
+safe_vector<std::string> stringToVector(const std::string &text, char sep);
 std::string upperCase(std::string text);
 std::string lowerCase(std::string text);
 std::string ltrim(std::string s);

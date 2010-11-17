@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ogc/machine/processor.h>
-#include <vector>
+#include "safe_vector.hpp"
 #include <string>
 
 #include "smartptr.hpp"
@@ -13,7 +13,7 @@
 
 static u8 *homebrewbuffer = (u8 *)0x92000000;
 static u32 homebrewsize = 0;
-static std::vector<std::string> Arguments;
+static safe_vector<std::string> Arguments;
 
 extern const u8 app_booter_dol[];
 extern const u32 app_booter_dol_size;

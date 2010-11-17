@@ -1,10 +1,24 @@
+/*************************************|
+|---vector class wrapper by Miigotu---|
+|*************************************/
+
+#ifndef SAFE_VECTOR
+#define SAFE_VECTOR
+
 #include <vector>
 
 template <class T>
 class safe_vector
 {
     public:
+		typedef size_t size_type;
+		typedef typename std::vector<T>::iterator iterator;
+		typedef typename std::vector<T>::const_iterator const_iterator;
+		typedef typename std::vector<T>::reference reference;
+		typedef typename std::vector<T>::const_reference const_reference;
+
         safe_vector(){};
+        safe_vector(size_type n){thevector.resize(n);}
         ~safe_vector(){clear();};
 
         void clear()
@@ -15,61 +29,66 @@ class safe_vector
 
 		void push_back(const T& x)
 		{
-			if(thevector.size() == thevector.capacity())
-				thevector.reserve(thevector.size() + 100);
+			if(thevector.size() * sizeof(T) == thevector.capacity() && thevector.capacity() < thevector.max_size() - 20)
+				thevector.reserve(thevector.size() + 20);
 			thevector.push_back(x);
-		}
-
-		size_type size() const
-		{
-			return thevecotr.size();
 		}
 
 		void resize(size_type sz, T c = T())
 		{
 			thevector.resize(sz, c);
-			realloc();
+			realloc(sz);
 		}
+
+		size_type size() const { return thevector.size(); }
 		
-		void reserve(size_type n)
-		{
-			thevector.reserve(n);
-		}
+		void reserve(size_type n) {thevector.reserve(n);}
 
-		size_type capacity() const
-		{
-			return thevector.capacity();
-		}
+		size_type capacity() const {return thevector.capacity();}
 
-		reference operator[](size_type n)
-		{
-			return thevector.operator[](n);
-		}
+		bool empty() const {return thevector.empty();}
 
-		const_reference operator[](size_type n) const
-		{
-			return thevector.operator[](n);
-		}
+		reference operator[](size_type n) {return thevector[n];}
+		const_reference operator[](size_type n) const {return thevector[n];}
 		
-		void realloc()
+		iterator erase(iterator position) {return thevector.erase(position);}
+		iterator erase(iterator first, iterator last) {return thevector.erase(first, last);}
+		
+		iterator begin() {return thevector.begin();}
+		const_iterator begin() const {return thevector.begin();}
+
+		iterator end() {return thevector.end();}
+		const_iterator end() const {return thevector.end();}
+		
+		const_reference at (size_type n) const {return thevector.at(n);}
+		reference at (size_type n) {return thevector.at(n);}
+
+		reference back() {return thevector.back();}
+		const_reference back() const {return thevector.back();}
+		
+		void realloc(size_type sz)
 		{
-			vector<T>::iterator itr;
+			if(thevector.size() * sizeof(T) < thevector.capacity() || sz * sizeof(T) < thevector.capacity() || sz < thevector.size())
+			{
+				iterator itr;
 
-			std:vector<T> newvector;
-			newvector.reserve(thevector.size());
-			for (itr = thevector.begin(); itr < thevector.end(); itr++)
-				newvector.push_back(thevector[i]);
+				std::vector<T> newvector;
+				newvector.reserve(sz);
+				for (itr = thevector.begin();  newvector.size() < sz && itr < thevector.end(); itr++)
+					newvector.push_back(*itr);
 
-			clear();
+				clear();
 
-			thevector.reserve(newvector.size());
-			for (itr = newvector.begin(); itr < newvector.end(); itr++)
-				thevector.push_back(newvector[i]);
-				
-			newvector.clear();
-			std::vector<T>().swap(newvector);
+				thevector.reserve(sz);
+				for (itr = newvector.begin(); thevector.size() < sz && itr < newvector.end(); itr++)
+					thevector.push_back(*itr);
+
+				newvector.clear();
+				std::vector<T>().swap(newvector);
+			}
 		}
-
 	private:
         std::vector<T> thevector;
 };
+
+#endif /*- SAFE_VECTOR -*/
