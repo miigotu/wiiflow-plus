@@ -329,7 +329,9 @@ void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 	{
 		CText::CLine &words = m_lines[k];
 		if (words.empty())
+		{
 			posY += (float)m_font.lineSpacing;
+		}
 		for (u32 i = 0; i < words.size(); ++i)
 		{
 			float wordWidth = m_font.font->getWidth(words[i].text.c_str());
@@ -357,7 +359,7 @@ void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 		if (!ignoreNewlines && k + 1 < m_lines.size())
 			posX = 9999999.f;
 	}
-	totalHeight = posY;
+	totalHeight = posY + m_font.lineSpacing;
 	
 	if ((style & (FTGX_JUSTIFY_CENTER | FTGX_JUSTIFY_RIGHT)) != 0)
 	{
@@ -408,7 +410,7 @@ void CText::draw(void)
 
 int CText::getTotalHeight(void)
 {
-	return totalHeight + (m_lines.size() * m_font.lineSpacing);
+	return totalHeight;
 }
 
 string upperCase(string text)

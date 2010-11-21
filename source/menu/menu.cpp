@@ -795,6 +795,13 @@ u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, 
 	font = _font(theme.fontSet, domain, "font", font);
 	SSoundEffect clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
 	SSoundEffect hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
+	
+	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	if (btnPos & FTGX_JUSTIFY_RIGHT)
+		x = m_vid.width() - x - width;
+	if (btnPos & FTGX_ALIGN_BOTTOM)
+		y = m_vid.height() - y - height;
+	
 	return m_btnMgr.addButton(font, text, x, y, width, height, c, btnTexSet, clickSound, hoverSound);
 }
 
@@ -808,6 +815,13 @@ u32 CMenu::_addPicButton(CMenu::SThemeData &theme, const char *domain, STexture 
 	STexture tex2 = _texture(theme.texSet, domain, "texture_selected", texSelected);
 	SSoundEffect clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
 	SSoundEffect hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
+
+	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	if (btnPos & FTGX_JUSTIFY_RIGHT)
+		x = m_vid.width() - x - width;
+	if (btnPos & FTGX_ALIGN_BOTTOM)
+		y = m_vid.height() - y - height;
+
 	return m_btnMgr.addPicButton(tex1, tex2, x, y, width, height, clickSound, hoverSound);
 }
 
@@ -822,6 +836,13 @@ u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, c
 	height = m_theme.getInt(domain, "height", height);
 	font = _font(theme.fontSet, domain, "font", font);
 	style = _textStyle(domain, "style", style);
+
+	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	if (btnPos & FTGX_JUSTIFY_RIGHT)
+		x = m_vid.width() - x - width;
+	if (btnPos & FTGX_ALIGN_BOTTOM)
+		y = m_vid.height() - y - height;
+
 	return m_btnMgr.addLabel(font, text, x, y, width, height, c, style);
 }
 
@@ -837,6 +858,13 @@ u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, c
 	font = _font(theme.fontSet, domain, "font", font);
 	STexture texBg = _texture(theme.texSet, domain, "background_texture", bg);
 	style = _textStyle(domain, "style", style);
+
+	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	if (btnPos & FTGX_JUSTIFY_RIGHT)
+		x = m_vid.width() - x - width;
+	if (btnPos & FTGX_ALIGN_BOTTOM)
+		y = m_vid.height() - y - height;
+
 	return m_btnMgr.addLabel(font, text, x, y, width, height, c, style, texBg);
 }
 
@@ -854,6 +882,13 @@ u32 CMenu::_addProgressBar(CMenu::SThemeData &theme, const char *domain, int x, 
 	btnTexSet.leftSel = _texture(theme.texSet, domain, "texture_left_selected", theme.pbarTexLS);
 	btnTexSet.rightSel = _texture(theme.texSet, domain, "texture_right_selected", theme.pbarTexRS);
 	btnTexSet.centerSel = _texture(theme.texSet, domain, "texture_center_selected", theme.pbarTexCS);
+
+	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	if (btnPos & FTGX_JUSTIFY_RIGHT)
+		x = m_vid.width() - x - width;
+	if (btnPos & FTGX_ALIGN_BOTTOM)
+		y = m_vid.height() - y - height;
+
 	return m_btnMgr.addProgressBar(x, y, width, height, btnTexSet);
 }
 
@@ -863,6 +898,23 @@ void CMenu::_setHideAnim(u32 id, const char *domain, int dx, int dy, float scale
 	dy = m_theme.getInt(domain, "effect_y", dy);
 	scaleX = m_theme.getFloat(domain, "effect_scale_x", scaleX);
 	scaleY = m_theme.getFloat(domain, "effect_scale_y", scaleY);
+
+	int x, y;
+	u32 width, height;
+	m_btnMgr.getDimensions(id, x, y, width, height);
+
+	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	if (btnPos & FTGX_JUSTIFY_RIGHT)
+	{
+		dx = m_vid.width() - dx - width;
+		scaleX = m_vid.width() - scaleX - width;
+	}
+	if (btnPos & FTGX_ALIGN_BOTTOM)
+	{
+		dy = m_vid.height() - dy - height;
+		scaleY = m_vid.height() - scaleY - height;
+	}
+
 	m_btnMgr.hide(id, dx, dy, scaleX, scaleY, true);
 }
 

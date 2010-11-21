@@ -65,6 +65,7 @@ extern struct gameXMLinfo gameinfo;
 
 static bool titlecheck = false;
 u8 cnt_controlsreq = 0, cnt_controls = 0;
+const int pixels_to_skip = 10;
 
 void CMenu::_gameinfo(void)
 { 
@@ -73,29 +74,25 @@ void CMenu::_gameinfo(void)
 
 	u8 page = 0;
 	
-	int pixels_to_skip = 10;
 	int amount_of_skips = 0;
 	
-	int x = 0, y = 0, synopsis_x = 0, synopsis_y = 0;
+	int synopsis_x = 0, synopsis_y = 0;
 	u32 synopsis_w = 0, synopsis_h = 0;
-	
+
 	do
 	{
 		_mainLoopCommon();
 
 		if (amount_of_skips == 0)
 		{
+			// Check dimensions in the loop, because the animation can have an effect
 			m_btnMgr.getDimensions(m_gameinfoLblSynopsis, synopsis_x, synopsis_y, synopsis_w, synopsis_h); // Get original dimensions
-		}
+		}	
 
 		if ((BTN_DOWN_PRESSED || BTN_DOWN_HELD) && !(m_thrdWorking && m_thrdStop) && page == 1)
 		{
-			m_btnMgr.getDimensions(m_gameinfoLblSynopsis, x, y, synopsis_w, synopsis_h); // Get current dimensions
-			
-			if (y > (int) (synopsis_y - (synopsis_h - (m_vid.height() - 20)))) // 20 pixels from the bottom
+			if (synopsis_h - (amount_of_skips * pixels_to_skip) > (m_vid.height2D() - (20 + synopsis_y)))
 			{
-				// Move the control instead
-				// Height of a single line is...what? 10 pixels?
 				m_btnMgr.moveBy(m_gameinfoLblSynopsis, 0, -pixels_to_skip);
 				amount_of_skips++;
 			}
@@ -104,8 +101,6 @@ void CMenu::_gameinfo(void)
 		{
 			if (amount_of_skips)
 			{
-				// Move the control instead
-				// Height of a single line is...what? 10 pixels?
 				m_btnMgr.moveBy(m_gameinfoLblSynopsis, 0, pixels_to_skip);
 				amount_of_skips--;
 			}
@@ -113,6 +108,7 @@ void CMenu::_gameinfo(void)
 		else if (BTN_RIGHT_PRESSED && !(m_thrdWorking && m_thrdStop) && page == 0 && strlen(gameinfo.synopsis) > 0)
 		{
 			page = 1;
+			amount_of_skips = 0;
 						
 			m_btnMgr.reset(m_gameinfoLblSynopsis);
 			m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.synopsis)); //, line, false);
