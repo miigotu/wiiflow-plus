@@ -33,23 +33,24 @@ static bool return_to_menu = false;
 static bool return_to_priiloader = false;
 static bool return_to_disable = false;
 
-static bool wpads_On = false;
-
 void Open_Inputs(void)
 {
-	if(wpads_On) return;
-	WPAD_Init();
-	PAD_Init();
-	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
-	wpads_On = true;
+	if(WPAD_GetStatus() != WPAD_STATE_ENABLED && WPAD_GetStatus() != WPAD_STATE_ENABLING)
+	{
+		WPAD_Init();
+		PAD_Init();
+		WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+	}
 }
 
 void Close_Inputs(void)
 {
-	if(!wpads_On) return;
-	WPAD_Flush(WPAD_CHAN_ALL);
-	WPAD_Shutdown();
-	wpads_On = false;
+	while(WPAD_GetStatus() == WPAD_STATE_ENABLING); //Possible freeze if i keep this here?
+	if(WPAD_GetStatus() == WPAD_STATE_ENABLED)
+	{
+		WPAD_Flush(WPAD_CHAN_ALL);
+		WPAD_Shutdown();
+	}
 }
 
 bool Sys_Exiting(void)

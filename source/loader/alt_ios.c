@@ -130,7 +130,7 @@ bool loadIOS(int n, bool launch_game, bool switch_port)
 	bool iosOK;
 	char partition[6];
 
-	Close_Inputs(); // Need to do that here, even when you launch a game. IOS will not be properly reloaded if this is not done
+	Close_Inputs();
 
 	if (launch_game)
 	{
