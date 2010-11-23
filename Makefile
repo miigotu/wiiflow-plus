@@ -76,8 +76,8 @@ LIBS	:=	-lpng -lm -lz -lwiiuse -lbte -lasnd -logc -lfreetype -lvorbisidec -lmad 
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(CURDIR)/portlibs
-
+LIBDIRS	:=	$(CURDIR)/portlibs \
+			$(CURDIR)/libogc
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
 # rules for different file extensions
