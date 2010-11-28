@@ -145,6 +145,7 @@ bool loadIOS(int n, bool launch_game, bool switch_port)
 		mload_close();
 		usleep(500000);
 	}
+	else USBStorage_Deinit();
 
 	void *backup = COVER_allocMem1(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
 	if (backup != 0)

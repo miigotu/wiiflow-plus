@@ -260,9 +260,9 @@ void CMenu::init()
 
 void CMenu::cleanup(void)
 {
+	_waitForGameSoundExtract();
 	_stopSounds();
 	soundDeinit();
-	_waitForGameSoundExtract();
 	LWP_MutexDestroy(m_mutex);
 	m_mutex = 0;
 	LWP_MutexDestroy(m_gameSndMutex);

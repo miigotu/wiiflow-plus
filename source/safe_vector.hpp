@@ -1,6 +1,7 @@
-/*************************************|
-|---vector class wrapper by Miigotu---|
-|*************************************/
+/*****************************************|
+|-----vector class wrapper by Miigotu-----|
+|---Thx to dimok and r-win for guidance---|
+|*****************************************/
 
 #ifndef SAFE_VECTOR
 #define SAFE_VECTOR

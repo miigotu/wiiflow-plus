@@ -102,13 +102,13 @@ int old_main(int argc, char **argv)
 
 	// Init
 	Sys_Init();
-	Sys_ExitTo(0);
+	Sys_ExitTo(1);
 
 	if (iosOK)
 	{	Mount_Devices();
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 
-/*      	if (!wbfsOK && is_ios_type(IOS_TYPE_HERMES) && !FS_Mount_USB()) //Try swapping here first to avoid HDD Wait screen.
+/*      if (!wbfsOK && is_ios_type(IOS_TYPE_HERMES) && !FS_Mount_USB()) //Try swapping here first to avoid HDD Wait screen.
 		{
 			use_port1 = !use_port1;
 			loadIOS(mainIOS, false, true); //Reload the EHC module.
@@ -172,6 +172,7 @@ int old_main(int argc, char **argv)
 	int ret = 0;
 	do
 	{
+		Open_Inputs();
 		Mount_Devices();
 		gprintf("USB Available: %d\n", FS_USBAvailable());
 		gprintf("SD Available: %d\n", FS_SDAvailable());

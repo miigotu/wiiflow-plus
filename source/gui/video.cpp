@@ -440,10 +440,10 @@ void CVideo::render(void)
 	GX_InvalidateTexAll();
 }
 
-static STexture m_wTextures[20];
-
 void CVideo::_showWaitMessages(CVideo *m)
 {
+	m->m_waitMessageThrdStop = false;
+
 	u32 frames = m->m_waitMessageDelay * 50;
 	u32 waitFrames = frames;
 	
@@ -465,6 +465,8 @@ void CVideo::_showWaitMessages(CVideo *m)
 	}
 	while (m->m_showWaitMessage)
 	{
+		m->m_waitMessageThrdStop = false;
+
 		if (m->m_useWiiLight)
 		{
 			currentLightLevel += (fadeStep * fadeDirection);
@@ -481,7 +483,6 @@ void CVideo::_showWaitMessages(CVideo *m)
 			WIILIGHT_SetLevel(currentLightLevel);
 		}
 		
-		m->m_waitMessageThrdStop = false;
 		if (waitFrames == 0)
 		{
 			if (waitItr == m->m_waitMessages.end())
@@ -536,6 +537,7 @@ void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool use
 
 	if (tex.size() == 0)
 	{
+		STexture m_wTextures[10];
 		m_wTextures[0].fromPNG(wait_01_png);
 		m_wTextures[1].fromPNG(wait_02_png);
 		m_wTextures[2].fromPNG(wait_03_png);
@@ -546,6 +548,7 @@ void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool use
 		m_wTextures[7].fromPNG(wait_08_png);
 		m_wTextures[8].fromPNG(wait_09_png);
 		m_wTextures[9].fromPNG(wait_10_png);
+		m_waitMessages.reserve(10);
 		for (int i = 0; i < 10; i++)
 			m_waitMessages.push_back(m_wTextures[i]);
 
@@ -556,6 +559,8 @@ void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool use
 		m_waitMessages = tex;
 		m_waitMessageDelay = delay;
 	}
+
+	m_waitMessages.resize(m_waitMessages.size());
 	
 	if (m_waitMessages.size() == 1)
 		waitMessage(m_waitMessages[0]);

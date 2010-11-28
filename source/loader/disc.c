@@ -360,7 +360,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	if (ret < 0) return ret;
 
 	/* Disconnect Wiimotes */
-	Close_Inputs();
+	//Close_Inputs();
 	
 	/* Setup low memory */;
 	__Disc_SetLowMem(dvd);

@@ -22,8 +22,11 @@ bool SSoundEffect::play(u8 vol, bool in_thread)
 	if (vol == 0) return true;
 	
 	volume = vol;
-	if (!in_thread)
-		voice = ASND_GetFirstUnusedVoice();
+	if (!in_thread || voice == -1)
+		for(int i = 1; i <= 16; i++)
+			if (ASND_StatusVoice(i) == SND_UNUSED && i != 10)
+				voice = i;
+		//voice = ASND_GetFirstUnusedVoice();
 	
 	if (voice < 0 || voice >= 16) return false;
 

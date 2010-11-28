@@ -672,16 +672,13 @@ void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> argum
 		Close_Inputs();
 		Playlog_Delete();
 
-		//_hideWaitMessage();
 		WBFS_Close();
 
 		Unmount_All_Devices();
 		cleanup();
+		Close_Inputs();
 		USBStorage_Deinit();
-		//IOS_ReloadIOS(58);
-		//MEM2_cleanup();
 		bootHB = true;
-		//BootHomebrew();
 	}
 	m_exit = true;
 }
@@ -707,6 +704,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 	
 	Unmount_All_Devices();
 	cleanup();
+	Close_Inputs();
 	USBStorage_Deinit();
 
 	WII_LaunchTitle(hdr->hdr.chantitle);
@@ -962,6 +960,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	}
 	Unmount_All_Devices();
 	cleanup();
+	Close_Inputs();
 	USBStorage_Deinit();
 
 	if (gc)

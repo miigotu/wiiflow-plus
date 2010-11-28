@@ -76,8 +76,7 @@ LIBS	:=	-lpng -lm -lz -lwiiuse -lbte -lasnd -logc -lfreetype -lvorbisidec -lmad 
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(CURDIR)/portlibs \
-			$(CURDIR)/libogc
+LIBDIRS	:=	$(CURDIR)/portlibs
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
 # rules for different file extensions
@@ -165,6 +164,18 @@ clean:
 #---------------------------------------------------------------------------------
 run:
 	wiiload $(TARGET).dol
+
+#---------------------------------------------------------------------------------
+gdb:
+	@echo Loading GDB with symbols from boot.elf, type quit to exit.
+	@powerpc-eabi-gdb.exe boot.elf
+
+#---------------------------------------------------------------------------------
+addr:
+	@echo Loading addr2line with symbols from boot.elf..
+	@echo Press ctrl+c to exit.
+	@echo Enter an address from the stack dump:
+	@powerpc-eabi-addr2line -f -e boot.elf
 
 #---------------------------------------------------------------------------------
 else

@@ -145,6 +145,7 @@ err:
 		iosDestroyHeap(hid);
 		hid = -1;
 	} */
+	USB_Deinitialize();
 	return -1;
 }
 
@@ -160,6 +161,7 @@ void USBStorage_Deinit(void)
 		iosDestroyHeap(hid);
 		hid = -1;
 	} */
+	USB_Deinitialize();
 }
 
 s32 USBStorage_ReadSectors(u32 sector, u32 numSectors, void *buffer)

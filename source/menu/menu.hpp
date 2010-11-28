@@ -785,6 +785,7 @@ private:
 	int _initNetwork();
 	void _deinitNetwork();
 	static int GetCoverStatusAsync(CMenu *m);
+	void _getGrabStatus(void);
 	static void _addDiscProgress(int status, int total, void *user_data);
 	static int _gameInstaller(void *obj);
 	wstringEx _optBoolToString(int b);
