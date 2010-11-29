@@ -116,8 +116,8 @@ int CMenu::main(void)
 	m_reload = false;
 	static u32 disc_check = 0;
 	int done = 0;
+
 	// Start network asynchronious, if configured and required
-	_deinitNetwork(); //Fix failed hbc connections SOMETIMES
 	if (m_cfg.getBool("GENERAL", "async_network", false) || has_enabled_providers())
 		_initAsyncNetwork();
 
@@ -317,27 +317,35 @@ int CMenu::main(void)
 			}
 			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb) || m_btnMgr.selected(m_mainBtnHomebrew))
 			{
-				//disabled loading of hb list for now.
+				_showWaitMessage();
+
 				if (m_btnMgr.selected(m_mainBtnChannel)) 
 				{
 					m_current_view = COVERFLOW_CHANNEL;
 					m_category = 0;
+
+					m_btnMgr.hide(m_mainBtnChannel, true);
+					m_btnMgr.show(m_mainBtnUsb, true);
 				}
 				else if (m_btnMgr.selected(m_mainBtnUsb))
 				{
 					m_current_view = COVERFLOW_USB;
 					m_category = m_cat.getInt("GENERAL", "category", 0);
+					
+					m_btnMgr.hide(m_mainBtnUsb, true);
+					m_btnMgr.show(m_mainBtnChannel, true);
 				}
 				else if (m_btnMgr.selected(m_mainBtnHomebrew))
 				{
 					m_current_view = COVERFLOW_HOMEBREW;
 					m_category = 0;
+
+					m_btnMgr.hide(m_mainBtnHomebrew, true);
+					m_btnMgr.show(m_mainBtnUsb, true);
 				}
-				_showWaitMessage();
-				_hideMain();
 				_loadList();
+				_hideWaitMessage();
 				_initCF();
-				_showMain();
 			}
 			else if (m_btnMgr.selected(m_mainBtnInit))
 			{
@@ -384,11 +392,11 @@ int CMenu::main(void)
 			}
 			else if (m_btnMgr.selected(m_mainBtnDVD))
 			{
-				_hideMain();
+				_showWaitMessage();
+				_hideMain(true);
 				dir_discHdr hdr;
 				memset(&hdr, 0, sizeof(dir_discHdr));
 				memcpy(&hdr.hdr.id, "dvddvd", 6);
-				_showWaitMessage();
 				_launchGame(&hdr, true);
 				_showMain();
 			}
@@ -435,8 +443,10 @@ int CMenu::main(void)
 			m_btnMgr.show(m_mainBtnConfig);
 			m_btnMgr.show(m_mainBtnInfo);
 			m_btnMgr.show(m_mainBtnQuit);
-			m_btnMgr.show(m_favorites ? m_mainBtnFavoritesOn : m_mainBtnFavoritesOff);
-			m_btnMgr.hide(m_favorites ? m_mainBtnFavoritesOff : m_mainBtnFavoritesOn);
+			static bool change = m_favorites;
+			m_btnMgr.show(m_favorites ? m_mainBtnFavoritesOn : m_mainBtnFavoritesOff, change != m_favorites);
+			m_btnMgr.hide(m_favorites ? m_mainBtnFavoritesOff : m_mainBtnFavoritesOn, change != m_favorites);
+			change = m_favorites;
 		}
 		else
 		{

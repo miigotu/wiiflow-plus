@@ -7,6 +7,7 @@
 #include "loader/wbfs.h"
 #include "text.hpp"
 #include <ogc/system.h>
+#include <unistd.h>
 #include <wiilight.h>
 #include "homebrew.h"
 #include "gecko.h"
@@ -24,7 +25,6 @@ extern bool bootHB;
 extern int mainIOS;
 extern int mainIOSRev;
 extern int mainIOSminRev;
-
 
 CMenu *mainMenu;
 extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
@@ -81,7 +81,7 @@ int old_main(int argc, char **argv)
 					gameid = NULL;
 		}
 	}
-	gprintf("Loading cIOS: %d, Port: %d\n", mainIOS, use_port1);
+	gprintf("Loading cIOS: %d, Port: %d\n", mainIOS, is_ios_type(IOS_TYPE_HERMES) ? use_port1 : 0);
 
 	// Load Custom IOS
 	bool iosOK = loadIOS(mainIOS, false, false);
@@ -105,19 +105,27 @@ int old_main(int argc, char **argv)
 	Sys_ExitTo(1);
 
 	if (iosOK)
-	{	Mount_Devices();
+	{
+		Mount_Devices();
 		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 
-/*      if (!wbfsOK && is_ios_type(IOS_TYPE_HERMES) && !FS_Mount_USB()) //Try swapping here first to avoid HDD Wait screen.
+		//Try swapping here first to avoid HDD Wait screen.
+		for(int tries = 0; tries < 4 && !wbfsOK; tries++)// ~4 seconds before HDD wait will pop
 		{
-			use_port1 = !use_port1;
-			loadIOS(mainIOS, false, true); //Reload the EHC module.
+			usleep(1000000);
+
 			if (FS_Mount_USB())
 				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
-		} */
+
+			if(wbfsOK) break;
+
+			use_port1 = !use_port1;
+			loadIOS(mainIOS, false, true); //Reload the EHC module.
+		}
+
 		if (!wbfsOK)
 		{
-			//s16 switch_port = 200;
+			s8 switch_port = 4;
 
 			// Show HDD Wait Screen
 			STexture texWaitHDD;
@@ -127,39 +135,37 @@ int old_main(int argc, char **argv)
 
 			while(!wbfsOK)
 			{
-				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
-				if(!wbfsOK)
+				while(!FS_Mount_USB()) //Wait indefinitely until HDD is there or exit requested, trying each device 4 times one second apart before switching port.
 				{
-					while(!FS_Mount_USB()) //Wait indefinitely until HDD is there or exit requested.
+					if (switch_port < 4) switch_port++;
+
+					WPAD_ScanPads(); PAD_ScanPads();
+
+					u32 wbtnsPressed = 0, gbtnsPressed = 0,
+						wbtnsHeld = 0, gbtnsHeld = 0;
+
+					for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 					{
-						//if (switch_port < 200) switch_port++;
+						wbtnsPressed |= WPAD_ButtonsDown(chan);
+						gbtnsPressed |= PAD_ButtonsDown(chan);
 
-						WPAD_ScanPads(); PAD_ScanPads();
+						wbtnsHeld |= WPAD_ButtonsHeld(chan);
+						gbtnsHeld |= PAD_ButtonsHeld(chan);
+					 }
 
-						u32 wbtnsPressed = 0, gbtnsPressed = 0,
-							wbtnsHeld = 0, gbtnsHeld = 0;
+					 if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) || (gbtnsPressed & GBTN_HOME))
+						Sys_Exit(0);
 
-						for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-						{
-							wbtnsPressed |= WPAD_ButtonsDown(chan);
-							gbtnsPressed |= PAD_ButtonsDown(chan);
-
-							wbtnsHeld |= WPAD_ButtonsHeld(chan);
-							gbtnsHeld |= PAD_ButtonsHeld(chan);
-						 }
-
-						if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) || (gbtnsPressed & GBTN_HOME))
-							Sys_Exit(0);
-
-/* 						if (is_ios_type(IOS_TYPE_HERMES) && switch_port >= 2)
-						{
-							use_port1 = !use_port1;
-							loadIOS(mainIOS, false, true);
-							switch_port = 0;
-						} */
-						VIDEO_WaitVSync();
+					if (switch_port >= 4)
+					{
+						use_port1 = !use_port1;
+						loadIOS(mainIOS, false, true);
+						switch_port = 0;
 					}
+					VIDEO_WaitVSync();
+					usleep(1000000);
 				}
+				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 			}
 			vid.hideWaitMessage();
 			vid.waitMessage(0.2f);

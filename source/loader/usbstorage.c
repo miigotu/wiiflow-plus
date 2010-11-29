@@ -145,7 +145,7 @@ err:
 		iosDestroyHeap(hid);
 		hid = -1;
 	} */
-	USB_Deinitialize();
+	//USB_Deinitialize(); //Screwing up inputs even worse if i do this here..grr
 	return -1;
 }
 
