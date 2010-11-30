@@ -5,7 +5,9 @@
 
 #include <unistd.h>
 #include <fstream>
+#include <sys/stat.h>
 
+#include "loader/fs.h"
 #include "wbfs.h"
 #include "gecko.h"
 #include "sys.h"
@@ -92,6 +94,7 @@ void CMenu::_showMain(void)
 	for (u32 i = 1; i < ARRAY_SIZE(m_mainLblUser); ++i)
 		if (m_mainLblUser[i] != -1u)
 			m_btnMgr.show(m_mainLblUser[i]);
+
 	if (m_gameList.empty())
 	{
 		m_btnMgr.show(m_mainBtnInit);
@@ -143,17 +146,32 @@ int CMenu::main(void)
 		//Check for exit or reload request
 		if (BTN_HOME_PRESSED)
 		{
+			if(!m_locked && !m_disable_exit)
+			{
+				struct stat dummy;
+				if(BTN_PLUS_HELD) Sys_ExitTo(EXIT_TO_HBC);
+				else if(BTN_MINUS_HELD) Sys_ExitTo(EXIT_TO_MENU);
+				else if(BTN_1_HELD) Sys_ExitTo(EXIT_TO_PRIILOADER);
+				else if(BTN_2_HELD)	//Check that the files are there, or ios will hang.
+				{
+					if(FS_SDAvailable() && stat("sd:/bootmii/armboot.bin", &dummy) == 0 && stat("sd:/bootmii/ppcboot.elf", &dummy) == 0)
+						Sys_ExitTo(EXIT_TO_BOOTMII);
+					else  Sys_ExitTo(EXIT_TO_HBC);
+				}
+			}
 			m_reload = (BTN_B_HELD || m_disable_exit);
 			break;
 		}
-		if (!BTN_B_HELD && (BTN_UP_REPEAT || RIGHT_STICK_UP))
+		m_btnMgr.noClick(true);
+		if (!m_btnMgr.selected(m_mainBtnQuit) && !BTN_B_HELD && (BTN_UP_REPEAT || RIGHT_STICK_UP))
 			m_cf.up();
-		if ((!BTN_B_HELD && (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT))|| WROLL_RIGHT)
+		if (!m_btnMgr.selected(m_mainBtnQuit) && ((!BTN_B_HELD && (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)) || WROLL_RIGHT))
 			m_cf.right();
-		if (!BTN_B_HELD && (BTN_DOWN_REPEAT ||  RIGHT_STICK_DOWN))
+		if (!m_btnMgr.selected(m_mainBtnQuit) && !BTN_B_HELD && (BTN_DOWN_REPEAT ||  RIGHT_STICK_DOWN))
 			m_cf.down();
-		if ((!BTN_B_HELD && (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)) || WROLL_LEFT)
+		if (!m_btnMgr.selected(m_mainBtnQuit) && ((!BTN_B_HELD && (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)) || WROLL_LEFT))
 			m_cf.left();
+		m_btnMgr.noClick(false);
 		//CF Layout select
 		if (!BTN_B_HELD && BTN_1_PRESSED)
 		{
@@ -312,6 +330,19 @@ int CMenu::main(void)
 				m_cf.pageDown();
 			else if (m_btnMgr.selected(m_mainBtnQuit))
 			{
+				if(!m_locked && !m_disable_exit)
+				{
+					struct stat dummy;
+					if(BTN_PLUS_HELD) Sys_ExitTo(EXIT_TO_HBC);
+					else if(BTN_MINUS_HELD) Sys_ExitTo(EXIT_TO_MENU);
+					else if(BTN_1_HELD) Sys_ExitTo(EXIT_TO_PRIILOADER);
+					else if(BTN_2_HELD)	//Check that the files are there, or ios will hang.
+					{
+						if(FS_SDAvailable() && stat("sd:/bootmii/armboot.bin", &dummy) == 0 && stat("sd:/bootmii/ppcboot.elf", &dummy) == 0)
+							Sys_ExitTo(EXIT_TO_BOOTMII);
+						 else Sys_ExitTo(EXIT_TO_HBC);
+					}
+				}
 				m_reload = (BTN_B_HELD || m_disable_exit);
 				break;
 			}
@@ -319,28 +350,30 @@ int CMenu::main(void)
 			{
 				_showWaitMessage();
 
-				if (m_btnMgr.selected(m_mainBtnChannel)) 
+				m_btnMgr.hide(m_mainBtnHomebrew, true);
+				m_btnMgr.hide(m_mainBtnChannel, true);
+				m_btnMgr.hide(m_mainBtnUsb, true);
+
+				if (m_current_view == COVERFLOW_USB) 
 				{
 					m_current_view = COVERFLOW_CHANNEL;
 					m_category = 0;
 
-					m_btnMgr.hide(m_mainBtnChannel, true);
 					m_btnMgr.show(m_mainBtnUsb, true);
+					//m_btnMgr.show(m_mainBtnHomebrew);
 				}
-				else if (m_btnMgr.selected(m_mainBtnUsb))
+				else if (m_current_view == COVERFLOW_CHANNEL)
 				{
 					m_current_view = COVERFLOW_USB;
 					m_category = m_cat.getInt("GENERAL", "category", 0);
 					
-					m_btnMgr.hide(m_mainBtnUsb, true);
 					m_btnMgr.show(m_mainBtnChannel, true);
 				}
-				else if (m_btnMgr.selected(m_mainBtnHomebrew))
+				else if (0 && m_current_view == COVERFLOW_CHANNEL)
 				{
 					m_current_view = COVERFLOW_HOMEBREW;
 					m_category = 0;
 
-					m_btnMgr.hide(m_mainBtnHomebrew, true);
 					m_btnMgr.show(m_mainBtnUsb, true);
 				}
 				_loadList();

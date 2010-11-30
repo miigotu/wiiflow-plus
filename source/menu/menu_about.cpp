@@ -108,7 +108,7 @@ void CMenu::_textAbout(void)
 
 	u32 index = get_ios_info_from_tmd();
 
-	if ((is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 18) ||
+	if ((is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 17) ||
 		(is_ios_type(IOS_TYPE_HERMES) && IOS_GetRevision() >= 5))
 		m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"IOS%i rev%i, base IOS%i"), mainIOS, index == 0xFF ? mainIOSRev : atoi(revs[index]), m_loaded_ios_base), true);
 	else

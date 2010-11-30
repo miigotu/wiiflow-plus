@@ -16,6 +16,12 @@ extern "C" {
 #define HBC_JODI	0x0001000148415858ULL
 #define HBC_HAXX	0x000100014a4f4449ULL
 
+#define EXIT_TO_MENU 0
+#define EXIT_TO_HBC 1
+#define EXIT_TO_PRIILOADER 2
+#define EXIT_TO_DISABLE 3
+#define EXIT_TO_BOOTMII 4
+
 	/* Prototypes */
 	void Sys_Init(void);
 	void Sys_Reboot(void);

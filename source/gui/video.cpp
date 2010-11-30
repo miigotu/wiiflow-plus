@@ -579,8 +579,10 @@ void CVideo::waitMessage(const STexture &tex)
 
 	for (int i = 0; i < 3; ++i)
 	{
-		prepare();
-		setup2DProjection();
+		//prepare();
+		//setup2DProjection(false, true);
+		prepareAAPass(i);
+		setup2DProjection(false, true);
 		GX_SetNumChans(0);
 		GX_ClearVtxDesc();
 		GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);

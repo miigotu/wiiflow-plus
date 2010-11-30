@@ -102,7 +102,7 @@ int old_main(int argc, char **argv)
 
 	// Init
 	Sys_Init();
-	Sys_ExitTo(1);
+	Sys_ExitTo(EXIT_TO_HBC);
 
 	if (iosOK)
 	{
@@ -118,9 +118,11 @@ int old_main(int argc, char **argv)
 				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 
 			if(wbfsOK) break;
-
-			use_port1 = !use_port1;
-			loadIOS(mainIOS, false, true); //Reload the EHC module.
+			if (is_ios_type(IOS_TYPE_HERMES))
+			{
+				use_port1 = !use_port1;
+				loadIOS(mainIOS, false, true); //Reload the EHC module.
+			}
 		}
 
 		if (!wbfsOK)
@@ -156,7 +158,7 @@ int old_main(int argc, char **argv)
 					 if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) || (gbtnsPressed & GBTN_HOME))
 						Sys_Exit(0);
 
-					if (switch_port >= 4)
+					if (switch_port >= 4 && is_ios_type(IOS_TYPE_HERMES))
 					{
 						use_port1 = !use_port1;
 						loadIOS(mainIOS, false, true);

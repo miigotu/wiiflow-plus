@@ -231,13 +231,16 @@ void CMenu::init()
 	m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble", true));
 
 	int exit_to = m_cfg.getInt("GENERAL", "exit_to", 0);
-	m_disable_exit = exit_to == 3;
+	m_disable_exit = exit_to == EXIT_TO_DISABLE;
+	//Check that the files are there, or ios will hang on exit
+	if(exit_to == EXIT_TO_BOOTMII && (!FS_SDAvailable() || stat("sd:/bootmii/armboot.bin", &dummy) != 0 || stat("sd:/bootmii/ppcboot.elf", &dummy) != 0))
+		exit_to = EXIT_TO_HBC;
 	Sys_ExitTo(exit_to);
 
 	LWP_MutexInit(&m_mutex, 0);
 	LWP_MutexInit(&m_gameSndMutex, 0);
 
-	soundInit();
+	//soundInit(); //done in the m_btnMgr.init
 
 	m_cf.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255));
 	m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
@@ -950,8 +953,8 @@ void CMenu::_initCF(void)
 	m_cf.clear();
 	m_cf.reserve(m_gameList.size());
 
-/* 	m_gamelistdump = m_cfg.getBool("GENERAL", m_current_view == COVERFLOW_USB ? "dump_gamelist" : "dump_chanlist", true);
-	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str()); */
+ 	m_gamelistdump = m_cfg.getBool("GENERAL", m_current_view == COVERFLOW_USB ? "dump_gamelist" : "dump_chanlist", true);
+	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
 
 
 	m_titles_loaded = titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str());
@@ -991,20 +994,20 @@ void CMenu::_initCF(void)
 			int playcount = m_gcfg1.getInt("PLAYCOUNT", id, 0);
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
 
-/* 			if(m_gamelistdump)
+			if(m_gamelistdump)
 				m_dump.setWString(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", m_current_view == COVERFLOW_CHANNEL ? id.substr(0, 4) : id, w);
- */
+
 			CColor cover = custom_titles.getColor("COVERS", id, titles.getColor("COVERS", id, CColor(0xFFFFFF)));
 			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), cover, playcount, lastPlayed);
 		}
 	}
 	m_gcfg1.unload();
-/* 	if (m_gamelistdump)
+ 	if (m_gamelistdump)
 	{
 		m_dump.save();
 		m_dump.unload();
 		m_cfg.setBool("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "dump_chanlist" : "dump_gamelist", false);
-	} */
+	}
  	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode", true));
 	m_cf.setCompression(m_cfg.getBool("GENERAL", "allow_texture_compression", true));
 	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
@@ -1068,6 +1071,8 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	
 	m_btnMgr.draw();
 	ScanInput();
+
+	m_vid.setup2DProjection();
 	m_vid.render();
 	if (!blockReboot)
 	{
@@ -1090,8 +1095,6 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		&& (!m_gameSelected || (m_gameSelected && m_gameSound.voice && ASND_StatusVoice(m_gameSound.voice) == SND_UNUSED)))
 		m_music_fade_mode = 1;	
 	
-	_waitForGameSoundExtract();
-
 	LWP_MutexLock(m_gameSndMutex);
 	if (withCF && m_gameSelected && !!m_gameSoundTmp.data && m_gameSoundThread == 0 && m_musicCurrentVol == 0)
 	{

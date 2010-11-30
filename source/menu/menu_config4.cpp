@@ -17,11 +17,12 @@ static inline int loopNum(int i, int s)
 int currentChannelIndex = -1;
 int amountOfChannels = -1;
 
-const CMenu::SOption CMenu::_exitTo[4] = {
+const CMenu::SOption CMenu::_exitTo[5] = {
 	{ "menu", L"Menu" },
 	{ "hbc", L"HBC" },
 	{ "prii", L"Prii" },
-	{ "disabled", L"Disabled" }
+	{ "disabled", L"Disabled" },
+	{ "bootmii", L"BootMii" }
 };
 
 void CMenu::_hideConfig4(bool instant)
@@ -136,8 +137,8 @@ int CMenu::_config4(void)
 				break;
 			else if (m_btnMgr.selected(m_config4BtnHome))
 			{
-				m_cfg.setInt("GENERAL", "exit_to", (int)loopNum((u32)m_cfg.getInt("GENERAL", "exit_to", 0) + 1, ARRAY_SIZE(CMenu::_exitTo)));
-				int exit_to = m_cfg.getInt("GENERAL", "exit_to", 0);
+				int exit_to = (int)loopNum((u32)m_cfg.getInt("GENERAL", "exit_to", 0) + 1, ARRAY_SIZE(CMenu::_exitTo));
+				m_cfg.setInt("GENERAL", "exit_to", exit_to);
 				Sys_ExitTo(exit_to);
 				m_disable_exit = exit_to == 3;
 				_showConfig4();

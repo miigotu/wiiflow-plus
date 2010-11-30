@@ -18,11 +18,6 @@
 /* Constants */
 #define CERTS_LEN	0x280
 
-#define EXIT_TO_MENU 0
-#define EXIT_TO_HBC 1
-#define EXIT_TO_PRIILOADER 2
-#define EXIT_TO_DISABLE 3
-
 /* Variables */
 static const char certs_fs[] ATTRIBUTE_ALIGN(32) = "/sys/cert.sys";
 static bool reset = false;
@@ -32,6 +27,7 @@ static bool return_to_hbc = false;
 static bool return_to_menu = false;
 static bool return_to_priiloader = false;
 static bool return_to_disable = false;
+static bool return_to_bootmii = false;
 
 void Open_Inputs(void)
 {
@@ -72,7 +68,8 @@ void Sys_ExitTo(int option)
 	return_to_menu = option == EXIT_TO_MENU;
 	return_to_priiloader = option == EXIT_TO_PRIILOADER;
 	return_to_disable = option == EXIT_TO_DISABLE;
-	
+	return_to_bootmii = option == EXIT_TO_BOOTMII;
+
 	//magic word to force wii menu in priiloader.
 	if(return_to_menu)
 	{
@@ -95,10 +92,11 @@ void Sys_Exit(int ret)
 	Playlog_Delete();
 
 	if (return_to_menu || return_to_priiloader) Sys_LoadMenu();
-	else if(WII_LaunchTitle(HBC_108)<0)
-			if(WII_LaunchTitle(HBC_HAXX)<0)
-				if(WII_LaunchTitle(HBC_JODI)<0)
-					SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+	else if(return_to_bootmii) IOS_ReloadIOS(254);
+	if(WII_LaunchTitle(HBC_108)<0)
+		if(WII_LaunchTitle(HBC_HAXX)<0)
+			if(WII_LaunchTitle(HBC_JODI)<0)
+				SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 }
 
 void __Sys_ResetCallback(void)

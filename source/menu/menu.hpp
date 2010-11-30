@@ -819,7 +819,7 @@ private:
 	static const SOption _videoModes[7];
 	static const SOption _vidModePatch[4];
 	static const SOption _hooktype[8];
-	static const SOption _exitTo[4];
+	static const SOption _exitTo[5];
 	static const int _ios[6];
 	struct SIOS 
 	{ 

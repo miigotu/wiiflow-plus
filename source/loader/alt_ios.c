@@ -87,7 +87,7 @@ static int load_ehc_module_ex(void)
 void load_dip_249()
 {
 	int ret;
-	if (is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 18)
+	if (is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 17)
 	{
 		gprintf("Starting mload\n");
 		if(mload_init()<0) {

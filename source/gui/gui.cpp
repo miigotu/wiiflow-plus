@@ -54,8 +54,11 @@ u32 CButtonsMgr::addButton(SFont font, const wstringEx &text, int x, int y, u32 
 	b->hoverSound = hoverSound;
 	b->moveByX = 0;
 	b->moveByY = 0;
+
+	u32 sz = m_elts.size();
 	m_elts.push_back(elt);
-	return m_elts.size() - 1;
+
+	return m_elts.size() > sz ? m_elts.size() - 1 : -2;
 }
 
 void CButtonsMgr::reset(u32 id, bool instant)
@@ -396,8 +399,11 @@ u32 CButtonsMgr::addLabel(SFont font, const wstringEx &text, int x, int y, u32 w
 	b->texBg = bg;
 	b->moveByX = 0;
 	b->moveByY = 0;
+
+	u32 sz = m_elts.size();
 	m_elts.push_back(elt);
-	return m_elts.size() - 1;
+
+	return m_elts.size() > sz ? m_elts.size() - 1 : -2;
 }
 
 u32 CButtonsMgr::addProgressBar(int x, int y, u32 width, u32 height, SButtonTextureSet &texSet)
@@ -421,8 +427,11 @@ u32 CButtonsMgr::addProgressBar(int x, int y, u32 width, u32 height, SButtonText
 	b->targetVal = 0.f;
 	b->moveByX = 0;
 	b->moveByY = 0;
+
+	u32 sz = m_elts.size();
 	m_elts.push_back(elt);
-	return m_elts.size() - 1;
+
+	return m_elts.size() > sz ? m_elts.size() - 1 : -2;
 }
 
 u32 CButtonsMgr::addPicButton(STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height, const SSoundEffect &clickSound, const SSoundEffect &hoverSound)
