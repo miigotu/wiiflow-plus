@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <app version="2.2">
 		<name> WiiFlow</name>
-		<coder>Hibernatus</coder>
-		<version>2.2beta</version>
+		<coder>r-win, Miigotu &amp; Hulk</coder>
+		<version>2.2rc1</version>
 		<release_date>TBD</release_date>
 		<short_description>USB Loader</short_description>
 		<long_description>WiiFlow is a USB Loader that can be installed on a FAT/NTFS HDD or SD.Controls :
