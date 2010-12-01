@@ -330,7 +330,7 @@ void CMenu::_loadCFCfg()
 	m_numCFVersions = min(max(2, m_theme.getInt("_COVERFLOW", "number_of_modes", 2)), 8);
 	for (u32 i = 1; i <= m_numCFVersions; ++i)
 		_loadCFLayout(i);
-	_loadCFLayout(min(max(1, m_cfg.getInt("GENERAL", "last_cf_mode", 1)), (int)m_numCFVersions));
+	_loadCFLayout(min(max(1, m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1)), (int)m_numCFVersions));
 }
 
 Vector3D CMenu::_getCFV3D(const string &domain, const string &key, const Vector3D &def, bool otherScrnFmt)

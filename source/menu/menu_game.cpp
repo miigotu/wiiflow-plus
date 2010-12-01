@@ -344,17 +344,17 @@ void CMenu::_game(bool launch)
 		}
 		else if (BTN_1_PRESSED)
 		{
-			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1), m_numCFVersions);
+			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1), m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
-			m_cfg.setInt("GENERAL", "last_cf_mode", cfVersion);
+			m_cfg.setInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , cfVersion);
 		}
 		else if (BTN_2_PRESSED)
 		{
-			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
+			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1) - 2, m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
-			m_cfg.setInt("GENERAL", "last_cf_mode", cfVersion);
+			m_cfg.setInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , cfVersion);
 		}
 		else if (launch || BTN_A_PRESSED)
 		{

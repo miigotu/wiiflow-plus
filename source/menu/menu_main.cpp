@@ -175,17 +175,27 @@ int CMenu::main(void)
 		//CF Layout select
 		if (!BTN_B_HELD && BTN_1_PRESSED)
 		{
-			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1), m_numCFVersions);
-			_loadCFLayout(cfVersion);
-			m_cf.applySettings();
-			m_cfg.setInt("GENERAL", "last_cf_mode", cfVersion);
+			m_btnMgr.noClick(true);
+			if (!m_btnMgr.selected(m_mainBtnQuit))
+			{
+				int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1), m_numCFVersions);
+				_loadCFLayout(cfVersion);
+				m_cf.applySettings();
+				m_cfg.setInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , cfVersion);
+			}
+			m_btnMgr.noClick(false);
 		}
 		else if (!BTN_B_HELD && BTN_2_PRESSED)
 		{
-			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", "last_cf_mode", 1) - 2, m_numCFVersions);
-			_loadCFLayout(cfVersion);
-			m_cf.applySettings();
-			m_cfg.setInt("GENERAL", "last_cf_mode", cfVersion);
+			m_btnMgr.noClick(true);
+			if (!m_btnMgr.selected(m_mainBtnQuit))
+			{
+				int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1) - 2, m_numCFVersions);
+				_loadCFLayout(cfVersion);
+				m_cf.applySettings();
+				m_cfg.setInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , cfVersion);
+			}
+			m_btnMgr.noClick(false);
 		}
 		else if (BTN_B_HELD)
 		{
@@ -379,6 +389,9 @@ int CMenu::main(void)
 				_loadList();
 				_hideWaitMessage();
 				_initCF();
+
+				_loadCFLayout(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1));
+				m_cf.applySettings();
 			}
 			else if (m_btnMgr.selected(m_mainBtnInit))
 			{
