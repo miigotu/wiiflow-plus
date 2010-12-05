@@ -1,7 +1,7 @@
 
 #include "menu.hpp"
 #include "loader/patchcode.h"
-#include "loader/fs.h"
+
 #include "loader/sys.h"
 #include "loader/wdvd.h"
 #include "loader/mload_modules.h"
@@ -12,7 +12,7 @@
 #include <time.h>
 #include "network/http.h"
 #include "network/gcard.h"
-
+#include "DeviceHandler.hpp"
 #include "loader/mload_modules.h"
 #include "loader/wbfs.h"
 #include "loader/wbfs_ext.h"
@@ -44,9 +44,6 @@ extern const u8 favoritesoff_png[];
 extern const u8 favoritesoffs_png[];
 extern const u8 delete_png[];
 extern const u8 deletes_png[];
-extern int mainIOS;
-
-bool bootHB = false;
 
 const string CMenu::_translations[23] = {
 	"Default",
@@ -606,13 +603,15 @@ void CMenu::_directlaunch(const string &id)
 {
 	m_directLaunch = true;
 
-	int partitions = WBFS_GetPartitionCount();
-	for (int i = 0; i < partitions; i++)
+	for (int i = USB1; i < USB8; i++)
 	{
-		char part[6];
-		WBFS_GetPartitionName(i, (char *) &part);
+		if(!DeviceHandler::Instance()->IsInserted(i))
+			continue;
+
+		//char *part = (char *)DeviceName[i];
 		
-		s32 ret = WBFS_OpenNamed(part);
+		//s32 ret = WBFS_OpenNamed(part);
+		s32 ret = DeviceHandler::Instance()->Open_WBFS(i);
 		if (ret == 0)
 		{
 			// Let's find the game here...
@@ -628,7 +627,7 @@ void CMenu::_directlaunch(const string &id)
 
 			
 				// Game found
-				gprintf("Game found on partition %s\n", part);
+				gprintf("Game found on partition #%i\n", i);
 				_launch(&hdr); // Launch will exit wiiflow
 			}
 		}
@@ -674,7 +673,7 @@ void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> argum
 
 		WBFS_Close();
 
-		Unmount_All_Devices();
+		DeviceHandler::Instance()->UnMountAll();
 		cleanup();
 		Close_Inputs();
 		USBStorage_Deinit();
@@ -702,7 +701,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 	COVER_clear();
 	WBFS_Close();
 	
-	Unmount_All_Devices();
+	DeviceHandler::Instance()->UnMountAll();
 	cleanup();
 	Close_Inputs();
 	USBStorage_Deinit();
@@ -886,9 +885,10 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 
 	if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
 
-	if (!_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt"))
-		if (FS_USBAvailable() && !_loadFile(gameconfig, gameconfigSize, "usb:/", "gameconfig.txt"))
-			if (FS_SDAvailable()) _loadFile(gameconfig, gameconfigSize, "sd:/", "gameconfig.txt");
+	_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt");
+	//if (!_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt"))
+		//if (FS_USBAvailable() && !_loadFile(gameconfig, gameconfigSize, "usb:/", "gameconfig.txt"))
+			//if (FS_SDAvailable()) _loadFile(gameconfig, gameconfigSize, "sd:/", "gameconfig.txt");
 	
 	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) &hdr->hdr.id);
 	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) &hdr->hdr.id);
@@ -958,7 +958,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 			return;
 		}
 	}
-	Unmount_All_Devices();
+	DeviceHandler::Instance()->UnMountAll();
 	cleanup();
 	Close_Inputs();
 	USBStorage_Deinit();

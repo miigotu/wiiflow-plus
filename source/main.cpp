@@ -1,7 +1,7 @@
 #include "video.hpp"
 #include "menu/menu.hpp"
 #include "loader/disc.h"
-#include "loader/fs.h"
+
 #include "loader/alt_ios.h"
 #include "loader/sys.h"
 #include "loader/wbfs.h"
@@ -9,22 +9,13 @@
 #include <ogc/system.h>
 #include <unistd.h>
 #include <wiilight.h>
+#include "DeviceHandler.hpp"
 #include "homebrew.h"
 #include "gecko.h"
 
-extern "C"
-{
-    extern void __exception_setreload(int t);
-	extern bool use_port1;
-}
+extern "C" { extern void __exception_setreload(int t);}
 
 extern const u8 wait_hdd_png[];
-
-extern bool geckoinit;
-extern bool bootHB;
-extern int mainIOS;
-extern int mainIOSRev;
-extern int mainIOSminRev;
 
 CMenu *mainMenu;
 extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
@@ -46,7 +37,6 @@ void parse_ios_arg(int arg, int *ios, int *min_rev)
 	gprintf("Passed IOS Minimum Rev: %i\n", *min_rev);
 }
 
-
 int old_main(int argc, char **argv)
 {
 	geckoinit = InitGecko();
@@ -55,7 +45,6 @@ int old_main(int argc, char **argv)
 	SYS_SetArena1Hi((void *)0x81200000);	// See loader/apploader.c
 	CVideo vid;
 
-	bool wbfsOK = false;
 	char *gameid = NULL;
 	
 	for (int i = 0; i < argc; i++)
@@ -104,96 +93,39 @@ int old_main(int argc, char **argv)
 	Sys_Init();
 	Sys_ExitTo(EXIT_TO_HBC);
 
-	if (iosOK)
-	{
-		Mount_Devices();
-		wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
-
-		//Try swapping here first to avoid HDD Wait screen.
-		for(int tries = 0; tries < 4 && !wbfsOK; tries++)// ~4 seconds before HDD wait will pop
-		{
-			usleep(1000000);
-
-			if (FS_Mount_USB())
-				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
-
-			if(wbfsOK) break;
-			if (is_ios_type(IOS_TYPE_HERMES))
-			{
-				use_port1 = !use_port1;
-				loadIOS(mainIOS, false, true); //Reload the EHC module.
-			}
-		}
-
-		if (!wbfsOK)
-		{
-			s8 switch_port = 4;
-
-			// Show HDD Wait Screen
-			STexture texWaitHDD;
-			texWaitHDD.fromPNG(wait_hdd_png, GX_TF_RGB565, ALLOC_MALLOC);
-			vid.hideWaitMessage();
-			vid.waitMessage(texWaitHDD);
-
-			while(!wbfsOK)
-			{
-				while(!FS_Mount_USB()) //Wait indefinitely until HDD is there or exit requested, trying each device 4 times one second apart before switching port.
-				{
-					if (switch_port < 4) switch_port++;
-
-					WPAD_ScanPads(); PAD_ScanPads();
-
-					u32 wbtnsPressed = 0, gbtnsPressed = 0,
-						wbtnsHeld = 0, gbtnsHeld = 0;
-
-					for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-					{
-						wbtnsPressed |= WPAD_ButtonsDown(chan);
-						gbtnsPressed |= PAD_ButtonsDown(chan);
-
-						wbtnsHeld |= WPAD_ButtonsHeld(chan);
-						gbtnsHeld |= PAD_ButtonsHeld(chan);
-					 }
-
-					 if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) || (gbtnsPressed & GBTN_HOME))
-						Sys_Exit(0);
-
-					if (switch_port >= 4 && is_ios_type(IOS_TYPE_HERMES))
-					{
-						use_port1 = !use_port1;
-						loadIOS(mainIOS, false, true);
-						switch_port = 0;
-					}
-					VIDEO_WaitVSync();
-					usleep(1000000);
-				}
-				wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
-			}
-			vid.hideWaitMessage();
-			vid.waitMessage(0.2f);
-			SMART_FREE(texWaitHDD.data);
-		}
-	}
-
-	bool dipOK = Disc_Init() >= 0;
-	MEM2_takeBigOnes(true);
 	int ret = 0;
+
 	do
 	{
 		Open_Inputs();
-		Mount_Devices();
-		gprintf("USB Available: %d\n", FS_USBAvailable());
-		gprintf("SD Available: %d\n", FS_SDAvailable());
+
+		MEM2_takeBigOnes(true);
+
+		DeviceHandler::Instance()->MountAll();
+		ISFS_Initialize();
+		for(int i = 1; i < MAXDEVICES; i++)
+			if(DeviceHandler::Instance()->IsInserted(i))
+				gprintf("%s is Available.\n", DeviceName[i]);
+
+		bool wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
+		bool dipOK = Disc_Init() >= 0;
 
 		CMenu menu(vid);
 		menu.init();
 		mainMenu = &menu;
 		if (!iosOK)
+		{
 			menu.error(sfmt("IOS %i rev%i or later is required", mainIOS, mainIOSminRev));
+			break;
+		}
 		else if (!dipOK)
+		{
 			menu.error(L"Could not initialize the DIP module!");
-		else if (!wbfsOK)
-			menu.error(L"WBFS_Init failed");
+			break;
+		}
+ 		else if (!wbfsOK)
+			menu.error(L"Could not initialize WBFS!");
+			/*menu.m_current_view = COVERFLOW_CHANNEL; */
 		else
 		{
 			if (gameid != NULL && strlen(gameid) == 6)
@@ -202,9 +134,11 @@ int old_main(int argc, char **argv)
 				ret = menu.main();
 		}
 		vid.cleanup();
-		Unmount_All_Devices();
+		DeviceHandler::Instance()->UnMountAll();
 		if (bootHB)	BootHomebrew();
+
 	} while (ret == 1);
+
 	return ret;
 };
 

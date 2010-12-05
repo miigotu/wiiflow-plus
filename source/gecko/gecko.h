@@ -6,7 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+	extern bool geckoinit;
 #ifndef NO_DEBUG
 	//use this just like printf();
 	void gprintf(const char *str, ...);

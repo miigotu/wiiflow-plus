@@ -1,11 +1,12 @@
 #include "svnrev.h"
 #include "menu.hpp"
-#include "fs.h"
+
 #include "loader/sys.h"
 #include "loader/wbfs.h"
 #include "loader/ios_base.h"
 #include "gecko.h"
 #include "lockMutex.hpp"
+#include "defines.h"
 
 extern int mainIOS;
 extern int mainIOSRev;

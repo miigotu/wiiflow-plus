@@ -2,7 +2,7 @@
 #include "loader/sys.h"
 #include "loader/wbfs.h"
 #include "loader/alt_ios.h"
-#include "loader/fs.h"
+
 #include "oggplayer.h"
 
 #include "network/gcard.h"
@@ -18,6 +18,7 @@
 
 #include "gecko.h"
 #include "channels.h"
+#include "defines.h"
 
 // Sounds
 extern const u8 click_wav[];
@@ -57,8 +58,6 @@ const u32 lblfont_ttf_size = cffont_ttf_size;
 const u8 *thxfont_ttf = cffont_ttf;
 const u32 thxfont_ttf_size = cffont_ttf_size;
 
-#define WIINNERTAG_URL "http://www.wiinnertag.com/wiinnertag_scripts/update_sign.php?key={KEY}&game_id={ID6}"
-
 using namespace std;
 
 CMenu::CMenu(CVideo &vid) :
@@ -88,31 +87,53 @@ CMenu::CMenu(CVideo &vid) :
 	m_directLaunch = false;
 	m_exit = false;
 	m_initialCoverStatusComplete = false;
+	m_reload = false;
+	bootHB = false;
 }
 
 extern "C" { int makedir(char *newdir); }
 
 void CMenu::init()
 {
-	const char *drive = "usb";
-	const char *wfdrv = "usb";
+	const char *drive = "sd";
+	const char *check = "sd";
 	struct stat dummy;
 
-	if (FS_SDAvailable() && FS_USBAvailable())
-	{
-		if (stat(sfmt("sd:/%s/boot.dol", APPDATA_DIR2).c_str(), &dummy) == 0)
-			wfdrv = "sd";
-	}
-	else
-		wfdrv = FS_USBAvailable() ? "usb" : "sd";
+	for(int i = USB8; i >= SD; i--)
+		if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s/boot.dol", DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
+			drive = DeviceName[i];
 
-	m_appDir = sfmt("%s:/%s", wfdrv, APPDATA_DIR2);
-	//gprintf("Wiiflow boot.dol Location: %s\n", m_appDir.c_str());
+	if(drive == check && !DeviceHandler::Instance()->IsInserted(SD))
+	{
+		_buildMenus();
+		error(L"No boot.dol found on available partitions and no SD found!");
+		m_exit = true;
+		return;
+	}
+
+	m_appDir = sfmt("%s:/%s", drive, APPDATA_DIR2);
+	gprintf("Wiiflow boot.dol Location: %s\n", m_appDir.c_str());
+
 	m_cfg.load(sfmt("%s/" CFG_FILENAME, m_appDir.c_str()).c_str());
 
-	drive = m_cfg.getBool("GENERAL", "data_on_usb", strcmp(wfdrv, "usb") == 0) ? FS_USBAvailable() ? "usb" : "sd" : FS_SDAvailable() ? "sd" : "usb";
+	bool onUSB = m_cfg.getBool("GENERAL", "data_on_usb", strncmp(drive, "usb", 3) == 0);
+	if (onUSB)
+		for(int i = USB8; i > SD; i--)
+			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR).c_str(), &dummy) == 0)
+				drive = DeviceName[i];
+	else
+		drive = DeviceHandler::Instance()->IsInserted(SD) ? DeviceName[SD] : drive;
+
+	if(drive == check && !DeviceHandler::Instance()->IsInserted(SD))
+	{
+		_buildMenus();
+		error(L"No boot.dol found on available partitions and no SD found!");
+		m_exit = true;
+		return;
+	}
+
 	m_dataDir = sfmt("%s:/%s", drive, APPDATA_DIR);
-	//gprintf("Data Directory: %s\n", m_dataDir.c_str());
+	gprintf("Data Directory: %s\n", m_dataDir.c_str());
 	
 	m_dol = sfmt("%s/boot.dol", m_appDir.c_str());
 	m_ver = sfmt("%s/versions", m_appDir.c_str());
@@ -213,9 +234,13 @@ void CMenu::init()
 	bool pShadowBlur = m_theme.getBool("GENERAL", "pointer_shadow_blur", false);
 
 	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+	{
 		m_cursor[chan].init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", sfmt("pointer%i", chan+1).c_str()).c_str()).c_str(),
 			m_vid.wide(), pShadowColor, pShadowX, pShadowY, pShadowBlur, chan);
+		WPAD_SetVRes(chan, m_vid.width() + m_cursor[chan].width(), m_vid.height() + m_cursor[chan].height());
+	}
 		
+
 	m_btnMgr.init(m_vid);
 
 	_load_installed_cioses();	
@@ -224,16 +249,15 @@ void CMenu::init()
 	_buildMenus();
 	_loadCFCfg();
 
-	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-		WPAD_SetVRes(chan, m_vid.width() + m_cursor[chan].width(), m_vid.height() + m_cursor[chan].height());
-
 	m_locked = m_cfg.getString("GENERAL", "parent_code", "").size() >= 4;
 	m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble", true));
 
 	int exit_to = m_cfg.getInt("GENERAL", "exit_to", 0);
 	m_disable_exit = exit_to == EXIT_TO_DISABLE;
 	//Check that the files are there, or ios will hang on exit
-	if(exit_to == EXIT_TO_BOOTMII && (!FS_SDAvailable() || stat("sd:/bootmii/armboot.bin", &dummy) != 0 || stat("sd:/bootmii/ppcboot.elf", &dummy) != 0))
+	if(exit_to == EXIT_TO_BOOTMII && (!DeviceHandler::Instance()->IsInserted(SD) || 
+	stat(sfmt("%s:/bootmii/armboot.bin",DeviceName[SD]).c_str(), &dummy) != 0 || 
+	stat(sfmt("%s:/bootmii/ppcboot.elf", DeviceName[SD]).c_str(), &dummy) != 0))
 		exit_to = EXIT_TO_HBC;
 	Sys_ExitTo(exit_to);
 
@@ -1332,10 +1356,9 @@ bool CMenu::_loadGameList(void)
 	SmartBuf buffer;
 	u32 count;
 
-	char part[6];
-	WBFS_GetPartitionName(0, (char *) &part);
-	
-	s32 ret = WBFS_OpenNamed((char *) m_cfg.getString("GENERAL", "partition", part).c_str());
+	//const char *part = DeviceName[currentPartition];
+	//s32 ret = DeviceHandler::Instance()->Open_WBFS(2);//(char *) m_cfg.getString("GENERAL", "partition", part).c_str());
+	s32 ret = DeviceHandler::Instance()->Open_WBFS(m_cfg.getInt("GENERAL", "partition", 1));
  	if (ret < 0)
 	{
 		gprintf("Open partition failed : %i\n", ret);

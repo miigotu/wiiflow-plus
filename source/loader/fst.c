@@ -28,7 +28,7 @@
 #include <sys/unistd.h>
 #include <ogc/ipc.h>
 #include "fst.h"
-#include "fs.h"
+
 #include "mload.h"
 #include "gecko.h"
 #include "mload_modules.h"

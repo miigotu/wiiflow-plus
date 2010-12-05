@@ -3,7 +3,7 @@
 
 #include "config.hpp"
 #include "text.hpp"
-#include "loader/fs.h"
+#include "DeviceHandler.hpp"
 
 using namespace std;
 
@@ -203,7 +203,7 @@ void Config::save(void)
 {
 	if (m_changed)
 	{
-		if (strncasecmp(m_filename.c_str(), "sd:", 3) == 0) FS_Mount_SD();
+		//if (strncasecmp(m_filename.c_str(), "sd:", 3) == 0) FS_Mount_SD(); //CHANGEME
 		ofstream file(m_filename.c_str(), ios::out | ios::binary);
 		for (Config::DomainMap::iterator k = m_domains.begin(); k != m_domains.end(); ++k)
 		{

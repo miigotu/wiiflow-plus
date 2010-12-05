@@ -29,6 +29,8 @@ extern "C" {
 
 /* Prototypes */
 u32 swap32(u32);
+u32 le32(u32);
+u16 le16(u16);
 int makedir(char *newdir);
 
 #ifdef __cplusplus

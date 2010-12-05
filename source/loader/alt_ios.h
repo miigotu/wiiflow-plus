@@ -14,10 +14,11 @@ extern "C" {
 #define IOS_223_MIN_REV 2
 #define IOS_224_MIN_REV 5
 
-bool loadIOS(int n, bool launch_game, bool switching_port);
+bool loadIOS(int n, bool launch_game, bool);
 u32 get_ios_base();
 
 extern int mainIOS;
+extern int mainIOSRev;
 extern int mainIOSminRev;
 extern bool use_port1;
 

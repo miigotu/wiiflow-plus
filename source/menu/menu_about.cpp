@@ -5,15 +5,7 @@
 #include "sys.h"
 #include "alt_ios.h"
 #include "ios_base.h"
-
-#define LOADER_AUTHOR	"Kwiirk & Waninkoko, Hermes"
-#define GUI_AUTHOR		"Hibernatus, Narolez, r-win, Miigotu"
-#define THANKS			"Lustar, CedWii, Benjay, Domi78, Oops, Celtiore, Jiiwah, FluffyKiwi, Roku93, Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical, WiiPower, Hermes, Spidy1000, Dimok"
-#define THANKS_SITES	"devkitpro.org, wiibrew.org, wiitdb.com, ohloh.net, wiifanart.com, wiiflowiki.com"
-#define THANKS_CODE		"CFG Loader, uLoader, USB Loader GX, NeoGamma, WiiXplorer"
-
-extern int mainIOS;
-extern int mainIOSRev;
+#include "defines.h"
 
 void CMenu::_about(void)
 {

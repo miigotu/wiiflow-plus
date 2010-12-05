@@ -11,7 +11,7 @@
 #include "disc.h"
 #include "wdvd.h"
 #include "sys.h"
-#include "fs.h"
+
 #include "fst.h"
 #include "videopatch.h"
 #include "wbfs.h"
@@ -291,14 +291,13 @@ s32 Disc_Wait(void)
 }
 
 s32 Disc_SetUSB(const u8 *id) {
-	if (WBFS_DEVICE_USB && wbfs_part_fs) {
+	if (WBFS_DEVICE_USB && wbfs_part_fs)
 		return set_frag_list((u8 *) id);
-	}
 
 	s32 part = -1;
-	if (is_ios_type(IOS_TYPE_HERMES)) {
+	if (is_ios_type(IOS_TYPE_HERMES))
 		part = wbfs_part_idx ? wbfs_part_idx - 1 : 0;
-	}
+
 	return WDVD_SetUSBMode(WBFS_DEVICE_USB, (u8 *) id, part);
 }
 
@@ -320,24 +319,25 @@ s32 Disc_Type(bool gc)
 	u32 check;
 	u32 magic;
 	
-	if (!gc) {
+	if (!gc)
+	{
 		check = WII_MAGIC;
 		struct discHdr *header = (struct discHdr *)buffer;
 		ret = Disc_ReadHeader(header);
 		magic = header->magic;
-	} else {
+	}
+	else
+	{
 		check = GC_MAGIC;
 		struct gc_discHdr *header = (struct gc_discHdr *)buffer;
 		ret = Disc_ReadGCHeader(header);
 		magic = header->magic;
 	}
 
-	if (ret < 0)
-		return ret;
+	if (ret < 0) return ret;
 		
 	/* Check magic word */
-	if (magic != check)
-		return -1;
+	if (magic != check) return -1;
 
 	return 0;
 }

@@ -6,7 +6,6 @@
 
 #include "ntfs.h"
 
-#include "fs.h"
 #include "libwbfs/libwbfs.h"
 #include "wbfs.h"
 #include "wbfs_ext.h"
@@ -20,6 +19,8 @@
 int _FAT_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
 
 FragList *frag_list = NULL;
+sec_t gamePartitionStartSector = 0;
+u8 currentPartition = 0;
 
 void frag_init(FragList *ff, int maxnum)
 {
@@ -165,6 +166,12 @@ int frag_remap(FragList *ff, FragList *log, FragList *phy)
 	return 0;
 }
 
+void frag_set_gamePartitionStartSector(u8 index, sec_t sector)
+{
+	gamePartitionStartSector = sector;
+	currentPartition = index;
+}
+
 int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 {
 	char fname1[1024];
@@ -194,7 +201,8 @@ int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 			if (stat(fname, &st) == -1) break;
 		}
 		strcpy(fname1, fname);
-		if (wbfs_part_fs == PART_FS_FAT) {
+		if (wbfs_part_fs == PART_FS_FAT)
+		{
 			ret = _FAT_get_fragments(fname, &_frag_append, fs);
 			if (ret) {
 				// don't return failure, let it fallback to old method
@@ -202,20 +210,22 @@ int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 				ret_val = 0;
 				goto out;
 			}
-		} else if (wbfs_part_fs == PART_FS_NTFS) {
+		}
+		else if (wbfs_part_fs == PART_FS_NTFS)
+		{
 			ret = _NTFS_get_fragments(fname, &_frag_append, fs);
-			if (ret) {
+			if (ret)
+			{
 //				if (ret == -50 || ret == -500) {
 //				}
 				ret_val = ret;
 				goto out;
 			}
 			
-			gprintf("Shifting all frags by sector: %d\n", fs_wbfs_mount ? fs_wbfs_sec : fs_ntfs_sec);
+			gprintf("Shifting all frags by sector: %d\n", gamePartitionStartSector);
 			// offset to start of partition
-			for (j=0; j<fs->num; j++) {
-				fs->frag[j].sector += fs_wbfs_mount ? fs_wbfs_sec : fs_ntfs_sec;
-			}
+			for (j = 0; j < fs->num; j++) fs->frag[j].sector += gamePartitionStartSector;
+
 		}
 		frag_concat(fa, fs);
 	}

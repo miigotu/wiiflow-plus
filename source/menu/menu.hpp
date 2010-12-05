@@ -1,9 +1,6 @@
 #ifndef __MENU_HPP
 #define __MENU_HPP
 
-#define APP_NAME		"WiiFlow"
-#define APP_VERSION		"2.2"
-
 #include <wiiuse/wpad.h>
 #include <ogc/pad.h>
 
@@ -18,6 +15,10 @@
 #include "banner.h"
 #include "channels.h"
 #include "gct.h"
+#include "DeviceHandler.hpp"
+
+extern "C" {extern u8 currentPartition;}
+extern bool bootHB;
 
 enum {
 	COVERFLOW_USB,
@@ -35,6 +36,7 @@ public:
 	void error(const wstringEx &msg);
 	int main(void);
 	void cleanup(void);
+	u32 m_current_view;
 private:
 	struct SZone
 	{
@@ -553,7 +555,6 @@ private:
 	safe_vector<string>::iterator current_music;
 	bool m_video_playing;
 	
-	u32 m_current_view;
 	u32 m_loaded_ios_base;
 	u32 m_locDol;
 private:

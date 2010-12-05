@@ -20,8 +20,8 @@
 #include "wbfs.h"
 #include "wdvd.h"
 #include "splits.h"
-#include "fs.h"
-#include "partition.h"
+#include "frag.h"
+
 #include "wbfs_ext.h"
 #include "sys.h"
 #include "disc.h"
@@ -34,7 +34,7 @@
 s32 wbfsDev = WBFS_MIN_DEVICE;
 
 // partition
-int wbfs_part_fs  = PART_FS_WBFS;
+int wbfs_part_fs  = PART_FS_FAT;
 u32 wbfs_part_idx = 0;
 u32 wbfs_part_lba = 0;
 u32 partlistIndex = 0;
@@ -43,20 +43,10 @@ u8 wbfs_mounted = 0;
 /* WBFS HDD */
 wbfs_t *hdd = NULL;
 
-PartList plist;
-s32 initPartitionList = -1;
-
 /* WBFS callbacks */
 static rw_sector_callback_t readCallback  = NULL;
 static rw_sector_callback_t writeCallback = NULL;
 
-s32 InitPartitionList()
-{
-	if (initPartitionList != 0) {
-		initPartitionList = Partition_GetList(wbfsDev, &plist);
-	}
-	return initPartitionList;
-}
 
 /* Variables */
 static u32 nb_sectors, sector_size;
@@ -278,7 +268,6 @@ bool WBFS_Close()
 		wbfs_close(hdd);
 		hdd = NULL;
 	}
-	WBFS_Unmount();
 
 	wbfs_part_fs = 0;
 	wbfs_part_idx = 0;
@@ -300,131 +289,23 @@ bool WBFS_Selected()
 	return WBFS_Mounted();
 }
 
-s32 WBFS_Open(void)
-{
-	/* Close hard disk */
-	if (hdd) wbfs_close(hdd);
-	
-	/* Open hard disk */
-	wbfs_part_fs = 0;
-	wbfs_part_idx = 0;
-	wbfs_part_lba = 0;
-	hdd = wbfs_open_hd(readCallback, writeCallback, NULL, sector_size, nb_sectors, 0);
-	if (!hdd) return -1;
-	wbfs_part_idx = 1;
-	wbfs_mounted = 1;
-
-	return 0;
-}
-
 s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *partition)
 {
 	// close
 	WBFS_Close();
-
 	if (part_fs == PART_FS_FAT || part_fs == PART_FS_NTFS)
-	{
-		//if (wbfsDev != WBFS_DEVICE_USB) return -1;
-		if (wbfsDev == WBFS_DEVICE_USB && ((part_lba == fs_fat_sec && fs_fat_mount == 1) || (part_lba == fs_ntfs_sec && fs_ntfs_mount == 1)))
-			strcpy(wbfs_fs_drive, "usb:");
-		else if (wbfsDev == WBFS_DEVICE_SDHC && part_lba == fs_sd_sec && fs_sd_mount == 1)
-			strcpy(wbfs_fs_drive, "sd:");
-		else
-		{
-			if (!WBFS_Mount(part_lba, part_fs == PART_FS_NTFS)) return -1; // WBFS_Mount returns a boolean instead of an u32
-			strcpy(wbfs_fs_drive, "wbfs:");
-		}
-
-	}
+			strcpy(wbfs_fs_drive, partition);
 	else if (WBFS_OpenLBA(part_lba, part_size)) return -1;
 
+	frag_set_gamePartitionStartSector(part_idx, part_lba);
 	// success
 	wbfs_part_fs  = part_fs;
 	wbfs_part_idx = part_idx;
 	wbfs_part_lba = part_lba;
-	char *fs = "WBFS";
-	if (wbfs_part_fs == PART_FS_FAT) fs = "FAT";
-	if (wbfs_part_fs == PART_FS_NTFS) fs = "NTFS";
-	sprintf(partition, "%s%d", fs, wbfs_part_idx);
 	
 	wbfs_mounted = 1;
 	return 0;
 }
-
-s32 WBFS_OpenNamed(char *partition)
-{
-	int i;
-	u32 part_fs  = PART_FS_WBFS;
-	u32 part_idx = 0;
-	u32 part_lba = 0;
-	s32 ret = 0;
-
-	// close
-	WBFS_Close();
-
-	// parse partition option
-	if (strncasecmp(partition, "WBFS", 4) == 0)
-	{
-		i = atoi(partition+4);
-		if (i < 1 || i > 4) goto err;
-		part_fs  = PART_FS_WBFS;
-		part_idx = i;
-	}
-	else if (strncasecmp(partition, "FAT", 3) == 0)
-	{
-		i = atoi(partition+3);
-		if (i < 1 || i > 9) goto err;
-		part_fs  = PART_FS_FAT;
-		part_idx = i;
-	}
-	else if (strncasecmp(partition, "NTFS", 4) == 0)
-	{
-		i = atoi(partition+4);
-		if (i < 1 || i > 9) goto err;
-		part_fs  = PART_FS_NTFS;
-		part_idx = i;
-	}
-	else goto err;
-
-	// Get partition entries
-	ret = InitPartitionList();
-	if (ret || plist.num == 0) return -1;
-
-	if (part_fs == PART_FS_WBFS)
-	{
-		if (part_idx > plist.wbfs_n) goto err;
-		for (i=0; i<plist.num; i++)
-			if (plist.pinfo[i].wbfs_i == part_idx) break;
-	}
-	else if (part_fs == PART_FS_FAT)
-	{
-		if (part_idx > plist.fat_n) goto err;
-		for (i=0; i<plist.num; i++)
-			if (plist.pinfo[i].fat_i == part_idx) break;
-	}
-	else if (part_fs == PART_FS_NTFS)
-	{
-		if (part_idx > plist.ntfs_n) goto err;
-		for (i=0; i<plist.num; i++)
-			if (plist.pinfo[i].ntfs_i == part_idx) break;
-	}
-	if (i >= plist.num) goto err;
-
-	part_lba = plist.pentry[i].sector;
-	partlistIndex = i;
-
-	if (WBFS_OpenPart(part_fs, part_idx, part_lba, plist.pentry[i].size, partition))
-		goto err;
-
-	
-	wbfs_mounted = 1;
-
-	return 0;
-
-err:
-	return -1;
-}
-
 
 s32 WBFS_OpenLBA(u32 lba, u32 size)
 {
@@ -677,40 +558,6 @@ char *fstfilename2(FST_ENTRY *fst, u32 index)
 		return (char *)((u32)fst + count*12 + stringoffset);
 	}
 	else return NULL;
-}
-
-s32 WBFS_GetCurrentPartition()
-{
-	return partlistIndex;
-}
-
-s32 WBFS_GetPartitionCount()
-{
-	if (InitPartitionList()) return -1;
-	if (!Sys_SupportsExternalModule(true)) return plist.wbfs_n;
-	return plist.wbfs_n + plist.fat_n + plist.ntfs_n;
-}
-
-s32 WBFS_GetPartitionName(u32 index, char *buf)
-{
-	if (InitPartitionList()) return -1;
-	// Get the name of the partition
-
-	memset(buf, 0, 6);
-	if (Sys_SupportsExternalModule(true))
-	{
-		switch(plist.pinfo[index].fs_type)
-		{
-			case FS_TYPE_WBFS: snprintf(buf, 6, "WBFS%d", plist.pinfo[index].wbfs_i); break;
-			case FS_TYPE_NTFS: snprintf(buf, 6, "NTFS%d", plist.pinfo[index].ntfs_i); break;
-			case FS_TYPE_FAT32: snprintf(buf, 6, "FAT%d", plist.pinfo[index].fat_i); break;
-			case FS_TYPE_FAT16: snprintf(buf, 6, "FAT%d", plist.pinfo[index].fat_i); break;
-			default: return -1;
-		}
-	}
-	else snprintf(buf, 6, "WBFS%d", index + 1);
-
-	return 0;
 }
 
 f32 WBFS_EstimeGameSize(void)

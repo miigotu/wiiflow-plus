@@ -1,7 +1,9 @@
 #include "mload_modules.h"
 #include "fatffs_module.h"
-#include "fs.h"
 
+extern int	global_mount;	// 1   -> sd_ok SD was mounted
+							// 2   -> ud_ok  USB was mounted
+							// 128 -> Use NAND Emulation. Used for load_fat_module()
 
 static u32 ios_36[16] ATTRIBUTE_ALIGN(32)=
 {

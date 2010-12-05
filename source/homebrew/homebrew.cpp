@@ -18,6 +18,8 @@ static safe_vector<std::string> Arguments;
 extern const u8 app_booter_dol[];
 extern const u32 app_booter_dol_size;
 
+bool bootHB;
+
 void AddBootArgument(const char * argv)
 {
 	std::string arg(argv);

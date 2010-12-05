@@ -1,8 +1,4 @@
-
 #include "menu.hpp"
-#include "wbfs.h"
-
-
 #include "gecko.h"
 
 using namespace std;
@@ -55,7 +51,7 @@ void CMenu::_showConfig7(void)
 			m_btnMgr.show(m_config7LblUser[i]);
 	// 
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
-	m_btnMgr.setText(m_config7LblPartition, m_cfg.getString("GENERAL", "partition", "WBFS1"));
+	m_btnMgr.setText(m_config7LblPartition, wfmt(L"%s", DeviceName[m_cfg.getInt("GENERAL", "partition", 1)]));
 	m_btnMgr.setText(m_config7BtnAsyncNet, m_cfg.getBool("GENERAL", "async_network", false) ? _t("on", L"On") : _t("off", L"Off"));
 }
 
@@ -64,12 +60,9 @@ int CMenu::_config7(void)
 	int nextPage = 0;
 	SetupInput();
 	
-	s32 amountOfPartitions = WBFS_GetPartitionCount();
-	s32 currentPartition = WBFS_GetCurrentPartition();
 	s32 bCurrentPartition = currentPartition;
 
 	gprintf("Current Partition: %d\n", currentPartition);
-	gprintf("Amount of partitions: %d\n", amountOfPartitions);
 
 	_showConfig7();
 	while (true)
@@ -99,22 +92,24 @@ int CMenu::_config7(void)
 				break;
 			else if (m_btnMgr.selected(m_config7BtnPartitionP))
 			{
-				char buf[5];
-				currentPartition = loopNum(currentPartition + 1, amountOfPartitions);
-				gprintf("Next item: %d\n", currentPartition);
-				WBFS_GetPartitionName(currentPartition, (char *) &buf);
-				gprintf("Which is: %s\n", buf);
-				m_cfg.setString("GENERAL", "partition", buf);
+				currentPartition = loopNum(currentPartition + 1, (int)USB8);
+				if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+					while(!DeviceHandler::Instance()->IsInserted(currentPartition))
+						currentPartition = loopNum(currentPartition + 1, (int)USB8);
+				const char *partition = DeviceName[currentPartition];
+				gprintf("Next item: %s\n", partition);
+				m_cfg.setInt("GENERAL", "partition", currentPartition);
 				_showConfig7();
 			}
 			else if (m_btnMgr.selected(m_config7BtnPartitionM))
 			{
-				char buf[5];
-				currentPartition = loopNum(currentPartition - 1, amountOfPartitions);
-				gprintf("Next item: %d\n", currentPartition);
-				WBFS_GetPartitionName(currentPartition, (char *) &buf);
-				gprintf("Which is: %s\n", buf);
-				m_cfg.setString("GENERAL", "partition", buf);
+				currentPartition = loopNum(currentPartition - 1, (int)USB8);
+				if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+					while(!DeviceHandler::Instance()->IsInserted(currentPartition))
+						currentPartition = loopNum(currentPartition - 1, (int)USB8);
+				const char *partition = DeviceName[currentPartition];
+				gprintf("Next item: %s\n", partition);
+				m_cfg.setInt("GENERAL", "partition", currentPartition);
 				_showConfig7();
 			}
 			else if (m_btnMgr.selected(m_config7BtnAsyncNet))

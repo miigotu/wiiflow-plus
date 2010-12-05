@@ -1,9 +1,7 @@
-
-
 #include "loader/wbfs.h"
 #include "libwbfs/wiidisc.h"
 #include "menu.hpp"
-#include "loader/fs.h"
+
 #include "loader/ios_base.h"
 #include "gecko.h"
 

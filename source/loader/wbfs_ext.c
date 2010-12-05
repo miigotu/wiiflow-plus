@@ -18,8 +18,6 @@
 #include "wbfs.h"
 #include "wdvd.h"
 #include "splits.h"
-#include "fs.h"
-#include "partition.h"
 #include "wbfs_ext.h"
 #include "utils.h"
 #include "disc.h"
@@ -31,7 +29,7 @@
 #define TITLE_LEN 64
 
 char wbfs_fs_drive[16];
-char wbfs_ext_dir[16] = "/wbfs";
+char wbfs_ext_dir[16] = ":/wbfs";
 char invalid_path[] = "/\\:|<>?*\"'";
 
 int  wbfs_ext_vfs_have = 0;

@@ -21,6 +21,7 @@ SOURCES		:=	source \
 				source/cheats \
 				source/config \
 				source/data \
+				source/devicemounter \
 				source/gecko \
 				source/gui \
 				source/loader \
@@ -40,6 +41,7 @@ DATA		:=	data
 INCLUDES	:=	source \
 				source/cheats \
 				source/config \
+				source/devicemounter \
 				source/gecko \
 				source/gui \
 				source/loader \

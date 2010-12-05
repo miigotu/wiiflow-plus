@@ -38,7 +38,6 @@ typedef struct {
 
 /* Prototypes */
 s32 WBFS_Init(u32, u32);
-s32 WBFS_Open(void);
 s32 WBFS_Format(u32, u32);
 s32 WBFS_GetCount(u32 *);
 s32 WBFS_GetHeaders(void *, u32, u32);
@@ -51,7 +50,6 @@ s32 WBFS_DVD_Size(u64 *comp_size, u64 *real_size);
 s32 WBFS_DiskSpace(f32 *, f32 *);
 
 s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *partition);
-s32 WBFS_OpenNamed(char *partition);
 s32 WBFS_OpenLBA(u32 lba, u32 size);
 wbfs_disc_t* WBFS_OpenDisc(u8 *discid, char *path);
 void WBFS_CloseDisc(wbfs_disc_t *disc);
@@ -59,9 +57,6 @@ bool WBFS_Close();
 bool WBFS_Mounted();
 bool WBFS_Selected();
 
-s32 WBFS_GetCurrentPartition();
-s32 WBFS_GetPartitionCount();
-s32 WBFS_GetPartitionName(u32, char *);
 f32 WBFS_EstimeGameSize(void);
 
 #ifdef __cplusplus

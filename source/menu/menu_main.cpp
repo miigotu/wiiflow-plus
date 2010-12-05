@@ -2,12 +2,11 @@
 #include "menu.hpp"
 #include "loader/wdvd.h"
 #include "network/gcard.h"
-
+#include "DeviceHandler.hpp"
 #include <unistd.h>
 #include <fstream>
 #include <sys/stat.h>
 
-#include "loader/fs.h"
 #include "wbfs.h"
 #include "gecko.h"
 #include "sys.h"
@@ -154,9 +153,11 @@ int CMenu::main(void)
 				else if(BTN_1_HELD) Sys_ExitTo(EXIT_TO_PRIILOADER);
 				else if(BTN_2_HELD)	//Check that the files are there, or ios will hang.
 				{
-					if(FS_SDAvailable() && stat("sd:/bootmii/armboot.bin", &dummy) == 0 && stat("sd:/bootmii/ppcboot.elf", &dummy) == 0)
-						Sys_ExitTo(EXIT_TO_BOOTMII);
-					else  Sys_ExitTo(EXIT_TO_HBC);
+						if(DeviceHandler::Instance()->IsInserted(SD) && 
+						stat(sfmt("%s:/bootmii/armboot.bin", DeviceName[SD]).c_str(), &dummy) == 0 && 
+						stat(sfmt("%s:/bootmii/ppcboot.elf", DeviceName[SD]).c_str(), &dummy) == 0)
+							Sys_ExitTo(EXIT_TO_BOOTMII);
+						else  Sys_ExitTo(EXIT_TO_HBC);
 				}
 			}
 			m_reload = (BTN_B_HELD || m_disable_exit);
@@ -257,16 +258,16 @@ int CMenu::main(void)
 			else if (BTN_MINUS_PRESSED && !m_locked)
 			{
 				_hideMain();
-				s32 amountOfPartitions = WBFS_GetPartitionCount();
-				s32 currentPartition = WBFS_GetCurrentPartition();
-				char buf[5];
-				currentPartition = loopNum(currentPartition + 1, amountOfPartitions);
-				gprintf("Next item: %d\n", currentPartition);
-				WBFS_GetPartitionName(currentPartition, (char *) &buf);
-				gprintf("Which is: %s\n", buf);
-				m_cfg.setString("GENERAL", "partition", buf);
+				currentPartition = loopNum(currentPartition + 1, (int)USB8);
+				if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+					while(!DeviceHandler::Instance()->IsInserted(currentPartition))
+						currentPartition = loopNum(currentPartition + 1, (int)USB8);
+				currentPartition = 2;
+				const char *partition = DeviceName[currentPartition];
+				gprintf("Next item: %s\n", partition);
+				m_cfg.setString("GENERAL", "partition", partition);
 				m_showtimer=60; 
-				m_btnMgr.setText(m_mainLblNotice, (string)buf);
+				m_btnMgr.setText(m_mainLblNotice, (string)partition);
 				m_btnMgr.show(m_mainLblNotice);
 				_loadList();
 				_showMain();
@@ -348,7 +349,9 @@ int CMenu::main(void)
 					else if(BTN_1_HELD) Sys_ExitTo(EXIT_TO_PRIILOADER);
 					else if(BTN_2_HELD)	//Check that the files are there, or ios will hang.
 					{
-						if(FS_SDAvailable() && stat("sd:/bootmii/armboot.bin", &dummy) == 0 && stat("sd:/bootmii/ppcboot.elf", &dummy) == 0)
+						if(DeviceHandler::Instance()->IsInserted(SD) && 
+						stat(sfmt("%s:/bootmii/armboot.bin", DeviceName[SD]).c_str(), &dummy) == 0 && 
+						stat(sfmt("%s:/bootmii/ppcboot.elf", DeviceName[SD]).c_str(), &dummy) == 0)
 							Sys_ExitTo(EXIT_TO_BOOTMII);
 						 else Sys_ExitTo(EXIT_TO_HBC);
 					}
