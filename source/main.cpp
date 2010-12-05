@@ -98,10 +98,60 @@ int old_main(int argc, char **argv)
 	do
 	{
 		Open_Inputs();
-
 		MEM2_takeBigOnes(true);
-
+		bool HddMounted = false;
 		DeviceHandler::Instance()->MountAll();
+		for(int i = USB1; i <= USB8; i++)
+			if(DeviceHandler::Instance()->IsInserted(i))
+				HddMounted = true;
+  		if(!HddMounted)
+		{
+			STexture texWaitHDD;
+			texWaitHDD.fromPNG(wait_hdd_png, GX_TF_RGB565, ALLOC_MALLOC);
+			vid.hideWaitMessage();
+			vid.waitMessage(texWaitHDD);
+
+			while(!HddMounted) //Wait indefinitely until HDD is there or exit requested.
+			{
+				WPAD_ScanPads(); PAD_ScanPads();
+
+				u32 wbtnsPressed = 0, gbtnsPressed = 0,
+					wbtnsHeld = 0, gbtnsHeld = 0;
+
+				for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+				{
+					wbtnsPressed |= WPAD_ButtonsDown(chan);
+					gbtnsPressed |= PAD_ButtonsDown(chan);
+
+					wbtnsHeld |= WPAD_ButtonsHeld(chan);
+					gbtnsHeld |= PAD_ButtonsHeld(chan);
+				 }
+
+				if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) || (gbtnsPressed & GBTN_HOME))
+				{
+					DeviceHandler::Instance()->UnMountAll();
+					Sys_ExitTo(1);
+					Sys_Exit(0);
+				}
+
+				VIDEO_WaitVSync();
+				VIDEO_WaitVSync();
+
+				for(int i = USB1; i <= USB8; i++)
+					if(DeviceHandler::Instance()->IsInserted(i))
+						gprintf("%s is Available\n", DeviceName[i]);
+
+				for(int i = USB1; i <= USB8; i++)
+					if(DeviceHandler::Instance()->IsInserted(i))
+						HddMounted = true;
+
+				if(!HddMounted) DeviceHandler::Instance()->MountAll();
+
+			}
+			vid.hideWaitMessage();
+			vid.waitMessage(0.2f);
+			SMART_FREE(texWaitHDD.data);
+		}
 		ISFS_Initialize();
 		for(int i = 1; i < MAXDEVICES; i++)
 			if(DeviceHandler::Instance()->IsInserted(i))
