@@ -61,6 +61,7 @@ static inline const char * PartFromType(int type)
 		case 0xab: return "OSXBT";
 		case 0xaf: return "OSXHF";
 		case 0xe8: return "LUKS";
+		case 0xee: return "GPT";
 		default: return "Unknown";
 	}
 }

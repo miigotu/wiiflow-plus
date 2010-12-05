@@ -37,7 +37,6 @@ s32 wbfsDev = WBFS_MIN_DEVICE;
 int wbfs_part_fs  = PART_FS_FAT;
 u32 wbfs_part_idx = 0;
 u32 wbfs_part_lba = 0;
-u32 partlistIndex = 0;
 u8 wbfs_mounted = 0;
 
 /* WBFS HDD */
@@ -207,7 +206,7 @@ s32 WBFS_Init(u32 device, u32 timeout)
 {
 	u32 cnt;
 	s32 ret = -1;
-
+	wbfsDev = device;
 	/* Wrong timeout */
 	if (!timeout) return -1;
 

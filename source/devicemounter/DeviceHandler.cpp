@@ -198,17 +198,25 @@ const char * DeviceHandler::GetFSName(int dev)
 
 s32 DeviceHandler::Open_WBFS(int dev)
 {
-	const char *name = GetFSName(dev);
+	//const char *name = GetFSName(dev);
 	u32 part_fs = PART_FS_WBFS;
-	if (strncasecmp(name, "FAT", 3) == 0)
+	if (strncasecmp(GetFSName(dev), "FAT", 3) == 0)
 		part_fs = PART_FS_FAT;
-	if (strncasecmp(name, "NTFS", 4) == 0)
+	if (strncasecmp(GetFSName(dev), "NTFS", 4) == 0)
 		part_fs = PART_FS_NTFS;
-
+	u32 part_idx, part_lba, part_size;
 	char *partition = (char *)DeviceName[dev];
-	u32 part_idx = dev > 0 ? dev : 1;
-	u32 part_lba = Instance()->usb->GetLBAStart(dev);
-	u32 part_size = Instance()->usb->GetSize(dev);
-
+	if(dev == SD)
+	{
+		part_idx = 1;
+		part_lba = Instance()->sd->GetEBRSector(dev);
+		part_size = Instance()->sd->GetSize(dev);
+	}
+	else
+	{
+		part_idx = dev;
+		part_lba = Instance()->usb->GetLBAStart(dev - USB1);
+		part_size = Instance()->usb->GetSize(dev - USB1);
+	}
 	return WBFS_OpenPart(part_fs, part_idx, part_lba, part_size, partition);	
 }
