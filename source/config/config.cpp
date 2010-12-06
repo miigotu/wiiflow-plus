@@ -324,19 +324,11 @@ string Config::getString(const string &domain, const string &key, const string &
 {
 	if (domain.empty() || key.empty()) return defVal;
 	string &data = m_domains[upperCase(domain)][lowerCase(key)];
-	if (data.empty())
-	{
-		data = defVal;
-		m_changed = true;
-		return defVal;
-	}
-
-	if(strncasecmp(data.c_str(), "usb:", 4) == 0)
+	if (data.empty() || strncasecmp(data.c_str(), "usb:", 4) == 0)
 	{
 		data = defVal;
 		m_changed = true;
 	}
-
 	return data;
 }
 
