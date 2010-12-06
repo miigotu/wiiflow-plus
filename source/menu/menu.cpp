@@ -95,7 +95,7 @@ extern "C" { int makedir(char *newdir); }
 
 void CMenu::init()
 {
-	const char *drive = "sd";
+	const char *drive = "empty";
 	const char *check = "empty";
 	struct stat dummy;
 
@@ -122,8 +122,8 @@ void CMenu::init()
 				break;
 			}
 
-	if(drive == check) //No apps/wiiflow folder found, use first writable partition
-		for(int i = SD; i <= USB8; i++)
+	if(drive == check) //No apps/wiiflow folder found
+		for(int i = SD; i <= USB8; i++) // Find the first writable partition
 			if (DeviceHandler::Instance()->IsInserted(i))
 			{
 				drive = DeviceName[i];
@@ -149,25 +149,24 @@ void CMenu::init()
 	drive = check; //reset the drive variable for the check
 
 	if (onUSB)
-		for(int i = USB1; i <= USB8; i++) // Use first with wiiflow folder in root
+		for(int i = USB1; i <= USB8; i++) //Look for first partition with a wiiflow folder in root
 			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR).c_str(), &dummy) == 0)
 			{
 				drive = DeviceName[i];
 				break;
 			}
-	else
-		drive = DeviceHandler::Instance()->IsInserted(SD) ? DeviceName[SD] : check;
+	else if(DeviceHandler::Instance()->IsInserted(SD)) drive = DeviceName[SD];
 
-	if(drive == check && onUSB)
-		for(int i = USB1; i <= USB8; i++) // data_on_usb=yes and no wiiflow folder found in root of any USB partition, use first USB partition with wbfs folder.
+	if(drive == check && onUSB) //No wiiflow folder found in root of any usb partition, and data_on_usb=yes
+		for(int i = USB1; i <= USB8; i++) // Try first USB partition with wbfs folder.
 			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/wbfs", DeviceName[i]).c_str(), &dummy) == 0)
 			{
 				drive = DeviceName[i];
 				break;
 			}
 
-	if(drive == check && onUSB)
-		for(int i = USB1; i <= USB8; i++) // data_on_usb=yes and no wiiflow folder found in root of any USB partition, use first available USB partition.
+	if(drive == check && onUSB) // No wbfs folder found and data_on_usb=yes
+		for(int i = USB1; i <= USB8; i++) // Try first available USB partition.
 			if (DeviceHandler::Instance()->IsInserted(i))
 			{
 				drive = DeviceName[i];
