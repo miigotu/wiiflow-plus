@@ -121,6 +121,8 @@ class PartitionHandle
         const DISC_INTERFACE * GetDiscInterface() { return interface; };
     protected:
         bool valid(int pos) { return (pos >= 0 && pos < (int) PartitionList.size()); }
+		bool IsWBFS(PARTITION_RECORD * partition, int i);
+		bool IsWBFS(u8 PartNum, sec_t ebr_lba, sec_t next_erb_lba, EXTENDED_BOOT_RECORD ebr);
         int FindPartitions();
         void CheckEBR(u8 PartNum, sec_t ebr_lba);
 

@@ -1,5 +1,3 @@
-// FAT support, banner sounds and alt.dol by oggzee
-// Banner title for playlog by Clipper
 
 #include <stdio.h>
 #include <unistd.h>
@@ -50,22 +48,19 @@ static rw_sector_callback_t writeCallback = NULL;
 
 
 /* Variables */
-static u32 nb_sectors, sector_size;
+static u32 sector_size;
 
 s32 __WBFS_ReadDVD(void *fp, u32 lba, u32 len, void *iobuf)
 {
 	void *buffer = NULL;
-
-	u64 offset;
-	u32 mod, size;
 	s32 ret;
 
 	/* Calculate offset */
-	offset = ((u64)lba) << 2;
+	u64 offset = ((u64)lba) << 2;
 
 	/* Calcualte sizes */
-	mod  = len % 32;
-	size = len - mod;
+	u32 mod  = len % 32;
+	u32 size = len - mod;
 
 	/* Read aligned data */
 	if (size)
@@ -102,7 +97,6 @@ out:
 s32 __WBFS_ReadUSB(void *fp, u32 lba, u32 count, void *iobuf)
 {
 	u32 cnt = 0;
-	s32 ret;
 
 	/* Do reads */
 	while (cnt < count)
@@ -115,7 +109,7 @@ s32 __WBFS_ReadUSB(void *fp, u32 lba, u32 count, void *iobuf)
 			sectors = MAX_NB_SECTORS;
 
 		/* USB read */
-		ret = USBStorage_ReadSectors(lba + cnt, sectors, ptr);
+		s32 ret = USBStorage_ReadSectors(lba + cnt, sectors, ptr);
 		if (ret < 0) return ret;
 
 		/* Increment counter */
@@ -128,7 +122,6 @@ s32 __WBFS_ReadUSB(void *fp, u32 lba, u32 count, void *iobuf)
 s32 __WBFS_WriteUSB(void *fp, u32 lba, u32 count, void *iobuf)
 {
 	u32 cnt = 0;
-	s32 ret;
 
 	/* Do writes */
 	while (cnt < count)
@@ -141,7 +134,7 @@ s32 __WBFS_WriteUSB(void *fp, u32 lba, u32 count, void *iobuf)
 			sectors = MAX_NB_SECTORS;
 
 		/* USB write */
-		ret = USBStorage_WriteSectors(lba + cnt, sectors, ptr);
+		s32 ret = USBStorage_WriteSectors(lba + cnt, sectors, ptr);
 		if (ret < 0) return ret;
 
 		/* Increment counter */
@@ -154,7 +147,6 @@ s32 __WBFS_WriteUSB(void *fp, u32 lba, u32 count, void *iobuf)
 s32 __WBFS_ReadSDHC(void *fp, u32 lba, u32 count, void *iobuf)
 {
 	u32 cnt = 0;
-	s32 ret;
 
 	/* Do reads */
 	while (cnt < count)
@@ -167,7 +159,7 @@ s32 __WBFS_ReadSDHC(void *fp, u32 lba, u32 count, void *iobuf)
 			sectors = MAX_NB_SECTORS;
 
 		/* SDHC read */
-		ret = SDHC_ReadSectors(lba + cnt, sectors, ptr);
+		s32 ret = SDHC_ReadSectors(lba + cnt, sectors, ptr);
 		if (!ret) return -1;
 
 		/* Increment counter */
@@ -207,9 +199,10 @@ s32 __WBFS_WriteSDHC(void *fp, u32 lba, u32 count, void *iobuf)
 s32 WBFS_Init(u32 device, u32 timeout)
 {
 	u32 cnt;
-	s32 ret = -1;
 	wbfsDev = device;
-	/* Wrong timeout */
+
+	WBFS_Close();
+
 	if (!timeout) return -1;
 
 	/* Try to mount device */
@@ -218,47 +211,39 @@ s32 WBFS_Init(u32 device, u32 timeout)
 		switch (device)
 		{
 			case WBFS_DEVICE_USB:
-				/* Initialize USB storage */
-				ret = USBStorage_Init();
-				if (ret >= 0)
+				if (USBStorage_Init())
 				{
 					/* Setup callbacks */
 					readCallback  = __WBFS_ReadUSB;
 					writeCallback = __WBFS_WriteUSB;
 
 					/* Device info */
-					nb_sectors = USBStorage_GetCapacity(&sector_size);
+					USBStorage_GetCapacity(&sector_size);
 
-					goto out;
+					/* Sleep 1 second */
+					sleep(1);
+
+					return 1;
 				}
-				break;
+				else return -1;
+
 			case WBFS_DEVICE_SDHC:
 				/* Initialize SDHC */
-				ret = SDHC_Init();
-				if (ret)
+				if (SDHC_Init())
 				{
 					/* Setup callbacks */
 					readCallback  = __WBFS_ReadSDHC;
 					writeCallback = __WBFS_WriteSDHC;
 
 					/* Device info */
-					nb_sectors  = 0;
 					sector_size = SDHC_SECTOR_SIZE;
 
-					goto out;
+					return 1;
 				}
-				ret = -1;
-				break;
-			default:
-				return -1;
+				else return -1;
 		}
-
-		/* Sleep 1 second */
-		sleep(1);
 	}
-
-out:
-	return ret;
+	return -1;
 }
 
 bool WBFS_Close()
@@ -290,15 +275,9 @@ s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *
 
 	if (part_fs == PART_FS_WBFS)
 	{
-		wbfs_t *part = NULL;
-
 		/* Open partition */
-		part = wbfs_open_partition(readCallback, writeCallback, NULL, sector_size, part_size, part_lba, 0);
-		if (!part) return -1;
-
-		/* Close current hard disk */
-		if (hdd) wbfs_close(hdd);
-		hdd = part;
+		hdd = wbfs_open_partition(readCallback, writeCallback, NULL, sector_size, part_size, part_lba, 0);
+		if (!hdd) return -1;
 	}
 	
 	strcpy(wbfs_fs_drive, partition);
@@ -313,10 +292,8 @@ s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *
 
 s32 WBFS_Format(u32 lba, u32 size)
 {
-	wbfs_t *partition = NULL;
-
 	/* Reset partition */
-	partition = wbfs_open_partition(readCallback, writeCallback, NULL, sector_size, size, lba, 1);
+	wbfs_t *partition = wbfs_open_partition(readCallback, writeCallback, NULL, sector_size, size, lba, 1);
 	if (!partition) return -1;
 
 	/* Free memory */
@@ -343,7 +320,6 @@ s32 WBFS_GetHeaders(void *outbuf, u32 cnt, u32 len)
 	if (wbfs_part_fs) return WBFS_Ext_GetHeaders(outbuf, cnt, len);
 
 	u32 idx, size;
-	s32 ret;
 
 	/* No device open */
 	if (!hdd) return -1;
@@ -358,7 +334,7 @@ s32 WBFS_GetHeaders(void *outbuf, u32 cnt, u32 len)
 		memset(ptr, 0, slen);
 
 		/* Get header */
-		ret = wbfs_get_disc_info(hdd, idx, ptr, len, &size);
+		s32 ret = wbfs_get_disc_info(hdd, idx, ptr, len, &size);
 		if(ret != 0) return ret;
 	}
 
@@ -367,24 +343,16 @@ s32 WBFS_GetHeaders(void *outbuf, u32 cnt, u32 len)
 
 s32 WBFS_CheckGame(u8 *discid, char *path)
 {
-	wbfs_disc_t *disc = NULL;
-
 	/* Try to open game disc */
-	disc = WBFS_OpenDisc(discid, path);
-	if (disc)
-	{
-		/* Close disc */
-		WBFS_CloseDisc(disc);
-		return 1;
-	}
+	wbfs_disc_t *disc = WBFS_OpenDisc(discid, path);
+	if (disc) WBFS_CloseDisc(disc);
 
-	return 0;
+	return !!disc;
 }
 
 s32 WBFS_AddGame(progress_callback_t spinner, void *spinner_data)
 {
 	if (wbfs_part_fs) return WBFS_Ext_AddGame(spinner, spinner_data);
-	s32 ret;
 
 	/* No device open */
 	if (!hdd) return -1;
@@ -393,39 +361,32 @@ s32 WBFS_AddGame(progress_callback_t spinner, void *spinner_data)
 	partition_selector_t part_sel = ONLY_GAME_PARTITION;
 	int copy_1_1 = 0;
 
-	ret = wbfs_add_disc(hdd, __WBFS_ReadDVD, NULL, spinner, spinner_data, part_sel, copy_1_1);
-	if (ret < 0) return ret;
+	s32 ret = wbfs_add_disc(hdd, __WBFS_ReadDVD, NULL, spinner, spinner_data, part_sel, copy_1_1);
 
-	return 0;
+	return ret < 0 ? ret : 0;
 }
 
 s32 WBFS_RemoveGame(u8 *discid, char *path)
 {
 	if (wbfs_part_fs) return WBFS_Ext_RemoveGame(discid, path);
-	s32 ret;
 
 	/* No device open */
 	if (!hdd) return -1;
 
 	/* Remove game from device */
-	ret = wbfs_rm_disc(hdd, discid);
-	if (ret < 0) return ret;
+	s32 ret = wbfs_rm_disc(hdd, discid);
 
-	return 0;
+	return ret < 0 ? ret : 0;
 }
 
 s32 WBFS_GameSize(u8 *discid, char *path, f32 *size)
 {
-	wbfs_disc_t *disc = NULL;
-
-	u32 sectors;
-
 	/* Open disc */
-	disc = WBFS_OpenDisc(discid, path);
+	wbfs_disc_t *disc = WBFS_OpenDisc(discid, path);
 	if (!disc) return -2;
 
 	/* Get game size in sectors */
-	sectors = wbfs_disc_sector_used(disc, NULL);
+	u32 sectors = wbfs_disc_sector_used(disc, NULL);
 
 	/* Copy value */
 	*size = (disc->p->wbfs_sec_sz / GB_SIZE) * sectors;
@@ -439,7 +400,7 @@ s32 WBFS_GameSize(u8 *discid, char *path, f32 *size)
 s32 WBFS_DVD_Size(u64 *comp_size, u64 *real_size)
 {
 	if (wbfs_part_fs) return WBFS_Ext_DVD_Size(comp_size, real_size);
-	s32 ret;
+
 	u32 comp_sec = 0, last_sec = 0;
 
 	/* No device open */
@@ -448,7 +409,7 @@ s32 WBFS_DVD_Size(u64 *comp_size, u64 *real_size)
 	/* Add game to device */
 	partition_selector_t part_sel = ONLY_GAME_PARTITION;
 
-	ret = wbfs_size_disc(hdd, __WBFS_ReadDVD, NULL, part_sel, &comp_sec, &last_sec);
+	s32 ret = wbfs_size_disc(hdd, __WBFS_ReadDVD, NULL, part_sel, &comp_sec, &last_sec);
 	if (ret < 0) return ret;
 
 	*comp_size = ((u64)hdd->wii_sec_sz) * comp_sec;
@@ -461,17 +422,15 @@ s32 WBFS_DVD_Size(u64 *comp_size, u64 *real_size)
 s32 WBFS_DiskSpace(f32 *used, f32 *free)
 {
 	if (wbfs_part_fs) return WBFS_Ext_DiskSpace(used, free);
-	f32 ssize;
-	u32 cnt;
 
 	/* No device open */
 	if (!hdd) return -1;
 
 	/* Count used blocks */
-	cnt = wbfs_count_usedblocks(hdd);
+	u32 cnt = wbfs_count_usedblocks(hdd);
 
 	/* Sector size in GB */
-	ssize = hdd->wbfs_sec_sz / GB_SIZE;
+	f32 ssize = hdd->wbfs_sec_sz / GB_SIZE;
 
 	/* Copy values */
 	*free = ssize * cnt;

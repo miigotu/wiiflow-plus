@@ -32,6 +32,7 @@
 #include "utils.h"
 #include "ntfs.h"
 #include "fat.h"
+#include "libwbfs/libwbfs.h"
 
 #define PARTITION_TYPE_DOS33_EXTENDED       0x05 /* DOS 3.3+ extended partition */
 #define PARTITION_TYPE_WIN95_EXTENDED       0x0F /* Windows 95 extended partition */
@@ -153,6 +154,9 @@ int PartitionHandle::FindPartitions()
     // Read the first sector on the device
     if (!interface->readSectors(0, 1, &mbr)) return -1;
 
+	// Check if it's a RAW WBFS disc, without a partition table
+	if(IsWBFS((PARTITION_RECORD *)&mbr, 0)) return 0;
+
     // If this is the devices master boot record
     if (mbr.signature != MBR_SIGNATURE) return -1;
 
@@ -160,12 +164,15 @@ int PartitionHandle::FindPartitions()
     {
         PARTITION_RECORD * partition = (PARTITION_RECORD *) &mbr.partitions[i];
 
-/*      if(partition->type == PARTITION_TYPE_GPT_TABLE)
+		//Check for primary/extended WBFS partition
+		if(IsWBFS(partition, i)) continue;
+
+		if(partition->type == PARTITION_TYPE_GPT_TABLE)
         {
-			CheckGPT(i, le32(partition->lba_start));
-			break;
-        } */
-        if(partition->type == PARTITION_TYPE_DOS33_EXTENDED || partition->type == PARTITION_TYPE_WIN95_EXTENDED)
+			//CheckGPT(i, le32(partition->lba_start));
+			//break;
+        }
+        else if(partition->type == PARTITION_TYPE_DOS33_EXTENDED || partition->type == PARTITION_TYPE_WIN95_EXTENDED)
         {
 			CheckEBR(i, le32(partition->lba_start));
 			continue;
@@ -197,13 +204,11 @@ void PartitionHandle::CheckEBR(u8 PartNum, sec_t ebr_lba)
     do
     {
         // Read and validate the extended boot record
-        if (!interface->readSectors(ebr_lba + next_erb_lba, 1, &ebr))
-            return;
+        if (!interface->readSectors(ebr_lba + next_erb_lba, 1, &ebr)) return;
 
-        if (ebr.signature != EBR_SIGNATURE)
-            return;
+        if (ebr.signature != EBR_SIGNATURE) return;
 
-        if(le32(ebr.partition.block_count) > 0)
+        if(le32(ebr.partition.block_count) > 0 && !IsWBFS(PartNum, ebr_lba, next_erb_lba, ebr))
         {
             PartitionFS PartitionEntrie;
             PartitionEntrie.FSName = PartFromType(ebr.partition.type);
@@ -221,4 +226,44 @@ void PartitionHandle::CheckEBR(u8 PartNum, sec_t ebr_lba)
         next_erb_lba = le32(ebr.next_ebr.lba_start);
     }
     while(next_erb_lba > 0);
+}
+
+bool PartitionHandle::IsWBFS(PARTITION_RECORD * partition, int i)
+{
+	wbfs_head_t *head = (wbfs_head_t *)&partition;
+	if (head->magic == (WBFS_MAGIC))
+	{
+		PartitionFS PartitionEntrie;
+		PartitionEntrie.FSName = "WBFS";
+		PartitionEntrie.LBA_Start = le32(partition->lba_start);
+		PartitionEntrie.SecCount = head->n_hd_sec;
+		PartitionEntrie.Bootable = (partition->status == PARTITION_BOOTABLE);
+		PartitionEntrie.PartitionType = partition->type;
+		PartitionEntrie.PartitionNum = i;
+		PartitionEntrie.EBR_Sector = 0;
+
+		PartitionList.push_back(PartitionEntrie);
+		return true;
+	}
+	return false;
+}
+
+bool PartitionHandle::IsWBFS(u8 PartNum, sec_t ebr_lba, sec_t next_erb_lba, EXTENDED_BOOT_RECORD ebr)
+{
+	wbfs_head_t *head = (wbfs_head_t *)&ebr;
+	if(head->magic == (WBFS_MAGIC))
+	{
+		PartitionFS PartitionEntrie;
+		PartitionEntrie.FSName = "WBFS";
+		PartitionEntrie.LBA_Start = ebr_lba + next_erb_lba + le32(ebr.partition.lba_start);
+		PartitionEntrie.SecCount = head->n_hd_sec;
+		PartitionEntrie.Bootable = (ebr.partition.status == PARTITION_BOOTABLE);
+		PartitionEntrie.PartitionType = ebr.partition.type;
+		PartitionEntrie.PartitionNum = PartNum;
+		PartitionEntrie.EBR_Sector = ebr_lba + next_erb_lba;
+
+		PartitionList.push_back(PartitionEntrie);
+		return true;
+	}
+	return false;
 }

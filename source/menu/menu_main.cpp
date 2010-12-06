@@ -262,7 +262,6 @@ int CMenu::main(void)
 				if(!DeviceHandler::Instance()->IsInserted(currentPartition))
 					while(!DeviceHandler::Instance()->IsInserted(currentPartition))
 						currentPartition = loopNum(currentPartition + 1, (int)USB8);
-				currentPartition = 2;
 				const char *partition = DeviceName[currentPartition];
 				gprintf("Next item: %s\n", partition);
 				m_cfg.setInt("GENERAL", "partition", currentPartition);

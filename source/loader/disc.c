@@ -269,15 +269,14 @@ s32 Disc_Open(void)
 s32 Disc_Wait(void)
 {
 	u32 cover = 0;
-	s32 ret;
 	int icounter = 0;
 
 	/* Wait for disc */
-	while (!(cover & 0x2)) {
+	while (!(cover & 0x2))
+	{
 		/* Get cover status */
-		ret = WDVD_GetCoverStatus(&cover);
-		if (ret < 0)
-			return ret;
+		s32 ret = WDVD_GetCoverStatus(&cover);
+		if (ret < 0) return ret;
 			
 		// 10 tries to make sure it doesn´t "freeze" in Install dialog
 		// if no Game Disc is insert
@@ -290,7 +289,8 @@ s32 Disc_Wait(void)
 	return 0;
 }
 
-s32 Disc_SetUSB(const u8 *id) {
+s32 Disc_SetUSB(const u8 *id)
+{
 	if (WBFS_DEVICE_USB && wbfs_part_fs)
 		return set_frag_list((u8 *) id);
 

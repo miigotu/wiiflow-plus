@@ -198,25 +198,37 @@ const char * DeviceHandler::GetFSName(int dev)
 
 s32 DeviceHandler::Open_WBFS(int dev)
 {
-	//const char *name = GetFSName(dev);
-	u32 part_fs = PART_FS_WBFS;
-	if (strncasecmp(GetFSName(dev), "FAT", 3) == 0)
+	u32 part_fs, part_idx, part_lba, part_size;
+
+	if (strncasecmp(GetFSName(dev), "WBFS", 4) == 0)
+		part_fs = PART_FS_WBFS;
+	else if (strncasecmp(GetFSName(dev), "FAT", 3) == 0)
 		part_fs = PART_FS_FAT;
-	if (strncasecmp(GetFSName(dev), "NTFS", 4) == 0)
+	else if (strncasecmp(GetFSName(dev), "NTFS", 4) == 0)
 		part_fs = PART_FS_NTFS;
-	u32 part_idx, part_lba, part_size;
+	else return -1;
+
 	char *partition = (char *)DeviceName[dev];
 	if(dev == SD)
 	{
 		part_idx = 1;
-		part_lba = Instance()->sd->GetEBRSector(dev);
-		part_size = Instance()->sd->GetSize(dev);
+		part_lba = Instance()->sd->GetLBAStart(dev);
+
+		if(part_fs == PART_FS_WBFS)
+			part_size = Instance()->sd->GetSecCount(dev);
+		else
+			part_size = Instance()->sd->GetSize(dev);
 	}
 	else
 	{
 		part_idx = dev;
 		part_lba = Instance()->usb->GetLBAStart(dev - USB1);
-		part_size = Instance()->usb->GetSize(dev - USB1);
+
+		if(part_fs == PART_FS_WBFS)
+			part_size = Instance()->usb->GetSecCount(dev - USB1);
+		else
+			part_size = Instance()->usb->GetSize(dev - USB1);
 	}
+
 	return WBFS_OpenPart(part_fs, part_idx, part_lba, part_size, partition);	
 }
