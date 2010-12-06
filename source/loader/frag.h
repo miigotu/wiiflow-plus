@@ -43,7 +43,6 @@ int frag_get(FragList *ff, u32 offset, u32 count,
 		u32 *poffset, u32 *psector, u32 *pcount);
 
 int frag_remap(FragList *ff, FragList *log, FragList *phy);
-void frag_set_gamePartitionStartSector(u8 index, sec_t sector);
 int get_frag_list_for_file(char *fname, u8 *id, FragList **fl);
 int get_frag_list(u8 *id, char *path);
 int set_frag_list(u8 *id);

@@ -34,10 +34,12 @@
 s32 wbfsDev = WBFS_MIN_DEVICE;
 
 // partition
-int wbfs_part_fs  = PART_FS_FAT;
+int wbfs_part_fs  = PART_FS_WBFS;
 u32 wbfs_part_idx = 0;
 u32 wbfs_part_lba = 0;
 u8 wbfs_mounted = 0;
+
+u8 currentPartition = 0;
 
 /* WBFS HDD */
 wbfs_t *hdd = NULL;
@@ -282,41 +284,27 @@ bool WBFS_Mounted()
 	return wbfs_mounted != 0;
 }
 
-bool WBFS_Selected()
-{
-	if (wbfs_part_fs && wbfs_part_lba && *wbfs_fs_drive) return true;
-	return WBFS_Mounted();
-}
-
 s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *partition)
 {
-	// close
 	WBFS_Close();
-	if (part_fs == PART_FS_FAT || part_fs == PART_FS_NTFS)
-			strcpy(wbfs_fs_drive, partition);
-	else if (WBFS_OpenLBA(part_lba, part_size)) return -1;
 
-	frag_set_gamePartitionStartSector(part_idx, part_lba);
-	// success
-	wbfs_part_fs  = part_fs;
-	wbfs_part_idx = part_idx;
-	wbfs_part_lba = part_lba;
+	if (part_fs == PART_FS_WBFS)
+	{
+		wbfs_t *part = NULL;
+
+		/* Open partition */
+		part = wbfs_open_partition(readCallback, writeCallback, NULL, sector_size, part_size, part_lba, 0);
+		if (!part) return -1;
+
+		/* Close current hard disk */
+		if (hdd) wbfs_close(hdd);
+		hdd = part;
+	}
 	
-	wbfs_mounted = 1;
-	return 0;
-}
-
-s32 WBFS_OpenLBA(u32 lba, u32 size)
-{
-	wbfs_t *part = NULL;
-
-	/* Open partition */
-	part = wbfs_open_partition(readCallback, writeCallback, NULL, sector_size, size, lba, 0);
-	if (!part) return -1;
-
-	/* Close current hard disk */
-	if (hdd) wbfs_close(hdd);
-	hdd = part;
+	strcpy(wbfs_fs_drive, partition);
+	wbfs_part_fs  = part_fs;
+	wbfs_part_idx = currentPartition = part_idx;
+	wbfs_part_lba = part_lba;
 	
 	wbfs_mounted = 1;
 
@@ -448,29 +436,6 @@ s32 WBFS_GameSize(u8 *discid, char *path, f32 *size)
 	return 0;
 }
 
-s32 WBFS_GameSize2(u8 *discid, char *path, u64 *comp_size, u64 *real_size)
-{
-	wbfs_disc_t *disc = NULL;
-
-	u32 sectors, real_sec;
-
-	/* Open disc */
-	disc = WBFS_OpenDisc(discid, path);
-	if (!disc) return -2;
-
-	/* Get game size in sectors */
-	sectors = wbfs_disc_sector_used(disc, &real_sec);
-
-	/* Copy value */
-	*comp_size = ((u64)disc->p->wbfs_sec_sz) * sectors;
-	*real_size = ((u64)disc->p->wbfs_sec_sz) * real_sec;
-
-	/* Close disc */
-	WBFS_CloseDisc(disc);
-
-	return 0;
-}
-
 s32 WBFS_DVD_Size(u64 *comp_size, u64 *real_size)
 {
 	if (wbfs_part_fs) return WBFS_Ext_DVD_Size(comp_size, real_size);
@@ -528,38 +493,11 @@ wbfs_disc_t* WBFS_OpenDisc(u8 *discid, char *path)
 
 void WBFS_CloseDisc(wbfs_disc_t *disc)
 {
-	if (wbfs_part_fs)
-	{
-		WBFS_Ext_CloseDisc(disc);
-		return;
-	}
+	if (wbfs_part_fs)return WBFS_Ext_CloseDisc(disc);
 
 	/* No device open */
 	if (!hdd || !disc) return;
 
 	/* Close disc */
 	wbfs_close_disc(disc);
-}
-
-static inline u32 _be32(const u8 *p)
-{
-	return (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
-}
-
-char *fstfilename2(FST_ENTRY *fst, u32 index)
-{
-	u32 count = _be32((u8*)&fst[0].filelen);
-	u32 stringoffset;
-	if (index < count)
-	{
-		//stringoffset = *(u32 *)&(fst[index]) % (256*256*256);
-		stringoffset = _be32((u8*)&(fst[index])) % (256*256*256);
-		return (char *)((u32)fst + count*12 + stringoffset);
-	}
-	else return NULL;
-}
-
-f32 WBFS_EstimeGameSize(void)
-{
-    return wbfs_estimate_disc(hdd, __WBFS_ReadDVD, NULL, ALL_PARTITIONS);
 }

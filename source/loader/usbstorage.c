@@ -246,27 +246,14 @@ static bool __io_usb_Startup(void)
 	return __io_usb_IsInserted();
 }
 
-int usb_verbose = 0;
-
 bool __io_usb_ReadSectors(u32 sector, u32 count, void *buffer)
 {
-	s32 ret = USBStorage_ReadSectors(sector, count, buffer);
-	if (usb_verbose) {
-		printf("usb-r: %x [%d] = %d\n", sector, count, ret);
-		//sleep(1);
-	}
-	return ret >= 0;
+	return USBStorage_ReadSectors(sector, count, buffer) >= 0;
 }
 
 bool __io_usb_WriteSectors(u32 sector, u32 count, void *buffer)
 {
-	/*if (!buffer || count>128) {
-    	printf("USBWR %d %d %p \n", sector, count, buffer);
-		Wpad_WaitButtons();
-	}*/
-	s32 ret = USBStorage_WriteSectors(sector, count, buffer);
-	//printf("usb-w: %d %d %d\n", sector, count, ret); sleep(1);
-	return ret >= 0;
+	return USBStorage_WriteSectors(sector, count, buffer) >= 0;
 }
 
 static bool __io_usb_ClearStatus(void)
@@ -275,12 +262,6 @@ static bool __io_usb_ClearStatus(void)
 }
 
 static bool __io_usb_Shutdown(void)
-{
-	// do nothing
-	return true;
-}
-
-static bool __io_usb_NOP(void)
 {
 	// do nothing
 	return true;
@@ -296,146 +277,3 @@ DISC_INTERFACE __io_usbstorage = {
 	(FN_MEDIUM_CLEARSTATUS)  &__io_usb_ClearStatus,
 	(FN_MEDIUM_SHUTDOWN)     &__io_usb_Shutdown
 };
-
-// read-only
-DISC_INTERFACE __io_usbstorage_ro = {
-	DEVICE_TYPE_WII_USB,
-	FEATURE_MEDIUM_CANREAD | FEATURE_WII_USB,
-	(FN_MEDIUM_STARTUP)      &__io_usb_Startup,
-	(FN_MEDIUM_ISINSERTED)   &__io_usb_IsInserted,
-	(FN_MEDIUM_READSECTORS)  &__io_usb_ReadSectors,
-	(FN_MEDIUM_WRITESECTORS) &__io_usb_NOP,  //&__io_usb_WriteSectors,
-	(FN_MEDIUM_CLEARSTATUS)  &__io_usb_ClearStatus,
-	(FN_MEDIUM_SHUTDOWN)     &__io_usb_Shutdown
-};
-
-
-s32 USBStorage_WBFS_Open(char *buffer)
-{
-	void *buf = (void *)buffer;
-	u32 len = 8;
-	s32 ret;
-
-	/* Device not opened */
-	if (fd < 0) return fd;
-
-	/* MEM1 buffer */
-	if (!__USBStorage_isMEM2Buffer(buffer))
-	{
-		/* Allocate memory */
-		//buf = iosAlloc(hid, len);
-		buf = usb_buf2;
-		if (!buf) return IPC_ENOMEM;
-		memcpy(buf, buffer, len);
-	}
-
-	extern u32 wbfs_part_lba;
-	u32 part = wbfs_part_lba;
-	/* Read data */
-	ret = IOS_IoctlvFormat(hid, fd, USB_IOCTL_WBFS_OPEN_DISC, "dd:", buf, len, &part, 4);
-
-	return ret;
-}
-
-// woffset is in 32bit words, len is in bytes
-s32 USBStorage_WBFS_Read(u32 woffset, u32 len, void *buffer)
-{
-	void *buf = (void *)buffer;
-	s32 ret;
-
-	USBStorage_OpenDev();
-	/* Device not opened */
-	if (fd < 0) return fd;
-
-	/* MEM1 buffer */
-	if (!__USBStorage_isMEM2Buffer(buffer))
-	{
-		/* Allocate memory */
-		//buf = iosAlloc(hid, len);
-		buf = usb_buf2;
-		if (!buf) return IPC_ENOMEM;
-	}
-	*(char*)buf = 0;
-
-	/* Read data */
-	ret = IOS_IoctlvFormat(hid, fd, USB_IOCTL_WBFS_READ_DISC, "ii:d", woffset, len, buf, len);
-
-	/* Copy data */
-	if (buf != buffer)
-	{
-		memcpy(buffer, buf, len);
-		//iosFree(hid, buf);
-	}
-
-	return ret;
-}
-
-/*
-s32 USBStorage_WBFS_ReadDebug(u32 off, u32 size, void *buffer)
-{
-	void *buf = (void *)buffer;
-	s32 ret;
-
-	USBStorage_OpenDev();
-	// Device not opened
-	if (fd < 0) return fd;
-
-	// MEM1 buffer
-	if (!__USBStorage_isMEM2Buffer(buffer))
-	{
-		// Allocate memory
-		//buf = iosAlloc(hid, len);
-		buf = usb_buf2;
-		if (!buf) return IPC_ENOMEM;
-	}
-
-	// Read data
-	ret = IOS_IoctlvFormat(hid, fd, USB_IOCTL_WBFS_READ_DEBUG, "ii:d", off, size, buf, size);
-
-	// Copy data
-	if (buf != buffer)
-	{
-		memcpy(buffer, buf, size);
-		//iosFree(hid, buf);
-	}
-
-	return ret;
-}
-
-
-s32 USBStorage_WBFS_SetDevice(int dev)
-{
-	s32 ret;
-	static s32 retval = 0;
-	retval = 0;
-	USBStorage_OpenDev();
-	// Device not opened
-	if (fd < 0) return fd;
-	// ioctl
-	ret = IOS_IoctlvFormat(hid, fd, USB_IOCTL_WBFS_SET_DEVICE, "i:i", dev, &retval);
-	if (retval) return retval;
-	return ret;
-}
-
-s32 USBStorage_WBFS_SetFragList(void *p, int size)
-{
-	s32 ret;
-	USBStorage_OpenDev();
-	// Device not opened
-	if (fd < 0) return fd;
-	// ioctl
-	DCFlushRange(p, size);
-	ret = IOS_IoctlvFormat(hid, fd, USB_IOCTL_WBFS_SET_FRAGLIST, "d:", p, size);
-	return ret;
-}
-
-
-void usb_debug_dump(int arg)
-{
-	//return;
-	char buf[2048]="";
-	//printf("\nehc fd: %d\n", fd);
-	int r = USBStorage_WBFS_ReadDebug(arg, sizeof(buf), buf);
-	printf("\n: %d %.2000s\n", r, buf);
-}
-*/

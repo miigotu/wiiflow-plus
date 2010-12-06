@@ -19,8 +19,6 @@
 int _FAT_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
 
 FragList *frag_list = NULL;
-sec_t gamePartitionStartSector = 0;
-u8 currentPartition = 0;
 
 void frag_init(FragList *ff, int maxnum)
 {
@@ -166,12 +164,6 @@ int frag_remap(FragList *ff, FragList *log, FragList *phy)
 	return 0;
 }
 
-void frag_set_gamePartitionStartSector(u8 index, sec_t sector)
-{
-	gamePartitionStartSector = sector;
-	currentPartition = index;
-}
-
 int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 {
 	char fname1[1024];
@@ -222,9 +214,9 @@ int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 				goto out;
 			}
 			
-			gprintf("Shifting all frags by sector: %d\n", gamePartitionStartSector);
+			gprintf("Shifting all frags by sector: %d\n", wbfs_part_lba);
 			// offset to start of partition
-			for (j = 0; j < fs->num; j++) fs->frag[j].sector += gamePartitionStartSector;
+			for (j = 0; j < fs->num; j++) fs->frag[j].sector += wbfs_part_lba;
 
 		}
 		frag_concat(fa, fs);

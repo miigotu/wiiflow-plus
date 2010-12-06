@@ -122,7 +122,7 @@ bool PartitionHandle::Mount(int pos, const char * name)
             return true;
     }
 
-    MountNameList[pos].clear();
+    //MountNameList[pos].clear();
 
     return false;
 }
