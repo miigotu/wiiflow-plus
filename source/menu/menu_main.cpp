@@ -265,7 +265,7 @@ int CMenu::main(void)
 				currentPartition = 2;
 				const char *partition = DeviceName[currentPartition];
 				gprintf("Next item: %s\n", partition);
-				m_cfg.setString("GENERAL", "partition", partition);
+				m_cfg.setInt("GENERAL", "partition", currentPartition);
 				m_showtimer=60; 
 				m_btnMgr.setText(m_mainLblNotice, (string)partition);
 				m_btnMgr.show(m_mainLblNotice);

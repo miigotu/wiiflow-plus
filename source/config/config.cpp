@@ -4,6 +4,7 @@
 #include "config.hpp"
 #include "text.hpp"
 #include "DeviceHandler.hpp"
+#include "gecko.h"
 
 using namespace std;
 
@@ -329,6 +330,10 @@ string Config::getString(const string &domain, const string &key, const string &
 		m_changed = true;
 		return defVal;
 	}
+
+	if(strncasecmp(data.c_str(), "usb:", 4) == 0)
+		data = sfmt("usb1:%s", data.c_str()+4);
+
 	return data;
 }
 

@@ -96,17 +96,45 @@ extern "C" { int makedir(char *newdir); }
 void CMenu::init()
 {
 	const char *drive = "sd";
-	const char *check = "sd";
+	const char *check = "empty";
 	struct stat dummy;
 
-	for(int i = USB8; i >= SD; i--)
-		if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s/boot.dol", DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
+	for(int i = SD; i <= USB8; i++) //Find the first partition with a wiiflow.ini
+		if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s/" CFG_FILENAME, DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
+		{
 			drive = DeviceName[i];
+			break;
+		}
 
-	if(drive == check && !DeviceHandler::Instance()->IsInserted(SD))
+	if(drive == check) //No wiiflow.ini found
+		for(int i = SD; i <= USB8; i++) //Find the first partition with a boot.dol
+			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s/boot.dol", DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
+			{
+				drive = DeviceName[i];
+				break;
+			}
+			
+	if(drive == check) //No boot.dol found
+		for(int i = SD; i <= USB8; i++) //Find the first partition with apps/wiiflow folder
+			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
+			{
+				drive = DeviceName[i];
+				break;
+			}
+
+	if(drive == check) //No apps/wiiflow folder found, use first writable partition
+		for(int i = SD; i <= USB8; i++)
+			if (DeviceHandler::Instance()->IsInserted(i))
+			{
+				drive = DeviceName[i];
+				makedir((char *)sfmt("%s:/%s", DeviceName[i], APPDATA_DIR2).c_str()); //Make the apps dir, so saving wiiflow.ini does not fail.
+				break;
+			}
+
+	if(drive == check) // Should not happen
 	{
 		_buildMenus();
-		error(L"No boot.dol found on available partitions and no SD found!");
+		error(L"No available partitions found!");
 		m_exit = true;
 		return;
 	}
@@ -117,19 +145,49 @@ void CMenu::init()
 	m_cfg.load(sfmt("%s/" CFG_FILENAME, m_appDir.c_str()).c_str());
 
 	bool onUSB = m_cfg.getBool("GENERAL", "data_on_usb", strncmp(drive, "usb", 3) == 0);
-	if (onUSB)
-		for(int i = USB8; i > SD; i--)
-			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR).c_str(), &dummy) == 0)
-				drive = DeviceName[i];
-	else
-		drive = DeviceHandler::Instance()->IsInserted(SD) ? DeviceName[SD] : drive;
+	
+	drive = check; //reset the drive variable for the check
 
-	if(drive == check && !DeviceHandler::Instance()->IsInserted(SD))
-	{
+	if (onUSB)
+		for(int i = USB1; i <= USB8; i++) // Use first with wiiflow folder in root
+			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR).c_str(), &dummy) == 0)
+			{
+				drive = DeviceName[i];
+				break;
+			}
+	else
+		drive = DeviceHandler::Instance()->IsInserted(SD) ? DeviceName[SD] : check;
+
+	if(drive == check && onUSB)
+		for(int i = USB1; i <= USB8; i++) // data_on_usb=yes and no wiiflow folder found in root of any USB partition, use first USB partition with wbfs folder.
+			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/wbfs", DeviceName[i]).c_str(), &dummy) == 0)
+			{
+				drive = DeviceName[i];
+				break;
+			}
+
+	if(drive == check && onUSB)
+		for(int i = USB1; i <= USB8; i++) // data_on_usb=yes and no wiiflow folder found in root of any USB partition, use first available USB partition.
+			if (DeviceHandler::Instance()->IsInserted(i))
+			{
+				drive = DeviceName[i];
+				break;
+			}
+
+	if(drive == check)
+	{	
 		_buildMenus();
-		error(L"No boot.dol found on available partitions and no SD found!");
-		m_exit = true;
-		return;
+		if(DeviceHandler::Instance()->IsInserted(SD))
+		{
+			error(L"data_on_usb=yes and No available usb partitions for data!\nUsing SD.");
+			drive = DeviceName[SD];
+		}
+		else
+		{
+			error(L"No available usb partitions for data!\nExitting.");
+			m_exit = true;
+			return;
+		}
 	}
 
 	m_dataDir = sfmt("%s:/%s", drive, APPDATA_DIR);
@@ -157,6 +215,18 @@ void CMenu::init()
 	m_wdmDir = m_cfg.getString("GENERAL", "dir_wdm", sfmt("%s/wdm", m_txtCheatDir.c_str()));
 	m_wipDir = m_cfg.getString("GENERAL", "dir_wip", sfmt("%s/wip", m_txtCheatDir.c_str()));
 	//
+
+	u8 old_ini_check = m_cfg.getInt("GENERAL", "partition");
+	if(old_ini_check < USB1 || old_ini_check > USB8)
+	{
+		m_cfg.remove("GENERAL", "partition");
+		for(int i = USB1; i <= USB8; i++) // Find a usb partition with the wbfs folder, else leave it blank
+		if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/wbfs", DeviceName[i]).c_str(), &dummy) == 0)
+		{
+			m_cfg.setInt("GENERAL", "partition", i);
+			break;
+		}
+	}
 
 	m_cf.init();
 
@@ -1356,8 +1426,6 @@ bool CMenu::_loadGameList(void)
 	SmartBuf buffer;
 	u32 count;
 
-	//const char *part = DeviceName[currentPartition];
-	//s32 ret = DeviceHandler::Instance()->Open_WBFS(2);//(char *) m_cfg.getString("GENERAL", "partition", part).c_str());
 	s32 ret = DeviceHandler::Instance()->Open_WBFS(m_cfg.getInt("GENERAL", "partition", 1));
  	if (ret < 0)
 	{
