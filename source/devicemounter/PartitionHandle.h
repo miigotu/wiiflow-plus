@@ -36,6 +36,7 @@
 
 #define MBR_SIGNATURE           0x55AA
 #define EBR_SIGNATURE           MBR_SIGNATURE
+#define GPT_SIGNATURE			"EFI PART"
 
 #define PARTITION_BOOTABLE      0x80 /* Bootable (active) */
 #define PARTITION_NONBOOTABLE   0x00 /* Non-bootable */
@@ -51,7 +52,6 @@ typedef struct _PARTITION_RECORD {
     u32 block_count;                        /* Number of blocks in partition */
 } __attribute__((__packed__)) PARTITION_RECORD;
 
-
 typedef struct _MASTER_BOOT_RECORD {
     u8 code_area[446];                      /* Code area; normally empty */
     PARTITION_RECORD partitions[4];         /* 4 primary partitions */
@@ -66,8 +66,35 @@ typedef struct _EXTENDED_BOOT_RECORD {
     u16 signature;                          /* EBR signature; 0xAA55 */
 } __attribute__((__packed__)) EXTENDED_BOOT_RECORD;
 
-typedef struct _PartitionFS
+typedef struct _GPT_PARTITION_TABLE {
+	char magic[8];							/* "EFI PART" */
+	u32 Revision;
+	u32 Header_Size;						/* Size of this header */
+	u32 CheckSum;
+	u32 Reserved;							/* Must be 0 */
+	u64 Header_LBA;							/* Location of this header, always 1 in primary copy */
+	u64 Backup_Header_LBA;					/* Location of backup header, always max lba - 1 */
+	u64 First_Usable_LBA;					/* Primary GPT partition table's last LBA + 1 */
+	u64 Last_Usable_LBA;					/* Secondary GPT partition table's first LBA - 1 */
+	u8 GUID[16];							/* Disk GUID (also referred as UUID on UNIXes) */
+	u64 Table_LBA;							/* Always 2 in primary copy, or Header_LBA + 1.  Secondary copy is Backup_Header_LBA - 1 */
+	u32 Num_Entries;						/* Number of entries in the partition info array */
+	u32 Entry_Size;							/* Size of each array entry, usually 128 */
+	u32 Entries_CheckSum;					/* CRC32 of partition array */
+	u8 Zeroes[420];							/* Pad to a total 512 byte LBA or sizeof 1 LBA */
+} __attribute__((__packed__)) GPT_PARTITION_TABLE;
+
+typedef struct _GUID_PARTITION_ENTRY
 {
+    u8 Type_GUID[16];					/* Partition type GUID */
+    u8 Unique_GUID[16];					/* Unique partition GUID */
+    u64 First_LBA;						/* First LBA (little-endian) */
+    u64 Last_LBA;						/* Last LBA (inclusive, usually odd) */
+    u64 Attributes;						/* GUID Attribute flags (e.g. bit 60 denotes read-only) */
+    char Name[72];						/* Partition name (36 UTF-16LE code units) */
+} __attribute__((__packed__)) GUID_PARTITION_ENTRY;
+
+typedef struct _PartitionFS {
     const char * FSName;
     u32 LBA_Start;
     u32 SecCount;
@@ -76,7 +103,6 @@ typedef struct _PartitionFS
     u8 PartitionNum;
     u32 EBR_Sector;
 } PartitionFS;
-
 
 class PartitionHandle
 {
@@ -125,6 +151,7 @@ class PartitionHandle
 		bool IsWBFS(u8 PartNum, sec_t ebr_lba, sec_t next_erb_lba, EXTENDED_BOOT_RECORD ebr);
         int FindPartitions();
         void CheckEBR(u8 PartNum, sec_t ebr_lba);
+		bool CheckGPT(void);
 
         const DISC_INTERFACE *interface;
         safe_vector<PartitionFS> PartitionList;

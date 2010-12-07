@@ -211,7 +211,7 @@ s32 WBFS_Init(u32 device, u32 timeout)
 		switch (device)
 		{
 			case WBFS_DEVICE_USB:
-				if (USBStorage_Init())
+				if (USBStorage_Init() >= 0)
 				{
 					/* Setup callbacks */
 					readCallback  = __WBFS_ReadUSB;
@@ -229,7 +229,7 @@ s32 WBFS_Init(u32 device, u32 timeout)
 
 			case WBFS_DEVICE_SDHC:
 				/* Initialize SDHC */
-				if (SDHC_Init())
+				if (SDHC_Init() >= 0)
 				{
 					/* Setup callbacks */
 					readCallback  = __WBFS_ReadSDHC;

@@ -164,14 +164,11 @@ int PartitionHandle::FindPartitions()
     {
         PARTITION_RECORD * partition = (PARTITION_RECORD *) &mbr.partitions[i];
 
-		//Check for primary/extended WBFS partition
-		if(IsWBFS(partition, i)) continue;
 
-		if(partition->type == PARTITION_TYPE_GPT_TABLE)
-        {
-			//CheckGPT(i, le32(partition->lba_start));
-			//break;
-        }
+		/*if(partition->type == PARTITION_TYPE_GPT_TABLE)
+			return CheckGPT();
+		else */ if(IsWBFS(partition, i))	//Check for primary/extended WBFS partition
+			continue;
         else if(partition->type == PARTITION_TYPE_DOS33_EXTENDED || partition->type == PARTITION_TYPE_WIN95_EXTENDED)
         {
 			CheckEBR(i, le32(partition->lba_start));
@@ -225,7 +222,52 @@ void PartitionHandle::CheckEBR(u8 PartNum, sec_t ebr_lba)
         // and the next extended boot record in the chain
         next_erb_lba = le32(ebr.next_ebr.lba_start);
     }
-    while(next_erb_lba > 0);
+	while(next_erb_lba > 0);
+}
+
+bool PartitionHandle::CheckGPT(void)
+{
+	GPT_PARTITION_TABLE gpt;
+
+	// Read and validate the GUID Partition Table
+	if (!interface->readSectors(1, 1, &gpt)) return false;
+	
+	// Verify this is the Primary GPT entry
+	if (strncmp(gpt.magic, GPT_SIGNATURE, 8) != 0) return false;
+	if (gpt.Entry_Size != 128)		return false;
+	if (gpt.First_Usable_LBA != 2)	return false;
+	if (gpt.Table_LBA != 2)			return false;
+	if (gpt.Reserved != 0)			return false;
+	
+	u8 count = 0, blocks_read = 0;
+	do
+	{
+		GUID_PARTITION_ENTRY partition;
+
+        // Read the next 4 partition entries
+		if (!interface->readSectors(gpt.First_Usable_LBA + blocks_read, 1, &partition)) return false;
+
+		for(u8 i = 1; i <= 4; i++)
+		{
+			if(count >= MAX_MOUNTS || count >= gpt.Num_Entries)
+				break;
+
+            PartitionFS PartitionEntrie;
+			PartitionEntrie.FSName = partition.Name;
+			PartitionEntrie.LBA_Start = le32(partition.First_LBA);
+			//PartitionEntrie.SecCount = (le32(partition.Last_LBA) - le32(partition.First_LBA));
+			//PartitionEntrie.PartitionType = *partition.Type_GUID;
+			PartitionEntrie.PartitionNum = count + 1;
+			PartitionEntrie.EBR_Sector = 0;
+
+			PartitionList.push_back(PartitionEntrie);
+			count++;
+		}
+		blocks_read++;
+	}
+	while (count < MAX_MOUNTS && count < gpt.Num_Entries);
+
+	return true;
 }
 
 bool PartitionHandle::IsWBFS(PARTITION_RECORD * partition, int i)
