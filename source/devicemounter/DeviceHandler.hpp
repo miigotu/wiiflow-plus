@@ -80,6 +80,7 @@ class DeviceHandler
 		const PartitionHandle * GetUSBHandle() { return usb; };
 		static int PathToDriveType(const char * path);
         static const char * GetFSName(int dev);
+		static int GetFSType(int dev);
         static const char * PathToFSName(const char * path) { return GetFSName(PathToDriveType(path)); };
 		s32 Open_WBFS(int dev);
     private:

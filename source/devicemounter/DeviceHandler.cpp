@@ -196,17 +196,25 @@ const char * DeviceHandler::GetFSName(int dev)
     return NULL;
 }
 
+int DeviceHandler::GetFSType(int dev)
+{
+	const char *name = GetFSName(dev);
+	if (strncasecmp(name, "WBFS", 4) == 0)
+		return PART_FS_WBFS;
+	else if (strncasecmp(name, "FAT", 3) == 0)
+		return PART_FS_FAT;
+	else if (strncasecmp(name, "NTFS", 4) == 0)
+		return PART_FS_NTFS;
+	else if (strncasecmp(name, "LINUX", 5) == 0)
+		return PART_FS_EXT;
+	else
+		return -1;
+}
+
 s32 DeviceHandler::Open_WBFS(int dev)
 {
-	u32 part_fs, part_idx, part_lba, part_size;
-
-	if (strncasecmp(GetFSName(dev), "WBFS", 4) == 0)
-		part_fs = PART_FS_WBFS;
-	else if (strncasecmp(GetFSName(dev), "FAT", 3) == 0)
-		part_fs = PART_FS_FAT;
-	else if (strncasecmp(GetFSName(dev), "NTFS", 4) == 0)
-		part_fs = PART_FS_NTFS;
-	else return -1;
+	u32 part_idx, part_lba, part_size;
+	u32 part_fs = GetFSType(dev);
 
 	char *partition = (char *)DeviceName[dev];
 	if(dev == SD)

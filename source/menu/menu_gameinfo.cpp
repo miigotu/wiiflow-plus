@@ -91,7 +91,7 @@ void CMenu::_gameinfo(void)
 
 		if ((BTN_DOWN_PRESSED || BTN_DOWN_HELD) && !(m_thrdWorking && m_thrdStop) && page == 1)
 		{
-			if (synopsis_h - (amount_of_skips * pixels_to_skip) > (m_vid.height2D() - (20 + synopsis_y)))
+			if (synopsis_h - (amount_of_skips * pixels_to_skip) > (m_vid.height2D() - (35 + synopsis_y)))
 			{
 				m_btnMgr.moveBy(m_gameinfoLblSynopsis, 0, -pixels_to_skip);
 				amount_of_skips++;

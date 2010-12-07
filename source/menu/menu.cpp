@@ -100,7 +100,7 @@ void CMenu::init()
 	struct stat dummy;
 
 	for(int i = SD; i <= USB8; i++) //Find the first partition with a wiiflow.ini
-		if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s/" CFG_FILENAME, DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
+		if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/%s/" CFG_FILENAME, DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
 		{
 			drive = DeviceName[i];
 			break;
@@ -108,7 +108,7 @@ void CMenu::init()
 
 	if(drive == check) //No wiiflow.ini found
 		for(int i = SD; i <= USB8; i++) //Find the first partition with a boot.dol
-			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s/boot.dol", DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
+			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/%s/boot.dol", DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
 			{
 				drive = DeviceName[i];
 				break;
@@ -116,7 +116,7 @@ void CMenu::init()
 			
 	if(drive == check) //No boot.dol found
 		for(int i = SD; i <= USB8; i++) //Find the first partition with apps/wiiflow folder
-			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
+			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
 			{
 				drive = DeviceName[i];
 				break;
@@ -124,7 +124,7 @@ void CMenu::init()
 
 	if(drive == check) //No apps/wiiflow folder found
 		for(int i = SD; i <= USB8; i++) // Find the first writable partition
-			if (DeviceHandler::Instance()->IsInserted(i))
+			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS)
 			{
 				drive = DeviceName[i];
 				makedir((char *)sfmt("%s:/%s", DeviceName[i], APPDATA_DIR2).c_str()); //Make the apps dir, so saving wiiflow.ini does not fail.
@@ -150,7 +150,7 @@ void CMenu::init()
 
 	if (onUSB)
 		for(int i = USB1; i <= USB8; i++) //Look for first partition with a wiiflow folder in root
-			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR).c_str(), &dummy) == 0)
+			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR).c_str(), &dummy) == 0)
 			{
 				drive = DeviceName[i];
 				break;
@@ -159,7 +159,7 @@ void CMenu::init()
 
 	if(drive == check && onUSB) //No wiiflow folder found in root of any usb partition, and data_on_usb=yes
 		for(int i = USB1; i <= USB8; i++) // Try first USB partition with wbfs folder.
-			if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/wbfs", DeviceName[i]).c_str(), &dummy) == 0)
+			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/wbfs", DeviceName[i]).c_str(), &dummy) == 0)
 			{
 				drive = DeviceName[i];
 				break;
@@ -167,7 +167,7 @@ void CMenu::init()
 
 	if(drive == check && onUSB) // No wbfs folder found and data_on_usb=yes
 		for(int i = USB1; i <= USB8; i++) // Try first available USB partition.
-			if (DeviceHandler::Instance()->IsInserted(i))
+			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS)
 			{
 				drive = DeviceName[i];
 				break;
@@ -220,7 +220,7 @@ void CMenu::init()
 	{
 		m_cfg.remove("GENERAL", "partition");
 		for(int i = USB1; i <= USB8; i++) // Find a usb partition with the wbfs folder, else leave it blank
-		if (DeviceHandler::Instance()->IsInserted(i) && stat(sfmt("%s:/wbfs", DeviceName[i]).c_str(), &dummy) == 0)
+		if (DeviceHandler::Instance()->IsInserted(i) && (DeviceHandler::Instance()->GetFSType(i) == PART_FS_WBFS || stat(sfmt("%s:/wbfs", DeviceName[i]).c_str(), &dummy) == 0))
 		{
 			m_cfg.setInt("GENERAL", "partition", i);
 			break;
