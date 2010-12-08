@@ -155,7 +155,7 @@ inline u32 le32(u32 i)
 
 inline u16 le16(u16 i)
 {
-	return ((i & 0xFF) << 8) | ((i & 0xFF00) >> 8);
+	return ((i & 0x00FF) << 8) | ((i & 0xFF00) >> 8);
 }
 
 bool SSoundEffect::fromWAV(const u8 *buffer, u32 size)

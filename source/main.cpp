@@ -65,7 +65,7 @@ int old_main(int argc, char **argv)
 		else if (strlen(argv[i]) == 6)
 		{
 			gameid = argv[i];
-			for (int i=0; i<5; i++)
+			for (int i=0; i < 5; i++)
 				if (!isalnum(gameid[i]))
 					gameid = NULL;
 		}
@@ -99,6 +99,7 @@ int old_main(int argc, char **argv)
 	{
 		Open_Inputs();
 		MEM2_takeBigOnes(true);
+
 		bool HddMounted = false;
 		DeviceHandler::Instance()->MountAll();
 		for(int i = USB1; i <= USB8; i++)
@@ -152,11 +153,11 @@ int old_main(int argc, char **argv)
 			vid.waitMessage(0.2f);
 			SMART_FREE(texWaitHDD.data);
 		}
-		ISFS_Initialize();
 		for(int i = 1; i < MAXDEVICES; i++)
 			if(DeviceHandler::Instance()->IsInserted(i))
 				gprintf("%s is Available.\n", DeviceName[i]);
 
+		ISFS_Initialize();
 		bool wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		bool dipOK = Disc_Init() >= 0;
 
@@ -174,8 +175,11 @@ int old_main(int argc, char **argv)
 			break;
 		}
  		else if (!wbfsOK)
+		{
 			menu.error(L"Could not initialize WBFS!");
+			break;
 			/*menu.m_current_view = COVERFLOW_CHANNEL; */
+		}
 		else
 		{
 			if (gameid != NULL && strlen(gameid) == 6)

@@ -36,6 +36,7 @@
 
 #define MBR_SIGNATURE           0x55AA
 #define EBR_SIGNATURE           MBR_SIGNATURE
+#define VBR_SIGNATURE           MBR_SIGNATURE
 #define GPT_SIGNATURE			"EFI PART"
 
 #define PARTITION_BOOTABLE      0x80 /* Bootable (active) */

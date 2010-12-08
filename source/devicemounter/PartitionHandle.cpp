@@ -118,7 +118,7 @@ bool PartitionHandle::Mount(int pos, const char * name)
         if(fatMount(MountNameList[pos].c_str(), interface, GetLBAStart(pos), CACHE, SECTORS))
             return true;
     }
-    else if(strncmp(GetFSName(pos), "NTF", 3) == 0)
+    else if(strncmp(GetFSName(pos), "NTFS", 4) == 0)
     {
         if(ntfsMount(MountNameList[pos].c_str(), interface, GetLBAStart(pos), CACHE, SECTORS, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE))
             return true;
@@ -130,7 +130,10 @@ bool PartitionHandle::Mount(int pos, const char * name)
 			return true;
 	}
 */
-    //MountNameList[pos].clear();
+	else if(strncmp(GetFSName(pos), "WBFS", 4) == 0)
+		return true;
+
+	MountNameList[pos].clear();
 
     return false;
 }
@@ -146,13 +149,13 @@ void PartitionHandle::UnMount(int pos)
     char DeviceName[20];
     snprintf(DeviceName, sizeof(DeviceName), "%s:", MountNameList[pos].c_str());
 
-    //closing all open Files write back the cache
+    //closing all open files and write back the cache
     fatUnmount(DeviceName);
-    //closing all open Files write back the cache
+    //closing all open files write back the cache
     ntfsUnmount(DeviceName, true);
-	//closing all open files, write back the cache
+	//closing all open files, and write back the cache
 	//ext2Unmount(DeviceName);
-    //Remove name from list
+    //Remove mount name from the list
     MountNameList[pos].clear();
 }
 
@@ -236,42 +239,46 @@ void PartitionHandle::CheckEBR(u8 PartNum, sec_t ebr_lba)
 bool PartitionHandle::CheckGPT(void)
 {
 	GPT_PARTITION_TABLE gpt;
-
+	bool success = false;  // To return false unless at least 1 partition is verified
+	
 	// Read and validate the GUID Partition Table
 	if(!interface->readSectors(1, 3, &gpt)) return false;		// Limit GPT detection to 8 entries
 	//if(!interface->readSectors(1, 33, &gpt)) return false;	// To read all 128 possible partitions
 	
 	// Verify this is the Primary GPT entry
-	if(strncmp(gpt.magic, GPT_SIGNATURE, 8) != 0) return false;
-	if(gpt.Entry_Size != 128)		return false;
-	if(gpt.First_Usable_LBA != 2)	return false;
-	if(gpt.Table_LBA != 2)			return false;
-	if(gpt.Reserved != 0)			return false;
+	if(strncmp(gpt.magic, GPT_SIGNATURE, 8) != 0) 	return false;
+	if(le32(gpt.Entry_Size) != 128)					return false;
+	if(le64(gpt.Table_LBA) != 2)					return false;
+	if(le64(gpt.Header_LBA) != 1)					return false;
+	if(le64(gpt.First_Usable_LBA) != 34)			return false;
+	if(gpt.Reserved != 0)							return false;
 	
-	for(u8 i = 0; i < (gpt.Num_Entries > 8 ? 8 : gpt.Num_Entries); i++)
+	for(u8 i = 0; i < (le32(gpt.Num_Entries) > 8 ? 8 : le32(gpt.Num_Entries)); i++)
 	{
-		VOLUME_BOOT_RECORD * partition;
-		if(!interface->readSectors(gpt.partitions[i].First_LBA, 1, &partition)) return false;
-
-		// Check if partition is WBFS
-		wbfs_head_t *head = (wbfs_head_t *)partition;
-		bool isWBFS = head->magic == (WBFS_MAGIC);
-
-        if(gpt.partitions[i].Last_LBA - gpt.partitions[i].First_LBA > 0)
+        if(le64(gpt.partitions[i].Last_LBA) - le64(gpt.partitions[i].First_LBA) > 0)
         {
+			VOLUME_BOOT_RECORD * partition;
+			if(!interface->readSectors(le64(gpt.partitions[i].First_LBA), 1, &partition)) continue;
+			if(partition->signature != VBR_SIGNATURE) continue;
+
+			// Check if the partition is WBFS
+			wbfs_head_t *head = (wbfs_head_t *)partition;
+			bool isWBFS = head->magic == (WBFS_MAGIC);
+
             PartitionFS PartitionEntry;
             PartitionEntry.FSName = isWBFS ? "WBFS" : partition->Name; // Are ext2/3/4 boot blocks the same structure as FAT/NTFS ?
-            PartitionEntry.LBA_Start = gpt.partitions[i].First_LBA;
-            PartitionEntry.SecCount = isWBFS ? head->n_hd_sec : ((gpt.partitions[i].First_LBA - gpt.partitions[i].First_LBA) * partition->sectors_per_cluster);
+            PartitionEntry.LBA_Start = le64(gpt.partitions[i].First_LBA);
+            PartitionEntry.SecCount = isWBFS ? head->n_hd_sec : ((le64(gpt.partitions[i].Last_LBA) - le64(gpt.partitions[i].First_LBA)) * partition->sectors_per_cluster);
             PartitionEntry.Bootable = false;
             PartitionEntry.PartitionType = 0;
             PartitionEntry.PartitionNum = i;
             PartitionEntry.EBR_Sector = 0;
 
+			success = true;
             PartitionList.push_back(PartitionEntry);
         }
 	}
-	return true;
+	return success;
 }
 
 bool PartitionHandle::IsWBFS(MASTER_BOOT_RECORD * mbr)

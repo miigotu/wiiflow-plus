@@ -608,9 +608,6 @@ void CMenu::_directlaunch(const string &id)
 		if(!DeviceHandler::Instance()->IsInserted(i))
 			continue;
 
-		//char *part = (char *)DeviceName[i];
-		
-		//s32 ret = WBFS_OpenNamed(part);
 		s32 ret = DeviceHandler::Instance()->Open_WBFS(i);
 		if (ret == 0)
 		{

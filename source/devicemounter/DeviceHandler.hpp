@@ -39,6 +39,8 @@ enum
     USB6,
     USB7,
     USB8,
+    GCSDA,
+    GCSDB,
     MAXDEVICES
 };
 
@@ -53,6 +55,8 @@ const char DeviceName[MAXDEVICES][6] =
     "usb6",
     "usb7",
     "usb8",
+    "gca",
+    "gcb",
 };
 
 class DeviceHandler
@@ -69,28 +73,42 @@ class DeviceHandler
 
         //! Individual Mounts/UnMounts...
 		bool MountSD();
-		bool MountAllUSB();
 		bool MountUSB(int part);
+		bool MountAllUSB();
+		bool MountGCA();
+		bool MountGCB();
+
 		bool SD_Inserted() { if(sd) return sd->IsInserted(); return false; };
 		bool USB_Inserted() { if(usb) return usb->IsInserted(); return false; };
+		bool GCA_Inserted() { if(gca) return gca->IsInserted(); return false; };
+		bool GCB_Inserted() { if(gcb) return gcb->IsInserted(); return false; };
+
 		void UnMountSD() { if(sd) delete sd; sd = NULL; };
 		void UnMountUSB(int pos);
 		void UnMountAllUSB();
+		void UnMountGCA() { if(gca) delete gca; gca = NULL; };
+		void UnMountGCB() { if(gcb) delete gcb; gcb = NULL; };
+
 		const PartitionHandle * GetSDHandle() { return sd; };
 		const PartitionHandle * GetUSBHandle() { return usb; };
+		const PartitionHandle * GetGCAHandle() { return gca; };
+		const PartitionHandle * GetGCBHandle() { return gcb; };
+
 		static int PathToDriveType(const char * path);
         static const char * GetFSName(int dev);
 		static int GetFSType(int dev);
         static const char * PathToFSName(const char * path) { return GetFSName(PathToDriveType(path)); };
 		s32 Open_WBFS(int dev);
     private:
-        DeviceHandler() : sd(0), usb(0) { };
+        DeviceHandler() : sd(0), usb(0), gca(0), gcb(0) { };
         ~DeviceHandler();
 
 		static DeviceHandler *instance;
 
         PartitionHandle * sd;
         PartitionHandle * usb;
+        PartitionHandle * gca;
+        PartitionHandle * gcb;
 };
 
 #endif
