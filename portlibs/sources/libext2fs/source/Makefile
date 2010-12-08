@@ -33,7 +33,7 @@ CFLAGS		=	-Os -Wall $(MACHDEP) $(INCLUDE) -DGEKKO \
 				-DHAVE_ERRNO_H -DHAVE_STRDUP -DHAVE_SYS_RESOURCE_H
 CXXFLAGS	=	$(CFLAGS)
 ASFLAGS		:=	-g
-export EXT2BIN	:=	$(LIBDIR)/$(PLATFORM)/libext2fs.a
+export EXT2BIN	:=	$(LIBDIR)/libext2fs.a
 
 ifeq ($(BUILD),cube_debug)
 CFLAGS += -DDEBUG_GEKKO
@@ -95,18 +95,15 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr wii_debug wii_release cube_debug cube_release $(LIBDIR)
+	@rm -fr wii_debug wii_release $(LIBDIR)
 
 all: $(EXT2BIN)
 
 install:
-	cp ../include/ext2.h $(DEVKITPRO)/libogc/include
-	cp ../lib/wii/libext2fs.a $(DEVKITPRO)/libogc/lib/wii
-	cp ../lib/cube/libext2fs.a $(DEVKITPRO)/libogc/lib/cube
+	cp ../include/ext2.h ../../../include
+	cp ../lib/libext2fs.a ../../../lib
 
-wii-install:
-	cp ../include/ext2.h $(DEVKITPRO)/libogc/include
-	cp ../lib/wii/libext2fs.a $(DEVKITPRO)/libogc/lib/wii
+wii-install: install
 
 #---------------------------------------------------------------------------------
 else

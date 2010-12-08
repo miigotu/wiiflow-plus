@@ -17,7 +17,7 @@
 #include "gecko.h"
 
 int _FAT_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
-// int _ext2_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
+int _ext2_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
 
 FragList *frag_list = NULL;
 
@@ -215,7 +215,6 @@ int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 				goto out;
 			}
 		}
-/*
 		else if (wbfs_part_fs == PART_FS_EXT)
 		{
 			ret = _ext2_get_fragments(fname, &_frag_append, fs);
@@ -225,8 +224,7 @@ int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 				goto out;
 			}
 		}
-*/
-		if (wbfs_part_fs == PART_FS_NTFS/* || wbfs_part_fs == PART_FS_EXT*/)
+		if (wbfs_part_fs == PART_FS_NTFS || wbfs_part_fs == PART_FS_EXT)
 		{
 			gprintf("Shifting all frags by sector: %d\n", wbfs_part_lba);
 			// offset to start of partition

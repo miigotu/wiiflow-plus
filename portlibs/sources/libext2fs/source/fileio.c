@@ -410,35 +410,3 @@ errcode_t ext2fs_file_set_size(ext2_file_t file, ext2_off_t size)
 {
 	return ext2fs_file_set_size2(file, size);
 }
-
-errcode_t ext2fs_get_fragments(ext2_file_t file, _frag_append_t append_fragment, void *callback_data)
-{
-	ext2_filsys	fs;
-	errcode_t	retval = 0;
-	unsigned int	off_sec, count_sec, sec;
-	__u64		left;
-	
-	EXT2_CHECK_MAGIC(file, EXT2_ET_MAGIC_EXT2_FILE);
-	fs = file->fs;
-
-	while ((file->pos < EXT2_I_SIZE(&file->inode))) {
-		retval = sync_buffer_position(file);
-		if (retval)
-			break;
-		retval = load_buffer(file, 1);
-		if (retval)
-			break;
-
-		sec = file->pos / fs->blocksize;
-		off_sec = file->pos % fs->blocksize;
-		count_sec = fs->blocksize - off_sec;
-		left = EXT2_I_SIZE(&file->inode) - file->pos ;
-		if (count_sec > left)
-			count_sec = left;
-			
-		// Use this info to append a fragment
-		append_fragment(callback_data, off_sec, sec, count_sec);
-	}
-
-	return retval;
-}

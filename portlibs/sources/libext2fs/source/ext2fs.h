@@ -991,8 +991,6 @@ extern errcode_t ext2fs_extent_goto(ext2_extent_handle_t handle,
 				    blk64_t blk);
 
 /* fileio.c */
-typedef int (*_frag_append_t)(void *ff, unsigned int offset, unsigned int sector, unsigned int count);
-
 extern errcode_t ext2fs_file_open2(ext2_filsys fs, ext2_ino_t ino,
 				   struct ext2_inode *inode,
 				   int flags, ext2_file_t *ret);
@@ -1014,7 +1012,6 @@ errcode_t ext2fs_file_get_lsize(ext2_file_t file, __u64 *ret_size);
 extern ext2_off_t ext2fs_file_get_size(ext2_file_t file);
 extern errcode_t ext2fs_file_set_size(ext2_file_t file, ext2_off_t size);
 extern errcode_t ext2fs_file_set_size2(ext2_file_t file, ext2_off64_t size);
-errcode_t ext2fs_get_fragments(ext2_file_t file, _frag_append_t append_fragment, void *callback_data);
 
 /* finddev.c */
 extern char *ext2fs_find_block_device(dev_t device);

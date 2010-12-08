@@ -32,7 +32,7 @@
 #include "utils.h"
 #include "ntfs.h"
 #include "fat.h"
-//#include "ext2.h"
+#include "ext2.h"
 #include "libwbfs/libwbfs.h"
 
 #define PARTITION_TYPE_DOS33_EXTENDED       0x05 /* DOS 3.3+ extended partition */
@@ -123,13 +123,11 @@ bool PartitionHandle::Mount(int pos, const char * name)
         if(ntfsMount(MountNameList[pos].c_str(), interface, GetLBAStart(pos), CACHE, SECTORS, NTFS_SU | NTFS_RECOVER | NTFS_IGNORE_CASE))
             return true;
     }
-/*
 	else if(strncmp(GetFSName(pos), "LINUX", 5) == 0)
 	{
 		if(ext2Mount(MountNameList[pos].c_str(), interface, GetLBAStart(pos), CACHE, SECTORS, EXT2_FLAG_DEFAULT))
 			return true;
 	}
-*/
 	else if(strncmp(GetFSName(pos), "WBFS", 4) == 0)
 		return true;
 
@@ -154,7 +152,7 @@ void PartitionHandle::UnMount(int pos)
     //closing all open files write back the cache
     ntfsUnmount(DeviceName, true);
 	//closing all open files, and write back the cache
-	//ext2Unmount(DeviceName);
+	ext2Unmount(DeviceName);
     //Remove mount name from the list
     MountNameList[pos].clear();
 }

@@ -1,20 +1,14 @@
 
-default: cube-release wii-release
+default: wii-release
 
 all: debug release
 
-debug: cube-debug wii-debug
+debug: wii-debug
 
-release: cube-release wii-release
-
-cube-debug:
-	$(MAKE) -C source PLATFORM=cube BUILD=cube_debug
+release: wii-release
 
 wii-debug:
 	$(MAKE) -C source  PLATFORM=wii BUILD=wii_debug
-
-cube-release:
-	$(MAKE) -C source  PLATFORM=cube BUILD=cube_release
 
 wii-release:
 	$(MAKE) -C source  PLATFORM=wii BUILD=wii_release
@@ -22,7 +16,7 @@ wii-release:
 clean: 
 	$(MAKE) -C source clean
 
-install: cube-release wii-release
+install: wii-release
 	$(MAKE) -C source install
 
 run: install

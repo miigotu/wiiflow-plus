@@ -412,36 +412,49 @@ int ext2_fsync_r (struct _reent *r, int fd)
     return ret;
 }
 
-int _ext2_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data)
+typedef int (*_frag_append_t)(void *ff, u32 offset, u32 sector, u32 count);
+
+static _frag_append_t ext2_append_fragment = NULL;
+
+static int iterate_frags(ext2_filsys fs, blk_t *blocknr, int blockcnt, void *callback_data)
 {
-	struct _reent r;
-	ext2_file_state file_state;
-	int fd;
-	int retval = 0;
+	// Call ext2_append_fragment
+	if (ext2_append_fragment != NULL)
+	{
+		int sector = (fs->blocksize * (*blocknr)) / 512;
+		if (ext2_append_fragment(callback_data, 0, sector, blockcnt))
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
 
-	fd = ext2_open_r (&r, &file_state, path, O_RDONLY, 0);
-    ext2_file_state* state = STATE(fd);
+int _ext2_get_fragments(const char *path, _frag_append_t append_fragment, void *callback_data)
+{
+    ext2_vd *vd = NULL;
 
-	if (fd == -1) return -1;
-	if (fd != (int)&file_state) return -1;
-
-    // Sanity check
-    if (!state || !state->vd || !state->fd) {
+    // Get the volume descriptor for this path
+    vd = ext2GetVolume(path);
+    if (!vd) {
+        errno = ENODEV;
         return -1;
     }
+	path = ext2RealPath(path);
+	if (path == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	ext2_inode_t *ni = ext2OpenEntry(vd, path);
+    if (!ni) {
+        errno = ENOENT;
+        return -1;
+    }
+	ext2UpdateTimes(vd, ni, EXT2_UPDATE_ATIME);
 	
-    // Lock
-    ext2Lock(state->vd);
+	ext2_append_fragment = append_fragment;
+	int retval = ext2fs_block_iterate(vd->fs, ni->ino, 0, NULL, iterate_frags, callback_data);
+	ext2_append_fragment = NULL;
 
-    // Check that we are allowed to read from this file
-    if (!state->read) {
-        ext2Unlock(state->vd);
-        return -1;
-    }
-
-	retval = ext2fs_get_fragments(state->fd, append_fragment, callback_data);
-
-    // Unlock
-    ext2Unlock(state->vd);
     return retval;
 }
