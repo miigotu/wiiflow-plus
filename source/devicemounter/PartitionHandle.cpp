@@ -164,20 +164,20 @@ int PartitionHandle::FindPartitions()
     MASTER_BOOT_RECORD mbr;
 
     // Read the first sector on the device
-    if(!interface->readSectors(0, 1, &mbr)) return -1;
+    if(!interface->readSectors(0, 1, &mbr)) return 0;
 
 	// Check if it's a RAW WBFS disc, without a partition table
-	if(IsWBFS(&mbr)) return 0;
+	if(IsWBFS(&mbr)) return 1;
 
     // Verify this is the device's master boot record
-    if(mbr.signature != MBR_SIGNATURE) return -1;
+    if(mbr.signature != MBR_SIGNATURE) return 0;
 
     for (int i = 0; i < 4; i++)
     {
         PARTITION_RECORD * partition = (PARTITION_RECORD *) &mbr.partitions[i];
 
 		/* if(partition->type == PARTITION_TYPE_GPT_TABLE)
-			return CheckGPT();
+			return CheckGPT() ? PartitionList.size() : 0;
 		else  */if(IsWBFS(partition, i))	//Check for primary/extended WBFS partition
 			continue;
         else if(partition->type == PARTITION_TYPE_DOS33_EXTENDED || partition->type == PARTITION_TYPE_WIN95_EXTENDED)
@@ -201,7 +201,7 @@ int PartitionHandle::FindPartitions()
         }
     }
 
-    return 0;
+    return PartitionList.size();
 }
 
 void PartitionHandle::CheckEBR(u8 PartNum, sec_t ebr_lba)
@@ -268,7 +268,7 @@ bool PartitionHandle::CheckGPT(void)
             PartitionFS PartitionEntry;
             PartitionEntry.FSName = isWBFS ? "WBFS" : partition->Name; // Are ext2/3/4 boot blocks the same structure as FAT/NTFS ?
             PartitionEntry.LBA_Start = le64(gpt.partitions[i].First_LBA);
-            PartitionEntry.SecCount = isWBFS ? head->n_hd_sec : ((le64(gpt.partitions[i].Last_LBA) - le64(gpt.partitions[i].First_LBA)) * partition->sectors_per_cluster);
+            PartitionEntry.SecCount = isWBFS ? head->n_hd_sec : le64(gpt.partitions[i].Last_LBA) - le64(gpt.partitions[i].First_LBA);  //* partition->sectors_per_cluster);
             PartitionEntry.Bootable = false;
             PartitionEntry.PartitionType = 0;
             PartitionEntry.PartitionNum = i;
