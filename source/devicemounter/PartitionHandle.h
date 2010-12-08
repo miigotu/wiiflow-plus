@@ -110,7 +110,8 @@ typedef struct _VOLUME_BOOT_RECORD {
 	const char Name[8];
 	u16 bytes_per_sector;	// LE16
 	u8 sectors_per_cluster; // Number of sectors in each LBA
-	u8 unused[114];
+	u8 unused[496];			// We dont use these yet
+	u16 signature;
 }  __attribute__((__packed__)) VOLUME_BOOT_RECORD;
 
 class PartitionHandle

@@ -163,7 +163,7 @@ int PartitionHandle::FindPartitions()
     // Read the first sector on the device
     if(!interface->readSectors(0, 1, &mbr)) return -1;
 
-	// Check ifit's a RAW WBFS disc, without a partition table
+	// Check if it's a RAW WBFS disc, without a partition table
 	if(IsWBFS(&mbr)) return 0;
 
     // Verify this is the device's master boot record
@@ -253,13 +253,16 @@ bool PartitionHandle::CheckGPT(void)
 		VOLUME_BOOT_RECORD * partition;
 		if(!interface->readSectors(gpt.partitions[i].First_LBA, 1, &partition)) return false;
 
+		// Check if partition is WBFS
+		wbfs_head_t *head = (wbfs_head_t *)partition;
+		bool isWBFS = head->magic == (WBFS_MAGIC);
+
         if(gpt.partitions[i].Last_LBA - gpt.partitions[i].First_LBA > 0)
         {
-			
             PartitionFS PartitionEntry;
-            PartitionEntry.FSName = partition->Name; // Are ext2/3/4 boot blocks the same structure as FAT/NTFS/WBFS ?
+            PartitionEntry.FSName = isWBFS ? "WBFS" : partition->Name; // Are ext2/3/4 boot blocks the same structure as FAT/NTFS ?
             PartitionEntry.LBA_Start = gpt.partitions[i].First_LBA;
-            PartitionEntry.SecCount = (gpt.partitions[i].First_LBA - gpt.partitions[i].First_LBA) * partition->sectors_per_cluster;
+            PartitionEntry.SecCount = isWBFS ? head->n_hd_sec : ((gpt.partitions[i].First_LBA - gpt.partitions[i].First_LBA) * partition->sectors_per_cluster);
             PartitionEntry.Bootable = false;
             PartitionEntry.PartitionType = 0;
             PartitionEntry.PartitionNum = i;
