@@ -66,6 +66,16 @@ typedef struct _EXTENDED_BOOT_RECORD {
     u16 signature;                          /* EBR signature; 0xAA55 */
 } __attribute__((__packed__)) EXTENDED_BOOT_RECORD;
 
+typedef struct _GUID_PARTITION_ENTRY
+{
+    u8 Type_GUID[16];					/* Partition type GUID */
+    u8 Unique_GUID[16];					/* Unique partition GUID */
+    u64 First_LBA;						/* First LBA (little-endian) */
+    u64 Last_LBA;						/* Last LBA (inclusive, usually odd) */
+    u64 Attributes;						/* GUID Attribute flags (e.g. bit 60 denotes read-only) */
+    char Name[72];						/* Partition name (36 UTF-16LE code units) */
+} __attribute__((__packed__)) GUID_PARTITION_ENTRY;
+
 typedef struct _GPT_PARTITION_TABLE {
 	char magic[8];							/* "EFI PART" */
 	u32 Revision;
@@ -82,17 +92,8 @@ typedef struct _GPT_PARTITION_TABLE {
 	u32 Entry_Size;							/* Size of each array entry, usually 128 */
 	u32 Entries_CheckSum;					/* CRC32 of partition array */
 	u8 Zeroes[420];							/* Pad to a total 512 byte LBA or sizeof 1 LBA */
+	GUID_PARTITION_ENTRY partitions[128];	/* Max 128 Partition Entries */
 } __attribute__((__packed__)) GPT_PARTITION_TABLE;
-
-typedef struct _GUID_PARTITION_ENTRY
-{
-    u8 Type_GUID[16];					/* Partition type GUID */
-    u8 Unique_GUID[16];					/* Unique partition GUID */
-    u64 First_LBA;						/* First LBA (little-endian) */
-    u64 Last_LBA;						/* Last LBA (inclusive, usually odd) */
-    u64 Attributes;						/* GUID Attribute flags (e.g. bit 60 denotes read-only) */
-    char Name[72];						/* Partition name (36 UTF-16LE code units) */
-} __attribute__((__packed__)) GUID_PARTITION_ENTRY;
 
 typedef struct _PartitionFS {
     const char * FSName;
@@ -103,6 +104,14 @@ typedef struct _PartitionFS {
     u8 PartitionNum;
     u32 EBR_Sector;
 } PartitionFS;
+
+typedef struct _VOLUME_BOOT_RECORD {
+    u8 Jump[3];
+	const char Name[8];
+	u16 bytes_per_sector;	// LE16
+	u8 sectors_per_cluster; // Number of sectors in each LBA
+	u8 unused[114];
+}  __attribute__((__packed__)) VOLUME_BOOT_RECORD;
 
 class PartitionHandle
 {

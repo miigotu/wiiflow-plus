@@ -42,14 +42,6 @@ distribution.
 #define USB_IOCTL_UMS_READ_STRESS	(UMS_BASE+0x5)
 #define USB_IOCTL_UMS_SET_VERBOSE	(UMS_BASE+0x6)
 
-#define WBFS_BASE (('W'<<24)|('F'<<16)|('S'<<8))
-#define USB_IOCTL_WBFS_OPEN_DISC	        (WBFS_BASE+0x1)
-#define USB_IOCTL_WBFS_READ_DISC	        (WBFS_BASE+0x2)
-
-#define USB_IOCTL_WBFS_READ_DEBUG	        (WBFS_BASE+0x13)
-#define USB_IOCTL_WBFS_SET_DEVICE	        (WBFS_BASE+0x14)
-#define USB_IOCTL_WBFS_SET_FRAGLIST         (WBFS_BASE+0x15)
-
 #define UMS_HEAPSIZE			0x8000
 #define USB_MEM2_SIZE           0x10000
 

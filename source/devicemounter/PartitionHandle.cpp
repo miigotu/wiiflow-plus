@@ -32,7 +32,7 @@
 #include "utils.h"
 #include "ntfs.h"
 #include "fat.h"
-#include "ext2.h"
+//#include "ext2.h"
 #include "libwbfs/libwbfs.h"
 
 #define PARTITION_TYPE_DOS33_EXTENDED       0x05 /* DOS 3.3+ extended partition */
@@ -46,7 +46,7 @@ static inline const char * PartFromType(int type)
 {
 	switch (type)
 	{
-		case 0x00: return "Unused";
+		case 0x00: return "Unused"; //Or WBFS
 		case 0x01: return "FAT12";
 		case 0x04: return "FAT16";
 		case 0x05: return "Extended";
@@ -73,11 +73,11 @@ PartitionHandle::PartitionHandle(const DISC_INTERFACE *discio)
     interface = discio;
 
     // Sanity check
-    if (!interface) return;
+    if(!interface) return;
 
     // Start the device and check that it is inserted
-    if (!interface->startup()) return;
-    if (!interface->isInserted()) return;
+    if(!interface->startup()) return;
+    if(!interface->isInserted()) return;
 
     FindPartitions();
 }
@@ -115,7 +115,7 @@ bool PartitionHandle::Mount(int pos, const char * name)
 
     if(strncmp(GetFSName(pos), "FAT", 3) == 0)
     {
-        if (fatMount(MountNameList[pos].c_str(), interface, GetLBAStart(pos), CACHE, SECTORS))
+        if(fatMount(MountNameList[pos].c_str(), interface, GetLBAStart(pos), CACHE, SECTORS))
             return true;
     }
     else if(strncmp(GetFSName(pos), "NTF", 3) == 0)
@@ -151,7 +151,7 @@ void PartitionHandle::UnMount(int pos)
     //closing all open Files write back the cache
     ntfsUnmount(DeviceName, true);
 	//closing all open files, write back the cache
-	ext2Unmount(DeviceName);
+	//ext2Unmount(DeviceName);
     //Remove name from list
     MountNameList[pos].clear();
 }
@@ -161,21 +161,21 @@ int PartitionHandle::FindPartitions()
     MASTER_BOOT_RECORD mbr;
 
     // Read the first sector on the device
-    if (!interface->readSectors(0, 1, &mbr)) return -1;
+    if(!interface->readSectors(0, 1, &mbr)) return -1;
 
-	// Check if it's a RAW WBFS disc, without a partition table
+	// Check ifit's a RAW WBFS disc, without a partition table
 	if(IsWBFS(&mbr)) return 0;
 
-    // If this is the devices master boot record
-    if (mbr.signature != MBR_SIGNATURE) return -1;
+    // Verify this is the device's master boot record
+    if(mbr.signature != MBR_SIGNATURE) return -1;
 
     for (int i = 0; i < 4; i++)
     {
         PARTITION_RECORD * partition = (PARTITION_RECORD *) &mbr.partitions[i];
 
-		/*if(partition->type == PARTITION_TYPE_GPT_TABLE)
+		/* if(partition->type == PARTITION_TYPE_GPT_TABLE)
 			return CheckGPT();
-		else */ if(IsWBFS(partition, i))	//Check for primary/extended WBFS partition
+		else  */if(IsWBFS(partition, i))	//Check for primary/extended WBFS partition
 			continue;
         else if(partition->type == PARTITION_TYPE_DOS33_EXTENDED || partition->type == PARTITION_TYPE_WIN95_EXTENDED)
         {
@@ -209,22 +209,22 @@ void PartitionHandle::CheckEBR(u8 PartNum, sec_t ebr_lba)
     do
     {
         // Read and validate the extended boot record
-        if (!interface->readSectors(ebr_lba + next_erb_lba, 1, &ebr)) return;
+        if(!interface->readSectors(ebr_lba + next_erb_lba, 1, &ebr)) return;
 
-        if (ebr.signature != EBR_SIGNATURE) return;
+        if(ebr.signature != EBR_SIGNATURE) return;
 
         if(le32(ebr.partition.block_count) > 0 && !IsWBFS(PartNum, ebr_lba, next_erb_lba, ebr))
         {
-            PartitionFS PartitionEntrie;
-            PartitionEntrie.FSName = PartFromType(ebr.partition.type);
-            PartitionEntrie.LBA_Start = ebr_lba + next_erb_lba + le32(ebr.partition.lba_start);
-            PartitionEntrie.SecCount = le32(ebr.partition.block_count);
-            PartitionEntrie.Bootable = (ebr.partition.status == PARTITION_BOOTABLE);
-            PartitionEntrie.PartitionType = ebr.partition.type;
-            PartitionEntrie.PartitionNum = PartNum;
-            PartitionEntrie.EBR_Sector = ebr_lba + next_erb_lba;
+            PartitionFS PartitionEntry;
+            PartitionEntry.FSName = PartFromType(ebr.partition.type);
+            PartitionEntry.LBA_Start = ebr_lba + next_erb_lba + le32(ebr.partition.lba_start);
+            PartitionEntry.SecCount = le32(ebr.partition.block_count);
+            PartitionEntry.Bootable = (ebr.partition.status == PARTITION_BOOTABLE);
+            PartitionEntry.PartitionType = ebr.partition.type;
+            PartitionEntry.PartitionNum = PartNum;
+            PartitionEntry.EBR_Sector = ebr_lba + next_erb_lba;
 
-            PartitionList.push_back(PartitionEntrie);
+            PartitionList.push_back(PartitionEntry);
         }
         // Get the start sector of the current partition
         // and the next extended boot record in the chain
@@ -238,50 +238,43 @@ bool PartitionHandle::CheckGPT(void)
 	GPT_PARTITION_TABLE gpt;
 
 	// Read and validate the GUID Partition Table
-	if (!interface->readSectors(1, 1, &gpt)) return false;
+	if(!interface->readSectors(1, 3, &gpt)) return false;		// Limit GPT detection to 8 entries
+	//if(!interface->readSectors(1, 33, &gpt)) return false;	// To read all 128 possible partitions
 	
 	// Verify this is the Primary GPT entry
-	if (strncmp(gpt.magic, GPT_SIGNATURE, 8) != 0) return false;
-	if (gpt.Entry_Size != 128)		return false;
-	if (gpt.First_Usable_LBA != 2)	return false;
-	if (gpt.Table_LBA != 2)			return false;
-	if (gpt.Reserved != 0)			return false;
+	if(strncmp(gpt.magic, GPT_SIGNATURE, 8) != 0) return false;
+	if(gpt.Entry_Size != 128)		return false;
+	if(gpt.First_Usable_LBA != 2)	return false;
+	if(gpt.Table_LBA != 2)			return false;
+	if(gpt.Reserved != 0)			return false;
 	
-	u8 count = 0, blocks_read = 0;
-	do
+	for(u8 i = 0; i < (gpt.Num_Entries > 8 ? 8 : gpt.Num_Entries); i++)
 	{
-		GUID_PARTITION_ENTRY partition;
+		VOLUME_BOOT_RECORD * partition;
+		if(!interface->readSectors(gpt.partitions[i].First_LBA, 1, &partition)) return false;
 
-        // Read the next 4 partition entries
-		if (!interface->readSectors(gpt.First_Usable_LBA + blocks_read, 1, &partition)) return false;
+        if(gpt.partitions[i].Last_LBA - gpt.partitions[i].First_LBA > 0)
+        {
+			
+            PartitionFS PartitionEntry;
+            PartitionEntry.FSName = partition->Name; // Are ext2/3/4 boot blocks the same structure as FAT/NTFS/WBFS ?
+            PartitionEntry.LBA_Start = gpt.partitions[i].First_LBA;
+            PartitionEntry.SecCount = (gpt.partitions[i].First_LBA - gpt.partitions[i].First_LBA) * partition->sectors_per_cluster;
+            PartitionEntry.Bootable = false;
+            PartitionEntry.PartitionType = 0;
+            PartitionEntry.PartitionNum = i;
+            PartitionEntry.EBR_Sector = 0;
 
-		for(u8 i = 1; i <= 4; i++)
-		{
-			if(count >= MAX_MOUNTS || count >= gpt.Num_Entries)
-				break;
-
-            PartitionFS PartitionEntrie;
-			PartitionEntrie.FSName = partition.Name;
-			PartitionEntrie.LBA_Start = le32(partition.First_LBA);
-			//PartitionEntrie.SecCount = (le32(partition.Last_LBA) - le32(partition.First_LBA));
-			//PartitionEntrie.PartitionType = *partition.Type_GUID;
-			PartitionEntrie.PartitionNum = count + 1;
-			PartitionEntrie.EBR_Sector = 0;
-
-			PartitionList.push_back(PartitionEntrie);
-			count++;
-		}
-		blocks_read++;
+            PartitionList.push_back(PartitionEntry);
+        }
 	}
-	while (count < MAX_MOUNTS && count < gpt.Num_Entries);
-
 	return true;
 }
 
 bool PartitionHandle::IsWBFS(MASTER_BOOT_RECORD * mbr)
 {
 	wbfs_head_t *head = (wbfs_head_t *)mbr;
-	if (head->magic == (WBFS_MAGIC))
+	if(head->magic == (WBFS_MAGIC))
 	{
 		PartitionFS PartitionEntry;
 		PartitionEntry.FSName = "WBFS";
@@ -300,13 +293,13 @@ bool PartitionHandle::IsWBFS(MASTER_BOOT_RECORD * mbr)
 
 bool PartitionHandle::IsWBFS(PARTITION_RECORD * partition, int i)
 {
-	if (partition->type == 6)
+	if(partition->type == 6)
 	{
 		wbfs_head_t *head = (wbfs_head_t *)malloc(512);
 		memset(head, 0, sizeof(wbfs_head_t));
-		if (interface->readSectors(le32(partition->lba_start), 1, head))
+		if(interface->readSectors(le32(partition->lba_start), 1, head))
 		{
-			if (head->magic == (WBFS_MAGIC))
+			if(head->magic == (WBFS_MAGIC))
 			{
 				PartitionFS PartitionEntry;
 				PartitionEntry.FSName = "WBFS";
