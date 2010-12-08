@@ -301,30 +301,27 @@ bool PartitionHandle::IsWBFS(MASTER_BOOT_RECORD * mbr)
 
 bool PartitionHandle::IsWBFS(PARTITION_RECORD * partition, int i)
 {
-	if(partition->type == 6)
+	wbfs_head_t *head = (wbfs_head_t *)malloc(512);
+	memset(head, 0, sizeof(wbfs_head_t));
+	if(interface->readSectors(le32(partition->lba_start), 1, head))
 	{
-		wbfs_head_t *head = (wbfs_head_t *)malloc(512);
-		memset(head, 0, sizeof(wbfs_head_t));
-		if(interface->readSectors(le32(partition->lba_start), 1, head))
+		if(head->magic == (WBFS_MAGIC))
 		{
-			if(head->magic == (WBFS_MAGIC))
-			{
-				PartitionFS PartitionEntry;
-				PartitionEntry.FSName = "WBFS";
-				PartitionEntry.LBA_Start = le32(partition->lba_start);
-				PartitionEntry.SecCount = head->n_hd_sec;
-				PartitionEntry.Bootable = (partition->status == PARTITION_BOOTABLE);
-				PartitionEntry.PartitionType = partition->type;
-				PartitionEntry.PartitionNum = i;
-				PartitionEntry.EBR_Sector = 0;
+			PartitionFS PartitionEntry;
+			PartitionEntry.FSName = "WBFS";
+			PartitionEntry.LBA_Start = le32(partition->lba_start);
+			PartitionEntry.SecCount = head->n_hd_sec;
+			PartitionEntry.Bootable = (partition->status == PARTITION_BOOTABLE);
+			PartitionEntry.PartitionType = partition->type;
+			PartitionEntry.PartitionNum = i;
+			PartitionEntry.EBR_Sector = 0;
 
-				PartitionList.push_back(PartitionEntry);
-				free(head);
-				return true;
-			}
+			PartitionList.push_back(PartitionEntry);
+			free(head);
+			return true;
 		}
-		free(head);
 	}
+	free(head);
 	return false;
 }
 
