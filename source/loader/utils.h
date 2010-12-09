@@ -28,7 +28,7 @@ extern "C" {
 #endif	/* __cplusplus */
 
 /* Prototypes */
-u32 le64(u64);
+u64 le64(u64);
 u32 le32(u32);
 u16 le16(u16);
 int makedir(char *newdir);

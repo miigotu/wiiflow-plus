@@ -44,6 +44,17 @@
 
 #define BYTES_PER_SECTOR        512 /* Default in libogc */
 
+enum SIG_OFFSETS {
+	BPB_NTFS_ADDR = 0x3,
+	BPB_FAT16_ADDR = 0x36,
+	BPB_EXT2_ADDR = 0x44,
+	BPB_FAT32_ADDR = 0x52,
+};
+
+static const char FAT_SIG[3] = {'F', 'A', 'T'};
+static const char NTFS_SIG[4] = {'N', 'T', 'F', 'S'};
+static const char EXT_SIG[4] = {'E', 'F', '5', '3'};
+
 typedef struct _PARTITION_RECORD {
     u8 status;                              /* Partition status; see above */
     u8 chs_start[3];                        /* Cylinder-head-sector address to first block of partition */
@@ -106,14 +117,41 @@ typedef struct _PartitionFS {
     u32 EBR_Sector;
 } PartitionFS;
 
+typedef struct _BIOS_PARAMETER_BLOCK {
+	u16 Bytes_Per_Sector;		/* Size of a sector in bytes. */
+	u8 Sectors_Per_Cluster;		/* Size of a cluster in sectors. */
+	u16 ReservedSsectors;		/* zero on ntfs */
+	u8 Fats;					/* zero on ntfs */
+	u16 Root_Entries;			/* zero on ntfs */
+	u16 FatSectors;				/* Number of sectors in volume. (FAT) Zero on ntfs */
+	u8 Media_Type;				/* 0xf8 = hard disk */
+	u16 Sectors_Per_Fat;		/* zero on ntfs*/
+	u16 Sectors_Per_Track;		/* Required to boot Windows. (0x0d) */
+	u16 Heads;					/* Required to boot Windows. (0x0f) */
+	u32 Hidden_Sectors;			/* Offset to the start of the partition (0x11) in sectors. */
+	u32 Large_Sectors;			/* Number of sectors in volume if Sectors is 0 (FAT) Zero on ntfs (0x15) */
+} __attribute__((__packed__)) BIOS_PARAMETER_BLOCK; /* 25 (0x19) bytes */
+
 typedef struct _VOLUME_BOOT_RECORD {
-    u8 Jump[3];
-	char Name[8];
-	u16 bytes_per_sector;	// LE16
-	u8 sectors_per_cluster; // Number of sectors in each LBA
-	u8 unused[496];			// We dont use these yet
-	u16 signature;
-}  __attribute__((__packed__)) VOLUME_BOOT_RECORD;
+	u8 Jump[3];					/* Irrelevant (jump to boot up code).*/
+	char Name[8];						/* Magic "NTFS    ". */
+	BIOS_PARAMETER_BLOCK bpb;		/* See BIOS_PARAMETER_BLOCK. (0x0b) */
+	u8 Drive_Type;					/* 0x00 floppy, 0x80 hard disk */
+	u8 Current_Head;				/* zero on ntfs */
+	u8 Extended_Boot_Signature; 	/* 0x80 on ntfs (Doesnt show this in M$ docs)*/ 
+	u8 Reserved0;					/* zero on ntfs */
+	s64 Number_of_Sectors;			/* Number of sectors in volume. (NTFS)(0x28)*/
+	s64 MFT;						/* Cluster location of mft data. */
+	s64 MFT_Mirror;					/* Cluster location of copy of mft. */
+	s8 Clusters_Per_MFT;			/* Mft record size in clusters. */
+	u8 Reserved1[3];				/* zero */
+	s8 Clusters_Per_Index;			/* Index block size in clusters. */
+	u8 Reserved2[3];				/* zero */
+	u64 Volume_Serial_Number;		/* Irrelevant (serial number). */
+	u8 Checksum[4];					/* Boot sector checksum. */ 
+	u8 Bootstrap[426];				/* Irrelevant (boot up code). (0x54) */
+	u16 Signature;					/* End of bootsector magic. LE 0xaa55 */
+} __attribute__((__packed__)) VOLUME_BOOT_RECORD; /* 512 (0x200) bytes */
 
 class PartitionHandle
 {
@@ -159,6 +197,7 @@ class PartitionHandle
     protected:
         bool valid(int pos) { return (pos >= 0 && pos < (int) PartitionList.size()); }
 		bool IsWBFS(MASTER_BOOT_RECORD * mbr);
+		char * getNameFromVBR(VOLUME_BOOT_RECORD vbr);
         int FindPartitions();
         void CheckEBR(u8 PartNum, sec_t ebr_lba);
 		bool CheckGPT(void);
