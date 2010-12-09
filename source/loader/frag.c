@@ -15,9 +15,9 @@
 #include "sys.h"
 #include "wdvd.h"
 #include "gecko.h"
+#include "ext2_frag.h"
 
-int _FAT_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
-int _ext2_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
+int _FAT_get_fragments(const char *path, _frag_append_t append_fragment, void *callback_data);
 
 FragList *frag_list = NULL;
 
@@ -217,7 +217,7 @@ int get_frag_list_for_file(char *fname, u8 *id, FragList **fl)
 		}
 		else if (wbfs_part_fs == PART_FS_EXT)
 		{
-			ret = _ext2_get_fragments(fname, &_frag_append, fs);
+			ret = _EXT2_get_fragments(fname, &_frag_append, fs);
 			if (ret)
 			{
 				ret_val = ret;

@@ -101,6 +101,7 @@ all: $(EXT2BIN)
 
 install:
 	cp ../include/ext2.h ../../../include
+	cp ../source/ext2_frag.h ../../../include
 	cp ../lib/libext2fs.a ../../../lib
 
 wii-install: install
