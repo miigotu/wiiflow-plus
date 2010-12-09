@@ -173,23 +173,31 @@ int PartitionHandle::FindPartitions()
     for (int i = 0; i < 4; i++)
     {
         PARTITION_RECORD * partition = (PARTITION_RECORD *) &mbr.partitions[i];
+		VOLUME_BOOT_RECORD vbr;
 
-		/* if(partition->type == PARTITION_TYPE_GPT_TABLE)
+		if(!interface->readSectors(le32(partition->lba_start), 1, &vbr)) continue;
+
+		// Check if the partition is WBFS
+		wbfs_head_t *head = (wbfs_head_t *)&vbr;
+		bool isWBFS = head->magic == (WBFS_MAGIC);
+
+		if(vbr.signature != VBR_SIGNATURE && !isWBFS) continue;
+
+
+		if(!isWBFS && i == 0 && partition->type == PARTITION_TYPE_GPT_TABLE)
 			return CheckGPT() ? PartitionList.size() : 0;
-		else  */if(IsWBFS(partition, i))	//Check for primary/extended WBFS partition
-			continue;
-        else if(partition->type == PARTITION_TYPE_DOS33_EXTENDED || partition->type == PARTITION_TYPE_WIN95_EXTENDED)
+        else if(!isWBFS && (partition->type == PARTITION_TYPE_DOS33_EXTENDED || partition->type == PARTITION_TYPE_WIN95_EXTENDED))
         {
 			CheckEBR(i, le32(partition->lba_start));
 			continue;
         }
 
-        if(le32(partition->block_count) > 0)
+        if(isWBFS || le32(partition->block_count) > 0)
         {
             PartitionFS PartitionEntry;
-            PartitionEntry.FSName = PartFromType(partition->type);
+            PartitionEntry.FSName = isWBFS ? "WBFS" : PartFromType(partition->type);
             PartitionEntry.LBA_Start = le32(partition->lba_start);
-            PartitionEntry.SecCount = le32(partition->block_count);
+            PartitionEntry.SecCount = isWBFS ? head->n_hd_sec : le32(partition->block_count);
             PartitionEntry.Bootable = (partition->status == PARTITION_BOOTABLE);
             PartitionEntry.PartitionType = partition->type;
             PartitionEntry.PartitionNum = i;
@@ -212,14 +220,18 @@ void PartitionHandle::CheckEBR(u8 PartNum, sec_t ebr_lba)
         // Read and validate the extended boot record
         if(!interface->readSectors(ebr_lba + next_erb_lba, 1, &ebr)) return;
 
-        if(ebr.signature != EBR_SIGNATURE) return;
+		// Check if the partition is WBFS
+		wbfs_head_t *head = (wbfs_head_t *)&ebr;
+		bool isWBFS = head->magic == (WBFS_MAGIC);
 
-        if(le32(ebr.partition.block_count) > 0 && !IsWBFS(PartNum, ebr_lba, next_erb_lba, ebr))
+        if(ebr.signature != EBR_SIGNATURE && !isWBFS) return;
+		
+        if(isWBFS || le32(ebr.partition.block_count) > 0)
         {
             PartitionFS PartitionEntry;
-            PartitionEntry.FSName = PartFromType(ebr.partition.type);
+            PartitionEntry.FSName = isWBFS ? "WBFS" : PartFromType(ebr.partition.type);
             PartitionEntry.LBA_Start = ebr_lba + next_erb_lba + le32(ebr.partition.lba_start);
-            PartitionEntry.SecCount = le32(ebr.partition.block_count);
+            PartitionEntry.SecCount = isWBFS ? head->n_hd_sec : le32(ebr.partition.block_count);
             PartitionEntry.Bootable = (ebr.partition.status == PARTITION_BOOTABLE);
             PartitionEntry.PartitionType = ebr.partition.type;
             PartitionEntry.PartitionNum = PartNum;
@@ -253,18 +265,21 @@ bool PartitionHandle::CheckGPT(void)
 	
 	for(u8 i = 0; i < (le32(gpt.Num_Entries) > 8 ? 8 : le32(gpt.Num_Entries)); i++)
 	{
-        if(le64(gpt.partitions[i].Last_LBA) - le64(gpt.partitions[i].First_LBA) > 0)
+		VOLUME_BOOT_RECORD vbr;
+		if(!interface->readSectors(le64(gpt.partitions[i].First_LBA), 1, &vbr)) continue;
+
+
+		// Check if the partition is WBFS
+		wbfs_head_t *head = (wbfs_head_t *)&vbr;
+		bool isWBFS = head->magic == (WBFS_MAGIC);
+
+		if(vbr.signature != VBR_SIGNATURE && !isWBFS) continue;
+
+
+        if(isWBFS || le64(gpt.partitions[i].Last_LBA) - le64(gpt.partitions[i].First_LBA) > 0)
         {
-			VOLUME_BOOT_RECORD * partition;
-			if(!interface->readSectors(le64(gpt.partitions[i].First_LBA), 1, &partition)) continue;
-			if(partition->signature != VBR_SIGNATURE) continue;
-
-			// Check if the partition is WBFS
-			wbfs_head_t *head = (wbfs_head_t *)partition;
-			bool isWBFS = head->magic == (WBFS_MAGIC);
-
             PartitionFS PartitionEntry;
-            PartitionEntry.FSName = isWBFS ? "WBFS" : partition->Name; // Are ext2/3/4 boot blocks the same structure as FAT/NTFS ?
+            PartitionEntry.FSName = isWBFS ? "WBFS" : vbr.Name; // Are ext2/3/4 boot blocks the same structure as FAT/NTFS ?
             PartitionEntry.LBA_Start = le64(gpt.partitions[i].First_LBA);
             PartitionEntry.SecCount = isWBFS ? head->n_hd_sec : le64(gpt.partitions[i].Last_LBA) - le64(gpt.partitions[i].First_LBA);  //* partition->sectors_per_cluster);
             PartitionEntry.Bootable = false;
@@ -293,51 +308,11 @@ bool PartitionHandle::IsWBFS(MASTER_BOOT_RECORD * mbr)
 		PartitionEntry.PartitionNum = 0;
 		PartitionEntry.EBR_Sector = 0;
 
-		PartitionList.push_back(PartitionEntry);
-		return true;
-	}
-	return false;
-}
 
-bool PartitionHandle::IsWBFS(PARTITION_RECORD * partition, int i)
-{
-	wbfs_head_t *head = (wbfs_head_t *)malloc(512);
-	memset(head, 0, sizeof(wbfs_head_t));
-	if(interface->readSectors(le32(partition->lba_start), 1, head))
-	{
-		if(head->magic == (WBFS_MAGIC))
-		{
-			PartitionFS PartitionEntry;
-			PartitionEntry.FSName = "WBFS";
-			PartitionEntry.LBA_Start = le32(partition->lba_start);
-			PartitionEntry.SecCount = head->n_hd_sec;
-			PartitionEntry.Bootable = (partition->status == PARTITION_BOOTABLE);
-			PartitionEntry.PartitionType = partition->type;
-			PartitionEntry.PartitionNum = i;
-			PartitionEntry.EBR_Sector = 0;
 
-			PartitionList.push_back(PartitionEntry);
-			free(head);
-			return true;
-		}
-	}
-	free(head);
-	return false;
-}
 
-bool PartitionHandle::IsWBFS(u8 PartNum, sec_t ebr_lba, sec_t next_erb_lba, EXTENDED_BOOT_RECORD ebr)
-{
-	wbfs_head_t *head = (wbfs_head_t *)&ebr;
-	if(head->magic == (WBFS_MAGIC))
-	{
-		PartitionFS PartitionEntry;
-		PartitionEntry.FSName = "WBFS";
-		PartitionEntry.LBA_Start = ebr_lba + next_erb_lba + le32(ebr.partition.lba_start);
-		PartitionEntry.SecCount = head->n_hd_sec;
-		PartitionEntry.Bootable = (ebr.partition.status == PARTITION_BOOTABLE);
-		PartitionEntry.PartitionType = ebr.partition.type;
-		PartitionEntry.PartitionNum = PartNum;
-		PartitionEntry.EBR_Sector = ebr_lba + next_erb_lba;
+
+
 
 		PartitionList.push_back(PartitionEntry);
 		return true;

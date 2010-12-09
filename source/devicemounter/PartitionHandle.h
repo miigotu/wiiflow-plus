@@ -108,7 +108,7 @@ typedef struct _PartitionFS {
 
 typedef struct _VOLUME_BOOT_RECORD {
     u8 Jump[3];
-	const char Name[8];
+	char Name[8];
 	u16 bytes_per_sector;	// LE16
 	u8 sectors_per_cluster; // Number of sectors in each LBA
 	u8 unused[496];			// We dont use these yet
@@ -159,8 +159,6 @@ class PartitionHandle
     protected:
         bool valid(int pos) { return (pos >= 0 && pos < (int) PartitionList.size()); }
 		bool IsWBFS(MASTER_BOOT_RECORD * mbr);
-		bool IsWBFS(PARTITION_RECORD * partition, int i);
-		bool IsWBFS(u8 PartNum, sec_t ebr_lba, sec_t next_erb_lba, EXTENDED_BOOT_RECORD ebr);
         int FindPartitions();
         void CheckEBR(u8 PartNum, sec_t ebr_lba);
 		bool CheckGPT(void);
