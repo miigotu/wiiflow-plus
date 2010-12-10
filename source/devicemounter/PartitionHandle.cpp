@@ -1,6 +1,7 @@
  /****************************************************************************
  * Copyright (C) 2010
  * by Dimok
+ * modified for Debugging, GPT, WBFS, and EXT by Miigotu
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any
@@ -21,7 +22,8 @@
  * 3. This notice may not be removed or altered from any source
  * distribution.
  *
- * for WiiXplorer 2010
+ * By Dimok for WiiXplorer 2010
+ * By Miigotu for WiiFlow 2010
  ***************************************************************************/
 #include <gccore.h>
 #include <stdio.h>
@@ -35,9 +37,14 @@
 #include "ext2.h"
 #include "libwbfs/libwbfs.h"
 
-#ifdef DBG_MOUNTER
+//#define DBG_PRIMARY_VBR
+//#define DBG_GPT_VBR
+//#define DBG_GPT
+//#define DBG_MBR
+//#define DBG_EBR
+
 #include "gecko.h"
-#endif /* DBG_MOUNTER */
+static bool first = true;
 
 #define PARTITION_TYPE_DOS33_EXTENDED       0x05 /* DOS 3.3+ extended partition */
 #define PARTITION_TYPE_WIN95_EXTENDED       0x0F /* Windows 95 extended partition */
@@ -168,6 +175,14 @@ int PartitionHandle::FindPartitions()
     // Read the first sector on the device
     if(!interface->readSectors(0, 1, &mbr)) return 0;
 
+	#ifdef DBG_MBR
+	if(first)
+	{
+		gprintf("\nMBR:");
+		ghexdump((u8 *)&mbr, 512);
+	}
+	#endif /* DBG_MBR */
+
 	// Check if it's a RAW WBFS disc, without a partition table
 	if(IsWBFS(&mbr)) return 1;
 
@@ -181,6 +196,14 @@ int PartitionHandle::FindPartitions()
 
 		if(!interface->readSectors(le32(partition->lba_start), 1, &vbr)) continue;
 
+		#ifdef DBG_PRIMARY_VBR
+		if(first)
+		{
+			gprintf("\nPrimary VBR:");
+			ghexdump((u8 *)&vbr, 512);
+		}
+		#endif /* DBG_PRIMARY_VBR */
+
 		// Check if the partition is WBFS
 		wbfs_head_t *head = (wbfs_head_t *)&vbr;
 		bool isWBFS = head->magic == (WBFS_MAGIC);
@@ -188,14 +211,13 @@ int PartitionHandle::FindPartitions()
 		if(!isWBFS && i == 0 && partition->type == PARTITION_TYPE_GPT_TABLE)
 			return CheckGPT() ? PartitionList.size() : 0;
 
-		if(!isWBFS && le32(vbr.Signature) != VBR_SIGNATURE) continue;
+		if(!isWBFS && vbr.Signature != VBR_SIGNATURE && partition->type != 0x83) continue;
 
         if(!isWBFS && (partition->type == PARTITION_TYPE_DOS33_EXTENDED || partition->type == PARTITION_TYPE_WIN95_EXTENDED))
         {
 			CheckEBR(i, le32(partition->lba_start));
 			continue;
         }
-
         if(isWBFS || le32(partition->block_count) > 0)
         {
             PartitionFS PartitionEntry;
@@ -210,7 +232,7 @@ int PartitionHandle::FindPartitions()
             PartitionList.push_back(PartitionEntry);
         }
     }
-
+	first = false;
     return PartitionList.size();
 }
 
@@ -224,11 +246,19 @@ void PartitionHandle::CheckEBR(u8 PartNum, sec_t ebr_lba)
         // Read and validate the extended boot record
         if(!interface->readSectors(ebr_lba + next_erb_lba, 1, &ebr)) return;
 
+		#ifdef DBG_EBR
+		if(first)
+		{
+			gprintf("\nEBR:");
+			ghexdump((u8 *)&ebr, 512);
+		}
+		#endif /* DBG_MOUNTER */
+
 		// Check if the partition is WBFS
 		wbfs_head_t *head = (wbfs_head_t *)&ebr;
 		bool isWBFS = head->magic == (WBFS_MAGIC);
 
-        if(ebr.signature != EBR_SIGNATURE && !isWBFS) return;
+        if(!isWBFS && ebr.signature != EBR_SIGNATURE) return;
 		
         if(isWBFS || le32(ebr.partition.block_count) > 0)
         {
@@ -256,9 +286,18 @@ bool PartitionHandle::CheckGPT(void)
 	bool success = false;  // To return false unless at least 1 partition is verified
 	
 	// Read and validate the GUID Partition Table
-	if(!interface->readSectors(1, 3, &gpt)) return false;		// Limit GPT detection to 8 entries
-	//if(!interface->readSectors(1, 33, &gpt)) return false;	// To read all 128 possible partitions
-	
+	//if(!interface->readSectors(1, 2, &gpt)) return false;		// Limit GPT detection to 4 entries
+	//if(!interface->readSectors(1, 3, &gpt)) return false;		// Limit GPT detection to 8 entries
+	if(!interface->readSectors(1, 33, &gpt)) return false;	// To read all 128 possible partitions
+
+	#ifdef DBG_GPT
+	if(first)
+	{
+		gprintf("\nGPT:");
+		ghexdump((u8 *)&gpt, 512 * 33);
+	}
+	#endif /* DBG_GPT */
+
 	// Verify this is the Primary GPT entry
 	if(strncmp(gpt.magic, GPT_SIGNATURE, 8) != 0) 	return false;
 	if(le32(gpt.Entry_Size) != 128)					return false;
@@ -267,23 +306,95 @@ bool PartitionHandle::CheckGPT(void)
 	if(le64(gpt.First_Usable_LBA) != 34)			return false;
 	if(gpt.Reserved != 0)							return false;
 
-	for(u8 i = 0; i < (le32(gpt.Num_Entries) > 8 ? 8 : le32(gpt.Num_Entries)); i++)
+	#ifdef DBG_GPT
+	if(first) gprintf("\nGPT VERIFIED!\n");
+	#endif /* DBG_GPT */
+
+	//for(u8 i = 0; i < 1; i++)
+	//for(u8 i = 0; i < le32(gpt.Num_Entries); i++)
+	//for(u8 i = 0; i < (le32(gpt.Num_Entries) > 8 ? 8 : le32(gpt.Num_Entries)); i++)
+	for(u8 i = 0; i < le32(gpt.Num_Entries) && PartitionList.size() <= 8; i++)
 	{
+		GUID_PARTITION_ENTRY * entry = (GUID_PARTITION_ENTRY *) &gpt.partitions[i];
+
+		int Start = le64(entry->First_LBA);
+		int End = le64(entry->Last_LBA);
+		int Size = End - Start;
+
 		VOLUME_BOOT_RECORD vbr;
-		if(!interface->readSectors(le64(gpt.partitions[i].First_LBA), 1, &vbr)) continue;
+		if(!interface->readSectors(Start, 1, &vbr)) continue;
+
+		#ifdef DBG_GPT_VBR
+		if(first && i < 2)
+		{
+			gprintf("\nGPT VBR:");
+			ghexdump((u8 *)&vbr, 512);
+		}
+		#endif /* DBG_GPT */
 
 		// Check if the partition is WBFS
 		wbfs_head_t *head = (wbfs_head_t *)&vbr;
 		bool isWBFS = head->magic == (WBFS_MAGIC);
 
-		if(vbr.Signature != VBR_SIGNATURE && !isWBFS) continue;
+		//if(!isWBFS && vbr.Signature != VBR_SIGNATURE) continue; //Wont find EXT partitions with this I think
 
-        if(isWBFS || le64(gpt.partitions[i].Last_LBA) - le64(gpt.partitions[i].First_LBA) > 0)
+		#ifdef DBG_GPT_VBR
+		if(first)
+		{
+			gprintf("\n#%i LBA Start = %i\n", i, Start);
+			gprintf("#%i LBA End = %i\n", i, End);
+		}
+		#endif /* DBG_GPT_VBR */
+		
+        if(isWBFS || Size > 0)
         {
+			char *name = (char *)"NULL";
+			if(!isWBFS)
+			{
+				#ifdef DBG_GPT_VBR
+				if(first)
+				{
+					gprintf("\nNTFS Dump:");
+					ghexdump((u8 *)&vbr + BPB_NTFS_ADDR, sizeof(NTFS_SIGNATURE));
+					gprintf("\nFAT32 Dump:");
+					ghexdump((u8 *)&vbr + BPB_FAT32_ADDR, sizeof(FAT_SIGNATURE));
+					gprintf("\nFAT16 Dump:");
+					ghexdump((u8 *)&vbr + BPB_FAT16_ADDR, sizeof(FAT_SIGNATURE));
+					gprintf("\n");
+				}
+				#endif /* DBG_GPT_VBR */
+
+				if(memcmp((u8 *)&vbr + BPB_NTFS_ADDR, NTFS_SIGNATURE, sizeof(NTFS_SIGNATURE)) == 0)
+					strcpy(name, "NTFS");
+				else if(memcmp((u8 *)&vbr + BPB_FAT32_ADDR, FAT_SIGNATURE, sizeof(FAT_SIGNATURE)) == 0)
+					strcpy(name, "FAT32");
+				else if(memcmp((u8 *)&vbr + BPB_FAT16_ADDR, FAT_SIGNATURE, sizeof(FAT_SIGNATURE)) == 0)
+					strcpy(name, "FAT16");
+				else if(interface->readSectors(Start + 1, 1, &vbr))
+				{
+					#ifdef DBG_GPT_VBR
+					if(first)
+					{
+						gprintf("\nEXT2 Dump:");
+						ghexdump((u8 *)&vbr + BPB_EXT2_ADDR, sizeof(EXT_SIGNATURE));
+						gprintf("\n");
+					}
+					#endif /* DBG_GPT_VBR */
+
+					if(memcmp((u8 *)&vbr + BPB_EXT2_ADDR, EXT_SIGNATURE, sizeof(EXT_SIGNATURE)) == 0)
+					strcpy(name, "LINUX");
+				}
+				else continue;
+			}
+
+			#ifdef DBG_GPT_VBR
+			if(first) gprintf("\nNAME: %s\n", isWBFS ? "WBFS" : name);
+			#endif /* DBG_GPT_VBR */
+
             PartitionFS PartitionEntry;
-			PartitionEntry.FSName = isWBFS ? "WBFS" : getNameFromVBR(vbr);
-            PartitionEntry.LBA_Start = le64(gpt.partitions[i].First_LBA);
-            PartitionEntry.SecCount = isWBFS ? head->n_hd_sec : le64(gpt.partitions[i].Last_LBA) - le64(gpt.partitions[i].First_LBA);  //* partition->sectors_per_cluster);
+			PartitionEntry.FSName = isWBFS ? "WBFS" : name;
+            PartitionEntry.LBA_Start = Start;
+            PartitionEntry.SecCount = isWBFS ? head->n_hd_sec : Size;
             PartitionEntry.Bootable = false;
             PartitionEntry.PartitionType = 0;
             PartitionEntry.PartitionNum = i;
@@ -293,6 +404,7 @@ bool PartitionHandle::CheckGPT(void)
             PartitionList.push_back(PartitionEntry);
         }
 	}
+	first = false;
 	return success;
 }
 
@@ -314,32 +426,4 @@ bool PartitionHandle::IsWBFS(MASTER_BOOT_RECORD * mbr)
 		return true;
 	}
 	return false;
-}
-
-char * PartitionHandle::getNameFromVBR(VOLUME_BOOT_RECORD vbr)
-{
-	char *name = (char *)"NULL";
-
-#ifdef DBG_MOUNTER
-	gprintf("\nNTFS Dump:");
-	ghexdump((char *)&vbr + BPB_NTFS_ADDR, sizeof(NTFS_SIG));
-	gprintf("\nFAT32 Dump:");
-	ghexdump((char *)&vbr + BPB_FAT32_ADDR, sizeof(FAT_SIG));
-	gprintf("\nFAT16 Dump:");
-	ghexdump((char *)&vbr + BPB_FAT16_ADDR, sizeof(FAT_SIG));
-	gprintf("\nEXT2 Dump:");
-	ghexdump((char *)&vbr + BPB_EXT2_ADDR, sizeof(EXT_SIG));
-	gprintf("\n");
-#endif /* DBG_MOUNTER */
-
-	if(memcmp((char *)&vbr + BPB_NTFS_ADDR, NTFS_SIG, sizeof(NTFS_SIG)) == 0)
-		strcpy(name, "NTFS");
-	else if(memcmp((char *)&vbr + BPB_FAT32_ADDR, FAT_SIG, sizeof(FAT_SIG)) == 0)
-		strcpy(name, "FAT32");
-	else if(memcmp((char *)&vbr + BPB_FAT16_ADDR, FAT_SIG, sizeof(FAT_SIG)) == 0)
-		strcpy(name, "FAT16");
-	else if(memcmp((char *)&vbr + BPB_EXT2_ADDR, EXT_SIG, sizeof(EXT_SIG)) == 0)
-		strcpy(name, "LINUX");
-
-	return name;
 }

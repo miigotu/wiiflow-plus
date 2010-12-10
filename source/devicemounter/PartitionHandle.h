@@ -47,13 +47,13 @@
 enum SIG_OFFSETS {
 	BPB_NTFS_ADDR = 0x3,
 	BPB_FAT16_ADDR = 0x36,
-	BPB_EXT2_ADDR = 0x44,
 	BPB_FAT32_ADDR = 0x52,
+	BPB_EXT2_ADDR = 0x5C,
 };
 
-static const char FAT_SIG[3] = {'F', 'A', 'T'};
-static const char NTFS_SIG[4] = {'N', 'T', 'F', 'S'};
-static const char EXT_SIG[4] = {'E', 'F', '5', '3'};
+static const char FAT_SIGNATURE[3] = {'F', 'A', 'T'};
+static const char NTFS_SIGNATURE[4] = {'N', 'T', 'F', 'S'};
+static const char EXT_SIGNATURE[2] = {0x53, 0xEF};
 
 typedef struct _PARTITION_RECORD {
     u8 status;                              /* Partition status; see above */
@@ -197,7 +197,6 @@ class PartitionHandle
     protected:
         bool valid(int pos) { return (pos >= 0 && pos < (int) PartitionList.size()); }
 		bool IsWBFS(MASTER_BOOT_RECORD * mbr);
-		char * getNameFromVBR(VOLUME_BOOT_RECORD vbr);
         int FindPartitions();
         void CheckEBR(u8 PartNum, sec_t ebr_lba);
 		bool CheckGPT(void);

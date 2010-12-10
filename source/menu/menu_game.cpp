@@ -876,9 +876,13 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	setLanguage(language);
 	
 	// Do every disc related action before reloading IOS
-	if (!dvd)
-		if (get_frag_list((u8 *) &hdr->hdr.id, (char *)&hdr->path) < 0)
-			return;
+	if (!dvd && get_frag_list((u8 *) &hdr->hdr.id, (char *)&hdr->path) < 0)
+		return;
+
+	#ifdef DBG_FRAG
+	extern FragList *frag_list;
+	frag_dump(frag_list);
+	#endif /* DBG_FRAG */
 
 	if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
 
@@ -932,7 +936,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	bool blockIOSReload = m_gcfg2.getBool((const char *) hdr->hdr.id, "block_ios_reload", false);
 	if (mload && blockIOSReload)
 		disableIOSReload();
-	
+
 	if (!dvd)
 	{
 		s32 ret = Disc_SetUSB((u8 *) &hdr->hdr.id);
