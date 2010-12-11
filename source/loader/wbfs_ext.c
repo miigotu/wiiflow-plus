@@ -32,10 +32,6 @@ char wbfs_fs_drive[16];
 char wbfs_ext_dir[16] = ":/wbfs";
 char invalid_path[] = "/\\:|<>?*\"'";
 
-int  wbfs_ext_vfs_have = 0;
-int  wbfs_ext_vfs_lba = 0;
-int  wbfs_ext_vfs_dev = 0;
-
 split_info_t split;
 
 static int fat_hdr_count = 0;
@@ -485,16 +481,19 @@ void WBFS_Ext_CloseDisc(wbfs_disc_t* disc)
 s32 WBFS_Ext_DiskSpace(f32 *used, f32 *free)
 {
 	f32 size;
-	int ret;
-
 	*used = 0;
 	*free = 0;
+
+	static int wbfs_ext_vfs_have = 0, wbfs_ext_vfs_lba = 0,  wbfs_ext_vfs_dev = 0;
+
+	char *drive = wbfs_fs_drive;
+	strcat(drive, ":");
+
 	// statvfs is slow, so cache values
 	if (!wbfs_ext_vfs_have || wbfs_ext_vfs_lba != wbfs_part_lba || wbfs_ext_vfs_dev != wbfsDev )
 	{
-		ret = statvfs(wbfs_fs_drive, &wbfs_ext_vfs);
-
-		if (ret) return 0;
+		if(statvfs(drive, &wbfs_ext_vfs))
+			return 0;
 
 		wbfs_ext_vfs_have = 1;
 		wbfs_ext_vfs_lba = wbfs_part_lba;

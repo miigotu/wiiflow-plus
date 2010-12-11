@@ -902,7 +902,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if ((iosNum != mainIOS))
 	{
 		gprintf("Reloading IOS into %d\n", iosNum);
-		if (!loadIOS(iosNum, true, false))
+		if (!loadIOS(iosNum, true))
 		{
 			error(sfmt("Couldn't load IOS %i", iosNum));
 			return;

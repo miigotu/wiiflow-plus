@@ -67,7 +67,6 @@ int CMenu::_gameInstaller(void *obj)
 {
 	CMenu &m = *(CMenu *)obj;
 	int ret;
-//	u32 size;
 
 	if (!WBFS_Mounted())
 	{

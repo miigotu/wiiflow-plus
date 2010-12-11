@@ -73,7 +73,7 @@ int old_main(int argc, char **argv)
 	gprintf("Loading cIOS: %d, Port: %d\n", mainIOS, is_ios_type(IOS_TYPE_HERMES) ? use_port1 : 0);
 
 	// Load Custom IOS
-	bool iosOK = loadIOS(mainIOS, false, false);
+	bool iosOK = loadIOS(mainIOS, false);
 	mainIOSRev = IOS_GetRevision();
 	iosOK = iosOK && mainIOSRev >= mainIOSminRev;
 

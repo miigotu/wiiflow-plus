@@ -47,8 +47,8 @@
 enum SIG_OFFSETS {
 	BPB_NTFS_ADDR = 0x3,
 	BPB_FAT16_ADDR = 0x36,
+	BPB_EXT2_ADDR = 0x38,
 	BPB_FAT32_ADDR = 0x52,
-	BPB_EXT2_ADDR = 0x5C,
 };
 
 static const char FAT_SIGNATURE[3] = {'F', 'A', 'T'};

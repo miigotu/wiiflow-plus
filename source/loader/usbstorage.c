@@ -66,17 +66,21 @@ inline s32 __USBStorage_isMEM2Buffer(const void *buffer)
 
 u32 USBStorage_GetCapacity(u32 *_sector_size)
 {
-	if (fd >= 0) {
-		s32 ret;
+	if (fd >= 0)
+	{
+		u32 ret;
 
 		ret = IOS_IoctlvFormat(hid, fd, USB_IOCTL_UMS_GET_CAPACITY, ":i", &sector_size);
 
-		static int first = 1;
-		if (first) {
-			gprintf("\nSECTORS: %u\n", ret);
-			gprintf("SEC SIZE: %u\n", sector_size);
-			gprintf("HDD SIZE: %u GB [%u]\n", ret/1024/1024*sector_size/1024, sector_size);
-			first = 0;
+		static bool first = true;
+		if (first)
+		{
+			gprintf("\nSECTORS:  %lu\n", ret);
+			gprintf("SEC SIZE: %lu\n", sector_size);
+			u32 size = ((((ret / 1024U) * sector_size) / 1024U) / 1024U);
+			if(size >= 1000U) gprintf("HDD SIZE: %lu.%lu TB [%u]\n", size / 1024U, (size * 100U) % 1024U, sector_size);
+			else gprintf("HDD SIZE: %lu GB [%u]\n", size, sector_size);
+			first = false;
 		}
 
 		if (ret && _sector_size)
