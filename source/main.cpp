@@ -189,7 +189,11 @@ int old_main(int argc, char **argv)
 		}
 		vid.cleanup();
 		DeviceHandler::Instance()->UnMountAll();
-		if (bootHB)	BootHomebrew();
+		if (bootHB)
+		{
+			IOS_ReloadIOS(58);
+			BootHomebrew();
+		}
 
 	} while (ret == 1);
 
