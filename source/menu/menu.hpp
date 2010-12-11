@@ -611,7 +611,7 @@ private:
 	// 
 	bool _loadChannelList(void);
 	bool _loadList(void);
-	bool _loadHomebrewList(char *device = NULL);
+	bool _loadHomebrewList(void);
 	bool _loadGameList(void);
 	void _initCF(void);
 	// 

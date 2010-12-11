@@ -1528,98 +1528,90 @@ bool CMenu::_loadGameList(void)
 	return true;
 }
 
-safe_vector<dir_discHdr> list_homebrew(safe_vector<dir_discHdr> hb_list, char *mountname)
-{
-	dir_discHdr b;
-	bool skip = false;
-
-	char dirpath[256] = { 0 };
-	sprintf(dirpath, "%s:/apps", mountname);
-
-	struct stat filestat;
-	if (stat(dirpath, &filestat) != 0) return hb_list;
-
-	/* Open directory */
-	DIR_ITER *dir = diropen(dirpath);
-	if (!dir) return hb_list;
-
-	char entryName[256], newpath[256];
-
-	/* Read entries */
-	while(hb_list.size() < 100 && dirnext(dir, entryName, &filestat) == 0)
-	{
-/* 		//Prevent duplicates from multiple copies on different partitions until part switching is used.
-		for(u32 i = 0; hb_list.size() > 0 && i < hb_list.size(); i++)
-			if(strcasecmp(hb_list[i].hdr.title, entryName) == 0)
-				skip = true; */
-
-		/* Non valid entry */
-		if (entryName[0] == '.' || strlen(entryName) < 3 || !S_ISDIR(filestat.st_mode) || skip) continue;
-
-		/* Generate entry path */
-		sprintf(newpath,"%s/%s/boot.dol", dirpath, entryName);
-
-		for (u32 i = 0; i < sizeof(newpath); ++i)
-			if (newpath[i] >= 'A' && newpath[i] <= 'Z')
-				 newpath[i] = tolower(newpath[i]);
-
-		gprintf("-----------------------------------\n");
-		gprintf("trying %s\n", newpath);
-		if (stat(newpath, &filestat) == 0)
-		{
-			gprintf("found %s\n", newpath);
-			gprintf("count: %i\n\n", hb_list.size());
-			
-			memset(b.path, 0, sizeof(b.path));
-			memcpy(b.path, newpath, sizeof(b.path));
-			gprintf("Copied %s to the path\n", b.path);
-			
-			memset(b.hdr.title, 0, sizeof(b.hdr.title));
-			memcpy(b.hdr.title, entryName, sizeof(b.hdr.title));
-			gprintf("Copied %s to the Title\n", b.hdr.title);
-
-			for (u32 i = 0; i < 7; ++i)
-			{
-				if (entryName[i] < 'A' && entryName[i] > 'Z')
-					entryName[i] = 'X';
-
-				entryName[i] = toupper(entryName[i]);
-			}
-			memset(b.hdr.id, 0, 6);
-			memcpy(b.hdr.id, entryName, 6);
-			gprintf("Copied %s to the ID\n", b.hdr.id);
-			b.hdr.chantitle = 0;
-			gprintf("Copied %l to the Chantitle\n", b.hdr.chantitle);
-			hb_list.push_back(b);
-		}
-		else
-			gprintf("not found\n");
-		gprintf("-----------------------------------\n");
-	}
-	/* Close directory */
-	dirclose(dir);
-
-	return hb_list;
-}
-
-bool CMenu::_loadHomebrewList(char *device)
+bool CMenu::_loadHomebrewList()
 {
 	safe_vector<dir_discHdr> hb_list;
-	if(!device)
-	{
-		char mountname[3][6] = {"sd", "usb", "wbfs"};
-		for(int i = 0; i < 4; i++)
-			hb_list = list_homebrew(hb_list, mountname[i]);
-	}
-	else
-		hb_list = list_homebrew(hb_list, device);
 
-	if(hb_list.size() > 0)
+	while(1)
 	{
-		m_gameList.clear();
-		m_gameList.reserve(hb_list.size());
-		m_gameList = hb_list;
+		dir_discHdr b;
+		bool skip = false;
+
+		int currentHBPartition = m_cfg.getInt("GENERAL", "homebrew_partition", m_cfg.getInt("GENERAL", "partition", 1));
+
+		char dirpath[256] = { 0 };
+		sprintf(dirpath, "%s:/apps", DeviceName[currentHBPartition]);
+
+		struct stat filestat;
+		if (stat(dirpath, &filestat) != 0) break;
+
+		/* Open directory */
+		DIR_ITER *dir = diropen(dirpath);
+		if (!dir) break;
+
+		char entryName[256], newpath[256];
+
+		/* Read entries */
+		while(hb_list.size() < 100 && dirnext(dir, entryName, &filestat) == 0)
+		{
+	/* 		//Prevent duplicates from multiple copies on different partitions until part switching is used.
+			for(u32 i = 0; hb_list.size() > 0 && i < hb_list.size(); i++)
+				if(strcasecmp(hb_list[i].hdr.title, entryName) == 0)
+					skip = true; */
+
+			/* Non valid entry */
+			if (entryName[0] == '.' || strlen(entryName) < 3 || !S_ISDIR(filestat.st_mode) || skip) continue;
+
+			/* Generate entry path */
+			sprintf(newpath,"%s/%s/boot.dol", dirpath, entryName);
+
+			for (u32 i = 0; i < sizeof(newpath); ++i)
+				if (newpath[i] >= 'A' && newpath[i] <= 'Z')
+					 newpath[i] = tolower(newpath[i]);
+
+			gprintf("-----------------------------------\n");
+			gprintf("trying %s\n", newpath);
+			if (stat(newpath, &filestat) == 0)
+			{
+				gprintf("found %s\n", newpath);
+				gprintf("count: %i\n\n", hb_list.size());
+				
+				memset(b.path, 0, sizeof(b.path));
+				memcpy(b.path, newpath, sizeof(b.path));
+				gprintf("Copied %s to the path\n", b.path);
+				
+				memset(b.hdr.title, 0, sizeof(b.hdr.title));
+				memcpy(b.hdr.title, entryName, sizeof(b.hdr.title));
+				gprintf("Copied %s to the Title\n", b.hdr.title);
+
+				for (u32 i = 0; i < 7; ++i)
+				{
+					if (entryName[i] < 'A' && entryName[i] > 'Z')
+						entryName[i] = 'X';
+
+					entryName[i] = toupper(entryName[i]);
+				}
+				memset(b.hdr.id, 0, 6);
+				memcpy(b.hdr.id, entryName, 6);
+				gprintf("Copied %s to the ID\n", b.hdr.id);
+				b.hdr.chantitle = 0;
+				gprintf("Copied %l to the Chantitle\n", b.hdr.chantitle);
+				hb_list.push_back(b);
+			}
+			else
+				gprintf("not found\n");
+			gprintf("-----------------------------------\n");
+		}
+		/* Close directory */
+		dirclose(dir);
+
+		break;
 	}
+
+	m_gameList.clear();
+	m_gameList.reserve(hb_list.size());
+	m_gameList = hb_list;
+
 	return true;
 }
 

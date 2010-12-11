@@ -51,7 +51,13 @@ void CMenu::_showConfig7(void)
 			m_btnMgr.show(m_config7LblUser[i]);
 	// 
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
-	m_btnMgr.setText(m_config7LblPartition, wfmt(L"%s", DeviceName[m_cfg.getInt("GENERAL", "partition", 1)]));
+	if(m_current_view == COVERFLOW_USB)
+		m_btnMgr.setText(m_config7LblPartition, wfmt(L"%s", DeviceName[m_cfg.getInt("GENERAL", "partition", 1)]));
+	else if(m_current_view == COVERFLOW_HOMEBREW)
+		m_btnMgr.setText(m_config7LblPartition, wfmt(L"%s", DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", 1)]));
+	else
+		m_btnMgr.setText(m_config7LblPartition, wfmt(L"NAND"));
+	
 	m_btnMgr.setText(m_config7BtnAsyncNet, m_cfg.getBool("GENERAL", "async_network", false) ? _t("on", L"On") : _t("off", L"Off"));
 }
 
@@ -92,25 +98,37 @@ int CMenu::_config7(void)
 				break;
 			else if (m_btnMgr.selected(m_config7BtnPartitionP))
 			{
-				currentPartition = loopNum(currentPartition + 1, (int)USB8);
-				if(!DeviceHandler::Instance()->IsInserted(currentPartition))
-					while(!DeviceHandler::Instance()->IsInserted(currentPartition))
-						currentPartition = loopNum(currentPartition + 1, (int)USB8);
-				const char *partition = DeviceName[currentPartition];
-				gprintf("Next item: %s\n", partition);
-				m_cfg.setInt("GENERAL", "partition", currentPartition);
-				_showConfig7();
+				if(m_current_view == COVERFLOW_USB || m_current_view == COVERFLOW_HOMEBREW)
+				{
+					currentPartition = loopNum(currentPartition + 1, (int)USB8);
+					if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+						while(!DeviceHandler::Instance()->IsInserted(currentPartition))
+							currentPartition = loopNum(currentPartition + 1, (int)USB8);
+					const char *partition = DeviceName[currentPartition];
+					gprintf("Next item: %s\n", partition);
+					if(m_current_view == COVERFLOW_USB)
+						m_cfg.setInt("GENERAL", "partition", currentPartition);
+					else if(m_current_view == COVERFLOW_HOMEBREW)
+						m_cfg.setInt("GENERAL", "homebrew_partition", currentPartition);
+					_showConfig7();
+				}
 			}
 			else if (m_btnMgr.selected(m_config7BtnPartitionM))
 			{
-				currentPartition = loopNum(currentPartition - 1, (int)USB8);
-				if(!DeviceHandler::Instance()->IsInserted(currentPartition))
-					while(!DeviceHandler::Instance()->IsInserted(currentPartition))
-						currentPartition = loopNum(currentPartition - 1, (int)USB8);
-				const char *partition = DeviceName[currentPartition];
-				gprintf("Next item: %s\n", partition);
-				m_cfg.setInt("GENERAL", "partition", currentPartition);
-				_showConfig7();
+				if(m_current_view == COVERFLOW_USB || m_current_view == COVERFLOW_HOMEBREW)
+				{
+					currentPartition = loopNum(currentPartition - 1, (int)USB8);
+					if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+						while(!DeviceHandler::Instance()->IsInserted(currentPartition))
+							currentPartition = loopNum(currentPartition - 1, (int)USB8);
+					const char *partition = DeviceName[currentPartition];
+					gprintf("Next item: %s\n", partition);
+					if(m_current_view == COVERFLOW_USB)
+						m_cfg.setInt("GENERAL", "partition", currentPartition);
+					else if(m_current_view == COVERFLOW_HOMEBREW)
+						m_cfg.setInt("GENERAL", "homebrew_partition", currentPartition);
+					_showConfig7();
+				}
 			}
 			else if (m_btnMgr.selected(m_config7BtnAsyncNet))
 			{
@@ -121,7 +139,12 @@ int CMenu::_config7(void)
 	}
 	if (currentPartition != bCurrentPartition)
 	{
-		gprintf("Switching partition to %s\n", m_cfg.getString("GENERAL", "partition").c_str());
+		const char *newpartition = "NULL";
+		if(m_current_view == COVERFLOW_USB)
+			newpartition = DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", currentPartition)];
+		else if(m_current_view == COVERFLOW_HOMEBREW)
+			newpartition = DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", currentPartition)];
+		gprintf("Switching partition to %s\n", newpartition);
 		_loadList();
 	}
 	

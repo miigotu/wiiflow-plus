@@ -16,7 +16,7 @@ typedef struct _dolheader {
 	u32 entry_point;
 } dolheader;
 
-u32 load_dol_image (const void *dolstart, struct __argv *argv)
+u32 load_dol_image (void *dolstart, struct __argv *argv)
 {
 	if (dolstart)
 	{
@@ -26,7 +26,7 @@ u32 load_dol_image (const void *dolstart, struct __argv *argv)
 		{
 			if ((!dolfile->text_size[i]) || (dolfile->text_start[i] < 0x100)) continue;
 
-			memmove((void *) dolfile->text_start[i],dolstart+dolfile->text_pos[i],dolfile->text_size[i]);
+			memmove ((void *) dolfile->text_start[i],dolstart+dolfile->text_pos[i],dolfile->text_size[i]);
 			DCFlushRange ((void *) dolfile->text_start[i], dolfile->text_size[i]);
 			ICInvalidateRange ((void *) dolfile->text_start[i],dolfile->text_size[i]);
 		}
@@ -34,7 +34,7 @@ u32 load_dol_image (const void *dolstart, struct __argv *argv)
 		for(i = 0; i < 11; i++)
 		{
 			if ((!dolfile->data_size[i]) || (dolfile->data_start[i] < 0x100)) continue;
-			memmove((void *) dolfile->data_start[i],dolstart+dolfile->data_pos[i],dolfile->data_size[i]);
+			memmove ((void *) dolfile->data_start[i],dolstart+dolfile->data_pos[i],dolfile->data_size[i]);
 			DCFlushRange((void *) dolfile->data_start[i],dolfile->data_size[i]);
 		}
 		//memset ((void *) dolfile->bss_start, 0, dolfile->bss_size);

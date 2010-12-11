@@ -35,6 +35,8 @@ extern const u8 favoritesons_png[];
 extern const u8 favoritesoff_png[];
 extern const u8 favoritesoffs_png[];
 
+extern const u8 btnhomebrew_png[];
+
 static inline int loopNum(int i, int s)
 {
 	return i < 0 ? (s - (-i % s)) % s : i % s;
@@ -81,8 +83,8 @@ void CMenu::_showMain(void)
 			m_btnMgr.show(m_mainBtnUsb);
 			break;
 		case COVERFLOW_CHANNEL:
-			m_btnMgr.show(m_mainBtnUsb);
-			//m_btnMgr.show(m_mainBtnHomebrew);
+			//m_btnMgr.show(m_mainBtnUsb);
+			m_btnMgr.show(m_mainBtnHomebrew);
 			break;
 		case COVERFLOW_USB:
 		default:
@@ -257,20 +259,26 @@ int CMenu::main(void)
 			//Partition Selection
 			else if (BTN_MINUS_PRESSED && !m_locked)
 			{
-				_hideMain();
-				currentPartition = loopNum(currentPartition + 1, (int)USB8);
-				if(!DeviceHandler::Instance()->IsInserted(currentPartition))
-					while(!DeviceHandler::Instance()->IsInserted(currentPartition))
-						currentPartition = loopNum(currentPartition + 1, (int)USB8);
-				const char *partition = DeviceName[currentPartition];
-				gprintf("Next item: %s\n", partition);
-				m_cfg.setInt("GENERAL", "partition", currentPartition);
-				m_showtimer=60; 
-				m_btnMgr.setText(m_mainLblNotice, (string)partition);
-				m_btnMgr.show(m_mainLblNotice);
-				_loadList();
-				_showMain();
-				_initCF();
+				if(m_current_view == COVERFLOW_USB || m_current_view == COVERFLOW_HOMEBREW)
+				{
+					_hideMain();
+					currentPartition = loopNum(currentPartition + 1, (int)USB8);
+					if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+						while(!DeviceHandler::Instance()->IsInserted(currentPartition))
+							currentPartition = loopNum(currentPartition + 1, (int)USB8);
+					const char *partition = DeviceName[currentPartition];
+					gprintf("Next item: %s\n", partition);
+					if(m_current_view == COVERFLOW_USB)
+						m_cfg.setInt("GENERAL", "partition", currentPartition);
+					else if(m_current_view == COVERFLOW_HOMEBREW)
+						m_cfg.setInt("GENERAL", "homebrew_partition", currentPartition);
+					m_showtimer=60; 
+					m_btnMgr.setText(m_mainLblNotice, (string)partition);
+					m_btnMgr.show(m_mainLblNotice);
+					_loadList();
+					_showMain();
+					_initCF();
+				}
 			}
 		}
 		if (BTN_B_PRESSED)
@@ -365,30 +373,41 @@ int CMenu::main(void)
 				m_btnMgr.hide(m_mainBtnHomebrew, true);
 				m_btnMgr.hide(m_mainBtnChannel, true);
 				m_btnMgr.hide(m_mainBtnUsb, true);
+				m_btnMgr.hide(m_mainBtnInit, true);
+				m_btnMgr.hide(m_mainBtnInit2, true);
+				m_btnMgr.hide(m_mainLblInit, true);
 
 				if (m_current_view == COVERFLOW_USB) 
 				{
 					m_current_view = COVERFLOW_CHANNEL;
 					m_category = 0;
 
-					m_btnMgr.show(m_mainBtnUsb, true);
-					//m_btnMgr.show(m_mainBtnHomebrew);
+					//m_btnMgr.show(m_mainBtnUsb, true);
+					m_btnMgr.show(m_mainBtnHomebrew);
 				}
 				else if (m_current_view == COVERFLOW_CHANNEL)
 				{
-					m_current_view = COVERFLOW_USB;
-					m_category = m_cat.getInt("GENERAL", "category", 0);
-					
-					m_btnMgr.show(m_mainBtnChannel, true);
-				}
-				else if (0 && m_current_view == COVERFLOW_CHANNEL)
-				{
+					//m_current_view = COVERFLOW_USB;
 					m_current_view = COVERFLOW_HOMEBREW;
 					m_category = 0;
+					//m_category = m_cat.getInt("GENERAL", "category", 0);
 
 					m_btnMgr.show(m_mainBtnUsb, true);
 				}
+				else if (m_current_view == COVERFLOW_HOMEBREW)
+				{
+					m_current_view = COVERFLOW_USB;
+					m_category = m_cat.getInt("GENERAL", "category", 0);
+
+					m_btnMgr.show(m_mainBtnChannel, true);
+				}
 				_loadList();
+				if (m_gameList.empty())
+				{
+					m_btnMgr.show(m_mainBtnInit);
+					m_btnMgr.show(m_mainBtnInit2);
+					m_btnMgr.show(m_mainLblInit);
+				}
 				_hideWaitMessage();
 				_initCF();
 
@@ -516,8 +535,8 @@ int CMenu::main(void)
 					m_btnMgr.show(m_mainBtnUsb);
 					break;
 				case COVERFLOW_CHANNEL:
-					//m_btnMgr.show(m_mainBtnHomebrew);
-					m_btnMgr.show(m_mainBtnUsb);
+					m_btnMgr.show(m_mainBtnHomebrew);
+					//m_btnMgr.show(m_mainBtnUsb);
 					break;
 				case COVERFLOW_USB:
 				default:
@@ -614,8 +633,8 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	texUsbs.fromPNG(btnusbs_png);
 	texChannel.fromPNG(btnchannel_png);
 	texChannels.fromPNG(btnchannels_png);
-	texHomebrew.fromPNG(favoriteson_png);
-	texHomebrews.fromPNG(favoritesons_png);
+	texHomebrew.fromPNG(btnhomebrew_png);
+	texHomebrews.fromPNG(btnhomebrew_png);
 	texPrev.fromPNG(btnprev_png);
 	texPrevS.fromPNG(btnprevs_png);
 	texNext.fromPNG(btnnext_png);

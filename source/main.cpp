@@ -46,7 +46,7 @@ int old_main(int argc, char **argv)
 	CVideo vid;
 
 	char *gameid = NULL;
-	
+
 	for (int i = 0; i < argc; i++)
 	{
 		if (argv[i] != NULL && strcasestr(argv[i], "ios=") != NULL && strlen(argv[i]) > 4)
@@ -95,7 +95,7 @@ int old_main(int argc, char **argv)
 
 	int ret = 0;
 
-	do
+	do 
 	{
 		Open_Inputs();
 		MEM2_takeBigOnes(true);

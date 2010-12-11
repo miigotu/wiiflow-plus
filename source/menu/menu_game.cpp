@@ -973,8 +973,8 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	else 
 	{
 		// hide cios devices
- 		if (shadow_mload())
-			disable_ffs_patch();
+ 		/* if (shadow_mload())
+			disable_ffs_patch(); */
 		/*if (ffs_emulation)
 			 if (load_fatffs_module((u8 *)id.c_str()) != -1)
 				enable_ffs(nand_mode); */

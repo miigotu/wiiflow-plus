@@ -37,7 +37,7 @@ u32 wbfs_part_idx = 0;
 u32 wbfs_part_lba = 0;
 u8 wbfs_mounted = 0;
 
-u8 currentPartition = 0;
+u8 currentPartition = 1;
 
 /* WBFS HDD */
 wbfs_t *hdd = NULL;
@@ -281,6 +281,8 @@ s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *
 	}
 	
 	strcpy(wbfs_fs_drive, partition);
+	strcat(wbfs_fs_drive, ":");
+
 	wbfs_part_fs  = part_fs;
 	wbfs_part_idx = currentPartition = part_idx;
 	wbfs_part_lba = part_lba;
