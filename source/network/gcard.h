@@ -7,7 +7,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-u8 register_card_provider(const char *url, const char *key, u8 enabled);
+u8 register_card_provider(const char *url, const char *key);
 u8 has_enabled_providers();
 void add_game_to_card(const char *gameid);
 

@@ -29,7 +29,7 @@
 #define TITLE_LEN 64
 
 char wbfs_fs_drive[16];
-char wbfs_ext_dir[16] = "/wbfs";
+char wbfs_ext_dir[16] = ":/wbfs";
 char invalid_path[] = "/\\:|<>?*\"'";
 
 split_info_t split;
@@ -37,6 +37,8 @@ split_info_t split;
 static int fat_hdr_count = 0;
 static u32 fat_sector_size = 512;
 static struct dir_discHdr *fat_hdr_list = NULL;
+
+struct statvfs wbfs_ext_vfs;
 
 s32 __WBFS_ReadDVD(void *fp, u32 lba, u32 len, void *iobuf);
 
@@ -482,13 +484,15 @@ s32 WBFS_Ext_DiskSpace(f32 *used, f32 *free)
 	*used = 0;
 	*free = 0;
 
-	static struct statvfs wbfs_ext_vfs;
 	static int wbfs_ext_vfs_have = 0, wbfs_ext_vfs_lba = 0,  wbfs_ext_vfs_dev = 0;
+
+	char *drive = wbfs_fs_drive;
+	strcat(drive, ":");
 
 	// statvfs is slow, so cache values
 	if (!wbfs_ext_vfs_have || wbfs_ext_vfs_lba != wbfs_part_lba || wbfs_ext_vfs_dev != wbfsDev )
 	{
-		if(statvfs(wbfs_fs_drive, &wbfs_ext_vfs))
+		if(statvfs(drive, &wbfs_ext_vfs))
 			return 0;
 
 		wbfs_ext_vfs_have = 1;
@@ -514,30 +518,12 @@ static int nop_write_sector(void *_fp,u32 lba,u32 count,void*buf)
 	return 0;
 }
 
-void WBFS_Ext_get_dir(struct discHdr *header, char *path, char *fname)
+// format title so that it is usable in a filename
+void title_filename(char *title)
 {
-    // base usb:/wbfs
-	strcpy(path, wbfs_fs_drive);
-	strcat(path, wbfs_ext_dir);
-	mkdir(path, 0777);
-
-	strcat(path, "/");
-
-	strcpy(fname, path);
-
-	int layout = 1, re_space = 0, i;
-
-	//char title[TITLE_LEN];
-	char id[6];
-
-	memcpy(id, header->id, 6);
-
-	char *title = NULL; // (char *) titles.getString("TITLES", (char *) header->id).c_str();
-	if (title == NULL || strlen(title) == 0)
-		title = header->title;
-
+    int i, len;
     // trim leading space
-	int len = strlen(title);
+	len = strlen(title);
 	while (*title == ' ')
 	{
 		memmove(title, title+1, len);
@@ -550,33 +536,65 @@ void WBFS_Ext_get_dir(struct discHdr *header, char *path, char *fname)
         len--;
     }
     // replace silly chars with '_'
-    for (i = 0; i < len; i++)
+    for (i=0; i<len; i++)
 	{
         if(strchr(invalid_path, title[i]) || iscntrl(title[i]))
             title[i] = '_';
     }
+}
 
-	if (layout == 0) sprintf(fname + strlen(fname), "%s_%s", id, title);
-	else sprintf(fname + strlen(fname), "%s [%s]", title, id);
+void mk_gameid_title(struct discHdr *header, char *name, int re_space, int layout)
+{
+	int i, len;
+	char title[TITLE_LEN];
+	char id[8];
+
+	memcpy(id, header->id, 6);
+	id[6] = 0;
+	char *t = NULL; // (char *) titles.getString("TITLES", (char *) header->id).c_str();
+	if (t == NULL || strlen(t) == 0)
+		t = header->title;
+
+	STRCOPY(title, t);
+	title_filename(title);
+
+	if (layout == 0) sprintf(name, "%s_%s", id, title);
+	else sprintf(name, "%s [%s]", title, id);
 
 	// replace space with '_'
 	if (re_space)
 	{
-		int len = strlen(fname);
+		len = strlen(name);
 		for (i = 0; i < len; i++)
-			if(fname[i]==' ') fname[i] = '_';
+			if(name[i]==' ') name[i] = '_';
 	}
+}
+
+
+void WBFS_Ext_get_dir(struct discHdr *header, char *path, char *fname)
+{
+    // base usb:/wbfs
+	strcpy(path, wbfs_fs_drive);
+	strcat(path, wbfs_ext_dir);
+	mkdir(path, 0777);
+
+	strcat(path, "/");
+
+	strcpy(fname, path);
+	mk_gameid_title(header, fname + strlen(fname), 0, 1);
 	strcat(fname, ".wbfs");
 }
 
 
 wbfs_t* WBFS_Ext_OpenPart(char *fname)
 {
-	// wbfs 'partition' file
-	if(split_open(&split, fname));
-		return NULL;
+	wbfs_t *part = NULL;
+	int ret;
 
-	wbfs_t *part = wbfs_open_partition(
+	// wbfs 'partition' file
+	ret = split_open(&split, fname);
+	if (ret) return NULL;
+	part = wbfs_open_partition(
 			split_read_sector,
 			nop_write_sector, //readonly //split_write_sector,
 			&split, fat_sector_size, split.total_sec, 0, 0);
@@ -588,11 +606,13 @@ wbfs_t* WBFS_Ext_OpenPart(char *fname)
 
 wbfs_t* WBFS_Ext_CreatePart(u8 *id, char *fname)
 {
+	wbfs_t *part = NULL;
 	u64 size = (u64)143432*2*0x8000ULL;
 	u32 n_sector = size / 512;
+	int ret;
 
-	if(split_create(&split, fname, OPT_split_size, size, true));
-		return NULL;
+	ret = split_create(&split, fname, OPT_split_size, size, true);
+	if (ret) return NULL;
 
 	// force create first file
 	u32 scnt = 0;
@@ -603,7 +623,7 @@ wbfs_t* WBFS_Ext_CreatePart(u8 *id, char *fname)
 		return NULL;
 	}
 
-	wbfs_t *part = wbfs_open_partition(
+	part = wbfs_open_partition(
 			split_read_sector,
 			split_write_sector,
 			&split, fat_sector_size, n_sector, 0, 1);
@@ -685,8 +705,9 @@ s32 WBFS_Ext_AddGame(progress_callback_t spinner, void *spinner_data)
 	hdd = old_hdd;
 	wbfs_trim(part);
 	WBFS_Ext_ClosePart(part);
+	if (ret < 0) return ret;
 
-	return ret < 0 ? ret : 0;
+	return 0;
 }
 
 s32 WBFS_Ext_DVD_Size(u64 *comp_size, u64 *real_size)

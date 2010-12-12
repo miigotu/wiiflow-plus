@@ -10,22 +10,20 @@ struct provider
 {
 	char url[128];
 	char key[48];
-	u8 enabled;
 };
 
 struct provider *providers = NULL;
 int amount_of_providers = 0;
 
-u8 register_card_provider(const char *url, const char *key, u8 enabled)
+u8 register_card_provider(const char *url, const char *key)
 {
 	struct provider *new_providers = (struct provider *) realloc(providers, (amount_of_providers + 1) * sizeof(struct provider));
 	if (new_providers != NULL)
 	{
 		providers = new_providers;
 		memset(&providers[amount_of_providers], 0, sizeof(struct provider));
-		strncpy((char *) &providers[amount_of_providers].url, url, 128);
-		strncpy((char *) &providers[amount_of_providers].key, key, 48);
-		providers[amount_of_providers].enabled = enabled;
+		strncpy((char *) providers[amount_of_providers].url, url, 128);
+		strncpy((char *) providers[amount_of_providers].key, key, 48);
 		amount_of_providers++;
 		return 0;
 	}
@@ -37,7 +35,7 @@ u8 has_enabled_providers()
 	int i;
 	for (i = 0; i < amount_of_providers && providers != NULL; i++)
 	{
-		if (providers[i].enabled && strlen(providers[i].key) > 0)
+		if (strlen(providers[i].url) > 0 && strlen(providers[i].key) > 0)
 		{
 			return 1;
 		}
@@ -69,10 +67,10 @@ void add_game_to_card(const char *gameid)
 	
 	for (i = 0; i < amount_of_providers && providers != NULL; i++)
 	{
-		if (providers[i].enabled && strlen(providers[i].key) > 0)
+		if (strlen(providers[i].url) > 0 && strlen(providers[i].key) > 0)
 		{
-			strcpy(url, (char *) &providers[i].url);
-			str_replace(url, (char *) "{KEY}", (char *) &providers[i].key, MAX_URL_SIZE);		
+			strcpy(url, (char *) providers[i].url);
+			str_replace(url, (char *) "{KEY}", (char *) providers[i].key, MAX_URL_SIZE);		
 			str_replace(url, (char *) "{ID6}", (char *) gameid, MAX_URL_SIZE);
 
 			registering = true;
@@ -83,8 +81,11 @@ void add_game_to_card(const char *gameid)
 				
 			// Don't kill the thread, leave it running for now...
 
-			if (registering) LWP_SuspendThread(thread);
-
+			if (registering) 
+				LWP_SuspendThread(thread);
+			else
+				LWP_JoinThread(thread, NULL);
+	
 			thread = LWP_THREAD_NULL;
 		}
 	}

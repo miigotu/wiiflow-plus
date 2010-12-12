@@ -617,10 +617,10 @@ void CMenu::_directlaunch(const string &id)
 				// Find the game header
 				dir_discHdr hdr;
 				memset(&hdr, 0, sizeof(dir_discHdr));
-				strncpy((char *) &hdr.hdr.id, id.c_str(), 6);
+				strncpy((char *) hdr.hdr.id, id.c_str(), 6);
 				
 				if (wbfs_part_fs == PART_FS_NTFS || wbfs_part_fs == PART_FS_FAT)
-					WBFS_Ext_find_fname((u8 *) &hdr.hdr.id, NULL, (char *) &hdr.path, sizeof(hdr.path));
+					WBFS_Ext_find_fname((u8 *) hdr.hdr.id, NULL, (char *) &hdr.path, sizeof(hdr.path));
 
 			
 				// Game found
@@ -639,7 +639,7 @@ void CMenu::_launch(dir_discHdr *hdr)
 	switch(m_current_view)
 	{
 		case COVERFLOW_HOMEBREW:
-			_launchHomebrew((char *)&hdr->path, m_homebrewArgs);
+			_launchHomebrew((char *)hdr->path, m_homebrewArgs);
 			break;
 		case COVERFLOW_CHANNEL:
 			_launchChannel(hdr);
@@ -681,7 +681,7 @@ void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> argum
 
 void CMenu::_launchChannel(dir_discHdr *hdr)
 {
-	string id = string((const char *) &hdr->hdr.id);
+	string id = string((const char *) hdr->hdr.id);
 
 	m_cfg.setString("GENERAL", "current_channel", id);
 	m_gcfg2.setInt("PLAYCOUNT", id, m_gcfg2.getInt("PLAYCOUNT", id, 0) + 1);
@@ -708,7 +708,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 
 void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 {
-	string id = string((const char *) &hdr->hdr.id);
+	string id = string((const char *) hdr->hdr.id);
 
 	bool gc = false;
 	if (dvd)
@@ -874,9 +874,9 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	m_cat.save();
 	m_cfg.save();
 	setLanguage(language);
-	
+
 	// Do every disc related action before reloading IOS
-	if (!dvd && get_frag_list((u8 *) &hdr->hdr.id, (char *)&hdr->path) < 0)
+	if (!dvd && get_frag_list((u8 *) hdr->hdr.id, (char *) hdr->path) < 0)
 		return;
 
 	#ifdef DBG_FRAG
@@ -980,7 +980,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 				enable_ffs(nand_mode); */
 		
 		gprintf("Booting game\n");
-		char *altDolDir = (char *)&m_altDolDir;
+		char *altDolDir = (char *) m_altDolDir.c_str();
 		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir, wdm_entry == NULL ? 1 : wdm_entry->parameter) < 0)
 			Sys_LoadMenu();
 	}

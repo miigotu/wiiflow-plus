@@ -13,4 +13,5 @@
 #define THANKS_SITES	"devkitpro.org, wiibrew.org, wiitdb.com, ohloh.net, wiifanart.com, wiiflowiki.com"
 #define THANKS_CODE		"CFG Loader, uLoader, USB Loader GX, NeoGamma, WiiXplorer"
 
-#define WIINNERTAG_URL "http://www.wiinnertag.com/wiinnertag_scripts/update_sign.php?key={KEY}&game_id={ID6}"
+#define WIINNERTAG_URL 	"http://www.wiinnertag.com/wiinnertag_scripts/update_sign.php?key={KEY}&game_id={ID6}"
+#define DUTAG_URL		"http://tag.darkumbra.net/{KEY}.update={ID6}"

@@ -38,7 +38,7 @@ bool getnextnumber(FILE *fp, u32 *value)
 	memset(&line, 0, 255);
 	
 	*value = 0;
-	if (getnextline(fp, (char *) &line, sizeof(line)))
+	if (getnextline(fp, (char *) line, sizeof(line)))
 	{
 		if (line[0] == '\r' || line[0] == '\n' || strlen(line) == 0) 
 		{
@@ -83,9 +83,9 @@ int load_wdm(const char *wdmpath, const char *gameid)
 		wdm_entry_t *entry = &wdm_entries[i];
 		if (!getnextnumber(fp, &entry->count))
 			goto error;
-		if (!getnextline(fp, (char *) &entry->name, 64))
+		if (!getnextline(fp, (char *) entry->name, 64))
 			goto error;
-		if (!getnextline(fp, (char *) &entry->dolname, 32))
+		if (!getnextline(fp, (char *) entry->dolname, 32))
 			goto error;
 		if (!getnextnumber(fp, &entry->parameter))
 			goto error;

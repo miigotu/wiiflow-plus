@@ -349,11 +349,21 @@ void CMenu::init()
 
 	m_current_view = COVERFLOW_USB;
 
-	register_card_provider(
-		m_cfg.getString("GAMERCARD", "wiinnertag_url", WIINNERTAG_URL).c_str(),
-		m_cfg.getString("GAMERCARD", "wiinnertag_key", "").c_str(),
-		m_cfg.getBool("GAMERCARD", "wiinnertag_enable", false) ? 1 : 0
-	);
+	safe_vector<string> gamercards = stringToVector(m_cfg.getString("GAMERCARD", "gamercards"), '|');
+	if (gamercards.size() == 0 && m_cfg.getBool("GAMERCARD", "wiinnertag_enable", false))
+	{
+		gamercards.push_back("wiinnertag");
+		m_cfg.setString("GAMERCARD", "gamercards", "wiinnertag");
+		m_cfg.remove("GAMERCARD", "wiinnertag_enable");
+	}
+
+	for (safe_vector<string>::iterator itr = gamercards.begin(); itr != gamercards.end(); itr++)
+	{
+		register_card_provider(
+			m_cfg.getString("GAMERCARD", sfmt("%s_url", (*itr).c_str())).c_str(),
+			m_cfg.getString("GAMERCARD", sfmt("%s_key", (*itr).c_str())).c_str()
+		);
+	}
 }
 
 void CMenu::cleanup(void)
