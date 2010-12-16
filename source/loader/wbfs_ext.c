@@ -29,7 +29,7 @@
 #define TITLE_LEN 64
 
 char wbfs_fs_drive[16];
-char wbfs_ext_dir[16] = ":/wbfs";
+char wbfs_ext_dir[16] = "/wbfs";
 char invalid_path[] = "/\\:|<>?*\"'";
 
 split_info_t split;
@@ -486,13 +486,10 @@ s32 WBFS_Ext_DiskSpace(f32 *used, f32 *free)
 
 	static int wbfs_ext_vfs_have = 0, wbfs_ext_vfs_lba = 0,  wbfs_ext_vfs_dev = 0;
 
-	char *drive = wbfs_fs_drive;
-	strcat(drive, ":");
-
 	// statvfs is slow, so cache values
 	if (!wbfs_ext_vfs_have || wbfs_ext_vfs_lba != wbfs_part_lba || wbfs_ext_vfs_dev != wbfsDev )
 	{
-		if(statvfs(drive, &wbfs_ext_vfs))
+		if(statvfs(wbfs_fs_drive, &wbfs_ext_vfs))
 			return 0;
 
 		wbfs_ext_vfs_have = 1;
