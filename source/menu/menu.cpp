@@ -20,6 +20,8 @@
 #include "channels.h"
 #include "defines.h"
 
+#include "list.hpp"
+
 // Sounds
 extern const u8 click_wav[];
 extern const u32 click_wav_size;
@@ -1451,7 +1453,6 @@ bool CMenu::_loadChannelList(void)
 
 		memcpy(&b[i].hdr.id, chan->id, 4);
 		wcstombs(b[i].hdr.title, chan->name, sizeof(b->hdr.title));
-//		memcpy(&b[i].hdr.title, chan->name, sizeof(b->hdr.title)); // IMET header specifies max name length 42 (wchar, so * 4!), so we copy only the first 64 bytes here...
 		b[i].hdr.chantitle = chan->title;
 	
 		m_gameList.push_back(b[i]);
@@ -1475,189 +1476,33 @@ bool CMenu::_loadList(void)
 
 bool CMenu::_loadGameList(void)
 {
-	SmartBuf buffer;
-	u32 count;
-
-	s32 ret = DeviceHandler::Instance()->Open_WBFS(m_cfg.getInt("GENERAL", "partition", 1));
- 	if (ret < 0)
-	{
-		gprintf("Open partition failed : %i\n", ret);
-		return false;
-	}
-	ret = WBFS_GetCount(&count);
-	if (ret < 0)
-	{
-		error(wfmt(_fmt("wbfs3", L"WBFS_GetCount failed : %i"), ret));
-		return false;
-	}
-	u32 len = count * sizeof m_gameList[0];
-
-#ifdef USEHDRDUMP
-	FILE *file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "hdrdump").c_str(), "rb");
-	if (!file) return false;
-	fseek(file, 0, SEEK_END);
-	u64 fileSize = ftell(file);
-	fseek(file, 0, SEEK_SET);
-	len = fileSize;
-	ret = count = len / sizeof m_gameList[0];
-	if (fileSize > 0)
-	{
-		buffer = smartMemAlign32(fileSize);
-		fread(buffer.get(), 1, fileSize, file);
-	}
-	SAFE_CLOSE(file);
-
-#else
-
-	buffer = smartAnyAlloc(len);
-	if (!buffer) return false;
-	memset(buffer.get(), 0, len);
-	ret = WBFS_GetHeaders((dir_discHdr *)buffer.get(), count, sizeof (struct dir_discHdr));
-#endif
-
-	if (ret < 0)
-	{
-		error(wfmt(_fmt("wbfs4", L"WBFS_GetHeaders failed : %i"), ret));
-		return false;
-	}
-
-#ifdef DUMPHDRS
-	FILE *file = fopen(sfmt("%s/%s", m_dataDir.c_str(), "hdrdump").c_str(), "wb");
-	fwrite(buffer.get(), 1, len, file);
-	SAFE_CLOSE(file);
-#endif
-
 	m_gameList.clear();
-	m_gameList.reserve(count);
-	dir_discHdr *b = (dir_discHdr *)buffer.get();
-
-	for (u32 i = 0; i < count; ++i)
-		if (memcmp(b[i].hdr.id, "__CFG_", sizeof b[i].hdr.id) != 0)	// Because of uLoader
-			m_gameList.push_back(b[i]);
-
-	return true;
+	int currentPartition = m_cfg.getInt("GENERAL", "partition", 1);
+	DeviceHandler::Instance()->Open_WBFS(currentPartition);
+	safe_vector<string> pathlist;
+	CList::Instance()->GetPaths(pathlist, ".wbfs|.iso", sfmt(GAMES_DIR, DeviceName[currentPartition]));
+	m_gameList.reserve(pathlist.size());
+	CList::Instance()->GetHeaders(pathlist, m_gameList);
+	return m_gameList.size() > 0 ? true : false;
 }
 
 bool CMenu::_loadHomebrewList()
 {
-	safe_vector<dir_discHdr> hb_list;
-
-	while(1)
-	{
-		dir_discHdr b;
-		bool skip = false;
-
-		int currentHBPartition = m_cfg.getInt("GENERAL", "homebrew_partition", m_cfg.getInt("GENERAL", "partition", 1));
-
-		char dirpath[256] = { 0 };
-		sprintf(dirpath, "%s:/apps", DeviceName[currentHBPartition]);
-
-		struct stat filestat;
-		if (stat(dirpath, &filestat) != 0) break;
-
-		/* Open directory */
-		DIR_ITER *dir = diropen(dirpath);
-		if (!dir) break;
-
-		char entryName[256], newpath[256];
-
-		/* Read entries */
-		while(hb_list.size() < 100 && dirnext(dir, entryName, &filestat) == 0)
-		{
-	/* 		//Prevent duplicates from multiple copies on different partitions until part switching is used.
-			for(u32 i = 0; hb_list.size() > 0 && i < hb_list.size(); i++)
-				if(strcasecmp(hb_list[i].hdr.title, entryName) == 0)
-					skip = true; */
-
-			/* Non valid entry */
-			if (entryName[0] == '.' || strlen(entryName) < 3 || !S_ISDIR(filestat.st_mode) || skip) continue;
-
-			/* Generate entry path */
-			sprintf(newpath,"%s/%s/boot.dol", dirpath, entryName);
-
-			for (u32 i = 0; i < sizeof(newpath); ++i)
-				if (newpath[i] >= 'A' && newpath[i] <= 'Z')
-					 newpath[i] = tolower(newpath[i]);
-
-			gprintf("-----------------------------------\n");
-			gprintf("trying %s\n", newpath);
-			if (stat(newpath, &filestat) == 0)
-			{
-				gprintf("found %s\n", newpath);
-				gprintf("count: %i\n\n", hb_list.size());
-				
-				memset(b.path, 0, sizeof(b.path));
-				memcpy(b.path, newpath, sizeof(b.path));
-				gprintf("Copied %s to the path\n", b.path);
-				
-				memset(b.hdr.title, 0, sizeof(b.hdr.title));
-				memcpy(b.hdr.title, entryName, sizeof(b.hdr.title));
-				gprintf("Copied %s to the Title\n", b.hdr.title);
-
-				for (u32 i = 0; i < 7; ++i)
-				{
-					if (entryName[i] < 'A' && entryName[i] > 'Z')
-						entryName[i] = 'X';
-
-					entryName[i] = toupper(entryName[i]);
-				}
-				memset(b.hdr.id, 0, 6);
-				memcpy(b.hdr.id, entryName, 6);
-				gprintf("Copied %s to the ID\n", b.hdr.id);
-				b.hdr.chantitle = 0;
-				gprintf("Copied %l to the Chantitle\n", b.hdr.chantitle);
-				hb_list.push_back(b);
-			}
-			else
-				gprintf("not found\n");
-			gprintf("-----------------------------------\n");
-		}
-		/* Close directory */
-		dirclose(dir);
-
-		break;
-	}
-
 	m_gameList.clear();
-	m_gameList.reserve(hb_list.size());
-	m_gameList = hb_list;
+	int currentHBPartition = m_cfg.getInt("GENERAL", "homebrew_partition", m_cfg.getInt("GENERAL", "partition", 1));
+	safe_vector<string> pathlist;
+	CList::Instance()->GetPaths(pathlist, ".dol", sfmt(HOMEBREW_DIR, DeviceName[currentHBPartition]));
+	m_gameList.reserve(pathlist.size());
+	CList::Instance()->GetHeaders(pathlist, m_gameList);
 
-	return true;
-}
-
-static void listOGGMP3(const char *path, safe_vector<string> &oggFiles)
-{
-	DIR *d;
-	struct dirent *dir;
-
-	oggFiles.clear();
-	d = opendir(path);
-	if (d != 0)
-	{
-		dir = readdir(d);
-		while (dir != 0)
-		{
-			string fileName = dir->d_name;
-			for (u32 i = 0; i < fileName.size(); ++i)
-				if (fileName[i] >= 'a' && fileName[i] <= 'z')
-					fileName[i] &= 0xDF;
-			if (fileName.size() > 4)
-			{
-				string fileExt = fileName.substr(fileName.size() - 4, 4);
-				if (fileExt == ".OGG" || fileExt == ".MP3")
-				{
-					oggFiles.push_back(fileName);
-				}
-			}
-			dir = readdir(d);
-		}
-		closedir(d);
-	}
+	return m_gameList.size() > 0 ? true : false;
 }
 
 void CMenu::_searchMusic(void)
 {
-	listOGGMP3(m_musicDir.c_str(), music_files);
+	music_files.clear();
+	CList::Instance()->GetPaths(music_files, ".ogg|.mp3", m_musicDir);
+
 	_shuffleMusic();
 }
 
@@ -1682,8 +1527,8 @@ void CMenu::_startMusic(void)
 	if (current_music == music_files.end())
 		_shuffleMusic();
 
-	ifstream file(sfmt("%s/%s", m_musicDir.c_str(), (*current_music).c_str()).c_str(), ios::in | ios::binary);
-	m_music_ismp3 = (*current_music).substr((*current_music).size() - 4, 4) == ".MP3";
+	ifstream file((*current_music).c_str(), ios::in | ios::binary);
+	m_music_ismp3 = strcasestr((*current_music).c_str(), ".MP3") != NULL;
 	current_music++;
 
 	if (!file.is_open()) return;
@@ -1777,7 +1622,7 @@ void CMenu::_loopMusic(void)
 		_updateMusicVol();
 	}
 	
-	if(((m_music_ismp3 && !MP3Player_IsPlaying()) || StatusOgg() == OGG_STATUS_EOF) && !m_video_playing)
+	if(!MP3Player_IsPlaying() && StatusOgg() == OGG_STATUS_EOF && !m_video_playing)
 		_startMusic();
 
 	return;

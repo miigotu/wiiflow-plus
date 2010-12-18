@@ -24,6 +24,7 @@ SOURCES		:=	source \
 				source/devicemounter \
 				source/gecko \
 				source/gui \
+				source/list \
 				source/loader \
 				source/channel \
 				source/homebrew \
@@ -44,6 +45,7 @@ INCLUDES	:=	source \
 				source/devicemounter \
 				source/gecko \
 				source/gui \
+				source/list \
 				source/loader \
 				source/channel \
 				source/homebrew \

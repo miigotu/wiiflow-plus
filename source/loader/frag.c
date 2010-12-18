@@ -265,13 +265,8 @@ out:
 
 int get_frag_list(u8 *id, char *path)
 {
-	char fname[1024];
-
 	if (wbfs_part_fs == PART_FS_WBFS) return 0;
-
-	if (!WBFS_Ext_find_fname(id, path, fname, sizeof(fname))) return -2;
-	
-	return get_frag_list_for_file((char *) fname, id, &frag_list);
+	return get_frag_list_for_file((char *)path, id, &frag_list);
 }
 
 int set_frag_list(u8 *id)

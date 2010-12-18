@@ -29,6 +29,7 @@
 #include <gccore.h>
 #include "safe_vector.hpp"
 #include <string>
+#include "libwbfs/libwbfs.h"
 
 #define MAX_PARTITIONS          32 /* Maximum number of partitions that can be found */
 #define MAX_MOUNTS              10 /* Maximum number of mounts available at one time */
@@ -115,6 +116,7 @@ typedef struct _PartitionFS {
     u8 PartitionType;
     u8 PartitionNum;
     u32 EBR_Sector;
+	wbfs_t *wbfshandle;
 } PartitionFS;
 
 typedef struct _BIOS_PARAMETER_BLOCK {
@@ -190,6 +192,10 @@ class PartitionHandle
         int GetPartitionCount() { return PartitionList.size(); };
         //! Get the partition size in bytes
         u64 GetSize(int pos) { if(valid(pos)) return (u64) PartitionList[pos].SecCount*BYTES_PER_SECTOR; else return 0; };
+		//! Get the wbfs mount handle
+        wbfs_t * GetWbfsHandle(int pos) { if(valid(pos)) return PartitionList[pos].wbfshandle; else return 0; };
+		//! Set the wbfs mount handle
+        bool SetWbfsHandle(int pos, wbfs_t * wbfshandle) { if(valid(pos)) {PartitionList[pos].wbfshandle = wbfshandle; return true;} else return false; };
         //! Get the whole partition record struct
         PartitionFS * GetPartitionRecord(int pos) { if(valid(pos)) return &PartitionList[pos]; else return NULL; };
         //! Get the disc interface of this handle

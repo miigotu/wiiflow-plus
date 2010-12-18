@@ -219,8 +219,6 @@ int is_ios=0;
 
 // /* 	if(discid)
 	// {
-		// if (!WBFS_Ext_find_fname(discid, fname, sizeof(fname)))
-			// return -1;
 		// global_mount &=~0xc;
 
 		// if(fname[0]=='u')

@@ -440,17 +440,6 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	return 0;
 }
 
-s32 Disc_OpenPartition(u8 *id)
-{
-	u64 offset;
-
-	if (Disc_SetUSB(id) < 0) return -1;
-	if (Disc_Open() < 0) return -2;
-	if (__Disc_FindPartition(&offset) < 0) return -3;
-	if (WDVD_OpenPartition(offset, 0, 0, 0, Tmd_Buffer) < 0) return -4;
-	return 0;
-}
-
 s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck, char *altDolDir, u32 wdm_parameter)
 {
 	u64 offset;

@@ -22,6 +22,7 @@
 #include "loader/fst.h"
 #include "loader/wdm.h"
 #include "loader/wip.h"
+#include "list.hpp"
 
 #include "gui/WiiMovie.hpp"
 #include "channels.h"
@@ -29,6 +30,7 @@
 #include "gecko.h"
 #include "homebrew.h"
 #include "sys.h"
+#include "defines.h"
 
 using namespace std;
 
@@ -605,28 +607,18 @@ void CMenu::_directlaunch(const string &id)
 
 	for (int i = USB1; i < USB8; i++)
 	{
-		if(!DeviceHandler::Instance()->IsInserted(i))
-			continue;
+		if(!DeviceHandler::Instance()->IsInserted(i)) continue;
 
-		s32 ret = DeviceHandler::Instance()->Open_WBFS(i);
-		if (ret == 0)
+		DeviceHandler::Instance()->Open_WBFS(i);
+
+		safe_vector<string> pathlist;
+		CList::Instance()->GetPaths(pathlist, id.c_str(), sfmt(GAMES_DIR, DeviceName[i]));
+		m_gameList.clear();
+		CList::Instance()->GetHeaders(pathlist, m_gameList);
+		if(m_gameList.size() > 0)
 		{
-			// Let's find the game here...
-			if (WBFS_CheckGame((u8 *) id.c_str(), NULL))
-			{
-				// Find the game header
-				dir_discHdr hdr;
-				memset(&hdr, 0, sizeof(dir_discHdr));
-				strncpy((char *) hdr.hdr.id, id.c_str(), 6);
-				
-				if (wbfs_part_fs == PART_FS_NTFS || wbfs_part_fs == PART_FS_FAT)
-					WBFS_Ext_find_fname((u8 *) hdr.hdr.id, NULL, (char *) &hdr.path, sizeof(hdr.path));
-
-			
-				// Game found
-				gprintf("Game found on partition #%i\n", i);
-				_launch(&hdr); // Launch will exit wiiflow
-			}
+			gprintf("Game found on partition #%i\n", i);
+			_launch(&m_gameList[0]); // Launch will exit wiiflow
 		}
 	}
 	
@@ -668,8 +660,6 @@ void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> argum
 		Close_Inputs();
 		Playlog_Delete();
 
-		WBFS_Close();
-
 		DeviceHandler::Instance()->UnMountAll();
 		cleanup();
 		Close_Inputs();
@@ -696,7 +686,6 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 	m_cfg.save();
 
 	COVER_clear();
-	WBFS_Close();
 	
 	DeviceHandler::Instance()->UnMountAll();
 	cleanup();
@@ -751,7 +740,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		}
 		/* Read header */
 		Disc_ReadHeader(header);
-		for (int i=0;i<6;i++)
+		for (int i = 0;i < 6; i++)
 			id[i] = header->id[i];
 	}
 	bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
@@ -887,9 +876,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
 
 	_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt");
-	//if (!_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt"))
-		//if (FS_USBAvailable() && !_loadFile(gameconfig, gameconfigSize, "usb:/", "gameconfig.txt"))
-			//if (FS_SDAvailable()) _loadFile(gameconfig, gameconfigSize, "sd:/", "gameconfig.txt");
 	
 	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) &hdr->hdr.id);
 	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) &hdr->hdr.id);
@@ -934,28 +920,23 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	}
 
 	bool blockIOSReload = m_gcfg2.getBool((const char *) hdr->hdr.id, "block_ios_reload", false);
-	if (mload && blockIOSReload)
-		disableIOSReload();
-
+	if (mload && blockIOSReload) disableIOSReload();
 	if (!dvd)
 	{
-		s32 ret = Disc_SetUSB((u8 *) &hdr->hdr.id);
+		s32 ret = Disc_SetUSB((u8 *) hdr->hdr.id);
 		if (ret < 0)
 		{
 			gprintf("Set USB failed: %d\n", ret);
 			error(L"Disc_SetUSB failed");
-			if (iosLoaded)
-				Sys_LoadMenu();
+			if (iosLoaded) Sys_LoadMenu();
 			return;
 		}
 		
-		WBFS_Close();
 		
 		if (Disc_Open() < 0)
 		{
 			error(L"Disc_Open failed");
-			if (iosLoaded) 	
-				Sys_LoadMenu();
+			if (iosLoaded) Sys_LoadMenu();
 			return;
 		}
 	}

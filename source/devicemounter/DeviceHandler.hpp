@@ -98,12 +98,15 @@ class DeviceHandler
         static const char * GetFSName(int dev);
 		static int GetFSType(int dev);
         static const char * PathToFSName(const char * path) { return GetFSName(PathToDriveType(path)); };
+		static wbfs_t * GetWbfsHandle(int dev);
+		//static u32 GetLBAStart(int dev);
 		s32 Open_WBFS(int dev);
+
     private:
         DeviceHandler() : sd(0), usb(0), gca(0), gcb(0) { };
         ~DeviceHandler();
 
-		static DeviceHandler *instance;
+		static DeviceHandler * instance;
 
         PartitionHandle * sd;
         PartitionHandle * usb;

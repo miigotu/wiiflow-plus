@@ -19,7 +19,6 @@
 
 #include "gecko.h"
 
-//extern int __Arena2Lo;
 extern "C" {extern u8 currentPartition;}
 
 int mainIOSRev = 0;
@@ -89,39 +88,17 @@ bool loadIOS(int ios, bool launch_game)
 
 	Close_Inputs();
 
-	// if (launch_game)
-	// {
 	DeviceHandler::Instance()->UnMountAll();
-	WBFS_Close();
 
 	WDVD_Close();
 	USBStorage_Deinit();
 
 	mload_close();
-	//usleep(500000);
-	//}
-	//else USBStorage_Deinit();
 
-/*  void *backup = COVER_allocMem1(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
-	if (backup != 0)
-	{
-		memcpy(backup, &__Arena2Lo, 0x200000);
-		DCFlushRange(backup, 0x200000);
-	} */
-	//usleep(100000);
+
 	gprintf("Reloading into IOS %i...", ios);
 	iosOK = IOS_ReloadIOS(ios) == 0;
 	gprintf("%s, Current IOS: %i\n", iosOK ? "OK" : "FAILED!", IOS_GetVersion());
-	//usleep(300000);
-
-	//if (!is_ios_type(IOS_TYPE_WANIN)) sleep(1); // Narolez: sleep after IOS reload lets power down/up the harddisk when cIOS 249 is used!
-
-/* 	if (backup != 0)
-	{
-		memcpy(&__Arena2Lo, backup, 0x200000);
-		DCFlushRange(&__Arena2Lo, 0x200000);
-		COVER_free(backup);
-	} */
 
 	if (iosOK && is_ios_type(IOS_TYPE_HERMES))
 		load_ehc_module_ex();

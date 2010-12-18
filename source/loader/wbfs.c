@@ -46,9 +46,8 @@ wbfs_t *hdd = NULL;
 static rw_sector_callback_t readCallback  = NULL;
 static rw_sector_callback_t writeCallback = NULL;
 
-
 /* Variables */
-static u32 sector_size;
+static u32 sector_size = SDHC_SECTOR_SIZE;
 
 s32 __WBFS_ReadDVD(void *fp, u32 lba, u32 len, void *iobuf)
 {
@@ -195,66 +194,8 @@ s32 __WBFS_WriteSDHC(void *fp, u32 lba, u32 count, void *iobuf)
 	return 0;
 }
 
-
-s32 WBFS_Init(u32 device, u32 timeout)
-{
-	u32 cnt;
-	wbfsDev = device;
-
-	WBFS_Close();
-
-	if (!timeout) return -1;
-
-	/* Try to mount device */
-	for (cnt = 0; cnt < timeout; cnt++)
-	{
-		switch (device)
-		{
-			case WBFS_DEVICE_USB:
-				if (USBStorage_Init() >= 0)
-				{
-					/* Setup callbacks */
-					readCallback  = __WBFS_ReadUSB;
-					writeCallback = __WBFS_WriteUSB;
-
-					/* Device info */
-					USBStorage_GetCapacity(&sector_size);
-
-					/* Sleep 1 second */
-					sleep(1);
-
-					return 1;
-				}
-				else return -1;
-
-			case WBFS_DEVICE_SDHC:
-				/* Initialize SDHC */
-				if (SDHC_Init() >= 0)
-				{
-					/* Setup callbacks */
-					readCallback  = __WBFS_ReadSDHC;
-					writeCallback = __WBFS_WriteSDHC;
-
-					/* Device info */
-					sector_size = SDHC_SECTOR_SIZE;
-
-					return 1;
-				}
-				else return -1;
-		}
-	}
-	return -1;
-}
-
 bool WBFS_Close()
 {
-	/* Close hard disk */
-	if (hdd)
-	{
-		wbfs_close(hdd);
-		hdd = NULL;
-	}
-
 	wbfs_part_fs = 0;
 	wbfs_part_idx = 0;
 	wbfs_part_lba = 0;
@@ -269,17 +210,12 @@ bool WBFS_Mounted()
 	return wbfs_mounted != 0;
 }
 
-s32 WBFS_OpenPart(u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *partition)
+s32 WBFS_Init(wbfs_t * handle, u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *partition)
 {
 	WBFS_Close();
 
-	if (part_fs == PART_FS_WBFS)
-	{
-		/* Open partition */
-		hdd = wbfs_open_partition(readCallback, writeCallback, NULL, sector_size, part_size, part_lba, 0);
-		if (!hdd) return -1;
-	}
-	
+	hdd = handle;
+	wbfsDev = strncmp(partition, "sd", 2) == 0 ? WBFS_DEVICE_SDHC : WBFS_DEVICE_USB;
 	strcpy(wbfs_fs_drive, partition);
 	strcat(wbfs_fs_drive, ":");
 
@@ -300,45 +236,6 @@ s32 WBFS_Format(u32 lba, u32 size)
 
 	/* Free memory */
 	wbfs_close(partition);
-
-	return 0;
-}
-
-s32 WBFS_GetCount(u32 *count)
-{
-	if (wbfs_part_fs) return WBFS_Ext_GetCount(count);
-
-	/* No device open */
-	if (!hdd) return -1;
-
-	/* Get list length */
-	*count = wbfs_count_discs(hdd);
-
-	return 0;
-}
-
-s32 WBFS_GetHeaders(void *outbuf, u32 cnt, u32 len)
-{
-	if (wbfs_part_fs) return WBFS_Ext_GetHeaders(outbuf, cnt, len);
-
-	u32 idx, size;
-
-	/* No device open */
-	if (!hdd) return -1;
-
-	u32 slen = len;
-	if (len > sizeof(struct discHdr))
-		len = sizeof(struct discHdr);
-
-	for (idx = 0; idx < cnt; idx++)
-	{
-		u8 *ptr = ((u8 *)outbuf) + (idx * slen);
-		memset(ptr, 0, slen);
-
-		/* Get header */
-		s32 ret = wbfs_get_disc_info(hdd, idx, ptr, len, &size);
-		if(ret != 0) return ret;
-	}
 
 	return 0;
 }

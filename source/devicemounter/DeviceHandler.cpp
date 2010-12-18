@@ -267,6 +267,39 @@ int DeviceHandler::GetFSType(int dev)
 	return -1;
 }
 
+wbfs_t * DeviceHandler::GetWbfsHandle(int dev)
+{
+    if(dev == SD && DeviceHandler::instance->sd)
+        return DeviceHandler::instance->sd->GetWbfsHandle(0);
+	else if(dev >= USB1 && dev <= USB8 && DeviceHandler::instance->usb)
+        return DeviceHandler::instance->usb->GetWbfsHandle(dev-USB1);
+
+    else if(dev == GCSDA && DeviceHandler::instance->gca)
+        return DeviceHandler::instance->gca->GetWbfsHandle(0);
+
+    else if(dev == GCSDB && DeviceHandler::instance->gcb)
+        return DeviceHandler::instance->gcb->GetWbfsHandle(0);
+
+    return NULL;
+}
+
+/* u32 DeviceHandler::GetLBAStart(int dev)
+{
+    if(dev == SD && DeviceHandler::instance->sd)
+        return DeviceHandler::instance->sd->GetLBAStart(0);
+
+	else if(dev >= USB1 && dev <= USB8 && DeviceHandler::instance->usb)
+        return DeviceHandler::instance->usb->GetLBAStart(dev-USB1);
+
+    else if(dev == GCSDA && DeviceHandler::instance->gca)
+        return DeviceHandler::instance->gca->GetLBAStart(0);
+
+    else if(dev == GCSDB && DeviceHandler::instance->gcb)
+        return DeviceHandler::instance->gcb->GetLBAStart(0);
+
+    return 0;
+} */
+
 s32 DeviceHandler::Open_WBFS(int dev)
 {
 	u32 part_idx, part_lba, part_size;
@@ -299,5 +332,5 @@ s32 DeviceHandler::Open_WBFS(int dev)
 	}
 	else return -1;
 
-	return WBFS_OpenPart(part_fs, part_idx, part_lba, part_size, partition);	
+	return WBFS_Init(GetWbfsHandle(dev), part_fs, part_idx, part_lba, part_size, partition);
 }

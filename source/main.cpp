@@ -158,7 +158,6 @@ int old_main(int argc, char **argv)
 				gprintf("%s is Available.\n", DeviceName[i]);
 
 		ISFS_Initialize();
-		bool wbfsOK = WBFS_Init(WBFS_DEVICE_USB, 1) >= 0;
 		bool dipOK = Disc_Init() >= 0;
 
 		CMenu menu(vid);
@@ -173,12 +172,6 @@ int old_main(int argc, char **argv)
 		{
 			menu.error(L"Could not initialize the DIP module!");
 			break;
-		}
- 		else if (!wbfsOK)
-		{
-			menu.error(L"Could not initialize WBFS!");
-			break;
-			/*menu.m_current_view = COVERFLOW_CHANNEL; */
 		}
 		else
 		{
