@@ -43,7 +43,8 @@ void CList::GetPaths(safe_vector<string> &pathlist, string containing, string di
 				for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
 					if(((string)entry).rfind(*compare) != string::npos)
 					{
-						pathlist.push_back(sfmt("%s/%s", directory.c_str(), entry));
+						if(entry[strlen(entry) - 1] == '3' || !isdigit(entry[strlen(entry) - 1]))
+							pathlist.push_back(sfmt("%s/%s", directory.c_str(), entry));
 						break;
 					}
 			}
@@ -65,7 +66,8 @@ void CList::GetPaths(safe_vector<string> &pathlist, string containing, string di
 				for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
 					if(((string)entry).rfind(*compare) != string::npos)
 					{
-						pathlist.push_back(sfmt("%s/%s", (*templist).c_str(), entry));
+						if(entry[strlen(entry) - 1] == '3' || !isdigit(entry[strlen(entry) - 1]))
+							pathlist.push_back(sfmt("%s/%s", (*templist).c_str(), entry));
 						break;
 					}
 			}
@@ -88,8 +90,8 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 {
 	dir_discHdr tmp;
 	u32 count = 0;
-	//u8 * id = NULL;
 	u8 id[6] = {0};
+
 	for(safe_vector<string>::iterator itr = pathlist.begin(); itr != pathlist.end(); itr++)
 	{
 		bzero(&tmp, sizeof(dir_discHdr));
@@ -112,7 +114,10 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 			}
 			if(tmp.hdr.id[0] != 0)
 			{
-				gprintf("\nFOUND ID!\n%s\n", tmp.hdr.id);
+				char *idstart = strcasestr(strrchr(tmp.path,'/'), (char *)tmp.hdr.id);
+				for (u32 i = 0; i < 6; ++i)
+					idstart[i] = toupper(idstart[i]);
+
 				headerlist.push_back(tmp);
 				continue;
 			}
@@ -127,6 +132,10 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 
 			if (tmp.hdr.magic == 0x5D1C9EA3	&& memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) != 0)
 			{
+				char *idstart = strcasestr(strrchr(tmp.path,'/'), (char *)tmp.hdr.id);
+				for (u32 i = 0; i < 6; ++i)
+					idstart[i] = toupper(idstart[i]);
+
 				headerlist.push_back(tmp);
 				continue;
 			}
@@ -139,7 +148,13 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 				/* Get header */
 				if(wbfs_get_disc_info(part, 0, (u8*)&tmp.hdr,	sizeof(discHdr), NULL) == 0
 				&& memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) != 0)
+				{
+					char *idstart = strcasestr(strrchr(tmp.path,'/'), (char *)tmp.hdr.id);
+					for (u32 i = 0; i < 6; ++i)
+						idstart[i] = toupper(idstart[i]);
+						
 					headerlist.push_back(tmp);
+				}
 
 				WBFS_Ext_ClosePart(part);
 				continue;
@@ -198,6 +213,7 @@ void CList::Check_For_ID(u8 *id, string path, string one, string two)
 	size_t idstart = path.find_last_of(one);
 	size_t idend = path.find_last_of(two);
 	if (idend != string::npos && idstart != string::npos && idend - idstart == 7)
-			for(u8 pos = 0; pos < 6; pos++)
-				id[pos] = toupper(path.at(idstart + 1 + pos));
+		for(u8 pos = 0; pos < 6; pos++)
+			id[pos] = toupper(path.at(idstart + 1 + pos));
+	
 }
