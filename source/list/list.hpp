@@ -30,6 +30,7 @@ class CList
 		void Init(string cachedir){m_cacheDir = cachedir;}
 	private:
 		bool update;
+		bool wbfs_fs;
 		string m_cacheDir;
 		string m_database;
 		void Check_For_ID(u8 *id, string path, string one, string two);

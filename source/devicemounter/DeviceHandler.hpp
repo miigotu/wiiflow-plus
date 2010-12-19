@@ -97,6 +97,7 @@ class DeviceHandler
 		static int PathToDriveType(const char * path);
         static const char * GetFSName(int dev);
 		static int GetFSType(int dev);
+		s16 GetMountedCount(int dev);
         static const char * PathToFSName(const char * path) { return GetFSName(PathToDriveType(path)); };
 		static wbfs_t * GetWbfsHandle(int dev);
 		//static u32 GetLBAStart(int dev);

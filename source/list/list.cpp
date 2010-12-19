@@ -23,6 +23,9 @@ void CList::DestroyInstance()
 
 void CList::GetPaths(safe_vector<string> &pathlist, string containing, string directory)
 {
+	wbfs_fs = false;
+	update = false;
+
 	if (strncasecmp(DeviceHandler::Instance()->PathToFSName(directory.c_str()), "WBFS", 4) != 0)
 	{
 		struct stat filestat;
@@ -43,7 +46,7 @@ void CList::GetPaths(safe_vector<string> &pathlist, string containing, string di
 		if(stat(directory.c_str(), &filestat) == -1) return;
 		update = (stat(m_database.c_str(), &cache) == -1 || filestat.st_mtime > cache.st_mtime);
 
-		if(update)
+		if(update || strcasestr(containing.c_str(), ".ogg") != 0 || strcasestr(containing.c_str(), ".mp3") != 0)
 		{
 			safe_vector<string> compares = stringToVector(containing, '|');
 			safe_vector<string> temp_pathlist;
@@ -96,6 +99,7 @@ void CList::GetPaths(safe_vector<string> &pathlist, string containing, string di
 	}
 	else
 	{
+		wbfs_fs = true;
 		int partition = DeviceHandler::Instance()->PathToDriveType(directory.c_str());
 		wbfs_t* handle = DeviceHandler::Instance()->GetWbfsHandle(partition);
 		if (!handle) return;
@@ -109,8 +113,9 @@ void CList::GetPaths(safe_vector<string> &pathlist, string containing, string di
 void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist)
 {
 	dir_discHdr tmp;
+	u32 count = 0;
 
-	if(update)
+	if(update || wbfs_fs)
 	{
 		for(safe_vector<string>::iterator itr = pathlist.begin(); itr != pathlist.end(); itr++)
 		{
@@ -174,6 +179,8 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 						(*itr)[i + 1] = toupper((*itr)[i + 1]);
 						i++;
 					}
+					else (*itr)[i] = tolower((*itr)[i]);
+
 				strcpy(tmp.hdr.title, (*itr).c_str());
 
 				for (u32 i = 0; i < 6; ++i)
@@ -189,7 +196,6 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 				wbfs_t* handle = DeviceHandler::Instance()->GetWbfsHandle(partition);
 				if (!handle) return;
 
-				static u32 count = 0;
 				s32 ret = wbfs_get_disc_info(handle, count, (u8 *)&tmp.hdr, sizeof(struct discHdr), NULL);
 				count++;
 				if(ret != 0) continue;

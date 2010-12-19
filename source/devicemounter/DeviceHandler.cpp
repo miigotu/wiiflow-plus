@@ -34,6 +34,8 @@
 #include "DeviceHandler.hpp"
 #include "wbfs.h"
 
+extern const DISC_INTERFACE __io_sdhc;
+
 DeviceHandler * DeviceHandler::instance = NULL;
 
 DeviceHandler::~DeviceHandler()
@@ -131,8 +133,13 @@ bool DeviceHandler::MountSD()
     if(sd->GetPartitionCount() < 1)
     {
         delete sd;
-        sd = NULL;
-        return false;
+        sd = new PartitionHandle(&__io_sdhc);
+		if(sd->GetPartitionCount() < 1)
+		{
+			delete sd;
+			sd = NULL;
+			return false;
+		}
     }
 
     //! Mount only one SD Partition
@@ -267,10 +274,31 @@ int DeviceHandler::GetFSType(int dev)
 	return -1;
 }
 
+s16 DeviceHandler::GetMountedCount(int dev)
+{
+	if(dev == SD && DeviceHandler::instance->sd && IsInserted(SD))
+		return 1;
+
+	else if(dev >= USB1 && dev <= USB8 && DeviceHandler::instance->usb)
+		for(int i = 0; i < usb->GetPartitionCount(); i++)
+		{
+			if(!IsInserted(i)) return i;
+		}
+
+	else if(dev == GCSDA && DeviceHandler::instance->gca && IsInserted(GCSDA))
+		return 1;
+
+	else if(dev == GCSDB && DeviceHandler::instance->gcb && IsInserted(GCSDB))
+		return 1;
+		
+	return -1;
+}
+
 wbfs_t * DeviceHandler::GetWbfsHandle(int dev)
 {
     if(dev == SD && DeviceHandler::instance->sd)
         return DeviceHandler::instance->sd->GetWbfsHandle(0);
+
 	else if(dev >= USB1 && dev <= USB8 && DeviceHandler::instance->usb)
         return DeviceHandler::instance->usb->GetWbfsHandle(dev-USB1);
 

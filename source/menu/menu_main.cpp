@@ -65,6 +65,8 @@ void CMenu::_hideMain(bool instant)
 			m_btnMgr.hide(m_mainLblUser[i], instant);
 }
 
+static bool show_homebrew = false;
+
 void CMenu::_showMain(void)
 {
 	_hideWaitMessage();
@@ -83,8 +85,10 @@ void CMenu::_showMain(void)
 			m_btnMgr.show(m_mainBtnUsb);
 			break;
 		case COVERFLOW_CHANNEL:
-			//m_btnMgr.show(m_mainBtnUsb);
-			m_btnMgr.show(m_mainBtnHomebrew);
+			if(!m_locked && show_homebrew)
+				m_btnMgr.show(m_mainBtnHomebrew);
+			else
+				m_btnMgr.show(m_mainBtnUsb);
 			break;
 		case COVERFLOW_USB:
 		default:
@@ -117,6 +121,8 @@ int CMenu::main(void)
 	wstringEx curLetter;
 	string prevTheme = m_cfg.getString("GENERAL", "theme", "default");
 	bool use_grab = m_cfg.getBool("GENERAL", "use_grab", false);
+	show_homebrew = m_cfg.getBool("GENERAL", "show_homebrew", false);
+
 	m_reload = false;
 	static u32 disc_check = 0;
 	int done = 0;
@@ -382,23 +388,31 @@ int CMenu::main(void)
 					m_current_view = COVERFLOW_CHANNEL;
 					m_category = 0;
 
-					//m_btnMgr.show(m_mainBtnUsb, true);
-					m_btnMgr.show(m_mainBtnHomebrew);
+					if(!m_locked && show_homebrew)
+						m_btnMgr.show(m_mainBtnHomebrew, true);
+					else
+						m_btnMgr.show(m_mainBtnUsb, true);
+					
 				}
 				else if (m_current_view == COVERFLOW_CHANNEL)
 				{
-					//m_current_view = COVERFLOW_USB;
-					m_current_view = COVERFLOW_HOMEBREW;
-					m_category = 0;
-					//m_category = m_cat.getInt("GENERAL", "category", 0);
-
-					m_btnMgr.show(m_mainBtnUsb, true);
+					if(!m_locked && show_homebrew)
+					{
+						m_current_view = COVERFLOW_HOMEBREW;
+						m_category = 0;
+						m_btnMgr.show(m_mainBtnUsb, true);
+					}
+					else
+					{
+						m_current_view = COVERFLOW_USB;
+						m_category = m_cat.getInt("GENERAL", "category", 0);
+						m_btnMgr.show(m_mainBtnChannel, true);
+					}
 				}
 				else if (m_current_view == COVERFLOW_HOMEBREW)
 				{
 					m_current_view = COVERFLOW_USB;
 					m_category = m_cat.getInt("GENERAL", "category", 0);
-
 					m_btnMgr.show(m_mainBtnChannel, true);
 				}
 				_loadList();
@@ -535,8 +549,10 @@ int CMenu::main(void)
 					m_btnMgr.show(m_mainBtnUsb);
 					break;
 				case COVERFLOW_CHANNEL:
-					m_btnMgr.show(m_mainBtnHomebrew);
-					//m_btnMgr.show(m_mainBtnUsb);
+					if(!m_locked && show_homebrew)
+						m_btnMgr.show(m_mainBtnHomebrew);
+					else
+						m_btnMgr.show(m_mainBtnUsb);
 					break;
 				case COVERFLOW_USB:
 				default:

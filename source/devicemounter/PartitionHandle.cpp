@@ -47,6 +47,8 @@
 #define CACHE 8
 #define SECTORS 64
 
+extern const DISC_INTERFACE __io_sdhc;
+
 static inline const char * PartFromType(int type)
 {
 	switch (type)
@@ -138,7 +140,7 @@ bool PartitionHandle::Mount(int pos, const char * name)
 	{
 		if (interface == &__io_usbstorage)
 			SetWbfsHandle(pos, wbfs_open_partition(__WBFS_ReadUSB, __WBFS_WriteUSB, NULL, 512, GetSecCount(pos), GetLBAStart(pos), 0));
-		else if (interface == &__io_wiisd)
+		else if (interface == &__io_wiisd || interface == &__io_sdhc)
 			SetWbfsHandle(pos, wbfs_open_partition(__WBFS_ReadSDHC, __WBFS_WriteSDHC, NULL, 512, GetSecCount(pos), GetLBAStart(pos), 0));
 
 		if(GetWbfsHandle(pos)) return true;

@@ -163,7 +163,7 @@ void CMenu::init()
 
 	if(drive == check && onUSB) //No wiiflow folder found in root of any usb partition, and data_on_usb=yes
 		for(int i = USB1; i <= USB8; i++) // Try first USB partition with wbfs folder.
-			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/wbfs", DeviceName[i]).c_str(), &dummy) == 0)
+			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt(GAMES_DIR, DeviceName[i]).c_str(), &dummy) == 0)
 			{
 				drive = DeviceName[i];
 				break;
@@ -220,12 +220,12 @@ void CMenu::init()
 	m_listCacheDir = m_cfg.getString("GENERAL", "dir_list_cache", sfmt("%s/lists", m_cacheDir.c_str()));
 	//
 
-	u8 old_ini_check = m_cfg.getInt("GENERAL", "partition");
-	if(old_ini_check < USB1 || old_ini_check > USB8)
+	u8 partition = m_cfg.getInt("GENERAL", "partition");  //Auto find a valid partition and fix old ini partition settings.
+	if(partition < USB1 || partition > USB8 || partition > DeviceHandler::Instance()->GetMountedCount(partition))
 	{
 		m_cfg.remove("GENERAL", "partition");
-		for(int i = USB1; i <= USB8; i++) // Find a usb partition with the wbfs folder, else leave it blank
-		if (DeviceHandler::Instance()->IsInserted(i) && (DeviceHandler::Instance()->GetFSType(i) == PART_FS_WBFS || stat(sfmt("%s:/wbfs", DeviceName[i]).c_str(), &dummy) == 0))
+		for(int i = USB1; i <= USB8; i++) // Find a usb partition with the wbfs folder or wbfs file system, else leave it blank (defaults to 1 later)
+		if (DeviceHandler::Instance()->IsInserted(i) && (DeviceHandler::Instance()->GetFSType(i) == PART_FS_WBFS || stat(sfmt(GAMES_DIR, DeviceName[i]).c_str(), &dummy) == 0))
 		{
 			m_cfg.setInt("GENERAL", "partition", i);
 			break;
@@ -317,7 +317,6 @@ void CMenu::init()
 		WPAD_SetVRes(chan, m_vid.width() + m_cursor[chan].width(), m_vid.height() + m_cursor[chan].height());
 	}
 		
-
 	m_btnMgr.init(m_vid);
 
 	_load_installed_cioses();	
@@ -331,7 +330,7 @@ void CMenu::init()
 
 	int exit_to = m_cfg.getInt("GENERAL", "exit_to", 0);
 	m_disable_exit = exit_to == EXIT_TO_DISABLE;
-	//Check that the files are there, or ios will hang on exit
+
 	if(exit_to == EXIT_TO_BOOTMII && (!DeviceHandler::Instance()->IsInserted(SD) || 
 	stat(sfmt("%s:/bootmii/armboot.bin",DeviceName[SD]).c_str(), &dummy) != 0 || 
 	stat(sfmt("%s:/bootmii/ppcboot.elf", DeviceName[SD]).c_str(), &dummy) != 0))
@@ -340,8 +339,6 @@ void CMenu::init()
 
 	LWP_MutexInit(&m_mutex, 0);
 	LWP_MutexInit(&m_gameSndMutex, 0);
-
-	//soundInit(); //done in the m_btnMgr.init
 
 	m_cf.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255));
 	m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
@@ -441,7 +438,22 @@ void CMenu::_loadCFCfg()
 	m_numCFVersions = min(max(2, m_theme.getInt("_COVERFLOW", "number_of_modes", 2)), 8);
 	for (u32 i = 1; i <= m_numCFVersions; ++i)
 		_loadCFLayout(i);
-	_loadCFLayout(min(max(1, m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1)), (int)m_numCFVersions));
+
+	int mode;
+	switch(m_current_view)
+	{
+		case COVERFLOW_HOMEBREW:
+			mode = m_cfg.getInt("GENERAL", "last_hb_cf_mode" , 1);
+			break;
+		case COVERFLOW_CHANNEL:
+			mode = m_cfg.getInt("GENERAL", "last_chan_cf_mode" , 1);
+			break;
+		case COVERFLOW_USB:
+		default:
+			mode = m_cfg.getInt("GENERAL", "last_cf_mode", 1);
+			break;
+	}
+	_loadCFLayout(min(max(1, mode), (int)m_numCFVersions));
 }
 
 Vector3D CMenu::_getCFV3D(const string &domain, const string &key, const Vector3D &def, bool otherScrnFmt)
@@ -1466,6 +1478,7 @@ bool CMenu::_loadChannelList(void)
 
 bool CMenu::_loadList(void)
 {
+	m_gameList.clear();
 	switch(m_current_view)
 	{
 		case COVERFLOW_CHANNEL:
@@ -1480,7 +1493,6 @@ bool CMenu::_loadList(void)
 
 bool CMenu::_loadGameList(void)
 {
-	m_gameList.clear();
 	int currentPartition = m_cfg.getInt("GENERAL", "partition", 1);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
 	safe_vector<string> pathlist;
@@ -1492,13 +1504,11 @@ bool CMenu::_loadGameList(void)
 
 bool CMenu::_loadHomebrewList()
 {
-	m_gameList.clear();
 	int currentHBPartition = m_cfg.getInt("GENERAL", "homebrew_partition", m_cfg.getInt("GENERAL", "partition", 1));
 	safe_vector<string> pathlist;
 	CList::Instance()->GetPaths(pathlist, ".dol", sfmt(HOMEBREW_DIR, DeviceName[currentHBPartition]));
 	m_gameList.reserve(pathlist.size());
 	CList::Instance()->GetHeaders(pathlist, m_gameList);
-
 	return m_gameList.size() > 0 ? true : false;
 }
 
@@ -1625,8 +1635,7 @@ void CMenu::_loopMusic(void)
 		}
 		_updateMusicVol();
 	}
-	
-	if(!MP3Player_IsPlaying() && StatusOgg() == OGG_STATUS_EOF && !m_video_playing)
+	if(((m_music_ismp3 && !MP3Player_IsPlaying()) || (!m_music_ismp3 && StatusOgg() == OGG_STATUS_EOF)) && !m_video_playing)
 		_startMusic();
 
 	return;

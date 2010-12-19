@@ -404,14 +404,28 @@ int CMenu::_coverDownloader(bool missingOnly)
 		{
 			// Try to get the full cover
 			string url;
+			string domain;
 			bool success = false;
 			FILE *file = NULL;
 
 			safe_vector<string> newID(1);
-			newID[0] = m_newID.getString(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", coverList[i], coverList[i]);
+			switch(m_current_view)
+			{
+				case COVERFLOW_CHANNEL:
+					domain = "CHANNELS";
+					break;
+				case COVERFLOW_HOMEBREW:
+					domain = "HOMEBREWS";
+					break;
+				case COVERFLOW_USB:
+				default:
+					domain = "GAMES";
+					break;
+			}
+			newID[0] = m_newID.getString(domain, coverList[i], coverList[i]);
 
  			if(!newID[0].empty() && strncasecmp(newID[0].c_str(), coverList[i].c_str(), m_current_view == COVERFLOW_CHANNEL ? 4 : 6) == 0)
-				m_newID.remove(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", coverList[i]);
+				m_newID.remove(domain, coverList[i]);
 			else if(!newID[0].empty()) gprintf("old id = %s\nnew id = %s\n", coverList[i].c_str(), newID[0].c_str());
 
 			for (u32 j = 0; !success && j < fmtURLBox.size() && !m_thrdStop; ++j)
