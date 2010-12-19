@@ -98,6 +98,7 @@ private:
 	std::string m_settingsDir;
 	std::string m_languagesDir;
 	std::string m_wdmDir;
+	std::string m_listCacheDir;
 	/* Updates */
 	const char* m_old_update_url;
 	const char* m_app_update_url;

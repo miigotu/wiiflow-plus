@@ -217,6 +217,7 @@ void CMenu::init()
 	m_cheatDir = m_cfg.getString("GENERAL", "dir_cheat", sfmt("%s/gct", m_txtCheatDir.c_str()));
 	m_wdmDir = m_cfg.getString("GENERAL", "dir_wdm", sfmt("%s/wdm", m_txtCheatDir.c_str()));
 	m_wipDir = m_cfg.getString("GENERAL", "dir_wip", sfmt("%s/wip", m_txtCheatDir.c_str()));
+	m_listCacheDir = m_cfg.getString("GENERAL", "dir_list_cache", sfmt("%s/lists", m_cacheDir.c_str()));
 	//
 
 	u8 old_ini_check = m_cfg.getInt("GENERAL", "partition");
@@ -250,6 +251,9 @@ void CMenu::init()
 	makedir((char *)m_cheatDir.c_str());
 	makedir((char *)m_wdmDir.c_str());
 	makedir((char *)m_wipDir.c_str());
+
+	makedir((char *)m_listCacheDir.c_str());
+	CList::Instance()->Init(m_listCacheDir);
 
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());

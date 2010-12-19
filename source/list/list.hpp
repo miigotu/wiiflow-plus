@@ -10,6 +10,7 @@
 
 #include "DeviceHandler.hpp"
 #include "safe_vector.hpp"
+#include "config.hpp"
 #include "wbfs.h"
 #include "wbfs_ext.h"
 #include "libwbfs/libwbfs.h"
@@ -26,6 +27,11 @@ class CList
 		static void DestroyInstance();
 		void GetPaths(safe_vector<string> &pathlist, string containing, string directory);
 		void GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist);
+		void Init(string cachedir){m_cacheDir = cachedir;}
+	private:
+		bool update;
+		string m_cacheDir;
+		string m_database;
 		void Check_For_ID(u8 *id, string path, string one, string two);
 
 	protected:
