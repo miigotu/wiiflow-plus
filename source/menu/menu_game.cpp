@@ -15,9 +15,7 @@
 #include "DeviceHandler.hpp"
 #include "loader/mload_modules.h"
 #include "loader/wbfs.h"
-#include "loader/wbfs_ext.h"
-#include "loader/usbstorage.h"
-#include "libwbfs/wiidisc.h"
+
 #include "loader/frag.h"
 #include "loader/fst.h"
 #include "loader/wdm.h"
@@ -29,7 +27,6 @@
 
 #include "gecko.h"
 #include "homebrew.h"
-#include "sys.h"
 #include "defines.h"
 
 using namespace std;
@@ -643,6 +640,8 @@ void CMenu::_launch(dir_discHdr *hdr)
 	}
 }
 
+extern "C" {extern void USBStorage_Deinit(void);}
+
 void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> arguments)
 {
 	COVER_clear();
@@ -657,10 +656,8 @@ void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> argum
 		for(u32 i = 0; i < arguments.size(); ++i)
 			AddBootArgument(arguments[i].c_str());
 
-		Close_Inputs();
 		Playlog_Delete();
 
-		DeviceHandler::Instance()->UnMountAll();
 		cleanup();
 		Close_Inputs();
 		USBStorage_Deinit();
@@ -687,11 +684,9 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 
 	COVER_clear();
 	
-	DeviceHandler::Instance()->UnMountAll();
 	cleanup();
 	Close_Inputs();
 	USBStorage_Deinit();
-
 	WII_LaunchTitle(hdr->hdr.chantitle);
 }
 
@@ -940,11 +935,9 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 			return;
 		}
 	}
-	DeviceHandler::Instance()->UnMountAll();
 	cleanup();
 	Close_Inputs();
 	USBStorage_Deinit();
-
 	if (gc)
 	{
 		WII_Initialize();

@@ -181,7 +181,6 @@ int old_main(int argc, char **argv)
 				ret = menu.main();
 		}
 		vid.cleanup();
-		DeviceHandler::Instance()->UnMountAll();
 		if (bootHB)
 		{
 			IOS_ReloadIOS(58);

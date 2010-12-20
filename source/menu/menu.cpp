@@ -4,22 +4,17 @@
 #include "loader/alt_ios.h"
 
 #include "oggplayer.h"
-
 #include "network/gcard.h"
 
 #include <fstream>
-#include <map>
 #include <sys/stat.h>
-#include <fstream>
 #include <dirent.h>
 #include <mp3player.h>
 #include <time.h>
 #include <wchar.h>
 
 #include "gecko.h"
-#include "channels.h"
 #include "defines.h"
-
 #include "list.hpp"
 
 // Sounds
@@ -371,6 +366,7 @@ void CMenu::init()
 
 void CMenu::cleanup(void)
 {
+	CList::Instance()->DestroyInstance(); // Destruction must be done manually
 	_waitForGameSoundExtract();
 	_stopSounds();
 	soundDeinit();
@@ -378,6 +374,8 @@ void CMenu::cleanup(void)
 	m_mutex = 0;
 	LWP_MutexDestroy(m_gameSndMutex);
 	m_gameSndMutex = 0;
+
+	DeviceHandler::Instance()->DestroyInstance(); // Destruction must be done manually, also unmounts all devices.
 	_deinitNetwork();
 }
 

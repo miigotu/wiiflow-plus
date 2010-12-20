@@ -10,13 +10,11 @@
 
 #include "DeviceHandler.hpp"
 #include "safe_vector.hpp"
-#include "config.hpp"
-#include "wbfs.h"
 #include "wbfs_ext.h"
 #include "libwbfs/libwbfs.h"
 #include "disc.h"
 #include "text.hpp"
-#include "gecko.h"
+//#include "gecko.h"
 
 using namespace std;
 
@@ -36,8 +34,8 @@ class CList
 		void Check_For_ID(u8 *id, string path, string one, string two);
 
 	protected:
-        CList(){};
-        ~CList();
+		 CList(): update(false), wbfs_fs(false) {};
+		~CList();
 
 		static CList * instance;
 };

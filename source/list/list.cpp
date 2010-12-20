@@ -4,7 +4,6 @@ CList * CList::instance = NULL;
 
 CList::~CList()
 {
-	//DestroyInstance();
 }
 
 CList * CList::Instance()
@@ -32,41 +31,37 @@ void CList::GetPaths(safe_vector<string> &pathlist, string containing, string di
 		struct stat cache;
 		
 		string buffer = directory;
-		size_t find = buffer.find(":/");
-		buffer.replace(find, 2, "_");
-		while(true)
-		{
-			find = buffer.find("/");
-			if(find == string::npos) break;
-			buffer[find] = '_';
-		}
-		
+		buffer.replace(buffer.find(":/"), 2, "_");
+		size_t find = buffer.find("/");
+		if(find != string::npos) buffer[find] = 0;
+
 		m_database = sfmt("%s/%s.db"/* "%s/%s_i.db" */, m_cacheDir.c_str(), buffer.c_str()/*,  disk guid (4) */);
 
 		if(stat(directory.c_str(), &filestat) == -1) return;
 		update = (stat(m_database.c_str(), &cache) == -1 || filestat.st_mtime > cache.st_mtime);
 
-		if(update || strcasestr(containing.c_str(), ".ogg") != 0 || strcasestr(containing.c_str(), ".mp3") != 0)
+		if(update)
 		{
+			/* Open primary directory */
+			DIR_ITER *dir_itr = diropen(directory.c_str());
+			if (!dir_itr) return;
+
 			safe_vector<string> compares = stringToVector(containing, '|');
 			safe_vector<string> temp_pathlist;
 
 			char entry[1024] = {0};
 
-			/* Open primary directory */
-			DIR_ITER *dir_itr = diropen(directory.c_str());
-			if (!dir_itr) return;
-
 			/* Read primary entries */
 			while(dirnext(dir_itr, entry, &filestat) == 0)
 			{
+				if (entry[0] == '.') continue;
+				if (strlen(entry) < 6) continue;
 				if(!S_ISDIR(filestat.st_mode))
 				{
 					for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
 						if(((string)entry).rfind(*compare) != string::npos)
 						{
-							//if(entry[strlen(entry) - 1] == '3' || !isdigit(entry[strlen(entry) - 1]))
-								pathlist.push_back(sfmt("%s/%s", directory.c_str(), entry));
+							pathlist.push_back(sfmt("%s/%s", directory.c_str(), entry));
 							break;
 						}
 				}
@@ -74,32 +69,35 @@ void CList::GetPaths(safe_vector<string> &pathlist, string containing, string di
 			}
 			dirclose(dir_itr);
 
-			for(safe_vector<string>::iterator templist = temp_pathlist.begin(); templist != temp_pathlist.end(); templist++)
+			if(temp_pathlist.size() > 0)
 			{
-				dir_itr = diropen((*templist).c_str());
-				if (!dir_itr) continue;
-
-				/* Read secondary entries */
-				while(dirnext(dir_itr, entry, &filestat) == 0)
+				for(safe_vector<string>::iterator templist = temp_pathlist.begin(); templist != temp_pathlist.end(); templist++)
 				{
-					if(S_ISDIR(filestat.st_mode)) continue;
-					if (strlen(entry) < 8) continue;
+					dir_itr = diropen((*templist).c_str());
+					if (!dir_itr) continue;
 
-					for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
-						if(((string)entry).rfind(*compare) != string::npos)
-						{
-							//if(entry[strlen(entry) - 1] == '3' || !isdigit(entry[strlen(entry) - 1]))
+					/* Read secondary entries */
+					while(dirnext(dir_itr, entry, &filestat) == 0)
+					{
+						if(S_ISDIR(filestat.st_mode)) continue;
+						if (strlen(entry) < 8) continue;
+
+						for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
+							if(((string)entry).rfind(*compare) != string::npos)
+							{
 								pathlist.push_back(sfmt("%s/%s", (*templist).c_str(), entry));
-							break;
-						}
+								break;
+							}
+					}
+					dirclose(dir_itr);
 				}
-				dirclose(dir_itr);
 			}
 		}
 	}
 	else
 	{
 		wbfs_fs = true;
+
 		int partition = DeviceHandler::Instance()->PathToDriveType(directory.c_str());
 		wbfs_t* handle = DeviceHandler::Instance()->GetWbfsHandle(partition);
 		if (!handle) return;
@@ -125,12 +123,20 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 			bool wbfs = (*itr).rfind(".wbfs") != string::npos;
 			if ((wbfs || (*itr).rfind(".iso")  != string::npos))
 			{
-				Check_For_ID(tmp.hdr.id, (*itr).c_str(), "[", "]"); 	 	 /* [GAMEID] Title, [GAMEID]_Title, Title [GAMEID], Title_[GAMEID] */
+				Check_For_ID(tmp.hdr.id, (*itr).c_str(), "[", "]"); 	 			/* [GAMEID] Title, [GAMEID]_Title, Title [GAMEID], Title_[GAMEID] */
 				if(tmp.hdr.id[0] == 0)
 				{
-					Check_For_ID(tmp.hdr.id, (*itr).c_str(), "/", "."); 	 /* GAMEID.wbfs, GAMEID.iso */
+					Check_For_ID(tmp.hdr.id, (*itr).c_str(), "/", "."); 			/* GAMEID.wbfs, GAMEID.iso */
 					if(tmp.hdr.id[0] == 0)
-						Check_For_ID(tmp.hdr.id, (*itr).c_str(), "/", "_"); /* GAMEID_Title */
+					{
+						Check_For_ID(tmp.hdr.id, (*itr).c_str(), "/", "_"); 		/* GAMEID_Title */
+						if(tmp.hdr.id[0] == 0)
+						{
+							Check_For_ID(tmp.hdr.id, (*itr).c_str(), "_", "."); 	/* Title_GAMEID */ // <-- Unsafe?
+							if(tmp.hdr.id[0] == 0)
+								Check_For_ID(tmp.hdr.id, (*itr).c_str(), " ", "."); /* Title GAMEID */ //<-- Unsafe?
+						}
+					}
 				}
 				if(tmp.hdr.id[0] != 0)
 				{
