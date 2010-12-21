@@ -9,7 +9,6 @@
 #include <fstream>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <mp3player.h>
 #include <time.h>
 #include <wchar.h>
 
@@ -78,8 +77,6 @@ CMenu::CMenu(CVideo &vid) :
 	m_numCFVersions = 0;
 	m_bgCrossFade = 0;
 	m_bnrSndVol = 0;
-	m_musicVol = 0;
-	m_music_fade_mode = 0;
 	m_gameSettingsPage = 0;
 	m_directLaunch = false;
 	m_exit = false;
@@ -313,6 +310,7 @@ void CMenu::init()
 	}
 		
 	m_btnMgr.init(m_vid);
+	m_musicPlayer.Init(m_cfg, m_musicDir, sfmt("%s/music", m_themeDataDir.c_str()));
 
 	_load_installed_cioses();	
 	m_loaded_ios_base = get_ios_base();
@@ -338,7 +336,6 @@ void CMenu::init()
 	m_cf.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255));
 	m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
 	m_bnrSndVol = m_cfg.getInt("GENERAL", "sound_volume_bnr", 255);
-	m_musicVol = m_musicCurrentVol = m_cfg.getInt("GENERAL", "sound_volume_music", 255);
 	
 	if (m_cfg.getBool("GENERAL", "favorites_on_startup", false))
 		m_favorites = m_cfg.getBool("GENERAL", "favorites", false);
@@ -1248,17 +1245,14 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		Sys_Test();
 	}
 	
-	// Fade music out when game is selected
-	if ((m_gameSelected && m_musicCurrentVol > 0) || m_video_playing)
-		m_music_fade_mode = -1;
-	
-	// Fade music back in when no game selected or if banner sound finished
-	if (m_musicCurrentVol != m_musicVol && !m_video_playing
-		&& (!m_gameSelected || (m_gameSelected && m_gameSound.voice && ASND_StatusVoice(m_gameSound.voice) == SND_UNUSED)))
-		m_music_fade_mode = 1;	
+	// Fade music in or out when game is selected
+	if (m_gameSelected || m_video_playing)
+		m_musicPlayer.SetFadeMode(FADE_OUT);
+	else if (m_musicPlayer.GetVolume() != m_musicPlayer.GetMaxVolume() && !m_video_playing && (!m_gameSelected || (m_gameSelected && m_gameSound.voice && ASND_StatusVoice(m_gameSound.voice) == SND_UNUSED)))
+		m_musicPlayer.SetFadeMode(FADE_IN);
 	
 	LWP_MutexLock(m_gameSndMutex);
-	if (withCF && m_gameSelected && !!m_gameSoundTmp.data && m_gameSoundThread == 0 && m_musicCurrentVol == 0)
+	if (withCF && m_gameSelected && !!m_gameSoundTmp.data && m_gameSoundThread == 0 && m_musicPlayer.GetVolume() == 0)
 	{
 		m_gameSound.stop();
 		m_gameSound = m_gameSoundTmp;
@@ -1272,7 +1266,8 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	if (withCF && m_gameSoundThread == 0)
 		m_cf.startPicLoader();
 
-	_loopMusic();
+	m_musicPlayer.Tick(m_video_playing);
+	
 	//Take Screenshot
 	if (gc_btnsPressed & PAD_TRIGGER_Z)
 	{
@@ -1495,177 +1490,40 @@ bool CMenu::_loadGameList(void)
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
 	safe_vector<string> pathlist;
 	CList::Instance()->GetPaths(pathlist, ".wbfs|.iso", sfmt(GAMES_DIR, DeviceName[currentPartition]));
-	m_gameList.reserve(pathlist.size());
 	CList::Instance()->GetHeaders(pathlist, m_gameList);
 	return m_gameList.size() > 0 ? true : false;
 }
 
 bool CMenu::_loadHomebrewList()
 {
-	int currentHBPartition = m_cfg.getInt("GENERAL", "homebrew_partition", m_cfg.getInt("GENERAL", "partition", 1));
+	int currentHBPartition = m_cfg.getInt("GENERAL", "homebrew_partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
+	DeviceHandler::Instance()->Open_WBFS(currentHBPartition);
 	safe_vector<string> pathlist;
 	CList::Instance()->GetPaths(pathlist, ".dol", sfmt(HOMEBREW_DIR, DeviceName[currentHBPartition]));
-	m_gameList.reserve(pathlist.size());
 	CList::Instance()->GetHeaders(pathlist, m_gameList);
 	return m_gameList.size() > 0 ? true : false;
-}
-
-void CMenu::_searchMusic(void)
-{
-	music_files.clear();
-	CList::Instance()->GetPaths(music_files, ".ogg|.mp3", m_musicDir);
-
-	_shuffleMusic();
-}
-
-void CMenu::_shuffleMusic(void)
-{
-	if (music_files.empty()) return;
-
-	if (m_cfg.getBool("GENERAL", "randomize_music", true))
-	{
-		srand(unsigned(time(NULL)));
-		random_shuffle(music_files.begin(), music_files.end());
-	}
-	current_music = music_files.begin();
-}
-
-void CMenu::_startMusic(void)
-{
-	if (music_files.empty()) return;
-
-	_stopMusic();
-
-	if (current_music == music_files.end())
-		_shuffleMusic();
-
-	ifstream file((*current_music).c_str(), ios::in | ios::binary);
-	m_music_ismp3 = strcasestr((*current_music).c_str(), ".MP3") != NULL;
-	current_music++;
-
-	if (!file.is_open()) return;
-
-	file.seekg(0, ios::end);
-	m_music_fileSize = file.tellg();
-	file.seekg(0, ios::beg);
-
-	SmartBuf buffer = smartMem2Alloc(m_music_fileSize);
-	if (!buffer) return;
-
-	file.read((char *)buffer.get(), m_music_fileSize);
-	bool fail = file.fail();
-	file.close();
-	if (fail) return;
-
-	m_music = buffer;
-	SMART_FREE(buffer);
-
-	if(m_music_ismp3)
-		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
-	else
-		PlayOgg(mem_open((char *)m_music.get(), m_music_fileSize), 0, OGG_INFINITE_TIME);
-
-	_updateMusicVol();
-}
-
-void CMenu::_updateMusicVol(void)
-{
-	SetVolumeOgg(m_musicCurrentVol);
-	MP3Player_Volume(m_musicCurrentVol);	
-}
-
-void CMenu::_stopMusic(void)
-{
-	if (StatusOgg() == OGG_STATUS_PAUSED) PauseOgg(0);
-	ASND_PauseVoice(0, 0);
-
-	MP3Player_Stop();
-	StopOgg();
-	SMART_FREE(m_music);
-}
-
-void CMenu::_pauseMusic(void)
-{
-	if (StatusOgg() == OGG_STATUS_RUNNING) PauseOgg(1);
-	MP3Player_Stop();
-}
-
-void CMenu::_resumeMusic(void)
-{
-	if(!m_music_ismp3 && !MP3Player_IsPlaying() && StatusOgg() == OGG_STATUS_PAUSED)
-		PauseOgg(0);
-	else if (m_music_ismp3)
-	{
-		if (StatusOgg() == OGG_STATUS_RUNNING) PauseOgg(1);
-		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
-	}
-}
-
-void CMenu::_loopMusic(void)
-{		
-	int fade_rate = m_cfg.getInt("GENERAL", "music_fade_rate", 8);
-	
-	if (m_music_fade_mode != 0)
-	{
-		if (m_music_fade_mode > 0) 
-		{
-			if (StatusOgg() == OGG_STATUS_PAUSED) PauseOgg(0);
-			if (ASND_StatusVoice(0) == SND_WAITING) ASND_PauseVoice(0, 0);
-		
-			m_musicCurrentVol += fade_rate;
-			if (m_musicCurrentVol >= m_musicVol)
-			{
-				m_musicCurrentVol = m_musicVol;
-				m_music_fade_mode = 0;
-			}
-		}
-		else
-		{	
-			m_musicCurrentVol -= fade_rate;
-			if (m_musicCurrentVol <= 0)
-			{
-				m_musicCurrentVol = 0;
-				m_music_fade_mode = 0;
-				
-				PauseOgg(1);
-				ASND_PauseVoice(0, 1);
-			}
-		}
-		_updateMusicVol();
-	}
-	if(((m_music_ismp3 && !MP3Player_IsPlaying()) || (!m_music_ismp3 && StatusOgg() == OGG_STATUS_EOF)) && !m_video_playing)
-		_startMusic();
-
-	return;
 }
 
 void CMenu::_stopSounds(void)
 {
 	// Fade out sounds
 	int fade_rate = m_cfg.getInt("GENERAL", "music_fade_rate", 8);
+	m_musicPlayer.SetFadeMode(FADE_OUT);
 
-	while (m_musicCurrentVol > 0 || m_gameSound.volume > 0)
+	while (m_musicPlayer.GetVolume() > 0 || m_gameSound.volume > 0)
 	{
-
-		m_music_fade_mode = 0;
-		if (m_musicCurrentVol > 0)
-		{
-			m_musicCurrentVol -= m_musicCurrentVol < fade_rate ? m_musicCurrentVol : fade_rate;
-
-			SetVolumeOgg(m_musicCurrentVol);
-			MP3Player_Volume(m_musicCurrentVol);
-		}	
+		m_musicPlayer.Tick(false);
+		
 		if (m_gameSound.volume > 0)
 			m_gameSound.setVolume(m_gameSound.volume < fade_rate ? 0 : m_gameSound.volume - fade_rate);
 
-
-		VIDEO_WaitVSync();
+		VIDEO_WaitVSync();		
 	}
 
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();
 
-	_stopMusic();
+	m_musicPlayer.Stop();
 	m_gameSound.stop();
 }
 

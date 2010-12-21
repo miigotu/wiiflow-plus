@@ -16,6 +16,7 @@
 #include "channels.h"
 #include "gct.h"
 #include "DeviceHandler.hpp"
+#include "musicplayer.h"
 
 extern "C" {extern u8 currentPartition;}
 extern bool bootHB;
@@ -64,7 +65,7 @@ private:
 	Config m_dump;
 	Config m_newID;
 	Channels m_channels;
-	SmartBuf m_music;
+	MusicPlayer m_musicPlayer;
 	safe_vector<std::string> m_homebrewArgs;
 	u8 m_aa;
 	bool m_directLaunch;
@@ -546,14 +547,7 @@ private:
 	lwp_t m_gameSoundThread;
 	mutex_t m_gameSndMutex;
 	u8 m_bnrSndVol;
-	int m_musicVol;
-	int m_musicCurrentVol;
-	int m_music_fade_mode; // Represents fade up (> 0),fade down (< 0), or no fade at all (== 0)
 	
-	bool m_music_ismp3;
-	u32 m_music_fileSize;
-	safe_vector<string> music_files;
-	safe_vector<string>::iterator current_music;
 	bool m_video_playing;
 	
 	u32 m_loaded_ios_base;
@@ -792,14 +786,6 @@ private:
 	static int _gameInstaller(void *obj);
 	wstringEx _optBoolToString(int b);
 	void _listDOL(safe_vector<std::string> &v, const std::string &gameId);
-	void _searchMusic(void);
-	void _shuffleMusic(void);
-	void _startMusic(void);
-	void _stopMusic(void);
-	void _pauseMusic(void);
-	void _resumeMusic(void);
-	void _loopMusic(void);
-	void _updateMusicVol(void);
 	void _stopSounds(void);
 	//
 	static u32 _downloadCheatFileAsync(void *obj);

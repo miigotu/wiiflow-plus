@@ -134,19 +134,17 @@ int CMenu::_configSnd(void)
 			}
 			else if (m_btnMgr.selected(m_configSndBtnMusicVolP))
 			{
-				m_musicVol = min(m_cfg.getInt("GENERAL", "sound_volume_music", 255) + step, 255);
-				m_cfg.setInt("GENERAL", "sound_volume_music", m_musicVol);
+				int musicVol = min(m_cfg.getInt("GENERAL", "sound_volume_music", 255) + step, 255);
+				m_cfg.setInt("GENERAL", "sound_volume_music", musicVol);
 				_showConfigSnd();
-				SetVolumeOgg(m_cfg.getInt("GENERAL", "sound_volume_music", 255));
-				MP3Player_Volume(m_cfg.getInt("GENERAL", "sound_volume_music", 255));
+				m_musicPlayer.SetVolume(m_musicPlayer.GetVolume(), musicVol);
 			}
 			else if (m_btnMgr.selected(m_configSndBtnMusicVolM))
 			{
-				m_musicVol = max(m_cfg.getInt("GENERAL", "sound_volume_music", 255) - step, 0);
-				m_cfg.setInt("GENERAL", "sound_volume_music", m_musicVol);
+				int musicVol = max(m_cfg.getInt("GENERAL", "sound_volume_music", 255) - step, 0);
+				m_cfg.setInt("GENERAL", "sound_volume_music", musicVol);
 				_showConfigSnd();
-				SetVolumeOgg(m_cfg.getInt("GENERAL", "sound_volume_music", 255));
-				MP3Player_Volume(m_cfg.getInt("GENERAL", "sound_volume_music", 255));
+				m_musicPlayer.SetVolume(m_musicPlayer.GetVolume(), musicVol);
 			}
 			else if (m_btnMgr.selected(m_configSndBtnCFVolP))
 			{

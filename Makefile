@@ -35,7 +35,7 @@ SOURCES		:=	source \
 				source/unzip \
 				source/xml \
 				source/wstringEx \
-				source/loader/libwbfs \
+				source/loader/libwbfs
 
 DATA		:=	data
 
@@ -55,7 +55,7 @@ INCLUDES	:=	source \
 				source/network \
 				source/unzip \
 				source/wstringEx \
-				source/xml \
+				source/xml
 				
 #---------------------------------------------------------------------------------
 # Default build shell script options
@@ -66,8 +66,8 @@ port		:=	0
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-CFLAGS	 =	-g -Os -Wall -Wno-char-subscripts -fno-strict-aliasing $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DMAIN_IOS=249
-CXXFLAGS =	-g -Os -Wall -Wno-char-subscripts -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H
+CFLAGS	 =	-g -Os -Wall -Wno-char-subscripts -fno-strict-aliasing $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DGECKO_SD -DMAIN_IOS=249
+CXXFLAGS =	-g -Os -Wall -Wno-char-subscripts -Wextra -Wno-multichar $(MACHDEP) $(INCLUDE) -DHAVE_CONFIG_H -DGECKO_SD
 
 LDFLAGS	 =	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x80B00000,-wrap,malloc,-wrap,free,-wrap,memalign,-wrap,calloc,-wrap,realloc,-wrap,malloc_usable_size -T../scripts/rvl.ld
 
@@ -172,7 +172,7 @@ run:
 #---------------------------------------------------------------------------------
 gdb:
 	@echo Loading GDB with symbols from boot.elf, type quit to exit.
-	@powerpc-eabi-gdb.exe boot.elf
+	@powerpc-eabi-gdb boot.elf
 
 #---------------------------------------------------------------------------------
 addr:

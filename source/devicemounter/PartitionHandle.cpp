@@ -188,10 +188,32 @@ int PartitionHandle::FindPartitions()
     // Verify this is the device's master boot record
     if(mbr.signature != MBR_SIGNATURE) return 0;
 
+	// Is this a valid MBR, or is this a possible VBR?
+	if(memcmp((u8 *)&mbr + BPB_FAT16_ADDR, FAT_SIGNATURE, sizeof(FAT_SIGNATURE)) == 0)
+	{
+		char fsName[9] = {0};
+		memcpy(fsName, (u8 *) &mbr + BPB_FAT16_ADDR, 8);
+		VOLUME_BOOT_RECORD *vbr = (VOLUME_BOOT_RECORD *)((u8 *) &mbr);
+		// This might be a VBR
+		PartitionFS PartitionEntry;
+		PartitionEntry.FSName = fsName;
+		PartitionEntry.LBA_Start = 0;
+		PartitionEntry.SecCount = le16(vbr->bpb.FatSectors);
+		PartitionEntry.Bootable = 0;
+		PartitionEntry.PartitionType = 0;
+		PartitionEntry.PartitionNum = 0;
+		PartitionEntry.EBR_Sector = 0;
+		
+		PartitionList.push_back(PartitionEntry);
+		return PartitionList.size();
+	}
+
 	for (int i = 0; i < 4; i++)
     {
         PARTITION_RECORD * partition = (PARTITION_RECORD *) &mbr.partitions[i];
 		VOLUME_BOOT_RECORD vbr;
+
+		if (le32(partition->lba_start) == 0) continue; // Invalid partition
 
 		if(!interface->readSectors(le32(partition->lba_start), 1, &vbr)) continue;
 

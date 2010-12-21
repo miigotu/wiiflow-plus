@@ -43,7 +43,7 @@ sec_t _FAT_startSector;
 /*
 This device name, as known by devkitPro toolchains
 */
-const char* DEVICE_NAME = "fat";
+const char* DEVICE_NAME = "wbfs";
 
 /*
 Data offsets

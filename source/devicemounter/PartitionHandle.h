@@ -66,7 +66,9 @@ typedef struct _PARTITION_RECORD {
 } __attribute__((__packed__)) PARTITION_RECORD;
 
 typedef struct _MASTER_BOOT_RECORD {
-    u8 code_area[446];                      /* Code area; normally empty */
+    u8 code_area[440];                      /* Code area; normally empty */
+	u8 disk_guid[4];						/* Disk signature (optional) */
+	u8 reserved[2];							/* Usually zeroed */
     PARTITION_RECORD partitions[4];         /* 4 primary partitions */
     u16 signature;                          /* MBR signature; 0xAA55 */
 } __attribute__((__packed__)) MASTER_BOOT_RECORD;
@@ -135,8 +137,8 @@ typedef struct _BIOS_PARAMETER_BLOCK {
 } __attribute__((__packed__)) BIOS_PARAMETER_BLOCK; /* 25 (0x19) bytes */
 
 typedef struct _VOLUME_BOOT_RECORD {
-	u8 Jump[3];					/* Irrelevant (jump to boot up code).*/
-	char Name[8];						/* Magic "NTFS    ". */
+	u8 Jump[3];						/* Irrelevant (jump to boot up code).*/
+	char Name[8];					/* Magic "NTFS    ". */
 	BIOS_PARAMETER_BLOCK bpb;		/* See BIOS_PARAMETER_BLOCK. (0x0b) */
 	u8 Drive_Type;					/* 0x00 floppy, 0x80 hard disk */
 	u8 Current_Head;				/* zero on ntfs */

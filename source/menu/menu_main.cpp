@@ -133,8 +133,7 @@ int CMenu::main(void)
 
 	SetupInput();
 	_loadList();
-	_searchMusic();
-	_startMusic();
+	m_musicPlayer.Play();
 	_updateWiiTDB();
 	_showMain();
 	m_curGameId.clear();

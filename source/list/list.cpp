@@ -56,16 +56,21 @@ void CList::GetPaths(safe_vector<string> &pathlist, string containing, string di
 			{
 				if (entry[0] == '.') continue;
 				if (strlen(entry) < 6) continue;
+
 				if(!S_ISDIR(filestat.st_mode))
 				{
 					for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
-						if(((string)entry).rfind(*compare) != string::npos)
+						if (strcasestr(entry, (*compare).c_str()) != NULL)
 						{
 							pathlist.push_back(sfmt("%s/%s", directory.c_str(), entry));
 							break;
 						}
 				}
-				else temp_pathlist.push_back(sfmt("%s/%s", directory.c_str(), entry));
+				else
+				{
+					temp_pathlist.push_back(sfmt("%s/%s", directory.c_str(), entry));
+				}
+				
 			}
 			dirclose(dir_itr);
 
@@ -83,7 +88,7 @@ void CList::GetPaths(safe_vector<string> &pathlist, string containing, string di
 						if (strlen(entry) < 8) continue;
 
 						for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
-							if(((string)entry).rfind(*compare) != string::npos)
+							if (strcasestr(entry, (*compare).c_str()) != NULL)
 							{
 								pathlist.push_back(sfmt("%s/%s", (*templist).c_str(), entry));
 								break;
@@ -97,6 +102,7 @@ void CList::GetPaths(safe_vector<string> &pathlist, string containing, string di
 	else
 	{
 		wbfs_fs = true;
+		if(strcasestr(containing.c_str(), ".dol") != 0) return;
 
 		int partition = DeviceHandler::Instance()->PathToDriveType(directory.c_str());
 		wbfs_t* handle = DeviceHandler::Instance()->GetWbfsHandle(partition);
@@ -115,6 +121,9 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 
 	if(update || wbfs_fs)
 	{
+		if(pathlist.size() < 1) return;
+		headerlist.reserve(pathlist.size() + headerlist.size());
+
 		for(safe_vector<string>::iterator itr = pathlist.begin(); itr != pathlist.end(); itr++)
 		{
 			bzero(&tmp, sizeof(dir_discHdr));
@@ -212,6 +221,7 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 				continue;
 			}
 		}
+		pathlist.clear();
 	}
 	else
 	{
@@ -224,6 +234,7 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 		fseek(cache, 0, SEEK_SET);
 
 		u32 count = fileSize / sizeof(dir_discHdr);
+		headerlist.reserve(count);
 		for(u32 i = 0; count >= 1 && i < count; i++)
 		{
 			fread((void *)&tmp, 1, sizeof(dir_discHdr), cache);
