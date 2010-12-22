@@ -28,8 +28,8 @@
 
 #include <gccore.h>
 #include "safe_vector.hpp"
-#include <string>
 #include "libwbfs/libwbfs.h"
+#include <string>
 
 #define MAX_PARTITIONS          32 /* Maximum number of partitions that can be found */
 #define MAX_MOUNTS              10 /* Maximum number of mounts available at one time */
@@ -54,6 +54,7 @@ enum SIG_OFFSETS {
 
 static const char FAT_SIGNATURE[3] = {'F', 'A', 'T'};
 static const char NTFS_SIGNATURE[4] = {'N', 'T', 'F', 'S'};
+static const char WBFS_SIGNATURE[4] = {'W', 'B', 'F', 'S'};
 static const char EXT_SIGNATURE[2] = {0x53, 0xEF};
 
 typedef struct _PARTITION_RECORD {
@@ -204,7 +205,7 @@ class PartitionHandle
         const DISC_INTERFACE * GetDiscInterface() { return interface; };
     protected:
         bool valid(int pos) { return (pos >= 0 && pos < (int) PartitionList.size()); }
-		bool IsWBFS(MASTER_BOOT_RECORD * mbr);
+		bool CheckRAW(VOLUME_BOOT_RECORD * vbr);
         int FindPartitions();
         void CheckEBR(u8 PartNum, sec_t ebr_lba);
 		bool CheckGPT(void);

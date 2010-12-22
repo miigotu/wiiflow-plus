@@ -1,13 +1,21 @@
 #include <fstream>
+#include <unistd.h>
+#include <fcntl.h>
 #include <mp3player.h>
 #include <string.h>
 
 #include "musicfile.h"
 #include "oggplayer.h"
+#include "modplayer.h"
 
 #include "gecko/gecko.h"
 
 using namespace std;
+
+MusicFile::MusicFile(MusicType music_type)
+{
+	m_music_type = music_type;
+}
 
 MusicFile::MusicFile(std::string filename, MusicType music_type)
 { 
@@ -81,14 +89,38 @@ MusicType MusicFile::GetMusicType(string filename)
 	return UNKNOWN;
 }
 
+static int ov_read(void *fp, void *dat, s32 size)
+{
+	return fread(dat, 1, size, (FILE *) fp);
+}
+
+Mp3File::Mp3File(string filename)
+	: MusicFile(MP3)
+{
+	fp = fopen(filename.c_str(), "rb");
+	isValid = (fp != NULL);
+}
+
+Mp3File::~Mp3File()
+{
+	Stop();
+	if (fp)
+		fclose(fp);
+}
+
 void Mp3File::Play()
 {
-	MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
+	if (isPaused)
+		isPaused = false;
+	else
+		MP3Player_PlayFile(fp, ov_read, NULL);
+//	MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
 }
 
 void Mp3File::Pause()
 {
-	Stop();
+	isPaused = true;
+//	Stop();
 }
 
 void Mp3File::Stop()
@@ -98,6 +130,8 @@ void Mp3File::Stop()
 
 PlayStatus Mp3File::Status()
 {
+	if (isPaused)
+		return MUSIC_PAUSED;
 	return (MP3Player_IsPlaying()) ? MUSIC_PLAYING : MUSIC_STOPPED;
 }
 
@@ -106,12 +140,27 @@ void Mp3File::SetVolume(int volume)
 	MP3Player_Volume(volume);
 }
 
+OggFile::OggFile(string filename)
+	: MusicFile(OGG)
+{
+	fp = fopen(filename.c_str(), "rb");
+	isValid = (fp != NULL);
+}
+
+OggFile::~OggFile()
+{
+	Stop();
+	if (fp)
+		fclose(fp);
+}
+
 void OggFile::Play()
 {
 	if (Status() == MUSIC_PAUSED)
 		PauseOgg(0);
 	else
-		PlayOgg(mem_open((char *)m_music.get(), m_music_fileSize), 0, OGG_ONE_TIME);
+		PlayOgg(fp, 0, OGG_ONE_TIME);
+//		PlayOgg(mem_open((char *)m_music.get(), m_music_fileSize), 0, OGG_ONE_TIME);
 }
 
 void OggFile::Pause()
@@ -140,48 +189,55 @@ void OggFile::SetVolume(int volume)
 {
 	SetVolumeOgg(volume);
 }
-/*
+
 BaseModFile::BaseModFile(string filename, MusicType musicType) 
-	: MusicFile(filename, musicType) 
-{ 
-	MODFILE_Init(&modFile);
-	MODFILE_Set(m_music.get(), m_music_fileSize, &modFile);
-	MODFILE_SetFormat(&modFile, 44100, 2, 16, TRUE);
-	SMART_FREE(m_music);
+	: MusicFile(musicType) 
+{
+	this->filename = filename;
 }
 
 BaseModFile::~BaseModFile()
 {
-	MODFILE_Free(&modFile);
+	Stop();
 }
 
 void BaseModFile::Play()
 {
-	MODFILE_Start(&modFile);
+	if (Status() == MUSIC_PAUSED)
+		PauseMod(0);
+	else
+		PlayMod(filename.c_str());
 }
 
 void BaseModFile::Pause()
 {
-	Stop();
+	PauseMod(1);
 }
 
 void BaseModFile::Stop()
 {
-	MODFILE_Stop(&modFile);
+	StopMod();
 }
 
 PlayStatus BaseModFile::Status()
 {
-	return modFile.playing ? MUSIC_PLAYING : MUSIC_STOPPED;
+	switch(StatusMod())
+	{
+		case MOD_STATUS_PAUSED: 	return MUSIC_PAUSED;
+		case MOD_STATUS_EOF: 		return MUSIC_STOPPED;
+		case MOD_STATUS_RUNNING: 	return MUSIC_PLAYING;
+		default:					return MUSIC_UNKNOWN;
+	}
 }
 
 void BaseModFile::SetVolume(int volume)
 {
-	SetVolumeOgg(volume);
+	SetVolumeMod(volume);
 }
 
 bool BaseModFile::IsValid()
 {
-	return MusicFile::IsValid() && MODFILE_Is(m_music.get(), m_music_fileSize);
+	// There is no way to tell if the stream is true without reading the file completely
+	// If the file content is read, one can use the MODFile_Is method
+	return true;
 }
-*/

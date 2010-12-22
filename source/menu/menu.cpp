@@ -3,7 +3,6 @@
 #include "loader/wbfs.h"
 #include "loader/alt_ios.h"
 
-#include "oggplayer.h"
 #include "network/gcard.h"
 
 #include <fstream>
@@ -1248,7 +1247,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	// Fade music in or out when game is selected
 	if (m_gameSelected || m_video_playing)
 		m_musicPlayer.SetFadeMode(FADE_OUT);
-	else if (m_musicPlayer.GetVolume() != m_musicPlayer.GetMaxVolume() && !m_video_playing && (!m_gameSelected || (m_gameSelected && m_gameSound.voice && ASND_StatusVoice(m_gameSound.voice) == SND_UNUSED)))
+	else if (m_musicPlayer.GetVolume() != m_musicPlayer.GetMaxVolume() && !m_video_playing && (!m_gameSelected || (m_gameSelected && !m_gameSound.voice)))
 		m_musicPlayer.SetFadeMode(FADE_IN);
 	
 	LWP_MutexLock(m_gameSndMutex);
@@ -1486,7 +1485,7 @@ bool CMenu::_loadList(void)
 
 bool CMenu::_loadGameList(void)
 {
-	int currentPartition = m_cfg.getInt("GENERAL", "partition", 1);
+	currentPartition = m_cfg.getInt("GENERAL", "partition", 1);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
 	safe_vector<string> pathlist;
 	CList::Instance()->GetPaths(pathlist, ".wbfs|.iso", sfmt(GAMES_DIR, DeviceName[currentPartition]));
@@ -1496,10 +1495,10 @@ bool CMenu::_loadGameList(void)
 
 bool CMenu::_loadHomebrewList()
 {
-	int currentHBPartition = m_cfg.getInt("GENERAL", "homebrew_partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
-	DeviceHandler::Instance()->Open_WBFS(currentHBPartition);
+	currentPartition = m_cfg.getInt("GENERAL", "homebrew_partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
+	DeviceHandler::Instance()->Open_WBFS(currentPartition);
 	safe_vector<string> pathlist;
-	CList::Instance()->GetPaths(pathlist, ".dol", sfmt(HOMEBREW_DIR, DeviceName[currentHBPartition]));
+	CList::Instance()->GetPaths(pathlist, ".dol", sfmt(HOMEBREW_DIR, DeviceName[currentPartition]));
 	CList::Instance()->GetHeaders(pathlist, m_gameList);
 	return m_gameList.size() > 0 ? true : false;
 }

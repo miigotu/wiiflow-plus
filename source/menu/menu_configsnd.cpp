@@ -1,8 +1,5 @@
 
 #include "menu.hpp"
-#include "oggplayer.h"
-
-#include <mp3player.h>
 
 using namespace std;
 

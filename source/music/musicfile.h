@@ -2,9 +2,8 @@
 #define _MUSICFILE_H
 
 #include <string>
+#include <stdio.h>
 #include "memory/smartptr.hpp"
-
-#include <modplay/modplay.h>
 
 enum MusicType
 {
@@ -41,6 +40,7 @@ public:
 	static MusicType GetMusicType(std::string filename);
 protected:
 	MusicFile(std::string filename, MusicType music_type);
+	MusicFile(MusicType music_type);
 
 	SmartBuf m_music;
 	MusicType m_music_type;
@@ -51,27 +51,34 @@ protected:
 class Mp3File : public MusicFile
 {
 public:
-	Mp3File(std::string filename) : MusicFile(filename, MP3) {};
+	Mp3File(std::string filename);
+	~Mp3File();
 
 	void Play();
 	void Pause();
 	void Stop();
 	PlayStatus Status();	
 	void SetVolume(int volume);
+private:
+	FILE *fp;
+	bool isPaused;
 };
 
 class OggFile : public MusicFile
 {
 public:
-	OggFile(std::string filename) : MusicFile(filename, OGG) {};
+	OggFile(std::string filename);
+	~OggFile();
 
 	void Play();
 	void Pause();
 	void Stop();
 	PlayStatus Status();	
 	void SetVolume(int volume);
+private:
+	FILE *fp;
 };
-/*
+
 class BaseModFile : public MusicFile
 {
 public:
@@ -86,7 +93,7 @@ public:
 	
 	bool IsValid();
 private:
-	MODFILE modFile;
+	std::string filename;
 };
 
 class ModFile : public BaseModFile
@@ -106,5 +113,5 @@ class XMFile : public BaseModFile
 public:
 	XMFile(std::string filename) : BaseModFile(filename, XM) {};
 };
-*/
+
 #endif

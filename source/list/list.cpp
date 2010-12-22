@@ -33,7 +33,11 @@ void CList::GetPaths(safe_vector<string> &pathlist, string containing, string di
 		string buffer = directory;
 		buffer.replace(buffer.find(":/"), 2, "_");
 		size_t find = buffer.find("/");
-		if(find != string::npos) buffer[find] = 0;
+		while(find != string::npos)
+		{
+			buffer[find] = '_';
+			find = buffer.find("/");
+		}
 
 		m_database = sfmt("%s/%s.db"/* "%s/%s_i.db" */, m_cacheDir.c_str(), buffer.c_str()/*,  disk guid (4) */);
 

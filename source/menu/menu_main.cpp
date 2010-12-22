@@ -205,6 +205,11 @@ int CMenu::main(void)
 			}
 			m_btnMgr.noClick(false);
 		}
+		//Search by pages
+		else if (!BTN_B_HELD && BTN_MINUS_PRESSED)
+			m_cf.pageUp();
+		else if (!BTN_B_HELD && BTN_PLUS_PRESSED)
+			m_cf.pageDown();
 		else if (BTN_B_HELD)
 		{
 			//Search by Alphabet
@@ -234,11 +239,11 @@ int CMenu::main(void)
 				m_btnMgr.setText(m_mainLblLetter, curLetter);
 				m_btnMgr.show(m_mainLblLetter);
 			}
-			//Search by pages
+			//Change songs
 			else if (BTN_LEFT_PRESSED)
-				m_cf.pageUp();
+				m_musicPlayer.Previous();
 			else if (BTN_RIGHT_PRESSED)
-				m_cf.pageDown();
+				m_musicPlayer.Next();
 			//Sorting Selection
 			else if (BTN_PLUS_PRESSED && !m_locked && m_titles_loaded)
 			{
@@ -268,9 +273,8 @@ int CMenu::main(void)
 				{
 					_hideMain();
 					currentPartition = loopNum(currentPartition + 1, (int)USB8);
-					if(!DeviceHandler::Instance()->IsInserted(currentPartition))
-						while(!DeviceHandler::Instance()->IsInserted(currentPartition))
-							currentPartition = loopNum(currentPartition + 1, (int)USB8);
+					while(!DeviceHandler::Instance()->IsInserted(currentPartition))
+						currentPartition = loopNum(currentPartition + 1, (int)USB8);
 					const char *partition = DeviceName[currentPartition];
 					gprintf("Next item: %s\n", partition);
 					if(m_current_view == COVERFLOW_USB)

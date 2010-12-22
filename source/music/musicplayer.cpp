@@ -14,8 +14,13 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 
 	SetVolume(m_music_volume);
 	
-	CList::Instance()->GetPaths(m_music_files, ".ogg|.mp3", themeMusicDir); //|.mod|.xm|.s3m", musicDir);
-	if (m_music_files.size() == 0)
+	MusicDirectory dir = (MusicDirectory) cfg.getInt("GENERAL", "music_directories", NORMAL_MUSIC | THEME_MUSIC);
+	
+	if (dir & THEME_MUSIC)
+	{
+		CList::Instance()->GetPaths(m_music_files, ".ogg|.mp3", themeMusicDir); //|.mod|.xm|.s3m", musicDir);
+	}
+	if (dir & NORMAL_MUSIC)
 	{
 		CList::Instance()->GetPaths(m_music_files, ".ogg|.mp3", musicDir); //|.mod|.xm|.s3m", musicDir);
 	}
@@ -57,10 +62,6 @@ void MusicPlayer::SetVolume(int volume)
 	{
 		m_music->SetVolume(volume);
 	}
-/*	
-	SetVolumeOgg(volume);
-	MP3Player_Volume(volume);
-*/	
 }
 
 void MusicPlayer::SetVolume(int volume, int max_volume)
@@ -71,17 +72,21 @@ void MusicPlayer::SetVolume(int volume, int max_volume)
 
 void MusicPlayer::Previous()
 {
-	m_current_music--;
+	if (m_music_files.empty()) return;
+
 	if (m_current_music == m_music_files.begin())
 	{
-		m_current_music = m_music_files.end() - 1;
+		m_current_music = m_music_files.end();
 	}
+	m_current_music--;
 
 	LoadCurrentFile();
 }
 
 void MusicPlayer::Next()
 {
+	if (m_music_files.empty()) return;
+
 	m_current_music++;
 	if (m_current_music == m_music_files.end())
 		m_current_music = m_music_files.begin();
@@ -95,10 +100,6 @@ void MusicPlayer::Pause()
 	{
 		m_music->Pause();
 	}
-/*
-	if (StatusOgg() == OGG_STATUS_RUNNING) PauseOgg(1);
-	MP3Player_Stop();
-*/	
 }
 
 void MusicPlayer::Play()
@@ -108,15 +109,6 @@ void MusicPlayer::Play()
 	{
 		m_music->SetVolume(m_music_current_volume);
 	}
-/*
-	if(!m_music_ismp3 && !MP3Player_IsPlaying() && StatusOgg() == OGG_STATUS_PAUSED)
-		PauseOgg(0);
-	else if (m_music_ismp3)
-	{
-		if (StatusOgg() == OGG_STATUS_RUNNING) PauseOgg(1);
-		MP3Player_PlayBuffer((char *)m_music.get(), m_music_fileSize, NULL);
-	}
-*/	
 }
 	
 void MusicPlayer::Stop()
@@ -166,7 +158,6 @@ void MusicPlayer::Tick(bool isVideoPlaying)
 	{
 		// Load next file...
 		Next();
-//		LoadCurrentFile();
 	}
 }
 

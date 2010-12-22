@@ -14,6 +14,12 @@ enum Fade
 	FADE_OUT = -1
 };
 
+enum MusicDirectory
+{
+	NORMAL_MUSIC = 1,
+	THEME_MUSIC = 2
+};
+
 #define ASND_MUSIC_VOICE 0
 
 class MusicPlayer
