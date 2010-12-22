@@ -174,7 +174,8 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 							break;
 						}
 						Disc_ReadHeader(&header);
-						if (WBFS_CheckGame(header.id, NULL))
+						
+						if (_searchGames((const char *) header.id).size() != 0)
 						{
 							error(_t("wbfsoperr4", L"Game already installed"));
 							out = true;

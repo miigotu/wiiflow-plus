@@ -64,11 +64,9 @@ MusicFile * MusicFile::Load(string filename)
 	{
 		case MP3:	gprintf("Creating Mp3File instance\n");	return new Mp3File(filename);
 		case OGG:	gprintf("Creating OggFile instance\n"); return new OggFile(filename);
-/*
-		case MOD:	return new ModFile(filename);
-		case S3M:	return new S3MFile(filename);
-		case XM:	return new XMFile(filename);
-*/		
+		case MOD:	gprintf("Creating ModFile instance\n");	return new ModFile(filename);
+		case S3M:	gprintf("Creating S3MFile instance\n");	return new S3MFile(filename);
+		case XM:	gprintf("Creating XMFile instance\n");	return new XMFile(filename);
 		default:	return NULL;
 	}
 }

@@ -18,7 +18,7 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 	
 	if (dir & THEME_MUSIC)
 	{
-		CList::Instance()->GetPaths(m_music_files, ".ogg|.mp3", themeMusicDir); //|.mod|.xm|.s3m", musicDir);
+		CList::Instance()->GetPaths(m_music_files, ".ogg|.mp3", themeMusicDir); //|.mod|.xm|.s3m", themeMusicDir);
 	}
 	if (dir & NORMAL_MUSIC)
 	{

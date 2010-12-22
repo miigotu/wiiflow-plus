@@ -725,6 +725,7 @@ private:
 	//
 	void _mainLoopCommon(bool withCF = false, bool blockReboot = false, bool adjusting = false);
 	// 
+	safe_vector<dir_discHdr> _searchGames(const char *gameId);
 public:
 	void _directlaunch(const std::string &id);
 private:

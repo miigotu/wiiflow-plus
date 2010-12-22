@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <modplay/modplay.h>
+#include "gecko/gecko.h"
 
 #define READ_SAMPLES 4096 // samples that it must read before to send
 #define MAX_PCMOUT 4096 // minimum size to read mod samples
@@ -122,19 +123,28 @@ static void * mod_player_thread(private_data_mod * priv)
 
 	while (!priv[0].eof && mod_thread_running)
 	{
+		gprintf("MOD: Start loop\n");
 		if (priv[0].flag)
+		{
+			gprintf("MOD: Sleeping thread\n");
 			LWP_ThreadSleep(modplayer_queue); // wait only when i have samples to send
-
+		}
+		
+		gprintf("MOD: thread, flag: %d\n", priv[0].flag);
 		if (priv[0].flag == 0) // wait to all samples are sent
 		{
 			if (ASND_TestPointer(0, priv[0].pcmout[priv[0].pcmout_pos])
 					&& ASND_StatusVoice(0) != SND_UNUSED)
 			{
+				gprintf("MOD: Current buffer is still playing\n");
+
 				priv[0].flag |= 64;
 				continue;
 			}
 			if (priv[0].pcm_indx < READ_SAMPLES)
 			{
+				gprintf("MOD: Reading additional samples\n");
+			
 				priv[0].flag = 3;
 
 				priv[0].mod.mixingbuf = (void *) &priv[0].pcmout[priv[0].pcmout_pos][priv[0].pcm_indx];
@@ -144,6 +154,8 @@ static void * mod_player_thread(private_data_mod * priv)
 				priv[0].flag &= 192;
 				if (!priv[0].playing)
 				{
+					gprintf("MOD: End of File\n");
+					
 					/* EOF */
 					if (priv[0].mode & 1)
 						priv[0].mod.play_position = 0; // repeat
@@ -152,6 +164,8 @@ static void * mod_player_thread(private_data_mod * priv)
 				}
 				else
 				{
+					gprintf("MOD: New samples loaded\n");
+
 					/* we don't bother dealing with sample rate changes, etc, but
 					 you'll have to*/
 					priv[0].pcm_indx += MAX_PCMOUT >> 1; //get 16 bits samples
@@ -165,6 +179,8 @@ static void * mod_player_thread(private_data_mod * priv)
 		{
 			if (ASND_StatusVoice(0) == SND_UNUSED || first_time)
 			{
+				gprintf("MOD: Start playing sample\n");
+
 				first_time = 0;
 				if (priv[0].stereo)
 				{
@@ -191,13 +207,17 @@ static void * mod_player_thread(private_data_mod * priv)
 		usleep(100);
 	}
 	priv[0].pcm_indx = 0;
+	
+	gprintf("MOD: Stopping mod thread\n");
 
 	return 0;
 }
 
 int PlayMod(const char *filename)
 {
-	MODFILE_Init(&private_mod.mod);	
+	gprintf("MOD: Start playing\n");
+	
+	MODFILE_Init(&private_mod.mod);
 	MODFILE_Load(filename, &private_mod.mod);
 	MODFILE_SetFormat(&private_mod.mod, 44100, 2, 16, TRUE);
 	
@@ -210,6 +230,7 @@ int PlayMod(const char *filename)
 	private_mod.flag = 0;
 	private_mod.bits = 0;
 	
+	MODFILE_Start(&private_mod.mod);
 	if (LWP_CreateThread(&h_modplayer, (void *) mod_player_thread,
 		&private_mod, modplayer_stack, STACKSIZE, 80) == -1)
 	{
@@ -218,48 +239,53 @@ int PlayMod(const char *filename)
 		memset(&private_mod, 0, sizeof(private_data_mod));
 		return -1;
 	}
-
 	
 	return 0;
 }
 
 void StopMod()
 {
+	gprintf("MOD: Stop playing\n");
+
 	MODFILE_Stop(&private_mod.mod);
-	MODFILE_Free(&private_mod.mod);
 	ASND_StopVoice(0);
 	mod_thread_running = 0;
 
 	if(h_modplayer != LWP_THREAD_NULL)
 	{
+		gprintf("MOD: Joining thread...");
 		if(modplayer_queue != LWP_TQUEUE_NULL)
 			LWP_ThreadSignal(modplayer_queue);
 		LWP_JoinThread(h_modplayer, NULL);
 		h_modplayer = LWP_THREAD_NULL;
+		gprintf("done\n");
 	}
 	if(modplayer_queue != LWP_TQUEUE_NULL)
 	{
+		gprintf("MOD: Closing queue...");
 		LWP_CloseQueue(modplayer_queue);
 		modplayer_queue = LWP_TQUEUE_NULL;
+		gprintf("done\n");
 	}
+	gprintf("MOD: Freeing module information\n");
+	MODFILE_Free(&private_mod.mod);
 }
 
 void PauseMod(int pause)
 {
 	if (pause)
 	{
+		gprintf("MOD: Pause\n");
 		private_mod.flag |= 128;
 	}
-	else
+	else if (private_mod.flag & 128)
 	{
-		if (private_mod.flag & 128)
+		gprintf("MOD: Resume\n");
+		private_mod.flag |= 64;
+		private_mod.flag &= ~128;
+		if (mod_thread_running > 0)
 		{
-			private_mod.flag |= 64;
-			private_mod.flag &= ~128;
-			if (mod_thread_running > 0)
-			{
-				LWP_ThreadSignal(modplayer_queue);
-			}
+			LWP_ThreadSignal(modplayer_queue);
 		}
 	}
 }
