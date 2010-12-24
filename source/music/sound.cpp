@@ -26,7 +26,6 @@ bool SSoundEffect::play(u8 vol, bool in_thread)
 		for(int i = 1; i <= 16; i++)
 			if (ASND_StatusVoice(i) == SND_UNUSED && i != 10)
 				voice = i;
-		//voice = ASND_GetFirstUnusedVoice();
 	
 	if (voice < 0 || voice >= 16) return false;
 

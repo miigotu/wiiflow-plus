@@ -336,7 +336,7 @@ s32 DeviceHandler::Open_WBFS(int dev)
 
 	if(dev == SD && IsInserted(dev))
 	{
-		part_idx = 0;
+		part_idx = 1;
 		part_lba = Instance()->sd->GetLBAStart(dev);
 		part_size = part_fs ? Instance()->sd->GetSize(dev) : Instance()->sd->GetSecCount(dev);
 	}
@@ -348,17 +348,17 @@ s32 DeviceHandler::Open_WBFS(int dev)
 	}
 	else if(dev == GCSDA && IsInserted(dev))
 	{
-		part_idx = 0;
+		part_idx = 1;
 		part_lba = Instance()->gca->GetLBAStart(dev);
 		part_size = part_fs ? Instance()->gca->GetSize(dev) : Instance()->gca->GetSecCount(dev);
 	}
 	else if(dev == GCSDB && IsInserted(dev))
 	{
-		part_idx = 0;
+		part_idx = 1;
 		part_lba = Instance()->gcb->GetLBAStart(dev);
 		part_size = part_fs ? Instance()->gcb->GetSize(dev) : Instance()->gcb->GetSecCount(dev);
 	}
 	else return -1;
 
-	return WBFS_Init(GetWbfsHandle(dev), part_fs, part_idx, part_lba, part_size, partition);
+	return WBFS_Init(GetWbfsHandle(dev), part_fs, part_idx, part_lba, part_size, partition, dev);
 }

@@ -397,6 +397,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 		}
 		m_thrdStepLen = dlWeight / (float)nbSteps;
 
+		Config m_newID;
 		m_newID.load(sfmt("%s/newid.ini", m_settingsDir.c_str()).c_str());
 		m_newID.setString("CHANNELS", "WFSF", "DWFA");
 

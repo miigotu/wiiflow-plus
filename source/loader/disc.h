@@ -20,13 +20,19 @@ struct discHdr
 
 	/* Padding */
 	u64 chantitle; // Used for channels
-	u8 unused1[6]; // Was 14, but removed 8 for chantitle above
 
-	/* Magic word */
+	/* Sorting */
+	u16 index;
+	u8 esrb;
+	u8 controllers;
+	u8 players;
+	u8 wifi;
+
+	/* Wii Magic word */
 	u32 magic;
 
-	/* Padding */
-	u8 unused2[4];
+	/* GC Magic word */
+	u32 gc_magic;
 
 	/* Game title */
 	char title[64];

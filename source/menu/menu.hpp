@@ -62,8 +62,6 @@ private:
 	Config m_gcfg2;
 	Config m_theme;
 	Config m_version;
-	Config m_dump;
-	Config m_newID;
 	Channels m_channels;
 	MusicPlayer m_musicPlayer;
 	safe_vector<std::string> m_homebrewArgs;

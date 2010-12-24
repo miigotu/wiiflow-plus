@@ -362,7 +362,7 @@ void CMenu::init()
 
 void CMenu::cleanup(void)
 {
-	CList::Instance()->DestroyInstance(); // Destruction must be done manually
+	CList::DestroyInstance(); // Destruction must be done manually
 	_waitForGameSoundExtract();
 	_stopSounds();
 	soundDeinit();
@@ -371,7 +371,7 @@ void CMenu::cleanup(void)
 	LWP_MutexDestroy(m_gameSndMutex);
 	m_gameSndMutex = 0;
 
-	DeviceHandler::Instance()->DestroyInstance(); // Destruction must be done manually, also unmounts all devices.
+	DeviceHandler::DestroyInstance(); // Destruction must be done manually, also unmounts all devices.
 	_deinitNetwork();
 }
 
@@ -1106,7 +1106,7 @@ void CMenu::_initCF(void)
 	#ifdef FREEZEDBG
 	gprintf("\n//- _initCF -//\n");
 	#endif
-	Config titles, custom_titles;
+	Config titles, custom_titles, m_dump;
 
 	m_cf.clear();
 	m_cf.reserve(m_gameList.size());

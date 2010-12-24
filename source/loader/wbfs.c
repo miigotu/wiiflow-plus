@@ -210,7 +210,7 @@ bool WBFS_Mounted()
 	return wbfs_mounted != 0;
 }
 
-s32 WBFS_Init(wbfs_t * handle, u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *partition)
+s32 WBFS_Init(wbfs_t * handle, u32 part_fs, u32 part_idx, u32 part_lba, u32 part_size, char *partition, u8 current)
 {
 	WBFS_Close();
 
@@ -220,9 +220,11 @@ s32 WBFS_Init(wbfs_t * handle, u32 part_fs, u32 part_idx, u32 part_lba, u32 part
 	strcat(wbfs_fs_drive, ":");
 
 	wbfs_part_fs  = part_fs;
-	wbfs_part_idx = currentPartition = part_idx;
+	wbfs_part_idx = part_idx;
 	wbfs_part_lba = part_lba;
-	
+
+	currentPartition = current;
+
 	wbfs_mounted = 1;
 
 	return 0;

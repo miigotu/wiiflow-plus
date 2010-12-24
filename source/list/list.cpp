@@ -132,6 +132,7 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 		{
 			bzero(&tmp, sizeof(dir_discHdr));
 			strncpy(tmp.path, (*itr).c_str(), sizeof(tmp.path));
+			tmp.hdr.index = headerlist.size();
 
 			bool wbfs = (*itr).rfind(".wbfs") != string::npos;
 			if ((wbfs || (*itr).rfind(".iso")  != string::npos))
@@ -226,34 +227,9 @@ void CList::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &h
 			}
 		}
 		pathlist.clear();
+		CCache(headerlist, m_database, SAVE);
 	}
-	else
-	{
-		//gprintf("Update gamelist database? NO! Reading DB:\n%s\n", m_database.c_str());
-		FILE *cache = fopen(m_database.c_str(), "rb");
-		if (!cache) return;
-
-		fseek(cache, 0, SEEK_END);
-		u64 fileSize = ftell(cache);
-		fseek(cache, 0, SEEK_SET);
-
-		u32 count = fileSize / sizeof(dir_discHdr);
-		headerlist.reserve(count);
-		for(u32 i = 0; count >= 1 && i < count; i++)
-		{
-			fread((void *)&tmp, 1, sizeof(dir_discHdr), cache);
-			headerlist.push_back(tmp);
-		}			
-		SAFE_CLOSE(cache);
-	}
-
-	if (update)
-	{
-		//gprintf("Update gamelist database? YES! Saving DB:\n%s\n", m_database.c_str());
-		FILE *dump = fopen(m_database.c_str(), "wb");
-		if (dump) fwrite((void *)&headerlist[0], 1, headerlist.size() * sizeof(dir_discHdr), dump);
-		SAFE_CLOSE(dump);
-	}
+	else CCache(headerlist, m_database, LOAD);
 }
 
 void CList::Check_For_ID(u8 *id, string path, string one, string two)

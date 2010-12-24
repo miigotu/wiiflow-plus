@@ -14,6 +14,7 @@
 #include "libwbfs/libwbfs.h"
 #include "disc.h"
 #include "text.hpp"
+#include "cache.hpp"
 //#include "gecko.h"
 
 using namespace std;

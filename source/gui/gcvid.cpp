@@ -647,6 +647,7 @@ u8 endBytesMth[] = { 0xff, 0xd9, 0xff, 0 }; //used in mth files
 int countRequiredSize(const u8* data, int size, int& start, int& end)
 {
 	start = 2*size;
+	end = size;
 	int count = 0;
 
 	int j;
