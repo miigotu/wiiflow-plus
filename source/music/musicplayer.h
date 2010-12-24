@@ -5,7 +5,7 @@
 #include "config/config.hpp"
 
 #include "safe_vector.hpp"
-#include "musicfile.h"
+#include "gui_sound.h"
 
 enum Fade
 {
@@ -25,7 +25,8 @@ enum MusicDirectory
 class MusicPlayer
 {
 public:
-	~MusicPlayer();
+	static MusicPlayer *Instance();
+	static void DestroyInstance();
 
 	void Init(Config &cfg, std::string musicDir, std::string themeMusicDir);
 	void Tick(bool isVideoPlaying);
@@ -41,7 +42,14 @@ public:
 	void Pause();
 	void Play();
 	void Stop();
+	
+	bool IsStopped() { return m_stopped; };
+    void SetPlaybackFinished(bool b) { m_playbackFinished = b; };	
 private:
+	~MusicPlayer();
+
+	static MusicPlayer *instance;
+
 	void LoadCurrentFile();
 
 	safe_vector<std::string> m_music_files;
@@ -54,7 +62,11 @@ private:
 	int m_music_current_volume;
 	bool m_manual_stop;
 	
-	MusicFile *m_music;
+	bool m_paused;
+	bool m_stopped;
+	bool m_playbackFinished;
+	
+	GuiSound *m_music;
 };
 
 #endif

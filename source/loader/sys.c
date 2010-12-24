@@ -22,6 +22,7 @@
 static const char certs_fs[] ATTRIBUTE_ALIGN(32) = "/sys/cert.sys";
 static bool reset = false;
 static bool shutdown = false;
+bool exiting = false;
 
 static bool return_to_hbc = false;
 static bool return_to_menu = false;
@@ -51,7 +52,7 @@ void Close_Inputs(void)
 
 bool Sys_Exiting(void)
 {
-	return reset || shutdown;
+	return reset || shutdown || exiting;
 }
 
 void Sys_Test(void)

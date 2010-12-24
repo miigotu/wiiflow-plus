@@ -6,6 +6,7 @@
 
 #include "safe_vector.hpp"
 #include <map>
+#include "gui_sound.h"
 #include "cursor.hpp"
 #include "gui.hpp"
 #include "coverflow.hpp"
@@ -63,7 +64,6 @@ private:
 	Config m_theme;
 	Config m_version;
 	Channels m_channels;
-	MusicPlayer m_musicPlayer;
 	safe_vector<std::string> m_homebrewArgs;
 	u8 m_aa;
 	bool m_directLaunch;
@@ -538,9 +538,9 @@ private:
 	volatile float m_thrdProgress;
 	volatile bool m_thrdMessageAdded;
 	volatile bool m_gameSelected;
-	SSoundEffect m_gameSound;
-	SSoundEffect m_gameSoundTmp;
-	SSoundEffect m_cameraSound;
+	GuiSound m_gameSound;
+	GuiSound m_gameSoundTmp;
+	SmartPtr<GuiSound> m_cameraSound;
 	dir_discHdr *m_gameSoundHdr;
 	lwp_t m_gameSoundThread;
 	mutex_t m_gameSndMutex;
@@ -555,7 +555,7 @@ private:
 	typedef std::pair<std::string, u32> FontDesc;
 	typedef std::map<FontDesc, SFont> FontSet;
 	typedef std::map<std::string, STexture> TexSet;
-	typedef std::map<std::string, SSoundEffect> SoundSet;
+	typedef std::map<std::string, SmartPtr<GuiSound> > SoundSet;
 	struct SThemeData
 	{
 		TexSet texSet;
@@ -586,9 +586,9 @@ private:
 		STexture btnTexPlusS;
 		STexture btnTexMinus;
 		STexture btnTexMinusS;
-		SSoundEffect clickSound;
-		SSoundEffect hoverSound;
-		SSoundEffect cameraSound;
+		SmartPtr<GuiSound> clickSound;
+		SmartPtr<GuiSound> hoverSound;
+		SmartPtr<GuiSound> cameraSound;
 	};
 	struct SCFParamDesc
 	{
@@ -748,7 +748,7 @@ public:
 	void _hideWaitMessage();
 private:
 	static void _showWaitMessages(CMenu *m);
-	SSoundEffect _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, SSoundEffect def);
+	SmartPtr<GuiSound> _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, SmartPtr<GuiSound> def);
 	u16 _textStyle(const char *domain, const char *key, u16 def);
 	u32 _addButton(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color);
 	u32 _addPicButton(SThemeData &theme, const char *domain, STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height);

@@ -14,6 +14,7 @@
 #include "gecko.h"
 #include "defines.h"
 #include "list.hpp"
+#include "music/SoundHandler.hpp"
 
 // Sounds
 extern const u8 click_wav[];
@@ -309,7 +310,7 @@ void CMenu::init()
 	}
 		
 	m_btnMgr.init(m_vid);
-	m_musicPlayer.Init(m_cfg, m_musicDir, sfmt("%s/music", m_themeDataDir.c_str()));
+	MusicPlayer::Instance()->Init(m_cfg, m_musicDir, sfmt("%s/music", m_themeDataDir.c_str()));
 
 	_load_installed_cioses();	
 	m_loaded_ios_base = get_ios_base();
@@ -365,6 +366,11 @@ void CMenu::cleanup(void)
 	CList::DestroyInstance(); // Destruction must be done manually
 	_waitForGameSoundExtract();
 	_stopSounds();
+	
+	m_cameraSound.release();
+	
+	MusicPlayer::DestroyInstance();
+	SoundHandler::DestroyInstance();
 	soundDeinit();
 	LWP_MutexDestroy(m_mutex);
 	m_mutex = 0;
@@ -399,21 +405,18 @@ void CMenu::_loadCFCfg()
 {
 	SFont font;
 	const char *domain = "_COVERFLOW";
-	SSoundEffect cfFlipSnd;
-	SSoundEffect cfHoverSnd;
-	SSoundEffect cfSelectSnd;
-	SSoundEffect cfCancelSnd;
+	SmartPtr<GuiSound> cfFlipSnd, cfHoverSnd, cfSelectSnd, cfCancelSnd;
 
 	m_cf.setCachePath(m_cacheDir.c_str(), !m_cfg.getBool("GENERAL", "keep_png", true), m_cfg.getBool("GENERAL", "compress_cache", false));
 	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
 	string filename = m_theme.getString(domain, "sound_flip");
-	cfFlipSnd.fromWAVFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str());
+	cfFlipSnd = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str())));
 	filename = m_theme.getString(domain, "sound_hover");
-	cfHoverSnd.fromWAVFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str());
+	cfHoverSnd = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str())));
 	filename = m_theme.getString(domain, "sound_select");
-	cfSelectSnd.fromWAVFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str());
+	cfSelectSnd = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
 	filename = m_theme.getString(domain, "sound_cancel");
-	cfCancelSnd.fromWAVFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str());
+	cfCancelSnd = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
 	m_cf.setSounds(cfFlipSnd, cfHoverSnd, cfSelectSnd, cfCancelSnd);
 	// Textures
 	string texLoading = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "loading_cover_box").c_str());
@@ -706,7 +709,7 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 void CMenu::_buildMenus(void)
 {
 	SThemeData theme;
-
+	
 	// Default fonts
 	theme.btnFont.fromBuffer(butfont_ttf, butfont_ttf_size, 24, 24);
 	theme.btnFont = _font(theme.fontSet, "GENERAL", "button_font", theme.btnFont);
@@ -721,13 +724,17 @@ void CMenu::_buildMenus(void)
 	theme.thxFont.fromBuffer(thxfont_ttf, thxfont_ttf_size, 18, 18);
 	theme.thxFont = _font(theme.fontSet, "GENERAL", "thxfont", theme.thxFont);
 	// Default Sounds
-	theme.clickSound.fromWAV(click_wav, click_wav_size);
+	gprintf("MAIN: Click sound\n");
+	theme.clickSound = SmartPtr<GuiSound>(new GuiSound(click_wav, click_wav_size, false));
 	theme.clickSound = _sound(theme.soundSet, "GENERAL", "click_sound", theme.clickSound);
-	theme.hoverSound.fromWAV(hover_wav, hover_wav_size);
+	gprintf("MAIN: Hover sound\n");
+	theme.hoverSound = SmartPtr<GuiSound>(new GuiSound(hover_wav, hover_wav_size, false));
 	theme.hoverSound = _sound(theme.soundSet, "GENERAL", "hover_sound", theme.hoverSound);
-	theme.cameraSound.fromWAV(camera_wav, camera_wav_size);
+	gprintf("MAIN: Camera sound\n");
+	theme.cameraSound = SmartPtr<GuiSound>(new GuiSound(camera_wav, camera_wav_size, false));
 	theme.cameraSound = _sound(theme.soundSet, "GENERAL", "camera_sound", theme.cameraSound);
 	m_cameraSound = theme.cameraSound;
+	gprintf("MAIN: Done with sounds\n");
 	// Default textures
 	theme.btnTexL.fromPNG(butleft_png);
 	theme.btnTexL = _texture(theme.texSet, "GENERAL", "button_texture_left", theme.btnTexL); 
@@ -896,7 +903,7 @@ STexture CMenu::_texture(CMenu::TexSet &texSet, const char *domain, const char *
 	return def;
 }
 
-SSoundEffect CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, SSoundEffect def)
+SmartPtr<GuiSound> CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, SmartPtr<GuiSound> def)
 {
 	string filename = m_theme.getString(domain, key);
 	if (filename.empty()) return def;
@@ -908,8 +915,7 @@ SSoundEffect CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const 
 	CMenu::SoundSet::iterator i = soundSet.find(filename);
 	if (i == soundSet.end())
 	{
-		SSoundEffect sound;
-		sound.fromWAVFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str());
+		SmartPtr<GuiSound> sound = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
 		soundSet[filename] = sound;
 		return sound;
 	}
@@ -954,8 +960,8 @@ u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, 
 	btnTexSet.rightSel = _texture(theme.texSet, domain, "texture_right_selected", theme.btnTexRS);
 	btnTexSet.centerSel = _texture(theme.texSet, domain, "texture_center_selected", theme.btnTexCS);
 	font = _font(theme.fontSet, domain, "font", font);
-	SSoundEffect clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
-	SSoundEffect hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
+	SmartPtr<GuiSound> clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
+	SmartPtr<GuiSound> hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
 	
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	if (btnPos & FTGX_JUSTIFY_RIGHT)
@@ -974,8 +980,8 @@ u32 CMenu::_addPicButton(CMenu::SThemeData &theme, const char *domain, STexture 
 	height = m_theme.getInt(domain, "height", height);
 	STexture tex1 = _texture(theme.texSet, domain, "texture_normal", texNormal);
 	STexture tex2 = _texture(theme.texSet, domain, "texture_selected", texSelected);
-	SSoundEffect clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
-	SSoundEffect hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
+	SmartPtr<GuiSound> clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
+	SmartPtr<GuiSound> hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
 
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	if (btnPos & FTGX_JUSTIFY_RIGHT)
@@ -1246,26 +1252,25 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	
 	// Fade music in or out when game is selected
 	if (m_gameSelected || m_video_playing)
-		m_musicPlayer.SetFadeMode(FADE_OUT);
-	else if (m_musicPlayer.GetVolume() != m_musicPlayer.GetMaxVolume() && !m_video_playing && (!m_gameSelected || (m_gameSelected && !m_gameSound.voice)))
-		m_musicPlayer.SetFadeMode(FADE_IN);
+		MusicPlayer::Instance()->SetFadeMode(FADE_OUT);
+	else if (MusicPlayer::Instance()->GetVolume() != MusicPlayer::Instance()->GetMaxVolume() && !m_video_playing && (!m_gameSelected || !m_gameSound.IsPlaying()))
+		MusicPlayer::Instance()->SetFadeMode(FADE_IN);
 	
 	LWP_MutexLock(m_gameSndMutex);
-	if (withCF && m_gameSelected && !!m_gameSoundTmp.data && m_gameSoundThread == 0 && m_musicPlayer.GetVolume() == 0)
+	if (withCF && m_gameSelected && m_gameSoundTmp.IsLoaded() && m_gameSoundThread == 0 && MusicPlayer::Instance()->GetVolume() == 0)
 	{
-		m_gameSound.stop();
+		m_gameSound.Stop();
 		m_gameSound = m_gameSoundTmp;
-		SMART_FREE(m_gameSoundTmp.data);
-		m_gameSound.play(m_bnrSndVol);
+		m_gameSound.Play(m_bnrSndVol);
 	}
 	else if (!withCF || !m_gameSelected)
-		m_gameSound.stop();
+		m_gameSound.Stop();
 	LWP_MutexUnlock(m_gameSndMutex);
 
 	if (withCF && m_gameSoundThread == 0)
 		m_cf.startPicLoader();
 
-	m_musicPlayer.Tick(m_video_playing);
+	MusicPlayer::Instance()->Tick(m_video_playing);
 	
 	//Take Screenshot
 	if (gc_btnsPressed & PAD_TRIGGER_Z)
@@ -1279,7 +1284,8 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		strftime(buffer,80,"%b-%d-20%y-%Hh%Mm%Ss.png",timeinfo);
 		gprintf("Screenshot taken and saved to: %s/%s\n", m_screenshotDir.c_str(), buffer);
 		m_vid.TakeScreenshot(sfmt("%s/%s", m_screenshotDir.c_str(), buffer).c_str());
-		m_cameraSound.play(255);
+		if (!!m_cameraSound)
+			m_cameraSound->Play(255);
 	}
 }
 
@@ -1507,23 +1513,26 @@ void CMenu::_stopSounds(void)
 {
 	// Fade out sounds
 	int fade_rate = m_cfg.getInt("GENERAL", "music_fade_rate", 8);
-	m_musicPlayer.SetFadeMode(FADE_OUT);
+	MusicPlayer::Instance()->SetFadeMode(FADE_OUT);
 
-	while (m_musicPlayer.GetVolume() > 0 || m_gameSound.volume > 0)
+	if (!MusicPlayer::Instance()->IsStopped())
 	{
-		m_musicPlayer.Tick(false);
-		
-		if (m_gameSound.volume > 0)
-			m_gameSound.setVolume(m_gameSound.volume < fade_rate ? 0 : m_gameSound.volume - fade_rate);
+		while (MusicPlayer::Instance()->GetVolume() > 0 || m_gameSound.GetVolume() > 0)
+		{
+			MusicPlayer::Instance()->Tick(false);
+			
+			if (m_gameSound.GetVolume() > 0)
+				m_gameSound.SetVolume(m_gameSound.GetVolume() < fade_rate ? 0 : m_gameSound.GetVolume() - fade_rate);
 
-		VIDEO_WaitVSync();		
+			VIDEO_WaitVSync();		
+		}
 	}
-
+	
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();
 
-	m_musicPlayer.Stop();
-	m_gameSound.stop();
+	MusicPlayer::Instance()->Stop();
+	m_gameSound.Stop();
 }
 
 bool CMenu::_loadFile(SmartBuf &buffer, u32 &size, const char *path, const char *file)

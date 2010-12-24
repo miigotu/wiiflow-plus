@@ -15,6 +15,7 @@
 
 #define SMART_FREE(P) if(!!P) P.release();
 #define SAFE_FREE(P) if(P != NULL){free(P);P=NULL;}
+#define SAFE_DELETE(P) if(P != NULL){delete P;P=NULL;}
 #define SAFE_CLOSE(P) if(P != NULL){fclose(P); P=NULL;}
 
 /* Macros */

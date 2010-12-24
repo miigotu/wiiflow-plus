@@ -4,18 +4,40 @@
 
 using namespace std;
 
+MusicPlayer *MusicPlayer::instance = NULL;
+
+MusicPlayer *MusicPlayer::Instance() 
+{
+	if (instance == NULL)
+	{
+		instance = new MusicPlayer();
+	}
+	return instance; 
+}
+
+void MusicPlayer::DestroyInstance()
+{
+	if (instance != NULL)
+	{
+		delete instance;
+		instance = NULL;
+	}
+}
+
 void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir) 
 {
 	m_fade_mode = FADE_NONE;
 	m_music = NULL;
 	m_manual_stop = true;
+	m_stopped = true;
 	m_fade_rate = cfg.getInt("GENERAL", "music_fade_rate", 8);
 	m_music_volume = cfg.getInt("GENERAL", "sound_volume_music", 255);
 
 	SetVolume(m_music_volume);
 	
 	MusicDirectory dir = (MusicDirectory) cfg.getInt("GENERAL", "music_directories", NORMAL_MUSIC | THEME_MUSIC);
-	
+
+	gprintf("MUSP: Looking in musicdir: %d\n", dir);
 	if (dir & THEME_MUSIC)
 	{
 		CList::Instance()->GetPaths(m_music_files, ".ogg|.mp3", themeMusicDir); //|.mod|.xm|.s3m", themeMusicDir);
@@ -30,6 +52,11 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 		srand(unsigned(time(NULL)));
 		random_shuffle(m_music_files.begin(), m_music_files.end());
 	}
+
+	gprintf("MUSP: Playlist:\n");
+	for (safe_vector<string>::iterator itr = m_music_files.begin(); itr != m_music_files.end(); itr++)
+		gprintf("%s\n", (*itr).c_str());
+
 	m_current_music = m_music_files.begin();
 }
 
@@ -121,6 +148,7 @@ void MusicPlayer::Stop()
 		delete m_music;
 		m_music = NULL;
 	}
+	m_stopped = true;
 }
 
 void MusicPlayer::Tick(bool isVideoPlaying)
@@ -132,9 +160,10 @@ void MusicPlayer::Tick(bool isVideoPlaying)
 	{
 		if (m_fade_mode == FADE_IN)
 		{
-			if (m_music->Status() == MUSIC_PAUSED || (!m_manual_stop && m_music->Status() == MUSIC_STOPPED))
+			if (m_paused || m_playbackFinished)
 			{
 				m_music->Play();
+				m_stopped = false;
 			}
 			SetVolume(m_music_current_volume + m_fade_rate);
 			if (m_music_current_volume >= m_music_volume)
@@ -154,7 +183,7 @@ void MusicPlayer::Tick(bool isVideoPlaying)
 			}
 		}
 	}
-	if (!isVideoPlaying && !m_manual_stop && (m_music == NULL || m_music->Status() == MUSIC_STOPPED))
+	if (!isVideoPlaying && !m_manual_stop && (m_music == NULL || m_stopped))
 	{
 		// Load next file...
 		Next();
@@ -168,11 +197,13 @@ void MusicPlayer::LoadCurrentFile()
 	if (m_music != NULL)
 	{
 		m_music->Stop();
-		delete m_music;
-		m_music = NULL;
 	}
 	
-	m_music = MusicFile::Load((*m_current_music));
+	if (m_music == NULL)
+		m_music = new GuiSound((*m_current_music).c_str(), ASND_MUSIC_VOICE);
+	else
+		m_music->Load((*m_current_music).c_str());
+
 	if (m_music != NULL && !m_manual_stop)
 	{
 		m_music->SetVolume(m_music_current_volume);

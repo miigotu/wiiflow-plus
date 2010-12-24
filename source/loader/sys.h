@@ -21,6 +21,7 @@ extern "C" {
 #define EXIT_TO_PRIILOADER 2
 #define EXIT_TO_DISABLE 3
 #define EXIT_TO_BOOTMII 4
+#define EXIT_TO_WIIFLOW 5
 
 	/* Prototypes */
 	void Sys_Init(void);

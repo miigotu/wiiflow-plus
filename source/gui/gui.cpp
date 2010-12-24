@@ -9,7 +9,7 @@ template <class T> static inline T loopNum(T i, T s)
 }
 
 STexture CButtonsMgr::_noTexture;
-SSoundEffect CButtonsMgr::_noSound;
+SmartPtr<GuiSound> CButtonsMgr::_noSound = SmartPtr<GuiSound>(new GuiSound());
 
 bool CButtonsMgr::init(CVideo &vid)
 {
@@ -29,7 +29,7 @@ bool CButtonsMgr::init(CVideo &vid)
 }
 
 u32 CButtonsMgr::addButton(SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color,
-	const SButtonTextureSet &texSet, const SSoundEffect &clickSound, const SSoundEffect &hoverSound)
+	const SButtonTextureSet &texSet, const SmartPtr<GuiSound> &clickSound, const SmartPtr<GuiSound> &hoverSound)
 {
 	CButtonsMgr::SButton *b = new CButtonsMgr::SButton;
 	SmartPtr<CButtonsMgr::SElement> elt(b);
@@ -160,8 +160,10 @@ void CButtonsMgr::stopSounds(void)
 		if (m_elts[i]->t == CButtonsMgr::GUIELT_BUTTON)
 		{
 			CButtonsMgr::SButton &b = (CButtonsMgr::SButton &)*m_elts[i];
-			b.hoverSound.stop();
-			b.clickSound.stop();
+			if (!!b.hoverSound)
+				b.hoverSound->Stop();
+			if (!!b.clickSound)
+				b.clickSound->Stop();
 		}
 }
 
@@ -226,8 +228,8 @@ void CButtonsMgr::mouse(int chan, int x, int y)
 				// 
 				if (s != m_selected[chan])
 				{
-					if (m_soundVolume > 0)
-						but.hoverSound.play(m_soundVolume);
+					if (m_soundVolume > 0 && !!but.hoverSound)
+						but.hoverSound->Play(m_soundVolume);
 					if (m_rumbleEnabled)
 					{
 						m_rumble[chan] = 4;
@@ -329,7 +331,7 @@ void CButtonsMgr::click(u32 id)
 			b.click = 1.f;
 			b.scaleX = 1.1f;
 			b.scaleY = 1.1f;
-			if (m_soundVolume > 0) b.clickSound.play(m_soundVolume);
+			if (m_soundVolume > 0 && !!b.clickSound) b.clickSound->Play(m_soundVolume);
 		}
 	}
 }
@@ -434,7 +436,7 @@ u32 CButtonsMgr::addProgressBar(int x, int y, u32 width, u32 height, SButtonText
 	return m_elts.size() > sz ? m_elts.size() - 1 : -2;
 }
 
-u32 CButtonsMgr::addPicButton(STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height, const SSoundEffect &clickSound, const SSoundEffect &hoverSound)
+u32 CButtonsMgr::addPicButton(STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height, const SmartPtr<GuiSound> &clickSound, const SmartPtr<GuiSound> &hoverSound)
 {
 	SButtonTextureSet texSet;
 
@@ -444,7 +446,7 @@ u32 CButtonsMgr::addPicButton(STexture &texNormal, STexture &texSelected, int x,
 	return i;
 }
 
-u32 CButtonsMgr::addPicButton(const u8 *pngNormal, const u8 *pngSelected, int x, int y, u32 width, u32 height, const SSoundEffect &clickSound, const SSoundEffect &hoverSound)
+u32 CButtonsMgr::addPicButton(const u8 *pngNormal, const u8 *pngSelected, int x, int y, u32 width, u32 height, const SmartPtr<GuiSound> &clickSound, const SmartPtr<GuiSound> &hoverSound)
 {
 	SButtonTextureSet texSet;
 

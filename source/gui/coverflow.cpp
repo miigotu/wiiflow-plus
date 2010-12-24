@@ -245,6 +245,11 @@ void CCoverFlow::simulateOtherScreenFormat(bool s)
 CCoverFlow::~CCoverFlow(void)
 {
 	clear();
+	m_sound1.release();
+	m_sound2.release();
+	m_hoverSound.release();
+	m_selectSound.release();
+	m_cancelSound.release();
 	LWP_MutexDestroy(m_mutex);
 }
 
@@ -546,10 +551,16 @@ bool CCoverFlow::setSorting(Sorting sorting)
 	return start();
 }
 
-void CCoverFlow::setSounds(const SSoundEffect &sound, const SSoundEffect &hoverSound, const SSoundEffect &selectSound, const SSoundEffect &cancelSound)
+void CCoverFlow::setSounds(const SmartPtr<GuiSound> &sound, const SmartPtr<GuiSound> &hoverSound, const SmartPtr<GuiSound> &selectSound, const SmartPtr<GuiSound> &cancelSound)
 {
+	m_sound1.release();
+	m_sound2.release();
+	m_hoverSound.release();
+	m_selectSound.release();
+	m_cancelSound.release();
+
 	m_sound1 = sound;
-	m_sound2 = sound;
+	m_sound2 = SmartPtr<GuiSound>(new GuiSound(sound.get()));
 	m_hoverSound = hoverSound;
 	m_selectSound = selectSound;
 	m_cancelSound = cancelSound;
@@ -560,11 +571,23 @@ void CCoverFlow::setSoundVolume(u8 vol)
 	m_soundVolume = vol;
 }
 
+void CCoverFlow::_stopSound(SmartPtr<GuiSound> snd)
+{
+	if (!!snd)
+		snd->Stop();
+}
+
+void CCoverFlow::_playSound(SmartPtr<GuiSound> snd)
+{
+	if (!!snd)
+		snd->Play(m_soundVolume);
+}
+
 void CCoverFlow::stopSound(void)
 {
-	m_sound1.stop();
-	m_sound2.stop();
-	m_hoverSound.stop();
+	_stopSound(m_sound1);
+	_stopSound(m_sound2);
+	_stopSound(m_hoverSound);
 }
 
 void CCoverFlow::applySettings(void)
@@ -1442,7 +1465,7 @@ bool CCoverFlow::select(void)
 	m_covers[m_range / 2].pos -= _coverMovesP();
 	m_cameraPos -= _cameraMoves();
 	_updateAllTargets();
-	m_selectSound.play(m_soundVolume);
+	_playSound(m_selectSound);
 	return true;
 }
 
@@ -1453,7 +1476,7 @@ void CCoverFlow::cancel(void)
 	LockMutex lock(m_mutex);
 	_unselect();
 	_updateAllTargets();
-	m_cancelSound.play(m_soundVolume);
+	_playSound(m_cancelSound);
 }
 
 void CCoverFlow::_updateAllTargets(bool instant)
@@ -1754,9 +1777,9 @@ void CCoverFlow::_playSound(void)
 	{
 		m_snd2 = !m_snd2;
 		if (m_snd2)
-			m_sound1.play(m_soundVolume);
+			_playSound(m_sound1);
 		else
-			m_sound2.play(m_soundVolume);
+			_playSound(m_sound2);
 	}
 }
 
@@ -1866,7 +1889,7 @@ void CCoverFlow::mouse(CVideo &vid, int chan, int x, int y)
 	if (m != m_mouse[chan])
 	{
 		if ((u32)m_mouse[chan] < m_range)
-			m_hoverSound.play(m_soundVolume);
+			_playSound(m_hoverSound);
 		_updateAllTargets();
 	}
 }

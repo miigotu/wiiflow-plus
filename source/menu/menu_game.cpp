@@ -296,7 +296,7 @@ void CMenu::_game(bool launch)
 
 		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
 		{
-			m_gameSound.stop();
+			m_gameSound.Stop();
 			break;
 		}
 		else if (BTN_PLUS_PRESSED)
@@ -364,7 +364,7 @@ void CMenu::_game(bool launch)
 					_waitForGameSoundExtract();
 					if (_wbfsOp(CMenu::WO_REMOVE_GAME))
 					{
-						m_gameSound.stop();
+						m_gameSound.Stop();
 						break;
 					}
 					_showGame();
@@ -376,7 +376,7 @@ void CMenu::_game(bool launch)
 				m_gcfg1.setBool("ADULTONLY", id, !m_gcfg1.getBool("ADULTONLY", id, false));
 			else if (m_btnMgr.selected(m_gameBtnBack))
 			{
-				m_gameSound.stop();
+				m_gameSound.Stop();
 				break;
 			}
 			else if (m_btnMgr.selected(m_gameBtnSettings))
@@ -471,7 +471,7 @@ void CMenu::_game(bool launch)
 		}
 		if (startGameSound == -10)
 		{
-			m_gameSound.stop();
+			m_gameSound.Stop();
 			wdm_count = 0;
 			m_gameSelected = false;
 			m_fa.unload();
@@ -1044,58 +1044,9 @@ struct IMD5Header
 	u8 crypto[16];
 } __attribute__((packed));
 
-struct LZ77Info
-{
-	u16 length : 4;
-	u16 offset : 12;
-} __attribute__((packed));
-
 inline u32 le32(u32 i)
 {
 	return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i & 0xFF0000) >> 8) | ((i & 0xFF000000) >> 24);
-}
-
-SmartBuf uncompressLZ77(u32 &size, const u8 *inputBuf, u32 inputLength)
-{
-	SmartBuf buffer;
-	if (inputLength <= 0x8 || *(const u32 *)inputBuf != 'LZ77' || inputBuf[4] != 0x10)
-		return buffer;
-	u32 uncSize = le32(((const u32 *)inputBuf)[1] << 8);
-	const u8 *inBuf = inputBuf + 8;
-	const u8 *inBufEnd = inputBuf + inputLength;
-
-	buffer = smartMem2Alloc(uncSize);
-	if (!buffer) return buffer;
-
-	u8 *bufCur = buffer.get();
-	u8 *bufEnd = buffer.get() + uncSize;
-	while (bufCur < bufEnd && inBuf < inBufEnd)
-	{
-		u8 flags = *inBuf;
-		++inBuf;
-		for (int i = 0; i < 8 && bufCur < bufEnd && inBuf < inBufEnd; ++i)
-		{
-			if ((flags & 0x80) != 0)
-			{
-				const LZ77Info &info = *(const LZ77Info *)inBuf;
-				inBuf += sizeof (LZ77Info);
-				int length = info.length + 3;
-				if (bufCur - info.offset - 1 < buffer.get() || bufCur + length > bufEnd)
-					return buffer;
-				memcpy(bufCur, bufCur - info.offset - 1, length);
-				bufCur += length;
-			}
-			else
-			{
-				*bufCur = *inBuf;
-				++inBuf;
-				++bufCur;
-			}
-			flags <<= 1;
-		}
-	}
-	size = uncSize;
-	return buffer;
 }
 
 void CMenu::_loadGameSound(dir_discHdr *hdr)
@@ -1115,38 +1066,8 @@ void CMenu::_loadGameSound(dir_discHdr *hdr)
 
 	if (soundBin == NULL || ((IMD5Header *)soundBin)->fcc != 'IMD5')
 		return;
-	const u8 *soundChunk = soundBin + sizeof (IMD5Header);
-	u32 sndType = *(u32 *)soundChunk;
-	u32 soundChunkSize = sndSize - sizeof (IMD5Header);
-	SmartBuf uncompressed;
-	if (sndType == 'LZ77')
-	{
-		u32 uncSize;
-		uncompressed = uncompressLZ77(uncSize, soundChunk, soundChunkSize);
-		if (!uncompressed) return;
-
-		soundChunk = uncompressed.get();
-		soundChunkSize = uncSize;
-		sndType = *(u32 *)soundChunk;
-	}
-	switch (sndType)
-	{
-		case 'RIFF':
-			LWP_MutexLock(m_gameSndMutex);
-			m_gameSoundTmp.fromWAV(soundChunk, soundChunkSize);
-			LWP_MutexUnlock(m_gameSndMutex);
-			break;
-		case 'BNS ':
-			LWP_MutexLock(m_gameSndMutex);
-			m_gameSoundTmp.fromBNS(soundChunk, soundChunkSize);
-			LWP_MutexUnlock(m_gameSndMutex);
-			break;
-		case 'FORM':
-			LWP_MutexLock(m_gameSndMutex);
-			m_gameSoundTmp.fromAIFF(soundChunk, soundChunkSize);
-			LWP_MutexUnlock(m_gameSndMutex);
-			break;
-	}
+	
+	m_gameSoundTmp.Load(soundBin, sndSize, false);
 	delete banner;
 }
 

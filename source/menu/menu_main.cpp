@@ -133,7 +133,7 @@ int CMenu::main(void)
 
 	SetupInput();
 	_loadList();
-	m_musicPlayer.Play();
+	MusicPlayer::Instance()->Play();
 	_updateWiiTDB();
 	_showMain();
 	m_curGameId.clear();
@@ -152,22 +152,34 @@ int CMenu::main(void)
 		//Check for exit or reload request
 		if (BTN_HOME_PRESSED)
 		{
+			gprintf("Home pressed, quit\n");
+			bool exitSet = false;
 			if(!m_locked && !m_disable_exit)
 			{
-				struct stat dummy;
+				exitSet = true;
+				
 				if(BTN_PLUS_HELD) Sys_ExitTo(EXIT_TO_HBC);
 				else if(BTN_MINUS_HELD) Sys_ExitTo(EXIT_TO_MENU);
 				else if(BTN_1_HELD) Sys_ExitTo(EXIT_TO_PRIILOADER);
 				else if(BTN_2_HELD)	//Check that the files are there, or ios will hang.
 				{
+						struct stat dummy;
 						if(DeviceHandler::Instance()->IsInserted(SD) && 
 						stat(sfmt("%s:/bootmii/armboot.bin", DeviceName[SD]).c_str(), &dummy) == 0 && 
 						stat(sfmt("%s:/bootmii/ppcboot.elf", DeviceName[SD]).c_str(), &dummy) == 0)
 							Sys_ExitTo(EXIT_TO_BOOTMII);
 						else  Sys_ExitTo(EXIT_TO_HBC);
 				}
+				else
+					exitSet = false;
 			}
 			m_reload = (BTN_B_HELD || m_disable_exit);
+			if (!exitSet && !m_reload)
+			{
+				// Mark exiting to prevent soundhandler from restarting
+				extern bool exiting;
+				exiting = true;
+			}
 			break;
 		}
 		m_btnMgr.noClick(true);
@@ -241,9 +253,9 @@ int CMenu::main(void)
 			}
 			//Change songs
 			else if (BTN_LEFT_PRESSED)
-				m_musicPlayer.Previous();
+				MusicPlayer::Instance()->Previous();
 			else if (BTN_RIGHT_PRESSED)
-				m_musicPlayer.Next();
+				MusicPlayer::Instance()->Next();
 			//Sorting Selection
 			else if (BTN_PLUS_PRESSED && !m_locked && m_titles_loaded)
 			{
@@ -594,13 +606,19 @@ int CMenu::main(void)
 				m_cf.mouse(m_vid, chan, -1, -1);		
 	}
 	//
+	gprintf("Invalidate GX\n");
+
 	GX_InvVtxCache();
 	GX_InvalidateTexAll();
+	gprintf("Clear coverflow\n");
 	m_cf.clear();
+	gprintf("Saving configuration files\n");
 	m_cfg.save();
 	m_cat.save();
 //	m_loc.save();
+	gprintf("Wait for dvd\n");
 	while(!m_initialCoverStatusComplete){}
+	gprintf("Done with main\n");
 	if (m_reload)
 	{
 		_showWaitMessage();

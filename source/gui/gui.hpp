@@ -12,7 +12,7 @@
 #include "wstringEx.hpp"
 #include "smartptr.hpp"
 #include "text.hpp"
-#include "sound.hpp"
+#include "gui_sound.h"
 
 #include "safe_vector.hpp"
 
@@ -33,12 +33,12 @@ public:
 	void setRumble(bool enabled) { m_rumbleEnabled = enabled; }
 	void reserve(u32 capacity) { m_elts.reserve(capacity); }
 	u32 addButton(SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color,
-		const SButtonTextureSet &texSet, const SSoundEffect &clickSound = _noSound, const SSoundEffect &hoverSound = _noSound);
+		const SButtonTextureSet &texSet, const SmartPtr<GuiSound> &clickSound = _noSound, const SmartPtr<GuiSound> &hoverSound = _noSound);
 	u32 addLabel(SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, const STexture &bg = _noTexture);
 	u32 addPicButton(const u8 *pngNormal, const u8 *pngSelected, int x, int y, u32 width, u32 height,
-		const SSoundEffect &clickSound = _noSound, const SSoundEffect &hoverSound = _noSound);
+		const SmartPtr<GuiSound> &clickSound = _noSound, const SmartPtr<GuiSound> &hoverSound = _noSound);
 	u32 addPicButton(STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height,
-		const SSoundEffect &clickSound = _noSound, const SSoundEffect &hoverSound = _noSound);
+		const SmartPtr<GuiSound> &clickSound = _noSound, const SmartPtr<GuiSound> &hoverSound = _noSound);
 	u32 addProgressBar(int x, int y, u32 width, u32 height, SButtonTextureSet &texSet);
 	void setText(u32 id, const wstringEx &text, bool unwrap = false);
 	void setText(u32 id, const wstringEx &text, u32 startline, bool unwrap = false);
@@ -110,8 +110,8 @@ private:
 		wstringEx text;
 		CColor textColor;
 		float click;
-		SSoundEffect clickSound;
-		SSoundEffect hoverSound;
+		SmartPtr<GuiSound> clickSound;
+		SmartPtr<GuiSound> hoverSound;
 	public:
 		SButton(void) { t = GUIELT_BUTTON; }
 		virtual void tick(void);
@@ -143,8 +143,8 @@ private:
 	u8 m_rumble[WPAD_MAX_WIIMOTES];
 	bool wii_rumble[WPAD_MAX_WIIMOTES];
 	bool gc_rumble[WPAD_MAX_WIIMOTES];
-	SSoundEffect m_sndHover;
-	SSoundEffect m_sndClick;
+	SmartPtr<GuiSound> m_sndHover;
+	SmartPtr<GuiSound> m_sndClick;
 	u8 m_soundVolume;
 	bool m_noclick;
 	CVideo m_vid;
@@ -153,7 +153,7 @@ private:
 	void _drawLbl(SLabel &b);
 	void _drawPBar(const SProgressBar &b);
 	static STexture _noTexture;
-	static SSoundEffect _noSound;
+	static SmartPtr<GuiSound> _noSound;
 };
 
 #endif // !defined(__GUI_HPP)

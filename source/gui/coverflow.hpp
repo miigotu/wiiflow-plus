@@ -16,7 +16,7 @@
 #include "FreeTypeGX.h"
 #include "text.hpp"
 #include "config.hpp"
-#include "sound.hpp"
+#include "gui_sound.h"
 #include "disc.h"
 #include "utils.h"
 
@@ -105,7 +105,7 @@ public:
 	void setBlur(u32 blurResolution, u32 blurRadius, float blurFactor);
 	bool setSorting(Sorting sorting);
 	// 
-	void setSounds(const SSoundEffect &sound, const SSoundEffect &hoverSound, const SSoundEffect &selectSound, const SSoundEffect &cancelSound);
+	void setSounds(const SmartPtr<GuiSound> &sound, const SmartPtr<GuiSound> &hoverSound, const SmartPtr<GuiSound> &selectSound, const SmartPtr<GuiSound> &cancelSound);
 	void setSoundVolume(u8 vol);
 	void stopSound(void);
 	// 
@@ -274,11 +274,11 @@ private:
 	Vector3D m_flipCoverAngle;
 	Vector3D m_flipCoverScale;
 	bool m_snd2;
-	SSoundEffect m_sound1;
-	SSoundEffect m_sound2;
-	SSoundEffect m_hoverSound;
-	SSoundEffect m_selectSound;
-	SSoundEffect m_cancelSound;
+	SmartPtr<GuiSound> m_sound1;
+	SmartPtr<GuiSound> m_sound2;
+	SmartPtr<GuiSound> m_hoverSound;
+	SmartPtr<GuiSound> m_selectSound;
+	SmartPtr<GuiSound> m_cancelSound;
 	u8 m_soundVolume;
 	float m_lodBias;
 	u8 m_aniso;
@@ -319,6 +319,10 @@ private:
 	void _instantTarget(int i);
 	void _transposeCover(safe_vector<CCover> &dst, u32 rows, u32 columns, int pos);
 	void _playSound(void);
+	
+	void _stopSound(SmartPtr<GuiSound> snd);
+	void _playSound(SmartPtr<GuiSound> snd);
+	
 	static bool _sortByPlayCount(CItem item1, CItem item2);
 	static bool _sortByLastPlayed(CItem item1, CItem item2);
 	static bool _sortByGameID(CItem item1, CItem item2);
