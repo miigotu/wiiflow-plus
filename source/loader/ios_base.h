@@ -1,7 +1,7 @@
 #ifndef _IOS_BASE_H_
 #define _IOS_BASE_H_
 
-#define info_number 23
+#define info_number 35
 
 #include <ogcsys.h>
 

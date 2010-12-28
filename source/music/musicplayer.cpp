@@ -1,5 +1,4 @@
 #include "musicplayer.h"
-#include "list/list.hpp"
 #include "gecko/gecko.h"
 
 using namespace std;
@@ -36,15 +35,17 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 	SetVolume(m_music_volume);
 	
 	MusicDirectory dir = (MusicDirectory) cfg.getInt("GENERAL", "music_directories", NORMAL_MUSIC | THEME_MUSIC);
+	m_music_files.Init(cfg.getString("GENERAL", "dir_list_cache"));
 
 	gprintf("MUSP: Looking in musicdir: %d\n", dir);
+
 	if (dir & THEME_MUSIC)
 	{
-		CList::Instance()->GetPaths(m_music_files, ".ogg|.mp3", themeMusicDir); //|.mod|.xm|.s3m", themeMusicDir);
+		m_music_files.Load(themeMusicDir, ".ogg|.mp3"); //|.mod|.xm|.s3m");
 	}
 	if (dir & NORMAL_MUSIC)
 	{
-		CList::Instance()->GetPaths(m_music_files, ".ogg|.mp3", musicDir); //|.mod|.xm|.s3m", musicDir);
+		m_music_files.Load(musicDir, ".ogg|.mp3"); //|.mod|.xm|.s3m");
 	}
 	
 	if (cfg.getBool("GENERAL", "randomize_music", false) && m_music_files.size() > 0)
@@ -127,11 +128,12 @@ void MusicPlayer::Pause()
 	{
 		m_music->Pause();
 	}
+	m_paused = true;
 }
 
 void MusicPlayer::Play()
 {
-	m_manual_stop = false; // Next tick will start the music
+	m_manual_stop = m_paused = false; // Next tick will start the music
 	if (m_music != NULL)
 	{
 		m_music->SetVolume(m_music_current_volume);
@@ -164,6 +166,7 @@ void MusicPlayer::Tick(bool isVideoPlaying)
 			{
 				m_music->Play();
 				m_stopped = false;
+				gprintf("m_stopped = %uc", m_stopped);
 			}
 			SetVolume(m_music_current_volume + m_fade_rate);
 			if (m_music_current_volume >= m_music_volume)
@@ -208,5 +211,6 @@ void MusicPlayer::LoadCurrentFile()
 	{
 		m_music->SetVolume(m_music_current_volume);
 		m_music->Play();
+		m_stopped = false;
 	}
 }

@@ -20,7 +20,6 @@
 #include "loader/fst.h"
 #include "loader/wdm.h"
 #include "loader/wip.h"
-#include "list.hpp"
 
 #include "gui/WiiMovie.hpp"
 #include "channels.h"
@@ -607,11 +606,14 @@ void CMenu::_directlaunch(const string &id)
 		if(!DeviceHandler::Instance()->IsInserted(i)) continue;
 
 		DeviceHandler::Instance()->Open_WBFS(i);
-
+		CList<dir_discHdr> list;
+		string path = sfmt(GAMES_DIR, DeviceName[i]);
 		safe_vector<string> pathlist;
-		CList::Instance()->GetPaths(pathlist, id.c_str(), sfmt(GAMES_DIR, DeviceName[i]));
+		list.GetPaths(pathlist, id.c_str(), path,
+			strncasecmp(DeviceHandler::Instance()->PathToFSName(path.c_str()), "WBFS", 4) == 0);
+
 		m_gameList.clear();
-		CList::Instance()->GetHeaders(pathlist, m_gameList);
+		list.GetHeaders(pathlist, m_gameList);
 		if(m_gameList.size() > 0)
 		{
 			gprintf("Game found on partition #%i\n", i);

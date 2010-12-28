@@ -1,6 +1,7 @@
 #include "cache.hpp"
 
-CCache::CCache(dir_discHdr &tmp, string path, u32 index, CMode mode) /* Load/Save One */
+template <typename T>
+CCache<T>::CCache(T &tmp, string path, u32 index, CMode mode) /* Load/Save One */
 {
 	filename = path;
 	//gprintf("Openning DB: %s\n", filename.c_str());
@@ -21,7 +22,8 @@ CCache::CCache(dir_discHdr &tmp, string path, u32 index, CMode mode) /* Load/Sav
 	}
 }
 
-CCache::CCache(safe_vector<dir_discHdr> &list, string path, CMode mode) /* Load/Save All */
+template <typename T>
+CCache<T>::CCache(safe_vector<T> &list, string path, CMode mode) /* Load/Save All */
 {
 	filename = path;
 	//gprintf("Openning DB: %s\n", filename.c_str());
@@ -42,7 +44,8 @@ CCache::CCache(safe_vector<dir_discHdr> &list, string path, CMode mode) /* Load/
 	}
 }
 
-CCache::CCache(safe_vector<dir_discHdr> &list, string path, dir_discHdr tmp, CMode mode) /* Add One */
+template <typename T>
+CCache<T>::CCache(safe_vector<T> &list, string path, T tmp, CMode mode) /* Add One */
 {
 	filename = path;
 	//gprintf("Openning DB: %s\n", filename.c_str());
@@ -60,7 +63,8 @@ CCache::CCache(safe_vector<dir_discHdr> &list, string path, dir_discHdr tmp, CMo
 	}
 }
 
-CCache::CCache(safe_vector<dir_discHdr> &list, string path, u32 index, CMode mode)  /* Remove One */
+template <typename T>
+CCache<T>::CCache(safe_vector<T> &list, string path, u32 index, CMode mode)  /* Remove One */
 {
 	filename = path;
 	//gprintf("Openning DB: %s\n", filename.c_str());
@@ -78,36 +82,40 @@ CCache::CCache(safe_vector<dir_discHdr> &list, string path, u32 index, CMode mod
 	}
 }
 
-CCache::~CCache()
+template <typename T>
+CCache<T>::~CCache()
 {
 	//gprintf("Closing DB: %s\n", filename.c_str());
 	if(cache) fclose(cache);
 	cache = NULL;
 }
 
-void CCache::SaveAll(safe_vector<dir_discHdr> list)
+template <typename T>
+void CCache<T>::SaveAll(safe_vector<T> list)
 {
 	//gprintf("Updating DB: %s\n", filename.c_str());
-	fwrite((void *)&list[0], 1, list.size() * sizeof(dir_discHdr), cache);
+	fwrite((void *)&list[0], 1, list.size() * sizeof(T), cache);
 }
 
-void CCache::SaveOne(dir_discHdr tmp, u32 index)
+template <typename T>
+void CCache<T>::SaveOne(T tmp, u32 index)
 {
 	//gprintf("Updating Item number %u in DB: %s\n", index, filename.c_str());
-	fseek(cache, index * sizeof(dir_discHdr), SEEK_SET);
-	fwrite((void *)&tmp, 1, sizeof(dir_discHdr), cache);
+	fseek(cache, index * sizeof(T), SEEK_SET);
+	fwrite((void *)&tmp, 1, sizeof(T), cache);
 }
 
-void CCache::LoadAll(safe_vector<dir_discHdr> &list)
+template <typename T>
+void CCache<T>::LoadAll(safe_vector<T> &list)
 {
 	//gprintf("Loading DB: %s\n", filename.c_str());
 
-	dir_discHdr tmp;
+	T tmp;
 	fseek(cache, 0, SEEK_END);
 	u64 fileSize = ftell(cache);
 	fseek(cache, 0, SEEK_SET);
 
-	u32 count = fileSize / sizeof(dir_discHdr);
+	u32 count = fileSize / sizeof(T);
 	list.reserve(count + list.size());
 	for(u32 i = 0; i < count; i++)
 	{
@@ -116,24 +124,30 @@ void CCache::LoadAll(safe_vector<dir_discHdr> &list)
 	}
 }
 
-void CCache::LoadOne(dir_discHdr &tmp, u32 index)
+template <typename T>
+void CCache<T>::LoadOne(T &tmp, u32 index)
 {
 	//gprintf("Fetching Item number %u in DB: %s\n", index, filename.c_str());
-	fseek(cache, index * sizeof(dir_discHdr), SEEK_SET);
-	fread((void *)&tmp, 1, sizeof(dir_discHdr), cache);
+	fseek(cache, index * sizeof(T), SEEK_SET);
+	fread((void *)&tmp, 1, sizeof(T), cache);
 	//gprintf("Path %s\n", tmp.path);
 }
 
-void CCache::AddOne(safe_vector<dir_discHdr> &list, dir_discHdr tmp)
+template <typename T>
+void CCache<T>::AddOne(safe_vector<T> &list, T tmp)
 {
 	//gprintf("Adding Item number %u in DB: %s\n", list.size()+1, filename.c_str());
 	list.push_back(tmp);
-	fwrite((void *)&tmp, 1, sizeof(dir_discHdr), cache);  // FILE* is opened as "ab+" so its always written to the EOF.
+	fwrite((void *)&tmp, 1, sizeof(T), cache);  // FILE* is opened as "ab+" so its always written to the EOF.
 }
 
-void CCache::RemoveOne(safe_vector<dir_discHdr> &list, u32 index)
+template <typename T>
+void CCache<T>::RemoveOne(safe_vector<T> &list, u32 index)
 {
 	//gprintf("Removing Item number %u in DB: %s\n", index, filename.c_str());
 	list.erase(list.begin() + index);
 	SaveAll(list);
 }
+
+template class CCache<dir_discHdr>;
+template class CCache<string>;

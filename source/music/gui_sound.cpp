@@ -83,6 +83,7 @@ extern "C" void SoundCallback(s32 voice)
 GuiSound::GuiSound()
 {
 	gprintf("SND: Creating GuiSound instance\n");
+	voice = -1;
 	Init();
 }
 
@@ -105,6 +106,7 @@ GuiSound::GuiSound(const u8 * snd, s32 len, bool isallocated, int v)
 GuiSound::GuiSound(GuiSound *g)
 {
 	gprintf("SND: Creating GuiSound instance from other GuiSound object\n");
+	voice = -1;
 	Init();
 	if (g == NULL) return;
 	

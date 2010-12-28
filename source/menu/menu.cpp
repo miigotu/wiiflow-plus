@@ -13,7 +13,6 @@
 
 #include "gecko.h"
 #include "defines.h"
-#include "list.hpp"
 #include "music/SoundHandler.hpp"
 
 // Sounds
@@ -245,7 +244,7 @@ void CMenu::init()
 	makedir((char *)m_wipDir.c_str());
 
 	makedir((char *)m_listCacheDir.c_str());
-	CList::Instance()->Init(m_listCacheDir);
+	m_gameList.Init(m_listCacheDir);
 
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
@@ -363,7 +362,6 @@ void CMenu::init()
 
 void CMenu::cleanup(void)
 {
-	CList::DestroyInstance(); // Destruction must be done manually
 	_waitForGameSoundExtract();
 	_stopSounds();
 	
@@ -1493,9 +1491,7 @@ bool CMenu::_loadGameList(void)
 {
 	currentPartition = m_cfg.getInt("GENERAL", "partition", 1);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
-	safe_vector<string> pathlist;
-	CList::Instance()->GetPaths(pathlist, ".wbfs|.iso", sfmt(GAMES_DIR, DeviceName[currentPartition]));
-	CList::Instance()->GetHeaders(pathlist, m_gameList);
+	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso");
 	return m_gameList.size() > 0 ? true : false;
 }
 
@@ -1503,9 +1499,7 @@ bool CMenu::_loadHomebrewList()
 {
 	currentPartition = m_cfg.getInt("GENERAL", "homebrew_partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
-	safe_vector<string> pathlist;
-	CList::Instance()->GetPaths(pathlist, ".dol", sfmt(HOMEBREW_DIR, DeviceName[currentPartition]));
-	CList::Instance()->GetHeaders(pathlist, m_gameList);
+	m_gameList.Load(sfmt(HOMEBREW_DIR, DeviceName[currentPartition]), ".dol");
 	return m_gameList.size() > 0 ? true : false;
 }
 

@@ -4,7 +4,7 @@
 #include <string>
 #include "config/config.hpp"
 
-#include "safe_vector.hpp"
+#include "cachedlist.hpp"
 #include "gui_sound.h"
 
 enum Fade
@@ -52,7 +52,7 @@ private:
 
 	void LoadCurrentFile();
 
-	safe_vector<std::string> m_music_files;
+	CachedList<std::string> m_music_files;
 	safe_vector<std::string>::iterator m_current_music;
 	
 	int m_fade_rate;

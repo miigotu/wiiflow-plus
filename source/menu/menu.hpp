@@ -5,6 +5,8 @@
 #include <ogc/pad.h>
 
 #include "safe_vector.hpp"
+#include "cachedlist.hpp"
+
 #include <map>
 #include "gui_sound.h"
 #include "cursor.hpp"
@@ -54,7 +56,7 @@ private:
 
 	CCoverFlow m_cf;
 	CFanart m_fa;
-	safe_vector<dir_discHdr> m_gameList;
+	CachedList<dir_discHdr> m_gameList;
 	Config m_cfg;
 	Config m_loc;
 	Config m_loclist;

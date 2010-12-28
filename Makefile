@@ -18,7 +18,6 @@ include $(DEVKITPPC)/wii_rules
 TARGET		:=	boot
 BUILD		:=	build
 SOURCES		:=	source \
-				source/cache \
 				source/cheats \
 				source/config \
 				source/data \
@@ -41,7 +40,6 @@ SOURCES		:=	source \
 DATA		:=	data
 
 INCLUDES	:=	source \
-				source/cache \
 				source/cheats \
 				source/config \
 				source/devicemounter \
