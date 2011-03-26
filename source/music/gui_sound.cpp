@@ -57,8 +57,7 @@ static inline int GetFirstUnusedVoice()
 extern "C" void SoundCallback(s32 voice)
 {
     SoundDecoder * decoder = SoundHandler::Instance()->Decoder(voice);
-    if(!decoder)
-        return;
+    if(!decoder) return;
 
     if(decoder->IsBufferReady())
     {
@@ -69,15 +68,9 @@ extern "C" void SoundCallback(s32 voice)
         }
     }
     else if(decoder->IsEOF())
-    {
         ASND_StopVoice(voice);
-        if(voice == 0)
-            MusicPlayer::Instance()->SetPlaybackFinished(true); //see if next music must be played
-    }
     else
-    {
         SoundHandler::Instance()->ThreadSignal();
-    }
 }
 
 GuiSound::GuiSound()
@@ -89,16 +82,16 @@ GuiSound::GuiSound()
 
 GuiSound::GuiSound(string filepath, int v)
 {
-	gprintf("SND: Creating GuiSound instance for file '%s' at voice %d\n", filepath.c_str(), voice);
 	voice = v;
+	gprintf("SND: Creating GuiSound instance for file '%s' at voice %i\n", filepath.c_str(), voice);
 	Init();
 	Load(filepath.c_str());
 }
 
 GuiSound::GuiSound(const u8 * snd, s32 len, bool isallocated, int v)
 {
-	gprintf("SND: Creating GuiSound instance for buffer with length %d\n", len);
 	voice = v;
+	gprintf("SND: Creating GuiSound instance for buffer at voice %i with length %i\n", voice, len);
 	Init();
 	Load(snd, len, isallocated);
 }
@@ -117,9 +110,7 @@ GuiSound::GuiSound(GuiSound *g)
 		Load(snd, g->length, true);
 	}
 	else
-	{
 		Load(g->filepath.c_str());
-	}
 }
 
 GuiSound::~GuiSound()
@@ -421,7 +412,7 @@ void GuiSound::SetVolume(int vol)
 	if(vol < 0)
 		return;
 
-    volume = 255*(vol/100.0);
+	volume = vol;
     ASND_ChangeVolumeVoice(voice, volume, volume);
 }
 

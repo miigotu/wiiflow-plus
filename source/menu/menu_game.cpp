@@ -1068,7 +1068,7 @@ void CMenu::_loadGameSound(dir_discHdr *hdr)
 
 	if (soundBin == NULL || ((IMD5Header *)soundBin)->fcc != 'IMD5')
 		return;
-	
+
 	m_gameSoundTmp.Load(soundBin, sndSize, false);
 	delete banner;
 }

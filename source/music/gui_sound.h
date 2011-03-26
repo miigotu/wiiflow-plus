@@ -63,6 +63,10 @@ class GuiSound
 		//!Checks if a sound is currently loaded
 		//!\return true if sound is loaded, false otherwise
 		bool IsLoaded() { return sound != NULL; };
+
+		//!Set the pointer to sound data to NULL !CAUTION!
+		//!\Only for when copying instances.
+		void Unload() { sound = NULL; };
 		//!Checks if the sound is currently playing
 		//!\return true if sound is playing, false otherwise
 		bool IsPlaying();

@@ -7,7 +7,7 @@
 
 #include "loader/fs.h"
 #include "loader/wdvd.h"
-#include "loader/usbstorage.h"
+#include "usbstorage.h"
 #include "unzip/unzip.h"
 #include "unzip/miniunz.h"
 

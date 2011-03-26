@@ -7,13 +7,6 @@
 #include "cachedlist.hpp"
 #include "gui_sound.h"
 
-enum Fade
-{
-	FADE_IN = 1,
-	FADE_NONE = 0,
-	FADE_OUT = -1
-};
-
 enum MusicDirectory
 {
 	NORMAL_MUSIC = 1,
@@ -29,9 +22,8 @@ public:
 	static void DestroyInstance();
 
 	void Init(Config &cfg, std::string musicDir, std::string themeMusicDir);
-	void Tick(bool isVideoPlaying);
+	void Tick(bool attenuate);
 	
-	void SetFadeMode(Fade mode);
 	void SetVolume(int volume);
 	void SetVolume(int volume, int max_volume);
 	int GetVolume() { return m_music_current_volume; };
@@ -44,7 +36,6 @@ public:
 	void Stop();
 	
 	bool IsStopped() { return m_stopped; };
-    void SetPlaybackFinished(bool b) { m_playbackFinished = b; };	
 private:
 	~MusicPlayer();
 
@@ -56,7 +47,6 @@ private:
 	safe_vector<std::string>::iterator m_current_music;
 	
 	int m_fade_rate;
-	Fade m_fade_mode;
 	
 	int m_music_volume;
 	int m_music_current_volume;

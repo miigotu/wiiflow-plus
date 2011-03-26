@@ -35,7 +35,7 @@ SOURCES		:=	source \
 				source/unzip \
 				source/xml \
 				source/wstringEx \
-				source/loader/libwbfs
+				source/devicemounter/libwbfs
 
 DATA		:=	data
 

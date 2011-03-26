@@ -20,19 +20,19 @@ extern int wd_last_error;
  
 typedef struct wbfs_head
 {
-        be32_t magic;
-        // parameters copied in the partition for easy dumping, and bug reports
-        be32_t n_hd_sec;	       // total number of hd_sec in this partition
-        u8  hd_sec_sz_s;       // sector size in this partition
-        u8  wbfs_sec_sz_s;     // size of a wbfs sec
-        u8  padding3[2];
-        u8  disc_table[0];	// size depends on hd sector size
+	be32_t magic;
+	// parameters copied in the partition for easy dumping, and bug reports
+	be32_t n_hd_sec;	       // total number of hd_sec in this partition
+	u8  hd_sec_sz_s;       // sector size in this partition
+	u8  wbfs_sec_sz_s;     // size of a wbfs sec
+	u8  padding3[2];
+	u8  disc_table[0];	// size depends on hd sector size
 }__attribute((packed)) wbfs_head_t ;
 
 typedef struct wbfs_disc_info
 {
-        u8 disc_header_copy[0x100];
-        be16_t wlba_table[0];
+	u8 disc_header_copy[0x100];
+	be16_t wlba_table[0];
 }wbfs_disc_info_t;
 
 //  WBFS first wbfs_sector structure:
@@ -69,47 +69,47 @@ typedef void (*progress_callback_t)(int status,int total,void *user_data);
 
 typedef struct wbfs_s
 {
-        wbfs_head_t *head;
+	wbfs_head_t *head;
 
-        /* hdsectors, the size of the sector provided by the hosting hard drive */
-        u32 hd_sec_sz;
-        u8  hd_sec_sz_s; // the power of two of the last number
-        u32 n_hd_sec;	 // the number of hd sector in the wbfs partition
+	/* hdsectors, the size of the sector provided by the hosting hard drive */
+	u32 hd_sec_sz;
+	u8  hd_sec_sz_s; // the power of two of the last number
+	u32 n_hd_sec;	 // the number of hd sector in the wbfs partition
 
-        /* standard wii sector (0x8000 bytes) */
-        u32 wii_sec_sz; 
-        u8  wii_sec_sz_s;
-        u32 n_wii_sec;
-        u32 n_wii_sec_per_disc;
-        
-        /* The size of a wbfs sector */
-        u32 wbfs_sec_sz;
-        u32 wbfs_sec_sz_s; 
-        u16 n_wbfs_sec;   // this must fit in 16 bit!
-        u16 n_wbfs_sec_per_disc;   // size of the lookup table
+	/* standard wii sector (0x8000 bytes) */
+	u32 wii_sec_sz; 
+	u8  wii_sec_sz_s;
+	u32 n_wii_sec;
+	u32 n_wii_sec_per_disc;
+	
+	/* The size of a wbfs sector */
+	u32 wbfs_sec_sz;
+	u32 wbfs_sec_sz_s; 
+	u16 n_wbfs_sec;   // this must fit in 16 bit!
+	u16 n_wbfs_sec_per_disc;   // size of the lookup table
 
-        u32 part_lba;
-        /* virtual methods to read write the partition */
-        rw_sector_callback_t read_hdsector;
-        rw_sector_callback_t write_hdsector;
-        void *callback_data;
+	u32 part_lba;
+	/* virtual methods to read write the partition */
+	rw_sector_callback_t read_hdsector;
+	rw_sector_callback_t write_hdsector;
+	void *callback_data;
 
-        u16 max_disc;
-        u32 freeblks_lba;
-        u32 *freeblks;
-        u16 disc_info_sz;
+	u16 max_disc;
+	u32 freeblks_lba;
+	u32 *freeblks;
+	u16 disc_info_sz;
 
-        u8  *tmp_buffer;  // pre-allocated buffer for unaligned read
-        
-        u32 n_disc_open;
+	u8  *tmp_buffer;  // pre-allocated buffer for unaligned read
+	
+	u32 n_disc_open;
        
 }wbfs_t;
 
 typedef struct wbfs_disc_s
 {
-        wbfs_t *p;
-        wbfs_disc_info_t  *header;	  // pointer to wii header
-        int i;		  		  // disc index in the wbfs header (disc_table)
+	wbfs_t *p;
+	wbfs_disc_info_t  *header;	  // pointer to wii header
+	int i;		  		  // disc index in the wbfs header (disc_table)
 }wbfs_disc_t;
 
 
@@ -190,7 +190,7 @@ u32 wbfs_count_usedblocks(wbfs_t*p);
   @copy_1_1: makes a 1:1 copy, whenever a game would not use the wii disc format, and some data is hidden outside the filesystem.
  */
 u32 wbfs_add_disc(wbfs_t*p,read_wiidisc_callback_t read_src_wii_disc, void *callback_data,
-                  progress_callback_t spinner,void *spinner_data,partition_selector_t sel,int copy_1_1);
+			progress_callback_t spinner,void *spinner_data,partition_selector_t sel,int copy_1_1);
 
 
 /*! remove a wiidvd inside a partition */

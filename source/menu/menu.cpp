@@ -1247,19 +1247,14 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		}
 		Sys_Test();
 	}
-	
-	// Fade music in or out when game is selected
-	if (m_gameSelected || m_video_playing)
-		MusicPlayer::Instance()->SetFadeMode(FADE_OUT);
-	else if (MusicPlayer::Instance()->GetVolume() != MusicPlayer::Instance()->GetMaxVolume() && !m_video_playing && (!m_gameSelected || !m_gameSound.IsPlaying()))
-		MusicPlayer::Instance()->SetFadeMode(FADE_IN);
-	
+
 	LWP_MutexLock(m_gameSndMutex);
-	if (withCF && m_gameSelected && m_gameSoundTmp.IsLoaded() && m_gameSoundThread == 0 && MusicPlayer::Instance()->GetVolume() == 0)
+	if (withCF && m_gameSelected && m_gameSoundTmp.IsLoaded() && m_gameSoundThread == 0 && !m_gameSound.IsPlaying() && MusicPlayer::Instance()->GetVolume() == 0)
 	{
 		m_gameSound.Stop();
 		m_gameSound = m_gameSoundTmp;
 		m_gameSound.Play(m_bnrSndVol);
+		m_gameSoundTmp.Unload();
 	}
 	else if (!withCF || !m_gameSelected)
 		m_gameSound.Stop();
@@ -1268,7 +1263,8 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	if (withCF && m_gameSoundThread == 0)
 		m_cf.startPicLoader();
 
-	MusicPlayer::Instance()->Tick(m_video_playing);
+	MusicPlayer::Instance()->Tick(m_video_playing || (m_gameSelected && 
+		(m_gameSoundTmp.IsLoaded() ||  m_gameSound.IsPlaying())));
 	
 	//Take Screenshot
 	if (gc_btnsPressed & PAD_TRIGGER_Z)
@@ -1507,13 +1503,12 @@ void CMenu::_stopSounds(void)
 {
 	// Fade out sounds
 	int fade_rate = m_cfg.getInt("GENERAL", "music_fade_rate", 8);
-	MusicPlayer::Instance()->SetFadeMode(FADE_OUT);
 
 	if (!MusicPlayer::Instance()->IsStopped())
 	{
 		while (MusicPlayer::Instance()->GetVolume() > 0 || m_gameSound.GetVolume() > 0)
 		{
-			MusicPlayer::Instance()->Tick(false);
+			MusicPlayer::Instance()->Tick(true);
 			
 			if (m_gameSound.GetVolume() > 0)
 				m_gameSound.SetVolume(m_gameSound.GetVolume() < fade_rate ? 0 : m_gameSound.GetVolume() - fade_rate);

@@ -8,24 +8,21 @@ MusicPlayer *MusicPlayer::instance = NULL;
 MusicPlayer *MusicPlayer::Instance() 
 {
 	if (instance == NULL)
-	{
 		instance = new MusicPlayer();
-	}
+
 	return instance; 
 }
 
 void MusicPlayer::DestroyInstance()
 {
 	if (instance != NULL)
-	{
 		delete instance;
-		instance = NULL;
-	}
+
+	instance = NULL;
 }
 
 void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir) 
 {
-	m_fade_mode = FADE_NONE;
 	m_music = NULL;
 	m_manual_stop = true;
 	m_stopped = true;
@@ -40,13 +37,10 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 	gprintf("MUSP: Looking in musicdir: %d\n", dir);
 
 	if (dir & THEME_MUSIC)
-	{
 		m_music_files.Load(themeMusicDir, ".ogg|.mp3"); //|.mod|.xm|.s3m");
-	}
+
 	if (dir & NORMAL_MUSIC)
-	{
 		m_music_files.Load(musicDir, ".ogg|.mp3"); //|.mod|.xm|.s3m");
-	}
 	
 	if (cfg.getBool("GENERAL", "randomize_music", false) && m_music_files.size() > 0)
 	{
@@ -70,26 +64,11 @@ MusicPlayer::~MusicPlayer()
 	}
 }
 
-void MusicPlayer::SetFadeMode(Fade mode)
-{
-	m_fade_mode = mode;
-	
-	if (m_music_files.empty())
-	{
-		if (mode == FADE_OUT)
-			SetVolume(0);
-		else if (mode == FADE_IN)
-			SetVolume(m_music_volume);
-	}
-}
-
 void MusicPlayer::SetVolume(int volume)
 {
 	m_music_current_volume = volume > m_music_volume ? m_music_volume : volume;
 	if (m_music != NULL)
-	{
-		m_music->SetVolume(volume);
-	}
+		m_music->SetVolume(m_music_current_volume);
 }
 
 void MusicPlayer::SetVolume(int volume, int max_volume)
@@ -103,9 +82,8 @@ void MusicPlayer::Previous()
 	if (m_music_files.empty()) return;
 
 	if (m_current_music == m_music_files.begin())
-	{
 		m_current_music = m_music_files.end();
-	}
+
 	m_current_music--;
 
 	LoadCurrentFile();
@@ -125,9 +103,8 @@ void MusicPlayer::Next()
 void MusicPlayer::Pause()
 {
 	if (m_music != NULL)
-	{
 		m_music->Pause();
-	}
+
 	m_paused = true;
 }
 
@@ -135,17 +112,15 @@ void MusicPlayer::Play()
 {
 	m_manual_stop = m_paused = false; // Next tick will start the music
 	if (m_music != NULL)
-	{
 		m_music->SetVolume(m_music_current_volume);
-	}
 }
 	
 void MusicPlayer::Stop()
 {
 	m_manual_stop = true;
-
 	if (m_music != NULL)
 	{
+		m_music->Pause();
 		m_music->Stop();
 		delete m_music;
 		m_music = NULL;
@@ -153,44 +128,28 @@ void MusicPlayer::Stop()
 	m_stopped = true;
 }
 
-void MusicPlayer::Tick(bool isVideoPlaying)
+void MusicPlayer::Tick(bool attenuate)
 {
 	if (m_music_files.empty()) return;
-	if (m_music_current_volume == 0 && m_fade_mode != FADE_IN) return;
+	if (m_music_current_volume == 0 && attenuate) return;
 
-	if (m_music != NULL && m_fade_mode != FADE_NONE)
+	if (m_music != NULL)
 	{
-		if (m_fade_mode == FADE_IN)
+		if (!attenuate && m_music_current_volume < m_music_volume)
 		{
-			if (m_paused || m_playbackFinished)
-			{
-				m_music->Play();
-				m_stopped = false;
-				gprintf("m_stopped = %uc", m_stopped);
-			}
-			SetVolume(m_music_current_volume + m_fade_rate);
-			if (m_music_current_volume >= m_music_volume)
-			{
-				SetVolume(m_music_volume);
-				m_fade_mode = FADE_NONE;
-			}
+			int volume = m_music_current_volume + m_fade_rate > m_music_volume ?
+				m_music_volume : m_music_current_volume + m_fade_rate;
+			SetVolume(volume);
 		}
-		else if (m_fade_mode == FADE_OUT)
+		else if (attenuate && m_music_current_volume > 0)
 		{
-			SetVolume(m_music_current_volume - m_fade_rate);
-			if (m_music_current_volume <= 0)
-			{
-				SetVolume(0);
-				m_fade_mode = FADE_NONE;
-				m_music -> Pause();
-			}
+			int volume = m_music_current_volume - m_fade_rate < 0 ?
+				0 : m_music_current_volume - m_fade_rate;
+			SetVolume(volume);
 		}
 	}
-	if (!isVideoPlaying && !m_manual_stop && (m_music == NULL || m_stopped))
-	{
-		// Load next file...
+	if (!attenuate && !m_manual_stop && (m_music == NULL || m_stopped || !m_music->IsPlaying()))
 		Next();
-	}
 }
 
 void MusicPlayer::LoadCurrentFile()
@@ -198,9 +157,7 @@ void MusicPlayer::LoadCurrentFile()
 	if (m_music_files.empty()) return;
 
 	if (m_music != NULL)
-	{
 		m_music->Stop();
-	}
 	
 	if (m_music == NULL)
 		m_music = new GuiSound((*m_current_music).c_str(), ASND_MUSIC_VOICE);
