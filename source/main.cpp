@@ -140,7 +140,9 @@ int old_main(int argc, char **argv)
 
 				for(int i = USB1; i <= USB8; i++)
 					if(DeviceHandler::Instance()->IsInserted(i))
+					{
 						gprintf("%s is Available\n", DeviceName[i]);
+					}
 
 				for(int i = USB1; i <= USB8; i++)
 					if(DeviceHandler::Instance()->IsInserted(i))
@@ -154,8 +156,12 @@ int old_main(int argc, char **argv)
 			SMART_FREE(texWaitHDD.data);
 		}
 		for(int i = 1; i < MAXDEVICES; i++)
+		{
 			if(DeviceHandler::Instance()->IsInserted(i))
+			{
 				gprintf("%s is Available.\n", DeviceName[i]);
+			}
+		}
 
 		ISFS_Initialize();
 		bool dipOK = Disc_Init() >= 0;

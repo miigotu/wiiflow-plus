@@ -104,8 +104,9 @@ int CMenu::_config7(void)
 					if(!DeviceHandler::Instance()->IsInserted(currentPartition))
 						while(!DeviceHandler::Instance()->IsInserted(currentPartition))
 							currentPartition = loopNum(currentPartition + 1, (int)USB8);
-					const char *partition = DeviceName[currentPartition];
-					gprintf("Next item: %s\n", partition);
+					//const char *partition = DeviceName[currentPartition];
+					//gprintf("Next item: %s\n", partition);
+					gprintf("Next item: %s\n", DeviceName[currentPartition]);
 					if(m_current_view == COVERFLOW_USB)
 						m_cfg.setInt("GENERAL", "partition", currentPartition);
 					else if(m_current_view == COVERFLOW_HOMEBREW)
@@ -121,8 +122,9 @@ int CMenu::_config7(void)
 					if(!DeviceHandler::Instance()->IsInserted(currentPartition))
 						while(!DeviceHandler::Instance()->IsInserted(currentPartition))
 							currentPartition = loopNum(currentPartition - 1, (int)USB8);
-					const char *partition = DeviceName[currentPartition];
-					gprintf("Next item: %s\n", partition);
+					//const char *partition = DeviceName[currentPartition];
+					//gprintf("Next item: %s\n", partition);
+					gprintf("Next item: %s\n", DeviceName[currentPartition]);
 					if(m_current_view == COVERFLOW_USB)
 						m_cfg.setInt("GENERAL", "partition", currentPartition);
 					else if(m_current_view == COVERFLOW_HOMEBREW)

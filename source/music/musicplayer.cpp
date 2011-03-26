@@ -148,6 +148,7 @@ void MusicPlayer::Tick(bool attenuate)
 			SetVolume(volume);
 		}
 	}
+		
 	if (!attenuate && !m_manual_stop && (m_music == NULL || m_stopped || !m_music->IsPlaying()))
 		Next();
 }

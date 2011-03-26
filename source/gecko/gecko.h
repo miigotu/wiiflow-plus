@@ -6,6 +6,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define NO_DEBUG
+
 	extern bool geckoinit;
 #ifndef NO_DEBUG
 	//use this just like printf();
@@ -16,6 +19,7 @@ extern "C" {
 #else
 	#define gprintf(...)
 	#define gsenddata(...)
+	#define ghexdump(...)
 	#define InitGecko()      false
 #endif /* NO_DEBUG */
 

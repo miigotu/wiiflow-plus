@@ -78,8 +78,14 @@ u32 USBStorage_GetCapacity(u32 *_sector_size)
 			gprintf("\nSECTORS:  %lu\n", ret);
 			gprintf("SEC SIZE: %lu\n", sector_size);
 			u32 size = ((((ret / 1024U) * sector_size) / 1024U) / 1024U);
-			if(size >= 1000U) gprintf("HDD SIZE: %lu.%lu TB [%u]\n", size / 1024U, (size * 100U) % 1024U, sector_size);
-			else gprintf("HDD SIZE: %lu GB [%u]\n", size, sector_size);
+			if(size >= 1000U)
+			{
+				 gprintf("HDD SIZE: %lu.%lu TB [%u]\n", size / 1024U, (size * 100U) % 1024U, sector_size);
+			}
+			else
+			{
+				 gprintf("HDD SIZE: %lu GB [%u]\n", size, sector_size);
+			}
 			first = false;
 		}
 

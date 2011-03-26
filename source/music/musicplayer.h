@@ -26,7 +26,7 @@ public:
 	
 	void SetVolume(int volume);
 	void SetVolume(int volume, int max_volume);
-	int GetVolume() { return m_music_current_volume; };
+	int GetVolume() { return m_music != NULL ? m_music_current_volume : 0; };
 	int GetMaxVolume() { return m_music_volume; };
 	
 	void Previous();

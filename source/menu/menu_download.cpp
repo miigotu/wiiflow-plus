@@ -427,7 +427,10 @@ int CMenu::_coverDownloader(bool missingOnly)
 
  			if(!newID[0].empty() && strncasecmp(newID[0].c_str(), coverList[i].c_str(), m_current_view == COVERFLOW_CHANNEL ? 4 : 6) == 0)
 				m_newID.remove(domain, coverList[i]);
-			else if(!newID[0].empty()) gprintf("old id = %s\nnew id = %s\n", coverList[i].c_str(), newID[0].c_str());
+			else if(!newID[0].empty())
+			{
+				 gprintf("old id = %s\nnew id = %s\n", coverList[i].c_str(), newID[0].c_str());
+			}
 
 			for (u32 j = 0; !success && j < fmtURLBox.size() && !m_thrdStop; ++j)
 			{

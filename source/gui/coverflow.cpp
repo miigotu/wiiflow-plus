@@ -573,13 +573,13 @@ void CCoverFlow::setSoundVolume(u8 vol)
 
 void CCoverFlow::_stopSound(SmartPtr<GuiSound> snd)
 {
-	if (!!snd)
+	if (snd->IsLoaded())
 		snd->Stop();
 }
 
 void CCoverFlow::_playSound(SmartPtr<GuiSound> snd)
 {
-	if (!!snd)
+	if (snd->IsLoaded())
 		snd->Play(m_soundVolume);
 }
 

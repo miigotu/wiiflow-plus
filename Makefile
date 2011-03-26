@@ -62,7 +62,6 @@ INCLUDES	:=	source \
 #---------------------------------------------------------------------------------
 ios			:=	249
 port		:=	0
-
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
@@ -149,15 +148,15 @@ $(BUILD):
 
 #---------------------------------------------------------------------------------
 all:
-	@make ios=224 port=$(port)
+	@make --no-print-directory ios=224 port=$(port)
 	@cp $(OUTPUT).dol 224.dol
-	@make  ios=223 port=$(port)
+	@make --no-print-directory ios=223 port=$(port)
 	@cp $(OUTPUT).dol 223.dol
-	@make  ios=222 port=$(port)
+	@make --no-print-directory ios=222 port=$(port)
 	@cp $(OUTPUT).dol 222.dol
-	@make ios=250 port=$(port)
+	@make --no-print-directory ios=250 port=$(port)
 	@cp $(OUTPUT).dol 250.dol
-	@make ios=249 port=$(port)
+	@make --no-print-directory ios=249 port=$(port)
 	@cp $(OUTPUT).dol 249.dol
 
 #---------------------------------------------------------------------------------

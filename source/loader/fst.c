@@ -453,9 +453,9 @@ int ocarina_load_code(u8 *id, const u8 *cheat, u32 cheatSize)
 	code_buf = (u8 *)cheat;
     code_size = cheatSize;
 
-	if(code_size <= 0) {
-		gprintf("Ocarina: No codes found");
-		gprintf("\n");
+	if(code_size <= 0)
+	{
+		gprintf("Ocarina: No codes found\n");
 		code_buf = NULL;
 		code_size = 0;
 		return 0;
@@ -463,15 +463,13 @@ int ocarina_load_code(u8 *id, const u8 *cheat, u32 cheatSize)
 
 	if (code_size > (u32)codelistend - (u32)codelist)
 	{
-		gprintf("Ocarina: Too many codes found");
-		gprintf("\n");
+		gprintf("Ocarina: Too many codes found\n");
 		code_buf = NULL;
 		code_size = 0;
 		return 0;
 	}
 
-    gprintf("Ocarina: Codes found.");
-	gprintf("\n");
+    gprintf("Ocarina: Codes found.\n");
 
 	return code_size;
 }

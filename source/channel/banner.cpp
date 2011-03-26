@@ -95,10 +95,14 @@ Banner::Banner(u8 *bnr, u64 title)
 			this->imet = imet;
 		}
 		else
+		{
 			gprintf("Invalid md5, banner not valid\n");
+		}
 	}
 	else
+	{
 		gprintf("Invalid signature found, banner not valid\n");
+	}
 }
 
 Banner::~Banner()

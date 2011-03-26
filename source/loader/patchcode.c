@@ -447,7 +447,9 @@ bool PatchReturnTo(void *Address, int Size, u32 id)
 //		gprintf("found %d addresses\n", found);
 //		int i;
 //		for(i = 0; i< 4; i++)
+//		{
 //			gprintf("ad[%d]: %08x\n", i, ad[i]);
+//		}
 //		gprintf("offset : %08x\n", ad[2] - ad[3]);
     }
 

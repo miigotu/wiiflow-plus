@@ -1107,9 +1107,6 @@ void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 start, u32 si
 
 void CMenu::_initCF(void)
 {
-	#ifdef FREEZEDBG
-	gprintf("\n//- _initCF -//\n");
-	#endif
 	Config titles, custom_titles, m_dump;
 
 	m_cf.clear();
@@ -1177,10 +1174,6 @@ void CMenu::_initCF(void)
 	if (m_curGameId.empty() || !m_cf.findId(m_curGameId.c_str(), true))
 		m_cf.findId(m_cfg.getString("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "current_channel" : "current_game").c_str(), true);
 	m_cf.startPicLoader();
-
-	#ifdef FREEZEDBG
-	gprintf("\n//- DONE -//\n");
-	#endif
 }
 
 void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
