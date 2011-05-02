@@ -144,19 +144,19 @@ $(BUILD):
 	@echo Building for  IOS $(ios) Port $(port).
 	@bash ./scripts/buildtype.sh $(ios) $(port)
 	@[ -d $@ ] || mkdir -p $@
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
 all:
-	@make --no-print-directory ios=224 port=$(port)
+	@$(MAKE) --no-print-directory ios=224 port=$(port)
 	@cp $(OUTPUT).dol 224.dol
-	@make --no-print-directory ios=223 port=$(port)
+	@$(MAKE) --no-print-directory ios=223 port=$(port)
 	@cp $(OUTPUT).dol 223.dol
-	@make --no-print-directory ios=222 port=$(port)
+	@$(MAKE) --no-print-directory ios=222 port=$(port)
 	@cp $(OUTPUT).dol 222.dol
-	@make --no-print-directory ios=250 port=$(port)
+	@$(MAKE) --no-print-directory ios=250 port=$(port)
 	@cp $(OUTPUT).dol 250.dol
-	@make --no-print-directory ios=249 port=$(port)
+	@$(MAKE) --no-print-directory ios=249 port=$(port)
 	@cp $(OUTPUT).dol 249.dol
 
 #---------------------------------------------------------------------------------
