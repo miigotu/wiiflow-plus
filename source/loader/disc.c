@@ -420,8 +420,11 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 			"ori %r3, %r3, appentrypoint@l\n"
 			"lwz %r3, 0(%r3)\n"
 			"mtlr %r3\n"
+			"nop\n"
 			"lis %r3, 0x8000\n"
+			"nop\n"
 			"ori %r3, %r3, 0x18A8\n"
+			"nop\n"
 			"mtctr %r3\n"
 			"bctr\n"
 		);

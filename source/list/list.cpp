@@ -115,11 +115,12 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 					}
 				}
 			}
-			if(tmp.hdr.id[0] != 0)
+			
+			/*if(tmp.hdr.id[0] != 0)
 			{
 				headerlist.push_back(tmp);
 				continue;
-			}
+			}*/
 
 			FILE *fp = fopen((*itr).c_str(), "rb");
 			if (fp)
