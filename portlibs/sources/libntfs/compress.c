@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 Anton Altaparmakov
  * Copyright (c) 2004-2006 Szabolcs Szakacsits
  * Copyright (c)      2005 Yura Pakhuchiy
- * Copyright (c) 2009-2010 Jean-Pierre Andre
+ * Copyright (c) 2009-2011 Jean-Pierre Andre
  *
  * This program/include file is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as published
@@ -28,7 +28,7 @@
  * this was put into public domain in 1988 by Haruhiko OKUMURA).
  *
  * LZHUF.C English version 1.0
- * Based on Japanese version 29-NOV-1988   
+ * Based on Japanese version 29-NOV-1988
  * LZSS coded by Haruhiko OKUMURA
  * Adaptive Huffman Coding coded by Haruyasu YOSHIZAKI
  * Edited and translated to English by Kenji RIKITAKE
@@ -61,6 +61,10 @@
 #include "lcnalloc.h"
 #include "logging.h"
 #include "misc.h"
+
+#undef le16_to_cpup
+/* the standard le16_to_cpup() crashes for unaligned data on some processors */
+#define le16_to_cpup(p) (*(u8*)(p) + (((u8*)(p))[1] << 8))
 
 /**
  * enum ntfs_compression_constants - constants used in the compression code
@@ -164,7 +168,7 @@ static void ntfs_new_node (struct COMPRESS_CONTEXT *pctx,
 			}
 			if (i >= THRESHOLD) {
 				if (i > pctx->match_length) {
-					pctx->match_position = 
+					pctx->match_position =
 						r - pp + 2*NTFS_SB_SIZE - 1;
 					if ((pctx->match_length = i) > mxl) {
 						i = pctx->rson[pp];
@@ -267,7 +271,7 @@ static unsigned int ntfs_compress_block(const char *inbuf,
 	unsigned int xout;
 	unsigned int ntag;
 
-	pctx = (struct COMPRESS_CONTEXT*)malloc(sizeof(struct COMPRESS_CONTEXT));
+	pctx = (struct COMPRESS_CONTEXT*)ntfs_malloc(sizeof(struct COMPRESS_CONTEXT));
 	if (pctx) {
 		pctx->inbuf = (const unsigned char*)inbuf;
 		ntfs_init_compress_tree(pctx);
@@ -543,7 +547,7 @@ return_overflow:
  * code.  Might be a bit confusing to debug but there really should never be
  * errors coming from here.
  */
-static BOOL ntfs_is_cb_compressed(ntfs_attr *na, runlist_element *rl, 
+static BOOL ntfs_is_cb_compressed(ntfs_attr *na, runlist_element *rl,
 				  VCN cb_start_vcn, int cb_clusters)
 {
 	/*
@@ -663,12 +667,12 @@ s64 ntfs_compressed_attr_pread(ntfs_attr *na, s64 pos, s64 count, void *b)
 	cb_size = na->compression_block_size;
 	cb_size_mask = cb_size - 1UL;
 	cb_clusters = na->compression_block_clusters;
-	
+
 	/* Need a temporary buffer for each loaded compression block. */
 	cb = (u8*)ntfs_malloc(cb_size);
 	if (!cb)
 		return -1;
-	
+
 	/* Need a temporary buffer for each uncompressed block. */
 	dest = (u8*)ntfs_malloc(cb_size);
 	if (!dest) {
@@ -1247,6 +1251,7 @@ static int ntfs_compress_overwr_free(ntfs_attr *na, runlist_element *rl,
 		case 1 :
 			/* there is a single hole, may have to merge */
 			freerl->vcn = freevcn;
+			freerl->length = freecnt;
 			if (freerl[1].lcn == LCN_HOLE) {
 				freerl->length += freerl[1].length;
 				erl = freerl;

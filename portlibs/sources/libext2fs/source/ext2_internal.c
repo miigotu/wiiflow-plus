@@ -56,6 +56,7 @@ static const devoptab_t devops_ext2 =
     NULL /* Device data */
 };
 
+
 const devoptab_t *ext2GetDevOpTab()
 {
     return &devops_ext2;

@@ -9,10 +9,7 @@ include $(DEVKITPPC)/wii_rules
 LIBOGC_INC      :=      $(DEVKITPRO)/libogc/include
 LIBOGC_LIB      :=      $(DEVKITPRO)/libogc/lib/wii
 
-PORTLIBS_INC	:=		../../include
-PORTLIBS_LIB	:=		../../lib
-
-CFLAGS  := -O4 $(MACHDEP) -I$(LIBOGC_INC) -DHAVE_CONFIG_H
+CFLAGS  := -O3 $(MACHDEP) -I$(LIBOGC_INC)
 
 LIB     := fat
 CFILES  := $(wildcard *.c)
@@ -27,9 +24,9 @@ clean :
 		rm -f $(OFILES) $(ARC)
 
 install :
-		mkdir -p  $(PORTLIBS_INC)  $(PORTLIBS_LIB)
-		cp -f $(ARC) $(PORTLIBS_LIB)/
-		cp -f $(HDR) $(PORTLIBS_INC)/
+		mkdir -p  $(LIBOGC_LIB)  $(LIBOGC_INC)
+		cp -f $(ARC) $(LIBOGC_LIB)/
+		cp -f $(HDR) $(LIBOGC_INC)/
 
 %.o : %.c
 		$(CC) $(CFLAGS) -c $< -o $@

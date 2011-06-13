@@ -42,6 +42,7 @@
 #include "ntfsinternal.h"
 #include "ntfsfile.h"
 #include "ntfs.h"
+#include "ntfsfile_frag.h"
 
 #define STATE(x)    ((ntfs_file_state*)x)
 

@@ -60,6 +60,7 @@
 #include "misc.h"
 #include "efs.h"
 #include "ntfs.h"
+#include "ntfsfile_frag.h"
 
 #if 0
 

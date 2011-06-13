@@ -15,6 +15,7 @@
 #include "DeviceHandler.hpp"
 #include "loader/mload_modules.h"
 #include "loader/wbfs.h"
+#include "loader/d2x.h"
 
 #include "loader/frag.h"
 #include "loader/fst.h"
@@ -831,7 +832,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if (has_enabled_providers() && _initNetwork() == 0)
 		add_game_to_card(id.c_str());
 
-
 	if (load_wdm(m_wdmDir.c_str(), id.c_str()) == 0)
 	{
 		wdm_entry_t *wdm_entry = NULL;
@@ -892,7 +892,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		}
 		iosLoaded = true;
 	}
-	bool mload = is_ios_type(IOS_TYPE_HERMES);
+//	bool mload = is_ios_type(IOS_TYPE_HERMES);
 	int minIOSRev = 0;
 	switch (IOS_GetVersion())
 	{
@@ -917,7 +917,11 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	}
 
 	bool blockIOSReload = m_gcfg2.getBool((const char *) hdr->hdr.id, "block_ios_reload", false);
-	if (mload && blockIOSReload) disableIOSReload();
+
+	if (blockIOSReload) block_ios_reload();
+	return_to_channel(rtrnID);
+	if (disable_return_to_patch) rtrnID = 0;
+
 	if (!dvd)
 	{
 		s32 ret = Disc_SetUSB((u8 *) hdr->hdr.id);

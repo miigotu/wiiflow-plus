@@ -194,7 +194,7 @@ struct struct_ext2_filsys {
 	char *				device_name;
 	struct ext2_super_block	* 	super;
 	unsigned int			blocksize;
-	int				fragsize;
+	int				clustersize;
 	dgrp_t				group_desc_count;
 	unsigned long			desc_blocks;
 	struct opaque_ext2_group_desc *	group_desc;
@@ -541,7 +541,7 @@ typedef struct ext2_icount *ext2_icount_t;
  * to ext2fs_openfs()
  */
 #define EXT2_LIB_SOFTSUPP_INCOMPAT	(0)
-#define EXT2_LIB_SOFTSUPP_RO_COMPAT	(0)
+#define EXT2_LIB_SOFTSUPP_RO_COMPAT	(EXT4_FEATURE_RO_COMPAT_BIGALLOC)
 
 /*
  * function prototypes
@@ -1356,6 +1356,7 @@ extern __u64 ext2fs_div64_ceil(__u64 a, __u64 b);
 
 #ifndef EXT2_CUSTOM_MEMORY_ROUTINES
 #include <string.h>
+#include "mem_allocate.h"
 /*
  *  Allocate memory
  */
@@ -1363,7 +1364,7 @@ _INLINE_ errcode_t ext2fs_get_mem(unsigned long size, void *ptr)
 {
 	void *pp;
 
-	pp = malloc(size);
+	pp = mem_alloc(size);
 	if (!pp)
 		return EXT2_ET_NO_MEMORY;
 	memcpy(ptr, &pp, sizeof (pp));
@@ -1376,9 +1377,9 @@ _INLINE_ errcode_t ext2fs_get_memalign(unsigned long size,
 	void *pp;
 
 	#ifdef HWRVL
-	pp = memalign(32, size);
+	pp = mem_align(32, size);
 	#else
-	pp = malloc(size);
+	pp = mem_alloc(size);
 	#endif
 	if (!pp)
 		return EXT2_ET_NO_MEMORY;
@@ -1402,7 +1403,7 @@ _INLINE_ errcode_t ext2fs_free_mem(void *ptr)
 	void *p;
 
 	memcpy(&p, ptr, sizeof(p));
-	free(p);
+	mem_free(p);
 	p = 0;
 	memcpy(ptr, &p, sizeof(p));
 	return 0;
@@ -1419,7 +1420,7 @@ _INLINE_ errcode_t ext2fs_resize_mem(unsigned long EXT2FS_ATTR((unused)) old_siz
 	/* Use "memcpy" for pointer assignments here to avoid problems
 	 * with C99 strict type aliasing rules. */
 	memcpy(&p, ptr, sizeof(p));
-	p = realloc(p, size);
+	p = mem_realloc(p, size);
 	if (!p)
 		return EXT2_ET_NO_MEMORY;
 	memcpy(ptr, &p, sizeof(p));

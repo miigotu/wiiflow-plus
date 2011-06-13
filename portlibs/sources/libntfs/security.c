@@ -4,7 +4,7 @@
  * Copyright (c) 2004 Anton Altaparmakov
  * Copyright (c) 2005-2006 Szabolcs Szakacsits
  * Copyright (c) 2006 Yura Pakhuchiy
- * Copyright (c) 2007-2009 Jean-Pierre Andre
+ * Copyright (c) 2007-2010 Jean-Pierre Andre
  *
  * This program/include file is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as published
@@ -127,8 +127,8 @@ struct SDH {		/* this is an image of an $SDH index entry */
 
 static ntfschar sii_stream[] = { const_cpu_to_le16('$'),
 				 const_cpu_to_le16('S'),
-				 const_cpu_to_le16('I'),   
-				 const_cpu_to_le16('I'),   
+				 const_cpu_to_le16('I'),
+				 const_cpu_to_le16('I'),
 				 const_cpu_to_le16(0) };
 static ntfschar sdh_stream[] = { const_cpu_to_le16('$'),
 				 const_cpu_to_le16('S'),
@@ -405,91 +405,6 @@ le32 ntfs_security_hash(const SECURITY_DESCRIPTOR_RELATIVE *sd, const u32 len)
 }
 
 /*
- *		Internal read
- *	copied and pasted from ntfs_fuse_read() and made independent
- *	of fuse context
- */
-
-static int ntfs_local_read(ntfs_inode *ni,
-		ntfschar *stream_name, int stream_name_len,
-		char *buf, size_t size, off_t offset)
-{
-	ntfs_attr *na = NULL;
-	int res, total = 0;
-
-	na = ntfs_attr_open(ni, AT_DATA, stream_name, stream_name_len);
-	if (!na) {
-		res = -errno;
-		goto exit;
-	}
-	if ((size_t)offset < (size_t)na->data_size) {
-		if (offset + size > (size_t)na->data_size)
-			size = na->data_size - offset;
-		while (size) {
-			res = ntfs_attr_pread(na, offset, size, buf);
-			if ((off_t)res < (off_t)size)
-				ntfs_log_perror("ntfs_attr_pread partial read "
-					"(%lld : %lld <> %d)",
-					(long long)offset,
-					(long long)size, res);
-			if (res <= 0) {
-				res = -errno;
-				goto exit;
-			}
-			size -= res;
-			offset += res;
-			total += res;
-		}
-	}
-	res = total;
-exit:
-	if (na)
-		ntfs_attr_close(na);
-	return res;
-}
-
-
-/*
- *		Internal write
- *	copied and pasted from ntfs_fuse_write() and made independent
- *	of fuse context
- */
-
-static int ntfs_local_write(ntfs_inode *ni,
-		ntfschar *stream_name, int stream_name_len,
-		char *buf, size_t size, off_t offset)
-{
-	ntfs_attr *na = NULL;
-	int res, total = 0;
-
-	na = ntfs_attr_open(ni, AT_DATA, stream_name, stream_name_len);
-	if (!na) {
-		res = -errno;
-		goto exit;
-	}
-	while (size) {
-		res = ntfs_attr_pwrite(na, offset, size, buf);
-		if (res < (s64)size)
-			ntfs_log_perror("ntfs_attr_pwrite partial write (%lld: "
-				"%lld <> %d)", (long long)offset,
-				(long long)size, res);
-		if (res <= 0) {
-			res = -errno;
-			goto exit;
-		}
-		size -= res;
-		offset += res;
-		total += res;
-	}
-	res = total;
-exit:
-	if (na)
-		ntfs_attr_close(na);
-	return res;
-}
-
-
-/*
  *	Get the first entry of current index block
  *	cut and pasted form ntfs_ie_get_first() in index.c
  */
@@ -531,7 +446,7 @@ static int entersecurity_stuff(ntfs_volume *vol, off_t offs)
 	if (stuff) {
 		memset(stuff, 0, STUFFSZ);
 		do {
-			written = ntfs_local_write(vol->secure_ni,
+			written = ntfs_attr_data_write(vol->secure_ni,
 				STREAM_SDS, 4, stuff, STUFFSZ, offs);
 			if (written == STUFFSZ) {
 				total += STUFFSZ;
@@ -589,10 +504,10 @@ static int entersecurity_data(ntfs_volume *vol,
 		phsds->security_id = keyid;
 		phsds->offset = cpu_to_le64(offs);
 		phsds->length = cpu_to_le32(fullsz - gap);
-		written1 = ntfs_local_write(vol->secure_ni,
+		written1 = ntfs_attr_data_write(vol->secure_ni,
 			STREAM_SDS, 4, fullattr, fullsz,
 			offs - gap);
-		written2 = ntfs_local_write(vol->secure_ni,
+		written2 = ntfs_attr_data_write(vol->secure_ni,
 			STREAM_SDS, 4, fullattr, fullsz,
 			offs - gap + ALIGN_SDS_BLOCK);
 		if ((written1 == fullsz)
@@ -769,7 +684,7 @@ static le32 entersecurityattr(ntfs_volume *vol,
 		retries = 0;
 		while (entry) {
 			next = ntfs_index_next(entry,xsii);
-			if (next) { 
+			if (next) {
 				psii = (struct SII*)next;
 					/* save last key and */
 					/* available position */
@@ -950,7 +865,7 @@ static le32 setsecurityattr(ntfs_volume *vol,
 						+ sizeof(SECURITY_DESCRIPTOR_HEADER);
 					oldattr = (char*)ntfs_malloc(size);
 					if (oldattr) {
-						rdsize = ntfs_local_read(
+						rdsize = ntfs_attr_data_read(
 							vol->secure_ni,
 							STREAM_SDS, 4,
 							oldattr, size, offs);
@@ -1109,7 +1024,7 @@ static int update_secur_descr(ntfs_volume *vol,
  *	This is intended to allow graceful upgrades for files which
  *	were created in previous versions, with a security attributes
  *	and no security id.
- *	
+ *
  *      It will allocate a security id and replace the individual
  *	security attribute by a reference to the global one
  *
@@ -1458,7 +1373,7 @@ static int leg_compare(const struct CACHED_PERMISSIONS_LEGACY *cached,
 /*
  *	Resize permission cache table
  *	do not call unless resizing is needed
- *	
+ *
  *	If allocation fails, the cache size is not updated
  *	Lack of memory is not considered as an error, the cache is left
  *	consistent and errno is not set.
@@ -1554,7 +1469,7 @@ static struct CACHED_PERMISSIONS *enter_cache(struct SECURITY_CONTEXT *scx,
 			if (pxdesc) {
 				pxsize = sizeof(struct POSIX_SECURITY)
 					+ (pxdesc->acccnt + pxdesc->defcnt)*sizeof(struct POSIX_ACE);
-				pxcached = (struct POSIX_SECURITY*)malloc(pxsize);
+				pxcached = (struct POSIX_SECURITY*)ntfs_malloc(pxsize);
 				if (pxcached) {
 					memcpy(pxcached, pxdesc, pxsize);
 					cacheentry->pxdesc = pxcached;
@@ -1585,7 +1500,7 @@ static struct CACHED_PERMISSIONS *enter_cache(struct SECURITY_CONTEXT *scx,
 			/* allocate block, if cache table was allocated */
 			if (pcache && (index1 <= pcache->head.last)) {
 				cacheblock = (struct CACHED_PERMISSIONS*)
-					malloc(sizeof(struct CACHED_PERMISSIONS)
+					ntfs_malloc(sizeof(struct CACHED_PERMISSIONS)
 						<< CACHE_PERMISSIONS_BITS);
 				pcache->cachetable[index1] = cacheblock;
 				for (i=0; i<(1 << CACHE_PERMISSIONS_BITS); i++)
@@ -1598,7 +1513,7 @@ static struct CACHED_PERMISSIONS *enter_cache(struct SECURITY_CONTEXT *scx,
 					if (pxdesc) {
 						pxsize = sizeof(struct POSIX_SECURITY)
 							+ (pxdesc->acccnt + pxdesc->defcnt)*sizeof(struct POSIX_ACE);
-						pxcached = (struct POSIX_SECURITY*)malloc(pxsize);
+						pxcached = (struct POSIX_SECURITY*)ntfs_malloc(pxsize);
 						if (pxcached) {
 							memcpy(pxcached, pxdesc, pxsize);
 							cacheentry->pxdesc = pxcached;
@@ -1772,7 +1687,7 @@ static char *retrievesecurityattr(ntfs_volume *vol, SII_INDEX_KEY id)
 
 			securattr = (char*)ntfs_malloc(size);
 			if (securattr) {
-				rdsize = ntfs_local_read(
+				rdsize = ntfs_attr_data_read(
 					ni, STREAM_SDS, 4,
 					securattr, size, offs);
 				if ((rdsize != size)
@@ -2088,7 +2003,7 @@ static int ntfs_get_perm(struct SECURITY_CONTEXT *scx,
  */
 
 int ntfs_get_posix_acl(struct SECURITY_CONTEXT *scx, ntfs_inode *ni,
-			const char *name, char *value, size_t size) 
+			const char *name, char *value, size_t size)
 {
 	const SECURITY_DESCRIPTOR_RELATIVE *phead;
 	struct POSIX_SECURITY *pxdesc;
@@ -2429,7 +2344,7 @@ int ntfs_get_owner_mode(struct SECURITY_CONTEXT *scx,
 					stbuf->st_uid = ntfs_find_user(scx->mapping[MAPUSERS],usid);
 #else
 					if (!perm && ntfs_same_sid(usid, adminsid)) {
-						stbuf->st_uid = 
+						stbuf->st_uid =
 							find_tenant(scx,
 								securattr);
 						if (stbuf->st_uid)
@@ -2541,7 +2456,7 @@ static struct POSIX_SECURITY *inherit_posix(struct SECURITY_CONTEXT *scx,
 
 /*
  *		Allocate a security_id for a file being created
- *	
+ *
  *	Returns zero if not possible (NTFS v3.x required)
  */
 
@@ -2763,7 +2678,7 @@ le32 ntfs_alloc_securid(struct SECURITY_CONTEXT *scx,
 /*
  *		Update ownership and mode of a file, reusing an existing
  *	security descriptor when possible
- *	
+ *
  *	Returns zero if successful
  */
 
@@ -2995,7 +2910,9 @@ int ntfs_set_posix_acl(struct SECURITY_CONTEXT *scx, ntfs_inode *ni,
 		count = 0;
 	isdir = (ni->mrec->flags & MFT_RECORD_IS_DIRECTORY) != const_cpu_to_le16(0);
 	newpxdesc = (struct POSIX_SECURITY*)NULL;
-	if (!deflt || isdir || !size) {
+	if ((!value
+		|| (((const struct POSIX_ACL*)value)->version == POSIX_VERSION))
+	    && (!deflt || isdir || (!size && !value))) {
 		cached = fetch_cache(scx, ni);
 		if (cached) {
 			uid = cached->uid;
@@ -3175,7 +3092,7 @@ int ntfs_set_mode(struct SECURITY_CONTEXT *scx, ntfs_inode *ni, mode_t mode)
 				/* must copy before merging */
 			pxsize = sizeof(struct POSIX_SECURITY)
 				+ (oldpxdesc->acccnt + oldpxdesc->defcnt)*sizeof(struct POSIX_ACE);
-			newpxdesc = (struct POSIX_SECURITY*)malloc(pxsize);
+			newpxdesc = (struct POSIX_SECURITY*)ntfs_malloc(pxsize);
 			if (newpxdesc) {
 				memcpy(newpxdesc, oldpxdesc, pxsize);
 				if (ntfs_merge_mode_posix(newpxdesc, mode))
@@ -3263,7 +3180,7 @@ int ntfs_sd_add_everyone(ntfs_inode *ni)
 	ACCESS_ALLOWED_ACE *ace;
 	SID *sid;
 	int ret, sd_len;
-	
+
 	/* Create SECURITY_DESCRIPTOR attribute (everyone has full access). */
 	/*
 	 * Calculate security descriptor length. We have 2 sub-authorities in
@@ -3271,14 +3188,14 @@ int ntfs_sd_add_everyone(ntfs_inode *ni)
 	 * 4 bytes to every SID.
 	 */
 	sd_len = sizeof(SECURITY_DESCRIPTOR_ATTR) + 2 * (sizeof(SID) + 4) +
-		sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE); 
+		sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE);
 	sd = (SECURITY_DESCRIPTOR_RELATIVE*)ntfs_calloc(sd_len);
 	if (!sd)
 		return -1;
-	
+
 	sd->revision = SECURITY_DESCRIPTOR_REVISION;
 	sd->control = SE_DACL_PRESENT | SE_SELF_RELATIVE;
-	
+
 	sid = (SID*)((u8*)sd + sizeof(SECURITY_DESCRIPTOR_ATTR));
 	sid->revision = SID_REVISION;
 	sid->sub_authority_count = 2;
@@ -3286,21 +3203,21 @@ int ntfs_sd_add_everyone(ntfs_inode *ni)
 	sid->sub_authority[1] = const_cpu_to_le32(DOMAIN_ALIAS_RID_ADMINS);
 	sid->identifier_authority.value[5] = 5;
 	sd->owner = cpu_to_le32((u8*)sid - (u8*)sd);
-	
-	sid = (SID*)((u8*)sid + sizeof(SID) + 4); 
+
+	sid = (SID*)((u8*)sid + sizeof(SID) + 4);
 	sid->revision = SID_REVISION;
 	sid->sub_authority_count = 2;
 	sid->sub_authority[0] = const_cpu_to_le32(SECURITY_BUILTIN_DOMAIN_RID);
 	sid->sub_authority[1] = const_cpu_to_le32(DOMAIN_ALIAS_RID_ADMINS);
 	sid->identifier_authority.value[5] = 5;
 	sd->group = cpu_to_le32((u8*)sid - (u8*)sd);
-	
+
 	acl = (ACL*)((u8*)sid + sizeof(SID) + 4);
 	acl->revision = ACL_REVISION;
 	acl->size = const_cpu_to_le16(sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE));
 	acl->ace_count = const_cpu_to_le16(1);
 	sd->dacl = cpu_to_le32((u8*)acl - (u8*)sd);
-	
+
 	ace = (ACCESS_ALLOWED_ACE*)((u8*)acl + sizeof(ACL));
 	ace->type = ACCESS_ALLOWED_ACE_TYPE;
 	ace->flags = OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE;
@@ -3315,7 +3232,7 @@ int ntfs_sd_add_everyone(ntfs_inode *ni)
 			    sd_len);
 	if (ret)
 		ntfs_log_perror("Failed to add initial SECURITY_DESCRIPTOR");
-	
+
 	free(sd);
 	return ret;
 }
@@ -3414,7 +3331,7 @@ int ntfs_allowed_access(struct SECURITY_CONTEXT *scx,
  *
  *	Returns true if access is allowed, including user is root and
  *		no user mapping defined
- *	
+ *
  *	Sets errno if there is a problem or if not allowed
  *
  *	This is used for Posix ACL and checking creation of DOS file names
@@ -3562,7 +3479,7 @@ int ntfs_set_owner(struct SECURITY_CONTEXT *scx, ntfs_inode *ni,
 			if (uid && (fileuid != uid))
 				mode &= 01777;
 #if POSIXACLS
-			res = ntfs_set_owner_mode(scx, ni, uid, gid, 
+			res = ntfs_set_owner_mode(scx, ni, uid, gid,
 				mode, pxdesc);
 #else
 			res = ntfs_set_owner_mode(scx, ni, uid, gid, mode);
@@ -3624,7 +3541,7 @@ int ntfs_set_ownmod(struct SECURITY_CONTEXT *scx, ntfs_inode *ni,
 				/* must copy before merging */
 			pxsize = sizeof(struct POSIX_SECURITY)
 				+ (oldpxdesc->acccnt + oldpxdesc->defcnt)*sizeof(struct POSIX_ACE);
-			newpxdesc = (struct POSIX_SECURITY*)malloc(pxsize);
+			newpxdesc = (struct POSIX_SECURITY*)ntfs_malloc(pxsize);
 			if (newpxdesc) {
 				memcpy(newpxdesc, oldpxdesc, pxsize);
 				if (ntfs_merge_mode_posix(newpxdesc, mode))
@@ -3678,7 +3595,7 @@ int ntfs_set_ownmod(struct SECURITY_CONTEXT *scx, ntfs_inode *ni,
 			if ((int)gid < 0)
 				gid = filegid;
 #if POSIXACLS
-			res = ntfs_set_owner_mode(scx, ni, uid, gid, 
+			res = ntfs_set_owner_mode(scx, ni, uid, gid,
 				mode, newpxdesc);
 #else
 			res = ntfs_set_owner_mode(scx, ni, uid, gid, mode);
@@ -3909,9 +3826,9 @@ static int link_single_group(struct MAPPING *usermapping, struct passwd *user,
 			grmem++;
 		if (*grmem) {
 			if (!grcnt)
-				groups = (gid_t*)malloc(sizeof(gid_t));
+				groups = (gid_t*)ntfs_malloc(sizeof(gid_t));
 			else
-				groups = (gid_t*)realloc(groups,
+				groups = (gid_t*)MEM2_realloc(groups,
 					(grcnt+1)*sizeof(gid_t));
 			if (groups)
 				groups[grcnt++]	= gid;
@@ -4095,7 +4012,7 @@ static int basicread(void *fileid, char *buf, size_t size, off_t offs __attribut
 
 static int localread(void *fileid, char *buf, size_t size, off_t offs)
 {
-	return (ntfs_local_read((ntfs_inode*)fileid,
+	return (ntfs_attr_data_read((ntfs_inode*)fileid,
 			AT_UNNAMED, 0, buf, size, offs));
 }
 
@@ -4321,7 +4238,7 @@ void ntfs_close_secure(struct SECURITY_CONTEXT *scx)
 		ntfs_index_ctx_put(vol->secure_xsii);
 		ntfs_index_ctx_put(vol->secure_xsdh);
 		ntfs_inode_close(vol->secure_ni);
-		
+
 	}
 	ntfs_free_mapping(scx->mapping);
 	free_caches(scx);
@@ -4917,7 +4834,7 @@ int ntfs_read_sds(struct SECURITY_API *scapi,
 	got = -1; /* default return */
 	if (scapi && (scapi->magic == MAGIC_API)) {
 		if (scapi->security.vol->secure_ni)
-			got = ntfs_local_read(scapi->security.vol->secure_ni,
+			got = ntfs_attr_data_read(scapi->security.vol->secure_ni,
 				STREAM_SDS, 4, buf, size, offset);
 		else
 			errno = EOPNOTSUPP;
@@ -5113,7 +5030,7 @@ int ntfs_get_group(struct SECURITY_API *scapi, const SID *gsid)
  */
 
 struct SECURITY_API *ntfs_initialize_file_security(const char *device,
-				int flags)
+				unsigned long flags)
 {
 	ntfs_volume *vol;
 	unsigned long mntflag;

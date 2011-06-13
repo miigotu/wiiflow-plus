@@ -12,6 +12,7 @@
 #include "wip.h"
 #include "wbfs.h"
 #include "sys.h"
+#include "d2x.h"
 
 typedef struct _SPatchCfg
 {

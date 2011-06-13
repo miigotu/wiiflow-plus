@@ -7,23 +7,13 @@
 extern "C" {
 #endif
 
-#define NO_DEBUG
-
 	extern bool geckoinit;
-#ifndef NO_DEBUG
+
 	//use this just like printf();
 	void gprintf(const char *str, ...);
 	void gsenddata(const u8 *data, int length, const char *filename);
 	void ghexdump(void *d, int len);
 	bool InitGecko();
-#else
-	#define gprintf(...)
-	#define gsenddata(...)
-	#define ghexdump(...)
-	#define InitGecko()      false
-#endif /* NO_DEBUG */
-
-
 
 #ifdef __cplusplus
 }

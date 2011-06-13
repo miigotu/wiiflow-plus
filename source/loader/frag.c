@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 
 #include "ntfs.h"
+#include "ntfsfile_frag.h"
 
 #include "libwbfs/libwbfs.h"
 #include "wbfs.h"

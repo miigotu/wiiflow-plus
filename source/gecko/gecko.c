@@ -6,7 +6,6 @@
 bool geckoinit = false;
 bool textVideoInit = false;
 
-#ifndef NO_DEBUG
 #include <stdarg.h>
 
 //using the gprintf from crediar because it is smaller than mine
@@ -88,5 +87,3 @@ bool InitGecko()
 	else return false;
 }
 
-
-#endif /* NO_DEBUG */
