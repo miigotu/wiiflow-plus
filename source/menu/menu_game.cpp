@@ -44,6 +44,8 @@ extern const u8 favoritesoffs_png[];
 extern const u8 delete_png[];
 extern const u8 deletes_png[];
 
+static u64 sm_title_id  ATTRIBUTE_ALIGN(32);
+
 const string CMenu::_translations[23] = {
 	"Default",
 	"Arab",
@@ -812,10 +814,10 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		rtrn = NULL;
 	}
 
-	int rtrnID = 0;
+	/*int rtrnID = 0;
 	if (!m_directLaunch)
 		if (rtrn != NULL && strlen(rtrn) == 4)
-			rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
+			rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];*/
 
 
 	SmartBuf cheatFile, gameconfig, dolFile;
@@ -892,7 +894,8 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		}
 		iosLoaded = true;
 	}
-//	bool mload = is_ios_type(IOS_TYPE_HERMES);
+	
+	bool mload = is_ios_type(IOS_TYPE_HERMES);
 	int minIOSRev = 0;
 	switch (IOS_GetVersion())
 	{
@@ -917,10 +920,65 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	}
 
 	bool blockIOSReload = m_gcfg2.getBool((const char *) hdr->hdr.id, "block_ios_reload", false);
+	
+	if (mload && blockIOSReload)
+			disableIOSReload();	
+			
+	if(is_ios_type(IOS_TYPE_D2X) && IOS_GetRevision() >= 21006 )
+	{
+		s32 ter = IOSReloadBlock(blockIOSReload, iosNum);
+		
+		if(ter < 0)
+		{
+			gprintf("Enable/Disable Block IOS Reload for cIOS: %u (rev %u) failed!\n",IOS_GetVersion(), IOS_GetRevision());
+		}
+		else 
+		{
+			if(blockIOSReload)
+			{
+				gprintf("Block IOS Reload enabled for game: %s on cIOS: %u (rev %u)\n",hdr->hdr.id ,IOS_GetVersion(), IOS_GetRevision());
+			}
+			else
+			{
+				gprintf("Block IOS Reload disabled for game: %s on cIOS: %u (rev %u)\n",hdr->hdr.id ,IOS_GetVersion(), IOS_GetRevision());
+			}
+		}
+	}
+	
+	int rtrnID = 0;
+	
+	if (!m_directLaunch) {
+		if (rtrn != NULL && strlen(rtrn) == 4)
+		{			
+			rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
+			
+			static ioctlv vector[1] __attribute__((aligned(0x20)));			
 
-	if (blockIOSReload) block_ios_reload();
-	return_to_channel(rtrnID);
-	if (disable_return_to_patch) rtrnID = 0;
+			sm_title_id = (((u64)(0x00010001) << 32) | (rtrnID&0xFFFFFFFF));
+			
+			vector[0].data = &sm_title_id;
+			vector[0].len = 8;
+			
+			s32 ESHandle = IOS_Open("/dev/es", 0);
+
+			int ret = IOS_Ioctlv(ESHandle, 0xA1, 1, 0, vector);
+			if (ret!=-101) {
+				gprintf("Return to channel enabled. Using new d2x way\n");
+				rtrn = NULL;
+				rtrnID = 0;
+			}
+			else
+			{
+				gprintf("Return to channel enabled. Using old way\n");
+			}
+				
+			IOS_Close(ESHandle);
+		}
+	}
+
+	//if (blockIOSReload) block_ios_reload();
+	//return_to_channel(rtrnID);
+	//if (disable_return_to_patch) rtrnID = 0;
 
 	if (!dvd)
 	{

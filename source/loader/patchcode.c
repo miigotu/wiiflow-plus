@@ -455,3 +455,40 @@ bool PatchReturnTo(void *Address, int Size, u32 id)
 
     return patched;
 }
+
+s32 IOSReloadBlock(bool block, u8 reqios)
+{
+    s32 ESHandle = IOS_Open("/dev/es", 0);
+    
+    if (ESHandle < 0)
+        return ESHandle;
+	
+	static ioctlv vector[0x08] ATTRIBUTE_ALIGN(32);		
+	static int mode ATTRIBUTE_ALIGN(32);
+    static int ios ATTRIBUTE_ALIGN(32);
+	
+	u32 inlen;
+		
+	if(block) 
+	{
+		inlen = 2;
+		mode = 2;
+		ios = reqios;
+		vector[1].data = &ios;
+        vector[1].len = 4;
+	}
+	else
+	{
+		inlen = 1;
+		mode = 0;	
+	}
+
+    vector[0].data = &mode;
+    vector[0].len = 4;
+
+    s32 r = IOS_Ioctlv(ESHandle, 0xA0, inlen, 0, vector);
+	
+    IOS_Close(ESHandle);
+	
+	return r;
+}

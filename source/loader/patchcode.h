@@ -37,6 +37,7 @@ void langpatcher(void *addr, u32 len);
 void vidolpatcher(void *addr, u32 len);
 void patchdebug(void *addr, u32 len);
 bool PatchReturnTo(void *Address, int Size, u32 id);
+s32 IOSReloadBlock(bool block, u8 reqios);
 
 #ifdef __cplusplus
 }

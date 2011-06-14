@@ -7,21 +7,22 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#define IOS_TYPE_UNK    0
-#define IOS_TYPE_WANIN  1
-#define IOS_TYPE_HERMES 2
-#define IOS_TYPE_KWIIRK 3
+#define IOS_TYPE_UNK    	0
+#define IOS_TYPE_WANIN  	1
+#define IOS_TYPE_HERMES 	2
+#define IOS_TYPE_KWIIRK 	3
+#define IOS_TYPE_D2X		4
 
-#define HBC_108		0x00010001af1bf516ULL
-#define HBC_JODI	0x0001000148415858ULL
-#define HBC_HAXX	0x000100014a4f4449ULL
+#define HBC_108				0x00010001af1bf516ULL
+#define HBC_JODI			0x0001000148415858ULL
+#define HBC_HAXX			0x000100014a4f4449ULL
 
-#define EXIT_TO_MENU 0
-#define EXIT_TO_HBC 1
-#define EXIT_TO_PRIILOADER 2
-#define EXIT_TO_DISABLE 3
-#define EXIT_TO_BOOTMII 4
-#define EXIT_TO_WIIFLOW 5
+#define EXIT_TO_MENU 		0
+#define EXIT_TO_HBC 		1
+#define EXIT_TO_PRIILOADER 	2
+#define EXIT_TO_DISABLE 	3
+#define EXIT_TO_BOOTMII 	4
+#define EXIT_TO_WIIFLOW		5
 
 	/* Prototypes */
 	void Sys_Init(void);

@@ -194,9 +194,16 @@ bool Sys_SupportsExternalModule(bool part_select)
 int get_ios_type()
 {
 	switch (IOS_GetVersion()) {
+		case 245:
+		case 246:
+		case 247:
+		case 248:
 		case 249:
 		case 250:
-			return IOS_TYPE_WANIN;
+			if(IOS_GetRevision() > 21000)
+				return IOS_TYPE_D2X;
+			else
+				return IOS_TYPE_WANIN;
 		case 222:
 		case 223:
 			if (IOS_GetRevision() == 1)
@@ -206,7 +213,10 @@ int get_ios_type()
 		case 224:
 			return IOS_TYPE_HERMES;
 		default:
-			return IOS_TYPE_WANIN;	
+			if(IOS_GetRevision() > 21000)
+				return IOS_TYPE_D2X;
+			else
+				return IOS_TYPE_WANIN;	
 	}
 }
 
