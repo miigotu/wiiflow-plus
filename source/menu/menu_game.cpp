@@ -917,7 +917,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		Sys_LoadMenu();
 	}
 
-	bool blockIOSReload = m_gcfg2.getBool((const char *) hdr->hdr.id, "block_ios_reload", false);
+	bool blockIOSReload = m_gcfg2.getBool((const char *) hdr->hdr.id, "block_ios_reload", true);
 	u8 gameIOS = blockIOSReload ? iosNum : 0;
 	
 	gprintf("Setting gameIOS to %d\n", gameIOS);

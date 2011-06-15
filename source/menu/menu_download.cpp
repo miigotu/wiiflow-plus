@@ -302,14 +302,17 @@ s32 CMenu::_networkComplete(s32 ok, void *usrData)
 	m->m_networkInit = ok == 0;
 	m->m_thrdNetwork = false;
 
+	gprintf("NET: Network init complete, enabled wifi_gecko: %s\n", m->m_cfg.getBool("GENERAL", "wifi_gecko", false) ? "yes" : "no");
+
 	if (m->m_cfg.getBool("GENERAL", "wifi_gecko", false))
 	{
 		// Get ip
 		std::string ip = m->m_cfg.getString("GENERAL", "wifi_gecko_ip");
 		u16 port = m->m_cfg.getInt("GENERAL", "wifi_gecko_port");
-		
+
 		if (ip.size() > 0 && port != 0)
 		{
+			gprintf("NET: WIFI Gecko to %s:%d\n", ip.c_str(), port);
 			WifiGecko_Init(ip.c_str(), port);
 		}
 	}

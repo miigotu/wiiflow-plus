@@ -57,7 +57,7 @@ int WifiGecko_Connect()
 {
 	if (!init) return -2;
 
-    if(!(connection < 0))
+    if(connection >= 0)
         return connection;
 
 	if (dest_ip == NULL || dest_port == 0) return connection;
@@ -89,7 +89,7 @@ int WifiGecko_Send(const char * data, int datasize)
 {
 	if (!init) return -2;
 
-    if(!WifiGecko_Connect())
+    if(WifiGecko_Connect() < 0)
         return connection;
 
     int ret = 0, done = 0, blocksize = 1024;

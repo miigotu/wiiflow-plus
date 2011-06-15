@@ -1,5 +1,4 @@
 #include "musicplayer.h"
-#include "gecko/gecko.h"
 
 using namespace std;
 
@@ -34,12 +33,12 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 	MusicDirectory dir = (MusicDirectory) cfg.getInt("GENERAL", "music_directories", NORMAL_MUSIC | THEME_MUSIC);
 	m_music_files.Init(cfg.getString("GENERAL", "dir_list_cache"));
 
-	gprintf("MUSP: Looking in musicdir: %d\n", dir);
-
 	if (dir & THEME_MUSIC)
+		// CList::Instance()->GetPaths(m_music_files, ".ogg|.mp3|.mod|.xm|.s3m|.wav|.aiff", themeMusicDir);
 		m_music_files.Load(themeMusicDir, ".ogg|.mp3"); //|.mod|.xm|.s3m");
 
 	if (dir & NORMAL_MUSIC)
+		//CList::Instance()->GetPaths(m_music_files, ".ogg|.mp3|.mod|.xm|.s3m|.wav|.aiff", musicDir);
 		m_music_files.Load(musicDir, ".ogg|.mp3"); //|.mod|.xm|.s3m");
 	
 	if (cfg.getBool("GENERAL", "randomize_music", false) && m_music_files.size() > 0)
@@ -47,10 +46,6 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 		srand(unsigned(time(NULL)));
 		random_shuffle(m_music_files.begin(), m_music_files.end());
 	}
-
-	gprintf("MUSP: Playlist:\n");
-	for (safe_vector<string>::iterator itr = m_music_files.begin(); itr != m_music_files.end(); itr++)
-		gprintf("%s\n", (*itr).c_str());
 
 	m_current_music = m_music_files.begin();
 }

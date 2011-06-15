@@ -300,7 +300,7 @@ void CMenu::_showGameSettings(void)
 	m_btnMgr.setText(m_gameSettingsBtnVipatch, _optBoolToString(m_gcfg2.getOptBool(id, "vipatch", 0)));
 	m_btnMgr.setText(m_gameSettingsBtnCountryPatch, _optBoolToString(m_gcfg2.getOptBool(id, "country_patch", 0)));
 	m_btnMgr.setText(m_gameSettingsBtnErr2Fix, _optBoolToString(m_gcfg2.getOptBool(id, "error_002_fix")));
-	m_btnMgr.setText(m_gameSettingsBtnBlockIOSReload, m_gcfg2.getBool(id, "block_ios_reload", false) ? _t("on", L"On") : _t("off", L"Off"));
+	m_btnMgr.setText(m_gameSettingsBtnBlockIOSReload, m_gcfg2.getBool(id, "block_ios_reload", true) ? _t("on", L"On") : _t("off", L"Off"));
 	i = min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblVideo, _t(CMenu::_videoModes[i].id, CMenu::_videoModes[i].text));
 	i = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
@@ -437,10 +437,10 @@ void CMenu::_gameSettings(void)
 			else if (m_btnMgr.selected(m_gameSettingsBtnBlockIOSReload))
 			{
 				bool booloption = m_gcfg2.getBool(id, "block_ios_reload");
-				if (booloption != false)
+				if (!booloption)
 					m_gcfg2.remove(id, "block_ios_reload");
 				else
-				m_gcfg2.setBool(id, "block_ios_reload", true);
+					m_gcfg2.setBool(id, "block_ios_reload", false);
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnLanguageP))

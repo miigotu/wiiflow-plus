@@ -29,7 +29,6 @@
 #include "gui_sound.h"
 #include "musicplayer.h"
 #include "WavDecoder.hpp"
-#include "gecko/gecko.h"
 #include "loader/sys.h"
 
 #define MAX_SND_VOICES      16
@@ -75,7 +74,6 @@ extern "C" void SoundCallback(s32 voice)
 
 GuiSound::GuiSound()
 {
-	gprintf("SND: Creating GuiSound instance\n");
 	voice = -1;
 	Init();
 }
@@ -83,7 +81,6 @@ GuiSound::GuiSound()
 GuiSound::GuiSound(string filepath, int v)
 {
 	voice = v;
-	gprintf("SND: Creating GuiSound instance for file '%s' at voice %i\n", filepath.c_str(), voice);
 	Init();
 	Load(filepath.c_str());
 }
@@ -91,14 +88,12 @@ GuiSound::GuiSound(string filepath, int v)
 GuiSound::GuiSound(const u8 * snd, s32 len, bool isallocated, int v)
 {
 	voice = v;
-	gprintf("SND: Creating GuiSound instance for buffer at voice %i with length %i\n", voice, len);
 	Init();
 	Load(snd, len, isallocated);
 }
 
 GuiSound::GuiSound(GuiSound *g)
 {
-	gprintf("SND: Creating GuiSound instance from other GuiSound object\n");
 	voice = -1;
 	Init();
 	if (g == NULL) return;
@@ -115,7 +110,6 @@ GuiSound::GuiSound(GuiSound *g)
 
 GuiSound::~GuiSound()
 {
-	gprintf("SND: Destructing GuiSound object\n");
 	FreeMemory();
 }
 
@@ -125,7 +119,7 @@ void GuiSound::Init()
 	length = 0;
 
 	if (voice == -1)
-    voice = GetFirstUnusedVoice();
+		voice = GetFirstUnusedVoice();
     if(voice > 0)
         VoiceUsed[voice] = true;
 	
@@ -156,12 +150,10 @@ void GuiSound::FreeMemory()
 
 bool GuiSound::Load(const char * filepath)
 {
-	gprintf("SND: Load file %s\n", filepath);
     FreeMemory();
 
 	if(!filepath)
 	{
-		gprintf("SND: Loading failed, no path specified\n");
         return false;
 	}
 
@@ -169,58 +161,49 @@ bool GuiSound::Load(const char * filepath)
     FILE * f = fopen(filepath, "rb");
     if(!f)
 	{
-		gprintf("SND: Loading failed, cannot open file\n");
         return false;
 	}
 
     fread(&magic, 1, 4, f);
     fclose(f);
 
-	gprintf("SND: Setting voice to %d\n", this->voice);
     SoundHandler::Instance()->AddDecoder(voice, filepath);
 
     SoundDecoder * decoder = SoundHandler::Instance()->Decoder(voice);
     if(!decoder)
 	{
-		gprintf("SND: Loading failed, no decoder found\n");
 		return false;
 	}
 	
     if(!decoder->IsBufferReady())
     {
         SoundHandler::Instance()->RemoveDecoder(voice);
-		gprintf("SND: Loading failed, buffer not ready\n");
         return false;
     }
 
 	this->filepath = filepath;
     SetLoop(loop);
 
-	gprintf("SND: Load file done\n");
 	return true;
 }
 
 bool GuiSound::Load(const u8 * snd, s32 len, bool isallocated)
 {
-	gprintf("SND: Load buffer of length %d\n", len);
     FreeMemory();
 	this->voice = voice;
 
     if(!snd)
 	{
-		gprintf("SND: Loading failed, empty buffer\n");
         return false;
 	}
 
     if(!isallocated && *((u32 *) snd) == 'RIFF')
     {
-		gprintf("SND: Loading sound effect\n");
         return LoadSoundEffect(snd, len);
     }
 
     if(*((u32 *) snd) == 'IMD5')
     {
-		gprintf("SND: Uncompressing banner sound\n");
         UncompressSoundbin(snd, len, isallocated);
     }
     else
@@ -230,27 +213,22 @@ bool GuiSound::Load(const u8 * snd, s32 len, bool isallocated)
         allocated = isallocated;
     }
 	
-	gprintf("SND: Setting voice to %d\n", this->voice);
-	ghexdump(sound, 4);
     SoundHandler::Instance()->AddDecoder(this->voice, sound, length);
 
     SoundDecoder * decoder = SoundHandler::Instance()->Decoder(voice);
     if(!decoder)
 	{
-		gprintf("SND: Loading failed, decoder not found\n");
         return false;
 	}
 
     if(!decoder->IsBufferReady())
     {
-		gprintf("SND: Loading failed, buffer not ready\n");
         SoundHandler::Instance()->RemoveDecoder(voice);
         return false;
     }
 
     SetLoop(loop);
 
-	gprintf("SND: Loading done\n");
 	return true;
 }
 
@@ -293,33 +271,26 @@ bool GuiSound::LoadSoundEffect(const u8 * snd, s32 len)
 
 void GuiSound::Play(int vol, bool restart)
 {
-	gprintf("SND: Playing soundeffect\n");
     if(SoundEffectLength > 0)
     {
-		gprintf("SND: Setting new sound effect\n");
-
         ASND_StopVoice(voice);
         ASND_SetVoice(voice, VOICE_STEREO_16BIT, 32000, 0, sound, SoundEffectLength, vol, vol, NULL);
-		gprintf("SND: Sound is playing\n");
         return;
     }
 
     if(IsPlaying() && !restart)
 	{
-		gprintf("SND: Playing failed: sound is already playing\n");
 		return;
 	}
 
 	if(voice < 0 || voice >= 16)
 	{
-		gprintf("SND: Playing failed: invalid voice specified (%d)\n", voice);
 		return;
 	}
 	
     SoundDecoder * decoder = SoundHandler::Instance()->Decoder(voice);
     if(!decoder)
 	{
-		gprintf("SND: Playing failed: no decoder found\n");
         return;
 	}
 
@@ -337,7 +308,6 @@ void GuiSound::Play(int vol, bool restart)
     SoundHandler::Instance()->ThreadSignal();
 
     ASND_SetVoice(voice, decoder->GetFormat(), decoder->GetSampleRate(), 0, curbuffer, bufsize, vol, vol, SoundCallback);
-	gprintf("SND: Sound is playing\n");
 }
 
 void GuiSound::Play()
@@ -349,27 +319,20 @@ void GuiSound::Stop()
 {
 	if (!IsPlaying()) return;
 
-	gprintf("SND: Stop sound, voice %d\n", voice);
 	if(voice < 0 || voice >= 16)
 		return;
 
-	gprintf("SND: Stop ASND voice\n");
 	ASND_StopVoice(voice);
 
-	gprintf("SND: Find decoder...");
     SoundDecoder * decoder = SoundHandler::Instance()->Decoder(voice);
     if(!decoder)
 	{
-		gprintf("failed\n");
         return;
 	}
-	gprintf("done\nSND: Clear buffer\n");
 
     decoder->ClearBuffer();
-    gprintf("SND: Rewind\n");
 	Rewind();
 	
-	gprintf("SND: Signalling thread\n");
     SoundHandler::Instance()->ThreadSignal();
 }
 

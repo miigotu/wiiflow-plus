@@ -722,17 +722,13 @@ void CMenu::_buildMenus(void)
 	theme.thxFont.fromBuffer(thxfont_ttf, thxfont_ttf_size, 18, 18);
 	theme.thxFont = _font(theme.fontSet, "GENERAL", "thxfont", theme.thxFont);
 	// Default Sounds
-	gprintf("MAIN: Click sound\n");
 	theme.clickSound = SmartPtr<GuiSound>(new GuiSound(click_wav, click_wav_size, false));
 	theme.clickSound = _sound(theme.soundSet, "GENERAL", "click_sound", theme.clickSound);
-	gprintf("MAIN: Hover sound\n");
 	theme.hoverSound = SmartPtr<GuiSound>(new GuiSound(hover_wav, hover_wav_size, false));
 	theme.hoverSound = _sound(theme.soundSet, "GENERAL", "hover_sound", theme.hoverSound);
-	gprintf("MAIN: Camera sound\n");
 	theme.cameraSound = SmartPtr<GuiSound>(new GuiSound(camera_wav, camera_wav_size, false));
 	theme.cameraSound = _sound(theme.soundSet, "GENERAL", "camera_sound", theme.cameraSound);
 	m_cameraSound = theme.cameraSound;
-	gprintf("MAIN: Done with sounds\n");
 	// Default textures
 	theme.btnTexL.fromPNG(butleft_png);
 	theme.btnTexL = _texture(theme.texSet, "GENERAL", "button_texture_left", theme.btnTexL); 
