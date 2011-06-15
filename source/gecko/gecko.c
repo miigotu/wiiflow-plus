@@ -1,6 +1,10 @@
 #include <gccore.h>
+#include <malloc.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/iosupport.h>
+
+#include "wifi_gecko.h"
 
 /* init-globals */
 bool geckoinit = false;
@@ -8,43 +12,70 @@ bool textVideoInit = false;
 
 #include <stdarg.h>
 
-//using the gprintf from crediar because it is smaller than mine
-void gprintf( const char *str, ... )
+static ssize_t __out_write(struct _reent *r __attribute__((unused)), int fd __attribute__((unused)), const char *ptr, size_t len)
 {
-	if (!(geckoinit))return;
+    if(geckoinit && ptr)
+        {
+            u32 level;
+			level = IRQ_Disable();
+			usb_sendbuffer(1, ptr, len);
+			IRQ_Restore(level);
+        }
 
-	char astr[4096];
-
-	va_list ap;
-	va_start(ap,str);
-
-	vsprintf( astr, str, ap );
-
-	va_end(ap);
-
-	usb_sendbuffer( 1, astr, strlen(astr) );
-} 
-
-void gsenddata(const u8 *data, int length, const char *filename)
-{
-	if (!(geckoinit))return;
-	
-	// First, send a "\x1b[2B]" line (this will tell geckoreader that binary data is comming up next)
-	const char *binary_data = "\x1b[2B]\n";
-	
-	usb_sendbuffer(1, binary_data, strlen(binary_data));
-	
-	u8 filenamelength = filename == NULL ? 0 : strlen(filename);
-	
-	// Send the length
-	usb_sendbuffer_safe(1, (u8 *) &length, 4);
-	usb_sendbuffer_safe(1, (u8 *) &filenamelength, 1);
-	usb_sendbuffer_safe(1, data, length);
-	if (filename != NULL)
-	{
-		usb_sendbuffer(1, filename, strlen(filename));
-	}
+        return len;
 }
+
+static const devoptab_t gecko_out = {
+        "stdout",       // device name
+        0,                      // size of file structure
+        NULL,           // device open
+        NULL,           // device close
+        __out_write,// device write
+        NULL,           // device read
+        NULL,           // device seek
+        NULL,           // device fstat
+        NULL,           // device stat
+        NULL,           // device link
+        NULL,           // device unlink
+        NULL,           // device chdir
+        NULL,           // device rename
+        NULL,           // device mkdir
+        0,                      // dirStateSize
+        NULL,           // device diropen_r
+        NULL,           // device dirreset_r
+        NULL,           // device dirnext_r
+        NULL,           // device dirclose_r
+        NULL,           // device statvfs_r
+        NULL,           // device ftruncate_r
+        NULL,           // device fsync_r
+        NULL,           // device deviceData
+        NULL,           // device chmod_r
+        NULL,           // device fchmod_r
+};
+
+static void USBGeckoOutput()
+{
+        devoptab_list[STD_OUT] = &gecko_out;
+        devoptab_list[STD_ERR] = &gecko_out;
+}
+
+//using the gprintf from crediar because it is smaller than mine
+void gprintf( const char *format, ... )
+{
+	char * tmp = NULL;
+	va_list va;
+	va_start(va, format);
+	if((vasprintf(&tmp, format, va) >= 0) && tmp)
+	{
+		WifiGecko_Send(tmp, strlen(tmp));
+		if (geckoinit)
+			__out_write(NULL, 0, tmp, strlen(tmp));
+	}
+	va_end(va);
+
+	if(tmp)
+	free(tmp);
+} 
 
 char ascii(char s) {
   if(s < 0x20) return '.';
@@ -78,6 +109,10 @@ void ghexdump(void *d, int len) {
 
 bool InitGecko()
 {
+	if (geckoinit) return geckoinit;
+
+	USBGeckoOutput();	
+
 	u32 geckoattached = usb_isgeckoalive(EXI_CHANNEL_1);
 	if (geckoattached)
 	{

@@ -10,8 +10,7 @@ extern "C" {
 	extern bool geckoinit;
 
 	//use this just like printf();
-	void gprintf(const char *str, ...);
-	void gsenddata(const u8 *data, int length, const char *filename);
+	void gprintf(const char *format, ...);
 	void ghexdump(void *d, int len);
 	bool InitGecko();
 

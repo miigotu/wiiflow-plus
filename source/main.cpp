@@ -12,6 +12,7 @@
 #include "DeviceHandler.hpp"
 #include "homebrew.h"
 #include "gecko.h"
+#include "wifi_gecko.h"
 
 extern "C" { extern void __exception_setreload(int t);}
 
@@ -194,6 +195,8 @@ int old_main(int argc, char **argv)
 		}
 
 	} while (ret == 1);
+	
+	WifiGecko_Close();
 
 	return ret;
 };

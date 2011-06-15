@@ -12,7 +12,8 @@
 #include "wip.h"
 #include "wbfs.h"
 #include "sys.h"
-#include "d2x.h"
+#include "mload_modules.h"
+#include "gecko.h"
 
 typedef struct _SPatchCfg
 {
@@ -51,7 +52,7 @@ static void __noprint(const char *fmt, ...)
 {
 }
 
-s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck, char *altDolDir)
+s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 gameIOS, u8 patchDiscCheck, char *altDolDir)
 {
 	void *dst = NULL;
 	int len = 0;
@@ -128,6 +129,21 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 
 		/* This patch should be run on the entire dol at 1 time */
 		if (rtrn) PatchReturnTo((void *) dolStart, dolEnd - dolStart, rtrn);
+	}
+	
+	if(gameIOS != 0)
+	{
+		gprintf("GameIOS set to %d, will try to block IOS reload\n", gameIOS);
+		if (is_ios_type(IOS_TYPE_HERMES))
+		{
+			gprintf("Block IOS reload for Hermes");
+			enable_ES_ioctlv_vector();
+		} 
+		else if (is_ios_type(IOS_TYPE_D2X) && IOS_GetRevision() % 100 > 5)
+		{
+			gprintf("Block IOS reload for D2X, rev %d", IOS_GetRevision() % 100);
+			IOSReloadBlock(gameIOS);
+		}
 	}
 
 	/* ERROR 002 fix (WiiPower) */

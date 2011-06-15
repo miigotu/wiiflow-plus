@@ -14,6 +14,7 @@
 #include <network.h>
 
 #include "gecko.h"
+#include "wifi_gecko.h"
 #include <fstream>
 #include "lockMutex.hpp"
 
@@ -301,12 +302,23 @@ s32 CMenu::_networkComplete(s32 ok, void *usrData)
 	m->m_networkInit = ok == 0;
 	m->m_thrdNetwork = false;
 
+	if (m->m_cfg.getBool("GENERAL", "wifi_gecko", false))
+	{
+		// Get ip
+		std::string ip = m->m_cfg.getString("GENERAL", "wifi_gecko_ip");
+		u16 port = m->m_cfg.getInt("GENERAL", "wifi_gecko_port");
+		
+		if (ip.size() > 0 && port != 0)
+		{
+			WifiGecko_Init(ip.c_str(), port);
+		}
+	}
+
 	return 0;
 }
 
 int CMenu::_initNetwork()
 {
-
 	while (net_get_status() == -EBUSY || m_thrdNetwork) {}; // Async initialization may be busy, wait to see if it succeeds.
 	if (m_networkInit) return 0;
 	if (!_isNetworkAvailable()) return -2;

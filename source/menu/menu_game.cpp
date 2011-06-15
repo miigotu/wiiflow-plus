@@ -15,7 +15,6 @@
 #include "DeviceHandler.hpp"
 #include "loader/mload_modules.h"
 #include "loader/wbfs.h"
-#include "loader/d2x.h"
 
 #include "loader/frag.h"
 #include "loader/fst.h"
@@ -895,7 +894,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		iosLoaded = true;
 	}
 	
-	bool mload = is_ios_type(IOS_TYPE_HERMES);
 	int minIOSRev = 0;
 	switch (IOS_GetVersion())
 	{
@@ -920,30 +918,9 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	}
 
 	bool blockIOSReload = m_gcfg2.getBool((const char *) hdr->hdr.id, "block_ios_reload", false);
+	u8 gameIOS = blockIOSReload ? iosNum : 0;
 	
-	if (mload && blockIOSReload)
-			disableIOSReload();	
-			
-	if(is_ios_type(IOS_TYPE_D2X) && IOS_GetRevision() >= 21006 )
-	{
-		s32 ter = IOSReloadBlock(blockIOSReload, iosNum);
-		
-		if(ter < 0)
-		{
-			gprintf("Enable/Disable Block IOS Reload for cIOS: %u (rev %u) failed!\n",IOS_GetVersion(), IOS_GetRevision());
-		}
-		else 
-		{
-			if(blockIOSReload)
-			{
-				gprintf("Block IOS Reload enabled for game: %s on cIOS: %u (rev %u)\n",hdr->hdr.id ,IOS_GetVersion(), IOS_GetRevision());
-			}
-			else
-			{
-				gprintf("Block IOS Reload disabled for game: %s on cIOS: %u (rev %u)\n",hdr->hdr.id ,IOS_GetVersion(), IOS_GetRevision());
-			}
-		}
-	}
+	gprintf("Setting gameIOS to %d\n", gameIOS);
 	
 	int rtrnID = 0;
 	
@@ -975,10 +952,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 			IOS_Close(ESHandle);
 		}
 	}
-
-	//if (blockIOSReload) block_ios_reload();
-	//return_to_channel(rtrnID);
-	//if (disable_return_to_patch) rtrnID = 0;
 
 	if (!dvd)
 	{
@@ -1019,7 +992,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		
 		gprintf("Booting game\n");
 		char *altDolDir = (char *) m_altDolDir.c_str();
-		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, altDolDir, wdm_entry == NULL ? 1 : wdm_entry->parameter) < 0)
+		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, gameIOS, altDolDir, wdm_entry == NULL ? 1 : wdm_entry->parameter) < 0)
 			Sys_LoadMenu();
 	}
 }

@@ -26,7 +26,7 @@
 
 #include "apploader.h"
 #include "patchcode.h"
-//#include "gecko.h"
+#include "gecko.h"
 
 extern void patchhook(u32 address, u32 len);
 extern void patchhook2(u32 address, u32 len);
@@ -456,37 +456,35 @@ bool PatchReturnTo(void *Address, int Size, u32 id)
     return patched;
 }
 
-s32 IOSReloadBlock(bool block, u8 reqios)
+s32 IOSReloadBlock(u8 reqios)
 {
     s32 ESHandle = IOS_Open("/dev/es", 0);
     
-    if (ESHandle < 0)
+    if (ESHandle < 0) {
+		gprintf("Reload IOS Block failed, cannot open /dev/es\n");
         return ESHandle;
+	}
 	
 	static ioctlv vector[0x08] ATTRIBUTE_ALIGN(32);		
 	static int mode ATTRIBUTE_ALIGN(32);
     static int ios ATTRIBUTE_ALIGN(32);
 	
-	u32 inlen;
-		
-	if(block) 
-	{
-		inlen = 2;
-		mode = 2;
-		ios = reqios;
-		vector[1].data = &ios;
-        vector[1].len = 4;
-	}
-	else
-	{
-		inlen = 1;
-		mode = 0;	
-	}
-
-    vector[0].data = &mode;
+	mode = 2;
+	vector[0].data = &mode;
     vector[0].len = 4;
 
+	ios = reqios;
+	vector[1].data = &ios;
+	vector[1].len = 4;
+
+	u32 inlen = 2;
     s32 r = IOS_Ioctlv(ESHandle, 0xA0, inlen, 0, vector);
+	
+	if (r < 0) {
+		gprintf("Enable/Disable Block IOS Reload for cIOS: %u (rev %u) failed!\n", IOS_GetVersion(), IOS_GetRevision());
+	} else {
+		gprintf("Block IOS Reload enabled on cIOS: %u (rev %u)\n", IOS_GetVersion(), IOS_GetRevision());
+	}
 	
     IOS_Close(ESHandle);
 	

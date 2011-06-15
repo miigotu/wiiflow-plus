@@ -1585,7 +1585,7 @@ void CMenu::_load_installed_cioses()
 			// We have an ios
 			
 			u32 version = t->title_version;
-			if (tmd_buf[4] == 0 && (version < 100 || version == 0xFFFF || (version > 21000 && version < 21100))) // Signature is empty
+			if (tmd_buf[4] == 0 && (version < 100 || version == 0xFFFF || (version > D2X_MIN_VERSION && version < D2X_MAX_VERSION))) // Signature is empty
 			{
 				// Probably an cios
 				SIOS s;

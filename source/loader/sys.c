@@ -200,7 +200,7 @@ int get_ios_type()
 		case 248:
 		case 249:
 		case 250:
-			if(IOS_GetRevision() > 21000)
+			if(IOS_GetRevision() > D2X_MIN_VERSION && IOS_GetRevision() < D2X_MAX_VERSION)
 				return IOS_TYPE_D2X;
 			else
 				return IOS_TYPE_WANIN;
@@ -213,7 +213,7 @@ int get_ios_type()
 		case 224:
 			return IOS_TYPE_HERMES;
 		default:
-			if(IOS_GetRevision() > 21000)
+			if(IOS_GetRevision() > D2X_MIN_VERSION && IOS_GetRevision() < D2X_MAX_VERSION)
 				return IOS_TYPE_D2X;
 			else
 				return IOS_TYPE_WANIN;	

@@ -364,13 +364,15 @@ int is_ios=0;
 	// return ret;
 // }
 
-// void enable_ES_ioctlv_vector(void)
-// {
-	// mload_init();
-	// patch_datas[0] = *((u32 *) (dip_plugin+16*4));
-	// mload_set_ES_ioctlv_vector((void *) patch_datas[0]);
-	// mload_close();
-// }
+void enable_ES_ioctlv_vector(void)
+{
+	if (mload_init() < 0 || IOS_GetRevision() == 2)
+		return;
+
+	patch_datas[0] = *((u32 *) (dip_plugin+16*4));
+	mload_set_ES_ioctlv_vector((void *) patch_datas[0]);
+	mload_close();
+}
 
 void Set_DIP_BCA_Datas(u8 *bca_data)
 {
@@ -394,14 +396,4 @@ u8 *search_for_ehcmodule_cfg(u8 *p, int size)
 		}
 	}
 	return NULL;
-}
-
-void disableIOSReload(void)
-{
-	if (mload_init() < 0 || IOS_GetRevision() == 2)
-		return;
-
-	patch_datas[0] = *((u32 *)(dip_plugin + 16 * 4));
-	mload_set_ES_ioctlv_vector((void *)patch_datas[0]);
-	mload_close();
 }

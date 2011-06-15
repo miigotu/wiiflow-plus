@@ -352,7 +352,7 @@ s32 Disc_IsGC(void)
 	return Disc_Type(1);
 }
 
-s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode, u32 rtrn, u8 patchDiscCheck, bool dvd, char *altDolDir, u32 wdm_parameter)
+s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode, u32 rtrn, u8 patchDiscCheck, bool dvd, u8 ios, char *altDolDir, u32 wdm_parameter)
 {
 	entry_point p_entry;
 
@@ -369,7 +369,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	__Disc_SelectVMode(vidMode);
 
 	/* Run apploader */
-	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vmode, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidMode, rtrn, patchDiscCheck, altDolDir);
+	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vmode, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidMode, rtrn, ios, patchDiscCheck, altDolDir);
 	free_wip();
 	
 	if (ret < 0) return ret;
@@ -420,9 +420,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 			"ori %r3, %r3, appentrypoint@l\n"
 			"lwz %r3, 0(%r3)\n"
 			"mtlr %r3\n"
-			"nop\n"
 			"lis %r3, 0x8000\n"
-			"nop\n"
 			"ori %r3, %r3, 0x18A8\n"
 			"nop\n"
 			"mtctr %r3\n"
@@ -443,7 +441,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	return 0;
 }
 
-s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck, char *altDolDir, u32 wdm_parameter)
+s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck, u8 ios, char *altDolDir, u32 wdm_parameter)
 {
 	u64 offset;
 
@@ -452,5 +450,5 @@ s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipa
 	if (ret < 0) return ret;
 
 	/* Boot partition */
-	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes, rtrn, patchDiscCheck, dvd, altDolDir, wdm_parameter);
+	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes, rtrn, patchDiscCheck, dvd, ios, altDolDir, wdm_parameter);
 }
