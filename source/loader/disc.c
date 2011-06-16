@@ -78,10 +78,15 @@ void __Disc_SetLowMem(bool dvd)
 	*(vu32 *)0x800030F0 = 0x0000001C;
 	*(vu32 *)0x8000318C = 0x00000000;
 	*(vu32 *)0x80003190 = 0x00000000;
+	
 	// Fix for Sam & Max (WiiPower)
 	// (only works if started from DVD)
-	// Readded by Dr. Clipper
-	if (dvd) *(vu32*)0x80003184	= 0x80000000;	// Game ID Address
+
+	// Fix for Sam & Max (WiiPower)
+	// (doesn't work on hermes cios - causes #001 error on fakesigned? games)
+	if (!is_ios_type(IOS_TYPE_HERMES)) {
+			*(vu32*)0x80003184 = 0x80000000;        // Game ID Address
+	}
 
 	/* Flush cache */
 	DCFlushRange((void *)0x80000000, 0x3F00);
@@ -420,7 +425,9 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 			"ori %r3, %r3, appentrypoint@l\n"
 			"lwz %r3, 0(%r3)\n"
 			"mtlr %r3\n"
+			"nop\n"
 			"lis %r3, 0x8000\n"
+			"nop\n"
 			"ori %r3, %r3, 0x18A8\n"
 			"nop\n"
 			"mtctr %r3\n"
