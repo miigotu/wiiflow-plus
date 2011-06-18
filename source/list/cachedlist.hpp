@@ -5,6 +5,7 @@
 #include "cache.hpp"
 #include "safe_vector.hpp"
 #include "gecko.h"
+#include "config.hpp"
 
 using namespace std;
 
@@ -16,7 +17,7 @@ class CachedList : public safe_vector<T>
 
     void Load(string path, string containing);
     void Unload(){if(m_loaded) {this->clear(); m_loaded = false; m_database = "";}};
-    void Save() {if(m_loaded && m_update) CCache<T>(*this, m_database, SAVE);}				/* Save All */
+    void Save() {if(m_loaded && m_update) CCache<T>(*this, m_database, &gcnt, rcnt, SAVE);}				/* Save All */
 
     //void get(T &tmp, u32 index) {if(m_loaded) CCache(tmp, m_database, index, LOAD);}		/* Load One */
     void Set(T tmp, u32 index) {if(m_loaded) CCache<T>(tmp, m_database, index, SAVE);}		/* Save One */
@@ -33,6 +34,10 @@ class CachedList : public safe_vector<T>
     CList<T> list;
     string m_database;
     string m_cacheDir;
+	Config m_cfg;
+	
+	u32 rcnt;
+	u32 gcnt;
 };
 
 #endif

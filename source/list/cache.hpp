@@ -30,14 +30,14 @@ class CCache
 {
 	public:
 		 CCache(T &tmp, string path, u32 index, CMode mode);					/* Load/Save One */
-		 CCache(safe_vector<T> &list, string path, CMode mode);					/* Load/Save All */
+		 CCache(safe_vector<T> &list, string path, u32 *count, u32 realcount, CMode mode);					/* Load/Save All */
 		 CCache(safe_vector<T> &list, string path, T tmp, CMode mode);			/* Add One */
 		 CCache(safe_vector<T> &list, string path, u32 index, CMode mode);		/* Remove One */
 		~CCache();
 	private:
 		void SaveAll(safe_vector<T> list);
 		void SaveOne(T tmp, u32 index);
-		void LoadAll(safe_vector<T> &list);
+		void LoadAll(safe_vector<T> &list, u32 *count, u32 realcount);
 		void LoadOne(T &tmp, u32 index);
 		
 		void AddOne(safe_vector<T> &list, T tmp);

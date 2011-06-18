@@ -23,7 +23,7 @@ CCache<T>::CCache(T &tmp, string path, u32 index, CMode mode) /* Load/Save One *
 }
 
 template <typename T>
-CCache<T>::CCache(safe_vector<T> &list, string path, CMode mode) /* Load/Save All */
+CCache<T>::CCache(safe_vector<T> &list, string path, u32 *count, u32 realcount, CMode mode) /* Load/Save All */
 {
 	filename = path;
 	//gprintf("Openning DB: %s\n", filename.c_str());
@@ -34,7 +34,7 @@ CCache<T>::CCache(safe_vector<T> &list, string path, CMode mode) /* Load/Save Al
 	switch(mode)
 	{
 		case LOAD:
-			LoadAll(list);
+			LoadAll(list, count, realcount);
 			break;
 		case SAVE:
 			SaveAll(list);
@@ -106,7 +106,7 @@ void CCache<T>::SaveOne(T tmp, u32 index)
 }
 
 template <typename T>
-void CCache<T>::LoadAll(safe_vector<T> &list)
+void CCache<T>::LoadAll(safe_vector<T> &list, u32 *count, u32 realcount)
 {
 	//gprintf("Loading DB: %s\n", filename.c_str());
 
@@ -115,14 +115,18 @@ void CCache<T>::LoadAll(safe_vector<T> &list)
 	u64 fileSize = ftell(cache);
 	fseek(cache, 0, SEEK_SET);
 
-	u32 count = fileSize / sizeof(T);
-	list.reserve(count + list.size());
-	for(u32 i = 0; i < count; i++)
+	*count = fileSize / sizeof(T);
+	
+	if(*count != realcount) return;
+	
+	list.reserve(*count + list.size());
+	for(u32 i = 0; i < *count; i++)
 	{
 		LoadOne(tmp, i);
 		list.push_back(tmp);
 	}
 }
+
 
 template <typename T>
 void CCache<T>::LoadOne(T &tmp, u32 index)

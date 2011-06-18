@@ -810,7 +810,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		//hooktype = 0;
 		debuggerselect = false;
 		patchDiscCheck = false;
-		rtrn = NULL;
 	}
 
 	/*int rtrnID = 0;

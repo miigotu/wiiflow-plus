@@ -1,10 +1,11 @@
 #include "list.hpp"
 
 template <typename T>
-void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs)
+void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs, u32 *cnt)
 {
 	if (!wbfs_fs)
 	{
+		u32 count = -1;
 		/* Open primary directory */
 		DIR_ITER *dir_itr = diropen(directory.c_str());
 		if (!dir_itr) return;
@@ -20,6 +21,8 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 		{
 			if (entry[0] == '.') continue;
 			if (strlen(entry) < 6) continue;
+			
+			count++;
 
 			if(!S_ISDIR(filestat.st_mode))
 			{
@@ -37,6 +40,7 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 			
 		}
 		dirclose(dir_itr);
+		*cnt = count;
 
 		if(temp_pathlist.size() > 0)
 		{
@@ -54,7 +58,7 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 					for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
 						if (strcasestr(entry, (*compare).c_str()) != NULL)
 						{
-							pathlist.push_back(sfmt("%s/%s", (*templist).c_str(), entry));
+							pathlist.push_back(sfmt("%s/%s", (*templist).c_str(), entry));							
 							break;
 						}
 				}
@@ -181,7 +185,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			if (!handle) return;
 
 			s32 ret = wbfs_get_disc_info(handle, count, (u8 *)&tmp.hdr, sizeof(struct discHdr), NULL);
-			count++;
+		
 			if(ret != 0) continue;
 			
 			if (tmp.hdr.magic == 0x5D1C9EA3	&& memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) != 0)
