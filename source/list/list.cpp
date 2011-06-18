@@ -1,4 +1,5 @@
 #include "list.hpp"
+#include "gecko.h"
 
 template <typename T>
 void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs, u32 *cnt)
@@ -37,7 +38,6 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 			{
 				temp_pathlist.push_back(sfmt("%s/%s", directory.c_str(), entry));
 			}
-			
 		}
 		dirclose(dir_itr);
 		*cnt = count;
@@ -81,16 +81,19 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 }
 
 template <>
-void CList<string>::GetHeaders(safe_vector<string> pathlist, safe_vector<string> &headerlist)
+void CList<string>::GetHeaders(safe_vector<string> pathlist, safe_vector<string> &headerlist, findtitle_callback_t, void *)
 {
+	gprintf("Getting headers for CList<string>\n");
 	headerlist = pathlist;
 }
 
 template <>
-void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist)
+void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist, findtitle_callback_t callback, void *callback_data)
 {
 	dir_discHdr tmp;
 	u32 count = 0;
+
+	gprintf("Getting headers for paths in pathlist (%d)\n", pathlist.size());
 
 	if(pathlist.size() < 1) return;
 	headerlist.reserve(pathlist.size() + headerlist.size());
@@ -119,6 +122,29 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 					}
 				}
 			}
+
+			if (tmp.hdr.id[0] == 0)
+			{
+				gprintf("Skipping file: '%s'\n", (*itr).c_str());
+				continue;
+			}
+			
+//			gprintf("Get information for '%s'\n", tmp.hdr.id);
+			if (memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) == 0)
+			{
+				// Skip uLoader configuration
+				continue;
+			}
+
+			// Use a callback to menu.cpp (or something like that) to find the title in titles.ini
+			// If found, use that!
+			if (callback != NULL && callback(callback_data, tmp.hdr.id, tmp.hdr.title, 64))
+			{
+				gprintf("Callback executed, game found\n");
+				tmp.hdr.magic = 0x5D1C9EA3;
+				headerlist.push_back(tmp);
+				continue;
+			}
 			
 			/*if(tmp.hdr.id[0] != 0)
 			{
@@ -134,7 +160,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				SAFE_CLOSE(fp);
 			}
 
-			if (tmp.hdr.magic == 0x5D1C9EA3	&& memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) != 0)
+			if (tmp.hdr.magic == 0x5D1C9EA3)
 			{
 				headerlist.push_back(tmp);
 				continue;

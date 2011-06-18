@@ -34,6 +34,9 @@ u32 le32(u32);
 u16 le16(u16);
 int makedir(char *newdir);
 
+bool str_replace(char *str, const char *olds, const char *news, int size);
+bool str_replace_all(char *str, const char *olds, const char *news, int size);
+
 #ifdef __cplusplus
 }
 #endif	/* __cplusplus */

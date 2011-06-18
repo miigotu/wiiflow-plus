@@ -24,7 +24,6 @@ void CMenu::error(const wstringEx &msg)
 	_hideCategorySettings();
 	_hideSystem();
 	_hideGameInfo();
-	_hideWiiTDBUpdate();
 	_hideCheatDownload();
 	_hideGameSettings();
 	_hideWaitMessage();

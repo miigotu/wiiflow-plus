@@ -13,9 +13,9 @@ template <typename T = dir_discHdr>
 class CachedList : public safe_vector<T>
 {
   public:
-    void Init(string cachedir){m_cacheDir = cachedir; m_loaded = false; m_update = false; m_database = "";}
+	void Init(string cachedir){m_cacheDir = cachedir; m_loaded = false; m_update = false; m_database = "";}
 
-    void Load(string path, string containing);
+    void Load(string path, string containing, findtitle_callback_t callback = NULL, void* callback_data = NULL);
     void Unload(){if(m_loaded) {this->clear(); m_loaded = false; m_database = "";}};
     void Save() {if(m_loaded && m_update) CCache<T>(*this, m_database, &gcnt, rcnt, SAVE);}				/* Save All */
 
@@ -24,7 +24,6 @@ class CachedList : public safe_vector<T>
 
     void Add(T tmp) {if(m_loaded) CCache<T>(*this, m_database, tmp, ADD);}					/* Add One */
     void Remove(u32 index) {if(m_loaded) CCache<T>(*this, m_database, index, REMOVE);}		/* Remove One */
-
   private:
     string make_db_name(string path);
 

@@ -22,6 +22,7 @@
 #include "loader/wip.h"
 
 #include "gui/WiiMovie.hpp"
+#include "gui/WiiTDB.hpp"
 #include "channels.h"
 
 #include "gecko.h"
@@ -260,8 +261,6 @@ static void setLanguage(int l)
 		configbytes[0] = 0xCD;
 }
 
-extern "C" { bool DatabaseLoaded(void); }
-
 void CMenu::_game(bool launch)
 {
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
@@ -302,7 +301,7 @@ void CMenu::_game(bool launch)
 		}
 		else if (BTN_PLUS_PRESSED)
 		{
-			if (DatabaseLoaded())
+			if (m_wiitdb.IsLoaded())
 			{
 				_hideGame();
 				_gameinfo();

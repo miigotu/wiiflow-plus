@@ -1103,17 +1103,13 @@ void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 start, u32 si
 
 void CMenu::_initCF(void)
 {
-	Config titles, custom_titles, m_dump;
+	Config m_dump;
 
 	m_cf.clear();
 	m_cf.reserve(m_gameList.size());
 
  	m_gamelistdump = m_cfg.getBool("GENERAL", m_current_view == COVERFLOW_USB ? "dump_gamelist" : "dump_chanlist", true);
 	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
-
-
-	m_titles_loaded = titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str());
-	custom_titles.load(sfmt("%s/custom_titles.ini", m_settingsDir.c_str()).c_str());
 
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
 	for (u32 i = 0; i < m_gameList.size(); ++i)
@@ -1133,7 +1129,7 @@ void CMenu::_initCF(void)
 					continue;
 				}
 			}
-			wstringEx w = custom_titles.getWString("TITLES", id, titles.getWString("TITLES", id));
+			wstringEx w = m_custom_titles.getWString("TITLES", id, m_titles.getWString("TITLES", id));
 
 			if (w.empty())
 			{
@@ -1141,10 +1137,14 @@ void CMenu::_initCF(void)
 				{
 					wchar_t channelname[IMET_MAX_NAME_LEN];
 					mbstowcs(channelname, m_gameList[i].hdr.title, IMET_MAX_NAME_LEN);
-					w = titles.getWString("TITLES", id.substr(0, 4), channelname);
+					string sid = id.substr(0, 4);
+					w = m_custom_titles.getWString("TITLES", sid, m_titles.getWString("TITLES", sid, channelname));
 				}
 				else
-					w = titles.getWString("TITLES", id.substr(0, 6), string(m_gameList[i].hdr.title, sizeof m_gameList[0].hdr.title));
+				{
+					string lid = id.substr(0, 6);
+					w = m_custom_titles.getWString("TITLES", lid, m_titles.getWString("TITLES", lid, string(m_gameList[i].hdr.title, sizeof m_gameList[0].hdr.title)));
+				}
 			}
 			int playcount = m_gcfg1.getInt("PLAYCOUNT", id, 0);
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
@@ -1152,7 +1152,7 @@ void CMenu::_initCF(void)
 			if(m_gamelistdump)
 				m_dump.setWString(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", m_current_view == COVERFLOW_CHANNEL ? id.substr(0, 4) : id, w);
 
-			CColor cover = custom_titles.getColor("COVERS", id, titles.getColor("COVERS", id, CColor(0xFFFFFF)));
+			CColor cover = m_custom_titles.getColor("COVERS", id, m_titles.getColor("COVERS", id, CColor(0xFFFFFFFF)));
 			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), cover, playcount, lastPlayed);
 		}
 	}
@@ -1460,23 +1460,68 @@ bool CMenu::_loadChannelList(void)
 bool CMenu::_loadList(void)
 {
 	m_gameList.clear();
+
+	gprintf("Loading items of view %d\n", m_current_view);
+
+	if (m_current_view != COVERFLOW_HOMEBREW)
+	{
+		bool load_titles = m_titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str());
+		bool load_custom_titles = m_custom_titles.load(sfmt("%s/custom_titles.ini", m_settingsDir.c_str()).c_str());
+		
+		gprintf("Loaded titles.ini: %s\n", load_titles ? "success" : "failed");
+		gprintf("Loaded custom titles.ini: %s\n", load_custom_titles ? "success" : "failed");
+	}
+
+	bool retval;
 	switch(m_current_view)
 	{
 		case COVERFLOW_CHANNEL:
-			return _loadChannelList();
+			gprintf("View = channel\n");
+			retval = _loadChannelList();
+			break;
 		case COVERFLOW_HOMEBREW:
-			return _loadHomebrewList();
+			gprintf("View = homebrew\n");
+			retval = _loadHomebrewList();
+			break;
 		case COVERFLOW_USB:
 		default:
-			return _loadGameList();
+			gprintf("View = usb\n");
+			retval = _loadGameList();
+			break;
 	}
+	
+	gprintf("Clear titles\n");
+	m_titles.clear();
+	gprintf("Clear custom titles\n");
+	m_custom_titles.clear();
+	
+	return retval;
+}
+
+bool CMenu::_findTitlesById(void *obj, u8 *id, char *title, int size)
+{
+	gprintf("Searching title for game '%s': ", id);
+
+	CMenu *m = (CMenu *) obj;
+	wstringEx w = m->m_custom_titles.getWString("TITLES", (const char *) id, m->m_titles.getWString("TITLES", (const char *) id));
+	if (w.empty())
+	{
+		gprintf("not found\n");
+		return false;
+	}
+	int len = w.size();
+	gprintf("found, len = %d, title = '%s'\n", len, w.c_str());
+	memcpy(title, w.c_str(), (len < size ? len : size) * sizeof(wchar_t));
+	gprintf("Copied title, check: '%s'\n", title);
+	return true;
 }
 
 bool CMenu::_loadGameList(void)
 {
 	currentPartition = m_cfg.getInt("GENERAL", "partition", 1);
+	gprintf("Opening partition %d\n", currentPartition);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
-	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso");
+	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso", CMenu::_findTitlesById, this);
 	return m_gameList.size() > 0 ? true : false;
 }
 

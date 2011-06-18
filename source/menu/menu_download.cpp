@@ -8,8 +8,7 @@
 #include "loader/fs.h"
 #include "loader/wdvd.h"
 #include "usbstorage.h"
-#include "unzip/unzip.h"
-#include "unzip/miniunz.h"
+#include "unzip/ZipFile.h"
 
 #include <network.h>
 
@@ -647,8 +646,6 @@ void CMenu::_download(string gameId)
 		thread = LWP_THREAD_NULL;
 	}
 	_hideDownload();
-
-	_updateWiiTDB();
 }
 
 void CMenu::_initDownloadMenu(CMenu::SThemeData &theme)
@@ -915,13 +912,12 @@ s8 CMenu::_versionDownloader() // code to download new version
 					LWP_MutexLock(m_mutex);
 					_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
 					LWP_MutexUnlock(m_mutex);
-					
-					unzFile unzfile = unzOpen(m_app_update_zip.c_str());
-					if (unzfile == NULL) goto fail;
 
-					int ret = extractZip(unzfile, 0, 1, NULL, m_appDir.c_str());
-					unzClose(unzfile);
-					if (ret == UNZ_OK)
+					ZipFile zFile(m_app_update_zip.c_str());
+					bool result = zFile.ExtractAll(m_appDir.c_str());
+					remove(m_app_update_zip.c_str());
+
+					if (result)
 					{
 						//Update apps dir succeeded, try to update the data dir.
 						download.data = NULL;
@@ -961,14 +957,11 @@ s8 CMenu::_versionDownloader() // code to download new version
 								_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
 								LWP_MutexUnlock(m_mutex);
 								
-								unzFile unzfile = unzOpen(m_data_update_zip.c_str());
-								if (unzfile == NULL)
-									goto success;
+								ZipFile zDataFile(m_data_update_zip.c_str());
+								result = zDataFile.ExtractAll(m_dataDir.c_str());
+								remove(m_data_update_zip.c_str());
 
-								int ret = extractZip(unzfile, 0, 1, NULL, m_dataDir.c_str());
-								unzClose(unzfile);
-
-								if (ret != UNZ_OK)
+								if (!result)
 								{
 									LWP_MutexLock(m_mutex);
 									_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
@@ -1082,10 +1075,18 @@ int CMenu::_wiitdbDownloaderAsync()
 		}
 		else
 		{
+			string zippath = sfmt("%s/wiitdb.zip", m_settingsDir.c_str());
+
+			gprintf("Downloading file to '%s'\n", zippath.c_str());
+
+			remove(zippath.c_str());
+			
 			_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), "WiiTDB.zip"), 1.f);
-			FILE *file = fopen(sfmt("%s/wiitdb.zip", m_settingsDir.c_str()).c_str(), "wb");
+			FILE *file = fopen(zippath.c_str(), "wb");
 			if (file == NULL)
 			{
+				gprintf("Can't save zip file\n");
+	
 				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg15", L"Couldn't save ZIP file"), 1.f);
 				LWP_MutexUnlock(m_mutex);
@@ -1094,6 +1095,20 @@ int CMenu::_wiitdbDownloaderAsync()
 			{
 				fwrite(download.data, download.size, 1, file);
 				SAFE_CLOSE(file);
+
+				gprintf("Extracting zip file: ");
+				
+				ZipFile zFile(zippath.c_str());
+				bool zres = zFile.ExtractAll(m_settingsDir.c_str());
+				
+				gprintf(zres ? "success\n" : "failed\n");
+
+				// We don't need the zipfile anymore
+				remove(zippath.c_str());
+
+				gprintf("Refreshing wiitdb\n");
+				m_wiitdb.CloseFile();
+				m_wiitdb.OpenFile(sfmt("%s/wiitdb.xml", m_settingsDir.c_str()).c_str());
 			}
 		}
 	}

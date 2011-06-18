@@ -20,6 +20,7 @@
 #include "gct.h"
 #include "DeviceHandler.hpp"
 #include "musicplayer.h"
+#include "WiiTDB.hpp"
 
 extern "C" {extern u8 currentPartition;}
 extern bool bootHB;
@@ -58,20 +59,22 @@ private:
 	CFanart m_fa;
 	CachedList<dir_discHdr> m_gameList;
 	Config m_cfg;
+	Config m_custom_titles;
 	Config m_loc;
 	Config m_loclist;
 	Config m_cat;
 	Config m_gcfg1;
 	Config m_gcfg2;
 	Config m_theme;
+	Config m_titles;
 	Config m_version;
 	Channels m_channels;
+	WiiTDB m_wiitdb;
 	safe_vector<std::string> m_homebrewArgs;
 	u8 m_aa;
 	bool m_directLaunch;
 	bool m_gamelistdump;
 	bool m_locked;
-	bool m_titles_loaded;
 	bool m_favorites;
 	s16 m_showtimer;
 	std::string m_curLanguage;
@@ -673,7 +676,6 @@ private:
 	void _hideCategorySettings(bool instant = false);
 	void _hideSystem(bool instant = false);
 	void _hideGameInfo(bool instant = false);
-	void _hideWiiTDBUpdate(bool instant = false);
 	void _hideCheatDownload(bool instant = false);
 	//
 	void _showError(void);
@@ -696,7 +698,6 @@ private:
 	void _showWBFS(WBFS_OP op);
 	void _showCFTheme(u32 curParam, int version, bool wide);
 	void _showGameSettings(void);
-	void _showWiiTDBUpdate(void);
 	void _showCheatDownload(void);
 	void _setBg(const STexture &tex, const STexture &lqTex);
 	void _updateBg(void);
@@ -769,6 +770,7 @@ private:
 	static int _coverDownloaderAll(CMenu *m);
 	static int _coverDownloaderMissing(CMenu *m);
 	static bool _downloadProgress(void *obj, int size, int position);
+	static bool _findTitlesById(void *obj, u8 *id, char *title, int size);
 	static int _wiitdbDownloader(CMenu *m);
 	int _wiitdbDownloaderAsync();
 
@@ -790,9 +792,6 @@ private:
 	void _stopSounds(void);
 	//
 	static u32 _downloadCheatFileAsync(void *obj);
-	static bool _updateProgress(void *obj, float progress);
-	static u32 _updateWiiTDBAsync(void *obj);
-	void _updateWiiTDB();
 	// 
 	void _playGameSound(void);
 	void _loadGameSound(dir_discHdr *);

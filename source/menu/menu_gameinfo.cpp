@@ -1,9 +1,10 @@
 #include "menu.hpp"
 
 #include <wiiuse/wpad.h>
+#include "gui/WiiTDB.hpp"
+
 #include "sys.h"
 #include "alt_ios.h"
-#include "../xml/xml.h"
 #include "gecko.h"
 
 extern const u8		wifi1_png[];
@@ -61,7 +62,7 @@ extern const u8		pegi_12_png[];
 extern const u8		pegi_16_png[];
 extern const u8		pegi_18_png[];
 
-extern struct gameXMLinfo gameinfo;
+GameXMLInfo gameinfo;
 
 static bool titlecheck = false;
 u8 cnt_controlsreq = 0, cnt_controls = 0;
@@ -105,13 +106,13 @@ void CMenu::_gameinfo(void)
 				amount_of_skips--;
 			}
 		}
-		else if (BTN_RIGHT_PRESSED && !(m_thrdWorking && m_thrdStop) && page == 0 && strlen(gameinfo.synopsis) > 0)
+		else if (BTN_RIGHT_PRESSED && !(m_thrdWorking && m_thrdStop) && page == 0 && gameinfo.Synopsis.size() > 0)
 		{
 			page = 1;
 			amount_of_skips = 0;
 						
 			m_btnMgr.reset(m_gameinfoLblSynopsis);
-			m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.synopsis)); //, line, false);
+			m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.Synopsis.c_str())); //, line, false);
 
 			m_btnMgr.hide(m_gameinfoLblID, true);
 			m_btnMgr.hide(m_gameinfoLblDev, true);
@@ -285,106 +286,86 @@ void CMenu::_textGameInfo(void)
 	cnt_controlsreq = 0;
 	cnt_controls = 0;
 
-	titlecheck = LoadGameInfoFromXML((char*)m_cf.getId().c_str());
+	titlecheck = m_wiitdb.GetGameXMLInfo(m_cf.getId().c_str(), &gameinfo);
 		
 	if(titlecheck)
 	{
-		gprintf("ID: %s\nTitle: %s\n", gameinfo.id, gameinfo.title);
-		m_btnMgr.setText(m_gameinfoLblID, wfmt(L"%s", gameinfo.id), true);
-		m_btnMgr.setText(m_gameinfoLblTitle, wfmt(L"%s", gameinfo.title), true);
-		m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", "" ), false);
-		m_btnMgr.setText(m_gameinfoLblDev, wfmt(_fmt("gameinfo1",L"Developer: %s"), gameinfo.developer), true);
-		m_btnMgr.setText(m_gameinfoLblPublisher, wfmt(_fmt("gameinfo2",L"Publisher: %s"), gameinfo.publisher), true);
-		m_btnMgr.setText(m_gameinfoLblRegion, wfmt(_fmt("gameinfo3",L"Region: %s"), gameinfo.region), true);
+		gprintf("ID: %s\nTitle: %s\n", gameinfo.GameID.c_str(), gameinfo.Title.c_str());
+		m_btnMgr.setText(m_gameinfoLblID, wfmt(L"%s", gameinfo.GameID.c_str()), true);
+		m_btnMgr.setText(m_gameinfoLblTitle, wfmt(L"%s", gameinfo.Title.c_str()), true);
+		m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.Synopsis.c_str()), false);
+		m_btnMgr.setText(m_gameinfoLblDev, wfmt(_fmt("gameinfo1",L"Developer: %s"), gameinfo.Developer.c_str()), true);
+		m_btnMgr.setText(m_gameinfoLblPublisher, wfmt(_fmt("gameinfo2",L"Publisher: %s"), gameinfo.Publisher.c_str()), true);
+		m_btnMgr.setText(m_gameinfoLblRegion, wfmt(_fmt("gameinfo3",L"Region: %s"), gameinfo.Region.c_str()), true);
 
-		string genres = gameinfo.genre;
-		wstringEx wGenres;
+		string wGenres = vectorToString(gameinfo.Genres, ", ");
+		m_btnMgr.setText(m_gameinfoLblGenre, wfmt(_fmt("gameinfo5",L"Genre: %s"), wGenres.c_str()), true);
 
-		// skip delimiters at beginning.
-		string::size_type lastPos = genres.find_first_not_of(",", 0);
-
-		// find first "non-delimiter".
-		string::size_type pos = genres.find_first_of(",", lastPos);
-
-		while (string::npos != pos || string::npos != lastPos)
-		{
-			string current_genre = ltrim(rtrim(genres.substr(lastPos, pos - lastPos)));
-					
-			if (wGenres.size() > 0)
-				wGenres += L", " + _t(current_genre.c_str(), wfmt(L"%s", current_genre.c_str()).c_str());
-			else
-				wGenres = _t(current_genre.c_str(), wfmt(L"%s", current_genre.c_str()).c_str());
-
-			// skip delimiters.  Note the "not_of"
-			lastPos = genres.find_first_not_of(",", pos);
+		int year = gameinfo.PublishDate >> 16;
+        int day = gameinfo.PublishDate & 0xFF;
+        int month = (gameinfo.PublishDate >> 8) & 0xFF;
 		
-			// find next "non-delimiter"
-			pos = genres.find_first_of(",", lastPos);
-		}
-
-		m_btnMgr.setText(m_gameinfoLblGenre, wfmt(_fmt("gameinfo5",L"Genre: %s"), wGenres.toUTF8().c_str()), true);
-
 		switch(CONF_GetRegion())
 		{
 		case 0:
 		case 4:
 		case 5:
-			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), gameinfo.year,gameinfo.month,gameinfo.day), true);
+			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), year, month, day), true);
 			break;
 		case 1:
-			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), gameinfo.month,gameinfo.day,gameinfo.year), true);
+			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), month, day, year), true);
 			break;
 		case 2:
-			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), gameinfo.day,gameinfo.month,gameinfo.year), true);
+			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), day, month, year), true);
 			break;
 		}
 		
 		//Ratings
-		switch(ConvertRatingToIndex(gameinfo.ratingtype))
+		switch(gameinfo.RatingType)
 		{
 			case 0:
 				//CERO
-				if(!strcmp(gameinfo.ratingvalue,"A"))
+				if (gameinfo.RatingValue == "A")
 					m_rating.fromPNG(cero_a_png);
-				else if(!strcmp(gameinfo.ratingvalue,"B"))
+				else if (gameinfo.RatingValue == "B")
 					m_rating.fromPNG(cero_b_png);
-				else if(!strcmp(gameinfo.ratingvalue,"D"))
+				else if (gameinfo.RatingValue == "D")
 					m_rating.fromPNG(cero_d_png);
-				else if(!strcmp(gameinfo.ratingvalue,"C"))
+				else if (gameinfo.RatingValue == "C")
 					m_rating.fromPNG(cero_c_png);
-				else if(!strcmp(gameinfo.ratingvalue,"Z"))
+				else if (gameinfo.RatingValue == "Z")
 					m_rating.fromPNG(cero_z_png);
 				else
 					m_rating.fromPNG(norating_png);		
 				break;
 			case 1:
 				//ESRB
-				if(!strcmp(gameinfo.ratingvalue,"AO"))
+				if (gameinfo.RatingValue == "AO")
 					m_rating.fromPNG(esrb_ao_png);
-				else if(!strcmp(gameinfo.ratingvalue,"E"))
+				else if (gameinfo.RatingValue == "E")
 					m_rating.fromPNG(esrb_e_png);
-				else if(!strcmp(gameinfo.ratingvalue,"EC"))
+				else if (gameinfo.RatingValue == "EC")
 					m_rating.fromPNG(esrb_ec_png);
-				else if(!strcmp(gameinfo.ratingvalue,"E10+"))
+				else if (gameinfo.RatingValue == "E10+")
 					m_rating.fromPNG(esrb_eten_png);
-				else if(!strcmp(gameinfo.ratingvalue,"T"))
+				else if (gameinfo.RatingValue == "T")
 					m_rating.fromPNG(esrb_t_png);
-				else if(!strcmp(gameinfo.ratingvalue,"M"))
+				else if (gameinfo.RatingValue == "M")
 					m_rating.fromPNG(esrb_m_png);
 				else
 					m_rating.fromPNG(norating_png);
 				break;
 			case 2:
 				//PEGI
-				if(!strcmp(gameinfo.ratingvalue,"3"))
+				if (gameinfo.RatingValue == "3")
 					m_rating.fromPNG(pegi_3_png);
-				else if(!strcmp(gameinfo.ratingvalue,"7"))
+				else if (gameinfo.RatingValue == "7")
 					m_rating.fromPNG(pegi_7_png);
-				else if(!strcmp(gameinfo.ratingvalue,"12"))
+				else if (gameinfo.RatingValue == "12")
 					m_rating.fromPNG(pegi_12_png);
-				else if(!strcmp(gameinfo.ratingvalue,"16"))
+				else if (gameinfo.RatingValue == "16")
 					m_rating.fromPNG(pegi_16_png);
-				else if(!strcmp(gameinfo.ratingvalue,"18"))
+				else if (gameinfo.RatingValue == "18")
 					m_rating.fromPNG(pegi_18_png);
 				else
 					m_rating.fromPNG(norating_png);
@@ -393,29 +374,29 @@ void CMenu::_textGameInfo(void)
 				break;
 		}	
 
-		m_btnMgr.setTexture(m_gameinfoLblRating ,m_rating);
+		m_btnMgr.setTexture(m_gameinfoLblRating, m_rating);
 		
 		//Wifi players
 		STexture emptyTex;
-		if(gameinfo.wifiplayers == 1)
+		if (gameinfo.WifiPlayers == 1)
 			m_wifi.fromPNG(wifi1_png);
-		else if(gameinfo.wifiplayers == 2)
+		else if (gameinfo.WifiPlayers == 2)
 			m_wifi.fromPNG(wifi2_png);
-		else if(gameinfo.wifiplayers == 4)
+		else if (gameinfo.WifiPlayers == 4)
 			m_wifi.fromPNG(wifi4_png);
-		else if(gameinfo.wifiplayers == 8)
+		else if (gameinfo.WifiPlayers == 8)
 			m_wifi.fromPNG(wifi8_png);
-		else if(gameinfo.wifiplayers == 12)
+		else if (gameinfo.WifiPlayers == 12)
 			m_wifi.fromPNG(wifi12_png);
-		else if(gameinfo.wifiplayers == 16)
+		else if (gameinfo.WifiPlayers == 16)
 			m_wifi.fromPNG(wifi16_png);
-		else if(gameinfo.wifiplayers == 32)
+		else if (gameinfo.WifiPlayers == 32)
 			m_wifi.fromPNG(wifi32_png);
 
-		if(gameinfo.wifiplayers > 0)
-			m_btnMgr.setTexture(m_gameinfoLblWifiplayers ,m_wifi);
+		if(gameinfo.WifiPlayers > 0)
+			m_btnMgr.setTexture(m_gameinfoLblWifiplayers, m_wifi);
 		else 
-			m_btnMgr.setTexture(m_gameinfoLblWifiplayers ,emptyTex);
+			m_btnMgr.setTexture(m_gameinfoLblWifiplayers, emptyTex);
 
 		u8 wiimote=0,
 			nunchuk=0,
@@ -430,21 +411,23 @@ void CMenu::_textGameInfo(void)
 			wheel=0;
 		
 		//check required controlls
-		for (u8 i=0;i<16;i++)
+		for (safe_vector<Accessoire>::iterator acc_itr = gameinfo.Accessoires.begin(); acc_itr != gameinfo.Accessoires.end(); acc_itr++)
 		{
-			if (strcmp(gameinfo.accessoriesReq[i],"wiimote")==0)
+			if (!(*acc_itr).Required) continue;
+			
+			if ((*acc_itr).Name == "wiimote")
                 wiimote=1;
-            if (strcmp(gameinfo.accessoriesReq[i],"nunchuk")==0)
+            if ((*acc_itr).Name == "nunchuk")
                 nunchuk=1;
-            if (strcmp(gameinfo.accessoriesReq[i],"guitar")==0)
+            if ((*acc_itr).Name == "guitar")
                 guitar=1;
-            if (strcmp(gameinfo.accessoriesReq[i],"drums")==0)
+            if ((*acc_itr).Name == "drums")
                 drums=1;
-            if (strcmp(gameinfo.accessoriesReq[i],"dancepad")==0)
+            if ((*acc_itr).Name == "dancepad")
                 dancepad=1;
-            if (strcmp(gameinfo.accessoriesReq[i],"motionplus")==0)
+            if ((*acc_itr).Name == "motionplus")
                 motionplus=1;
-            if (strcmp(gameinfo.accessoriesReq[i],"balanceboard")==0)
+            if ((*acc_itr).Name == "balanceboard")
                 balanceboard=1;
         }
 
@@ -453,19 +436,19 @@ void CMenu::_textGameInfo(void)
 		
 		if(wiimote && x < max_controlsReq)
 		{
-			u8 players = gameinfo.players;
-			if ( gameinfo.players >= 10)
+			u8 players = gameinfo.Players;
+			if (gameinfo.Players >= 10)
 				players = players/10;
 
-			if(players == 1)
+			if (players == 1)
 				m_controlsreq[x].fromPNG(wiimote1_png);
-			else if(players == 2)
+			else if (players == 2)
 				m_controlsreq[x].fromPNG(wiimote2_png);
-			else if(players == 3)
+			else if (players == 3)
 				m_controlsreq[x].fromPNG(wiimote3_png);
-			else if(players == 4)
+			else if (players == 4)
 				m_controlsreq[x].fromPNG(wiimote4_png);
-			else if(players == 8)
+			else if (players == 8)
 				m_controlsreq[x].fromPNG(wiimote8_png);
 
 			m_btnMgr.setTexture(m_gameinfoLblControlsReq[x] ,m_controlsreq[x], 20, 60);
@@ -526,27 +509,29 @@ void CMenu::_textGameInfo(void)
 		microphone=0,
 		wheel=0;
 
-		for (u8 i=0;i<16;i++)
+		for (safe_vector<Accessoire>::iterator acc_itr = gameinfo.Accessoires.begin(); acc_itr != gameinfo.Accessoires.end(); acc_itr++)
 		{
-            if (strcmp(gameinfo.accessories[i],"classiccontroller")==0)
+			if ((*acc_itr).Required) continue;
+		
+            if ((*acc_itr).Name == "classiccontroller")
                 classiccontroller=1;
-            if (strcmp(gameinfo.accessories[i],"nunchuk")==0)
+            if ((*acc_itr).Name == "nunchuk")
                 nunchuk=1;
-            if (strcmp(gameinfo.accessories[i],"guitar")==0)
+            if ((*acc_itr).Name == "guitar")
                 guitar=1;
-            if (strcmp(gameinfo.accessories[i],"drums")==0)
+            if ((*acc_itr).Name == "drums")
                 drums=1;
-            if (strcmp(gameinfo.accessories[i],"dancepad")==0)
+            if ((*acc_itr).Name == "dancepad")
                 dancepad=1;
-            if (strcmp(gameinfo.accessories[i],"motionplus")==0)
+            if ((*acc_itr).Name == "motionplus")
                 motionplus=1;
-            if (strcmp(gameinfo.accessories[i],"balanceboard")==0)
+            if ((*acc_itr).Name == "balanceboard")
                 balanceboard=1;
-            if (strcmp(gameinfo.accessories[i],"microphone")==0)
+            if ((*acc_itr).Name == "microphone")
                 microphone=1;
-            if (strcmp(gameinfo.accessories[i],"gamecube")==0)
+            if ((*acc_itr).Name == "gamecube")
                 gamecube=1;
-			if (strcmp(gameinfo.accessories[i],"wheel")==0)
+			if ((*acc_itr).Name == "wheel")
                 wheel=1;
         }
 		

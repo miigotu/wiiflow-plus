@@ -1,5 +1,6 @@
 #include "gcard.h"
 #include "http.h"
+#include "utils.h"
 
 #include <malloc.h>
 #include <string.h>
@@ -42,8 +43,6 @@ u8 has_enabled_providers()
 	}
 	return 0;
 }
-
-extern bool str_replace(char *str, char *olds, char *news, int size); // In xml.c
 
 bool registering;
 

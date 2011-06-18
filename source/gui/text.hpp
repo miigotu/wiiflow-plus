@@ -56,6 +56,7 @@ const char *fmt(const char *format, ...);
 std::string sfmt(const char *format, ...);
 wstringEx wfmt(const wstringEx &format, ...);
 bool checkFmt(const wstringEx &ref, const wstringEx &format);
+std::string vectorToString(const safe_vector<std::string> &vect, std::string sep);
 wstringEx vectorToString(const safe_vector<wstringEx> &vect, char sep);
 safe_vector<wstringEx> stringToVector(const wstringEx &text, char sep);
 safe_vector<std::string> stringToVector(const std::string &text, char sep);

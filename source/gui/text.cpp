@@ -110,6 +110,18 @@ wstringEx wfmt(const wstringEx &format, ...)
 	return ws;
 }
 
+string vectorToString(const safe_vector<string> &vect, string sep)
+{
+	string s;
+	for (u32 i = 0; i < vect.size(); ++i)
+	{
+		if (i > 0)
+			s.append(sep);
+		s.append(vect[i]);
+	}
+	return s;
+}
+
 wstringEx vectorToString(const safe_vector<wstringEx> &vect, char sep)
 {
 	wstringEx s;

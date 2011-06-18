@@ -132,9 +132,9 @@ int CMenu::main(void)
 		_initAsyncNetwork();
 
 	SetupInput();
-	_loadList();
+	m_wiitdb.OpenFile(sfmt("%s/wiitdb.xml", m_settingsDir.c_str()).c_str());
 	MusicPlayer::Instance()->Play();
-	_updateWiiTDB();
+	_loadList();
 	_showMain();
 	m_curGameId.clear();
 	_initCF();
@@ -227,7 +227,7 @@ int CMenu::main(void)
 			//Search by Alphabet
 			if (BTN_DOWN_PRESSED)
 			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA) // && m_titles_loaded)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
@@ -240,7 +240,7 @@ int CMenu::main(void)
 			}
 			else if (BTN_UP_PRESSED)
 			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA) // && m_titles_loaded)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
@@ -257,7 +257,7 @@ int CMenu::main(void)
 			else if (BTN_RIGHT_PRESSED)
 				MusicPlayer::Instance()->Next();
 			//Sorting Selection
-			else if (BTN_PLUS_PRESSED && !m_locked && m_titles_loaded)
+			else if (BTN_PLUS_PRESSED && !m_locked) // && m_titles_loaded)
 			{
 				u32 sort = 0;
 				sort = m_cfg.getInt("GENERAL", "sort", 0);
@@ -325,7 +325,7 @@ int CMenu::main(void)
 			*/
 			else if (m_btnMgr.selected(m_mainBtnPrev))
 			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA) // && m_titles_loaded)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
@@ -338,7 +338,7 @@ int CMenu::main(void)
 			}
 		 	else if (m_btnMgr.selected(m_mainBtnNext))
 			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA && m_titles_loaded)
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA) // && m_titles_loaded)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
