@@ -2,11 +2,33 @@
 #include "gecko.h"
 
 template <typename T>
-void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs, u32 *cnt)
+void CList<T>::CountGames(string directory, bool wbfs_fs, u32 *cnt)
+{
+	if (!wbfs_fs) 
+	{
+		u32 count = 0;
+		DIR_ITER *dir_itr = diropen(directory.c_str());
+		if (!dir_itr) return;
+	
+		char entry[1024] = {0};
+		struct stat filestat;
+	
+		while(dirnext(dir_itr, entry, &filestat) == 0)
+		{
+			if (entry[0] == '.') continue;
+			if (strlen(entry) < 6) continue;
+			count++;
+		}
+		
+		*cnt = count - 1;
+	}
+}
+
+template <typename T>
+void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs)
 {
 	if (!wbfs_fs)
 	{
-		u32 count = -1;
 		/* Open primary directory */
 		DIR_ITER *dir_itr = diropen(directory.c_str());
 		if (!dir_itr) return;
@@ -21,9 +43,7 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 		while(dirnext(dir_itr, entry, &filestat) == 0)
 		{
 			if (entry[0] == '.') continue;
-			if (strlen(entry) < 6) continue;
-			
-			count++;
+			if (strlen(entry) < 6) continue;			
 
 			if(!S_ISDIR(filestat.st_mode))
 			{
@@ -40,7 +60,6 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 			}
 		}
 		dirclose(dir_itr);
-		*cnt = count;
 
 		if(temp_pathlist.size() > 0)
 		{
@@ -145,12 +164,6 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				headerlist.push_back(tmp);
 				continue;
 			}
-			
-			/*if(tmp.hdr.id[0] != 0)
-			{
-				headerlist.push_back(tmp);
-				continue;
-			}*/
 
 			FILE *fp = fopen((*itr).c_str(), "rb");
 			if (fp)

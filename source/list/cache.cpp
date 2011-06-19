@@ -117,7 +117,10 @@ void CCache<T>::LoadAll(safe_vector<T> &list, u32 *count, u32 realcount)
 
 	*count = fileSize / sizeof(T);
 	
-	if(*count != realcount) return;
+	if(*count != realcount) {
+		remove(filename.c_str());
+		return;
+	}
 	
 	list.reserve(*count + list.size());
 	for(u32 i = 0; i < *count; i++)

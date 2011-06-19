@@ -25,7 +25,8 @@ class CList
     public:
 		 CList(){};
 		~CList(){};
-		void GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs = false, u32 *cnt = 0);
+		void CountGames(string directory, bool wbfs_fs, u32 *cnt);
+		void GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs = false);
 		void GetHeaders(safe_vector<string> pathlist, safe_vector<T> &headerlist, findtitle_callback_t callback = NULL, void *callback_data = NULL);
 	private:
 		void Check_For_ID(u8 *id, string path, string one, string two);
