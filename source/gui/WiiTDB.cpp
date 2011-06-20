@@ -26,7 +26,7 @@
 #include <string>
 #include <cstring>
 #include "WiiTDB.hpp"
-#include "Config.hpp"
+#include "config.hpp"
 #include "video.hpp"
 #include "gecko.h"
 
