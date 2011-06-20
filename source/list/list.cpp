@@ -157,13 +157,13 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 
 			// Use a callback to menu.cpp (or something like that) to find the title in titles.ini
 			// If found, use that!
-			if (callback != NULL && callback(callback_data, tmp.hdr.id, tmp.hdr.title, 64))
+			/*if (callback != NULL && callback(callback_data, tmp.hdr.id, tmp.hdr.title, 64))
 			{
 				gprintf("Callback executed, game found\n");
 				tmp.hdr.magic = 0x5D1C9EA3;
 				headerlist.push_back(tmp);
 				continue;
-			}
+			}*/
 
 			FILE *fp = fopen((*itr).c_str(), "rb");
 			if (fp)
@@ -224,7 +224,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			if (!handle) return;
 
 			s32 ret = wbfs_get_disc_info(handle, count, (u8 *)&tmp.hdr, sizeof(struct discHdr), NULL);
-		
+			count++;
 			if(ret != 0) continue;
 			
 			if (tmp.hdr.magic == 0x5D1C9EA3	&& memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) != 0)

@@ -6,7 +6,7 @@
 #include <sys/types.h> 
 #include <sys/param.h> 
 #include <sys/stat.h> 
-#include <unistd.h> 
+#include <unistd.h>
 
 #include "DeviceHandler.hpp"
 #include "safe_vector.hpp"

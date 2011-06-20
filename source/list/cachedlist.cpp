@@ -5,7 +5,7 @@ void CachedList<T>::Load(string path, string containing, findtitle_callback_t ca
 {
 	gprintf("\nLoading files containing %s in %s\n", containing.c_str(), path.c_str());
 	m_loaded = false;
-	m_database = sfmt("%s/%s.db"/* "%s/%s_i.db" */, m_cacheDir.c_str(), (make_db_name(path)).c_str()/*,  disk guid (4) */);
+	m_database = sfmt("%s/%s.db", m_cacheDir.c_str(), (make_db_name(path)).c_str());
 	
 	gprintf("Database file: %s\n", m_database.c_str());
 	m_wbfsFS = strncasecmp(DeviceHandler::Instance()->PathToFSName(path.c_str()), "WBFS", 4) == 0;
