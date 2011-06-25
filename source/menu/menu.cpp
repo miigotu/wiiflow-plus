@@ -1629,20 +1629,12 @@ void CMenu::_load_installed_cioses()
 			if (tmd_buf[4] == 0 && (version < 100 || version == 0xFFFF || (version > D2X_MIN_VERSION && version < D2X_MAX_VERSION))) // Signature is empty
 			{
 				// Probably an cios
-				SIOS s;
-				s.ios = title_l;
-				s.ar_index = get_ios_info(s_tmd, tmd_size);
-				_installed_cios.push_back(s);
+				_installed_cios.push_back(title_l);
 			}
 		}
 	}
 	
-	sort(_installed_cios.begin(), _installed_cios.end(), CMenu::_sortByIOS);
-}
-
-bool CMenu::_sortByIOS(SIOS item1, SIOS item2)
-{
-	return item1.ios > item2.ios;
+	sort(_installed_cios.begin(), _installed_cios.end());
 }
 
 void CMenu::_hideWaitMessage()

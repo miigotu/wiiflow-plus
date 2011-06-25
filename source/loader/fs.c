@@ -33,5 +33,12 @@ u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length)
 		}
 		ISFS_Close(fd);
 	}
+
+	if (*size > 0)
+	{
+		DCFlushRange(buf, *size);
+		ICInvalidateRange(buf, *size);
+	}
+	
 	return buf;
 }

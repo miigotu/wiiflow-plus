@@ -3,7 +3,6 @@
 
 #include "loader/sys.h"
 #include "loader/wbfs.h"
-#include "loader/ios_base.h"
 #include "gecko.h"
 #include "lockMutex.hpp"
 #include "defines.h"
@@ -295,13 +294,14 @@ void CMenu::_initSystemMenu(CMenu::SThemeData &theme)
 
 void CMenu::_textSystem(void)
 {
-	u32 index = get_ios_info_from_tmd();
+	u32 ver;
+	char* InfoIos=get_iosx_info_from_tmd(mainIOS, &ver);
 
 	m_btnMgr.setText(m_systemLblTitle, _t("sys1", L"System"));
 	m_btnMgr.setText(m_systemLblVersionTxt, _t("sys2", L"WiiFlow Version:"));
 	m_btnMgr.setText(m_systemLblVersion, wfmt(L"v%s r%s", APP_VERSION, SVN_REV).c_str());
 	m_btnMgr.setText(m_systemLblIOSTxt, _t("sys6", L"IOS Version:"));
-	m_btnMgr.setText(m_systemLblIOS, wfmt(L"%i v%i (%i)", mainIOS, index == 0xFF ? mainIOSRev : atoi(revs[index]), m_loaded_ios_base).c_str());
+	m_btnMgr.setText(m_systemLblIOS, wfmt(L"%i %i", mainIOS, InfoIos).c_str());
 	m_btnMgr.setText(m_systemBtnBack, _t("sys3", L"Cancel"));
 	m_btnMgr.setText(m_systemBtnDownload, _t("sys4", L"Upgrade"));
 	i = min((u32)version_num, ARRAY_SIZE(CMenu::_version) -1u);

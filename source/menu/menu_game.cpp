@@ -127,7 +127,7 @@ const CMenu::SOption CMenu::_hooktype[8] = {
 
 const int CMenu::_ios[6] = {0, 249, 250, 222, 223, 224};
 
-safe_vector<CMenu::SIOS> CMenu::_installed_cios;
+safe_vector<u32> CMenu::_installed_cios;
 
 wdm_entry_t *wdm_entry = NULL;
 u32 current_wdm = 0;

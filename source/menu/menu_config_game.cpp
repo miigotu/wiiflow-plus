@@ -2,7 +2,7 @@
 #include "libwbfs/wiidisc.h"
 #include "menu.hpp"
 
-#include "loader/ios_base.h"
+#include "loader/sys.h"
 #include "gecko.h"
 
 #define ARRAY_SIZE(a)	(sizeof a / sizeof a[0])
@@ -314,17 +314,18 @@ void CMenu::_showGameSettings(void)
 		m_gcfg2.setInt(id, "ios", CMenu::_ios[iosIdx]);
 	}
 
-	safe_vector<SIOS>::iterator itr = _installed_cios.end();
+	safe_vector<u32>::iterator itr = _installed_cios.end();
 	i = mainIOS;
 	if (m_gcfg2.getInt(id, "ios", &i) && (itr = find(_installed_cios.begin(), _installed_cios.end(), i)) == _installed_cios.end())
 	{
 		i = mainIOS;
 	}
-
+	u32 ver;
+	char* InfoIos=get_iosx_info_from_tmd(i, &ver);
 	if (i == mainIOS)
-		m_btnMgr.setText(m_gameSettingsLblIOS, _t("def", L"Default"));
-	else if ((*itr).ar_index != 0xFF)
-		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i %sb%s", i, revs[(*itr).ar_index], bases[(*itr).ar_index])));
+		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("Default (%i %s)", i, InfoIos)));
+	else if (InfoIos != NULL)
+		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i %s", i, InfoIos)));
 	else
 		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i", i)));
 		
@@ -466,27 +467,27 @@ void CMenu::_gameSettings(void)
 			else if (m_btnMgr.selected(m_gameSettingsBtnIOSM))
 			{
 				int currentIOS = m_gcfg2.getInt(id, "ios", mainIOS);
-				safe_vector<SIOS>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
+				safe_vector<u32>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
 				if (itr == _installed_cios.end()) // Not found, strange...
 					itr = find(_installed_cios.begin(), _installed_cios.end(), mainIOS);
 				itr++;
 				if (itr == _installed_cios.end())
 					itr = _installed_cios.begin();
 				
-				m_gcfg2.setInt(id, "ios", (*itr).ios);
+				m_gcfg2.setInt(id, "ios", (*itr));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnIOSP))
 			{
 				int currentIOS = m_gcfg2.getInt(id, "ios", mainIOS);
-				safe_vector<SIOS>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
+				safe_vector<u32>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
 				if (itr == _installed_cios.end()) // Not found, strange...
 					itr = find(_installed_cios.begin(), _installed_cios.end(), mainIOS);
 				if (itr == _installed_cios.begin())
 					itr = _installed_cios.end();
 				itr--;
 				
-				m_gcfg2.setInt(id, "ios", (*itr).ios);
+				m_gcfg2.setInt(id, "ios", (*itr));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP))

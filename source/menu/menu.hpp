@@ -809,17 +809,7 @@ private:
 	static const SOption _hooktype[8];
 	static const SOption _exitTo[5];
 	static const int _ios[6];
-	struct SIOS 
-	{ 
-		u32 ios; 
-		u32 ar_index; 
-		bool operator==(const u32& i) const
-		{
-			return ios == i;
-		}		
-	};
-	static safe_vector<SIOS> _installed_cios;
-	static bool _sortByIOS(SIOS item1, SIOS item2);
+	static safe_vector<u32> _installed_cios;
 	static int _version[9];
 	static const SCFParamDesc _cfParams[];
 	static const int _nbCfgPages;

@@ -39,16 +39,30 @@ extern "C" {
 	bool Sys_SupportsExternalModule(bool part_select);
 
 	s32  Sys_GetCerts(signed_blob **, u32 *);
-
+    s32 GetTMD(u64 TicketID, signed_blob **Output,  u32 *Length);
+	
 	void Open_Inputs(void);
 	void Close_Inputs(void);
-
+    char* str_seek_end(char **str, int *size);
 	int get_ios_type();
 	int is_ios_type(int type);
 
-	u32 get_ios_info_from_tmd();
+	void get_all_ios_info_str(int i, char *str, int size);
+	char* get_ios_info_from_tmd();
 	u32 get_ios_info(signed_blob *TMD, u32 size);
+	char* get_iosx_info_from_tmd(int ios_slot, u32 *version);
 	bool shadow_mload();
+
+typedef struct _iosinfo_t {
+        u32 magicword; //0x1ee7c105
+        u32 magicversion; // 1
+        u32 version; // Example: 5
+        u32 baseios; // Example: 56
+        char name[0x10]; // Example: d2x
+        char versionstring[0x10]; // Example: beta2
+} __attribute__((packed)) iosinfo_t;
+
+bool get_iosinfo(int ios, signed_blob *TMD, iosinfo_t *iosinfo);
 
 #ifdef __cplusplus
 }
