@@ -27,7 +27,7 @@ s32 FS_DeleteDir(const char *dirpath)
 		sprintf(newpath,"%s/%s", dirpath, ent->d_name);
 
 		/* Delete directory contents */
-		if (S_ISDIR(ent->d_type))
+		if (ent->d_type == DT_DIR)
 			FS_DeleteDir(newpath);
 
 		/* Delete object */

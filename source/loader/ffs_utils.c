@@ -66,7 +66,7 @@ static s32 scan_for_shared2(const char *dirpath)
 
 		/* Non valid entry */
 		if (ent->d_name[0]=='.') continue;
-		if(S_ISDIR(ent->d_type)) continue;
+		if (ent->d_type != DT_REG) continue;
 
 		//lower_caps(filename);
 
@@ -515,7 +515,7 @@ void FFS_Install(bool is_usb)
 		/* Non valid entry */
 		if(ent->d_name[0] == '.') continue;
 
-		if(!S_ISDIR(ent->d_type)) 
+		if(ent->d_type == DT_REG)
 		{
 			//lower_caps(filename);
 

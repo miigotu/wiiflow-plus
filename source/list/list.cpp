@@ -36,7 +36,6 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 		safe_vector<string> compares = stringToVector(containing, '|');
 		safe_vector<string> temp_pathlist;
 
-		char entry[1024] = {0};
 		struct dirent *ent;
 
 		/* Read primary entries */
@@ -45,7 +44,7 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 			if (ent->d_name[0] == '.') continue;
 			if (strlen(ent->d_name) < 6) continue;			
 
-			if(!S_ISDIR(ent->d_type))
+			if(ent->d_type == DT_REG)
 			{
 				for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
 					if (strcasestr(ent->d_name, (*compare).c_str()) != NULL)
@@ -71,7 +70,7 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 				/* Read secondary entries */
 				while((ent = readdir(dir_itr)) != NULL)
 				{
-					if(S_ISDIR(ent->d_type)) continue;
+					if(ent->d_type != DT_REG) continue;
 					if (strlen(ent->d_name) < 8) continue;
 
 					for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
@@ -107,7 +106,7 @@ void CList<string>::GetHeaders(safe_vector<string> pathlist, safe_vector<string>
 }
 
 template <>
-void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist, findtitle_callback_t callback, void *callback_data)
+void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist, findtitle_callback_t /*callback*/, void */*callback_data*/)
 {
 	dir_discHdr tmp;
 	u32 count = 0;
