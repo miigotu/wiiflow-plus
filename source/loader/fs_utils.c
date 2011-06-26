@@ -4,29 +4,30 @@
 s32 FS_DeleteDir(const char *dirpath)
 {
 	/* Open directory */
-	DIR_ITER *dir;
-	dir = diropen(dirpath);
+	DIR *dir;
+	dir = opendir(dirpath);
 	if (!dir) return -1;
 
 	/* Read entries */
 	while(1)
 	{
-		char filename[256], newpath[256];
-		struct stat filestat;
+		char newpath[256];
+		struct dirent *ent;
 
 		/* Read entry */
-		if (dirnext(dir, filename, &filestat)) break;
+		ent = readdir(dir);
+		if (ent == NULL) break;
 
 		/* Non valid entry */
-		if (filename[0] == '.') continue;
+		if (ent->d_name[0] == '.') continue;
 
-		//lower_caps(filename);
+		//lower_caps(ent->d_name);
 
 		/* Generate entry path */
-		sprintf(newpath,"%s/%s", dirpath, filename);
+		sprintf(newpath,"%s/%s", dirpath, ent->d_name);
 
 		/* Delete directory contents */
-		if (S_ISDIR(filestat.st_mode))
+		if (S_ISDIR(ent->d_type))
 			FS_DeleteDir(newpath);
 
 		/* Delete object */
@@ -37,7 +38,7 @@ s32 FS_DeleteDir(const char *dirpath)
 		}
 	}
 	/* Close directory */
-	dirclose(dir);
+	closedir(dir);
 	return 0;
 }
 
