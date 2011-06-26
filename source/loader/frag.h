@@ -28,7 +28,7 @@ typedef struct
 
 typedef int (*frag_append_t)(void *ff, u32 offset, u32 sector, u32 count);
 
-int _FAT_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
+//int _FAT_get_fragments (const char *path, _frag_append_t append_fragment, void *callback_data);
 
 void frag_init(FragList *ff, int maxnum);
 void frag_dump(FragList *ff);

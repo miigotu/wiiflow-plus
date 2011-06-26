@@ -39,7 +39,8 @@ static int shared_entries = 0;
 
 static s32 scan_for_shared2(const char *dirpath)
 {
-	DIR_ITER *dir;
+	DIR *dir;
+	struct dirent *ent;
 
 	void *title_tmd;
 	int title_tmd_len, n, m;
@@ -51,31 +52,31 @@ static s32 scan_for_shared2(const char *dirpath)
 	u32 title_id;
 
 	/* Open directory */
-	dir = diropen(dirpath);
+	dir = opendir(dirpath);
 	if (!dir) return -1;
 
 	/* Read entries */
 	while(1)
 	{
-		char filename[256], newpath[256];
-		struct stat filestat;
+		char newpath[256];
 
 		/* Read entry */
-		if (dirnext(dir, filename, &filestat)) break;
+		ent = readdir(dir);
+		if (ent == NULL) break;
 
 		/* Non valid entry */
-		if (filename[0]=='.') continue;
-		if(S_ISDIR(filestat.st_mode)) continue;
+		if (ent->d_name[0]=='.') continue;
+		if(S_ISDIR(ent->d_type)) continue;
 
 		//lower_caps(filename);
 
 		/* Generate entry path */
-		sprintf(newpath,"%s/%s/content/#title.tmd", dirpath, filename);
+		sprintf(newpath,"%s/%s/content/#title.tmd", dirpath, ent->d_name);
 		n = FS_Read_File(newpath, &title_tmd, &title_tmd_len);
 		if(n < 0)
 		{
 			/* Generate entry path */
-			sprintf(newpath,"%s/%s/content/title.tmd", dirpath, filename);
+			sprintf(newpath,"%s/%s/content/title.tmd", dirpath, ent->d_name);
 			n = FS_Read_File(newpath, &title_tmd, &title_tmd_len);
 		}
 		if(n == 0)
@@ -114,7 +115,7 @@ static s32 scan_for_shared2(const char *dirpath)
 					if((u32) title_ios > (u32)shared_list[m].ios)
 					{
 						FILE *fp;
-						sprintf(newpath,"%s/%s/content/%08x.app", dirpath, filename, Content[n].cid);
+						sprintf(newpath,"%s/%s/content/%08x.app", dirpath, ent->d_name, Content[n].cid);
 
 						// if content exist update
 						fp=fopen(newpath, "r");
@@ -138,7 +139,7 @@ static s32 scan_for_shared2(const char *dirpath)
 	}
 
 	/* Close directory */
-	dirclose(dir);
+	closedir(dir);
 	return 0;
 }
 
@@ -236,7 +237,7 @@ int FFS_Install_Wad(char *filename, bool is_usb)
 	char dir_path[256], *tik = NULL;
 	void *mem=NULL, *decrypt = NULL;
 	u8 title_key[16], *tmd_data = NULL;
-	int offset, error=0, wad_length=0, delete_content=0;
+	int offset, error=0, delete_content=0;
 
 	/* Open wad */
 	fp_in = fopen(filename, "r");
@@ -279,9 +280,7 @@ int FFS_Install_Wad(char *filename, bool is_usb)
 		error = 2;
 		goto error;
 	}
-	fseek(fp_in, 0, SEEK_END);
-	wad_length = ftell(fp_in);
-	fseek(fp_in, offset, SEEK_SET);
+
 	if(fread(tmd_data, 1, header->tmd_len, fp_in) != header->tmd_len)
 	{
 		error = 3;
@@ -485,12 +484,12 @@ error:
 void FFS_Install(bool is_usb)
 {
 	char dir_path[256];
-	DIR_ITER *dir;
+	DIR *dir;
 
 	/* Be sure device is present */
-	dir = diropen(is_usb ? "usb:" : "sd:");
+	dir = opendir(is_usb ? "usb:" : "sd:");
 	if (!dir) return;
-	dirclose(dir);	
+	closedir(dir);	
 
    /* Make sure necessary folders exist */
 	sprintf(dir_path, "%s/shared/00010001", is_usb ? "usb:" : "sd:");
@@ -500,42 +499,43 @@ void FFS_Install(bool is_usb)
 	makedir(dir_path);
 	
 	/* Open directory */
-	dir = diropen(dir_path);
+	dir = opendir(dir_path);
 	if(!dir) return;
 	
 	/* Read entries */
 	while(1)
 	{
-		char filename[256], newpath[256];
-		struct stat filestat;
+		char newpath[256];
+		struct dirent *ent;
 
 		/* Read entry */
-		if(dirnext(dir, filename, &filestat)) break;
+		ent = readdir(dir);
+		if(ent == NULL) break;
 
 		/* Non valid entry */
-		if(filename[0] == '.') continue;
+		if(ent->d_name[0] == '.') continue;
 
-		if(!S_ISDIR(filestat.st_mode)) 
+		if(!S_ISDIR(ent->d_type)) 
 		{
 			//lower_caps(filename);
 
 			/* Check if the file is a wad */
-			if(strcasecmp(filename, ".wad") != 0) continue;
+			if(strcasecmp(ent->d_name, ".wad") != 0) continue;
 
 			gprintf("Installing wads from %s to %s.", is_usb ? "USB" : "SD", "emulated nand"/* add path here */); 
-			sprintf(newpath,"%s/%s", dir_path, filename);
+			sprintf(newpath,"%s/%s", dir_path, ent->d_name);
 
-			gprintf("Installing %s title", filename);
+			gprintf("Installing %s title", ent->d_name);
 
 			if(FFS_Install_Wad(newpath, is_usb) < 0)
-				gprintf("Error Installing %s", filename);
+				gprintf("Error Installing %s", ent->d_name);
 			else
 			{
 				/* Delete the wad after install */
-				sprintf(newpath,"%s/%s", dir_path, filename);
+				sprintf(newpath,"%s/%s", dir_path, ent->d_name);
 				remove(newpath);
 			}
 		}
 	}
-	dirclose(dir);
+	closedir(dir);
 }

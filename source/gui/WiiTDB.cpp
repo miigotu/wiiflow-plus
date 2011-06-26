@@ -29,9 +29,9 @@
 #include "config.hpp"
 #include "video.hpp"
 #include "gecko.h"
+#include "defines.h"
 
 #define NAME_OFFSET_DB  "wiitdb_offsets.bin"
-#define TITLES_INI		"titles.ini"
 #define MAXREADSIZE     1024*1024   // Cache size only for parsing the offsets: 1MB
 
 typedef struct _ReplaceStruct
@@ -237,13 +237,13 @@ bool WiiTDB::CheckTitlesIni(const char * path)
     string TitlesPath = path;
     if(strlen(path) > 0 && path[strlen(path)-1] != '/')
         TitlesPath += '/';
-    TitlesPath += TITLES_INI;
+    TitlesPath += TITLES_FILENAME;
 	
     unsigned long long ExistingVersion = GetWiiTDBVersion();
 
 	Config titles;
 	bool update = !titles.load(TitlesPath.c_str()) || strtoull(titles.getString("GENERAL", "version", "0").c_str(), NULL, 10) != ExistingVersion;
-	titles.clear();
+	titles.unload();
 
 	return update ? ParseFile(path) : true;
 }
@@ -447,7 +447,7 @@ bool WiiTDB::ParseFile(const char * path)
     string TitlesPath = path;
     if(strlen(path) > 0 && path[strlen(path)-1] != '/')
         TitlesPath += '/';
-    TitlesPath += TITLES_INI;
+    TitlesPath += TITLES_FILENAME;
 
 	remove(TitlesPath.c_str());
 

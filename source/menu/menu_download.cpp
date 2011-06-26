@@ -4,6 +4,7 @@
 #include "loader/wbfs.h"
 #include "http.h"
 #include "pngu.h"
+#include "defines.h"
 
 #include "loader/fs.h"
 #include "loader/wdvd.h"
@@ -1131,7 +1132,7 @@ int CMenu::_titleDownloader(bool missingOnly)
 		return 0;
 	}
 
-	titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str());
+	titles.load(sfmt("%s/" TITLES_FILENAME, m_settingsDir.c_str()).c_str());
 	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);

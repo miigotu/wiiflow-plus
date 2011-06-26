@@ -7,18 +7,18 @@ void CList<T>::CountGames(string directory, bool wbfs_fs, u32 *cnt)
 	if (!wbfs_fs) 
 	{
 		u32 count = 0;
-		DIR_ITER *dir_itr = diropen(directory.c_str());
+		DIR *dir_itr = opendir(directory.c_str());
 		if (!dir_itr) return;
 	
-		char entry[1024] = {0};
-		struct stat filestat;
-	
-		while(dirnext(dir_itr, entry, &filestat) == 0)
+		struct dirent *ent;
+		
+		while((ent = readdir(dir_itr)) != NULL)
 		{
-			if (entry[0] == '.') continue;
-			if (strlen(entry) < 6) continue;
+			if (ent->d_name[0] == '.') continue;
+			if (strlen(ent->d_name) < 6) continue;
 			count++;
 		}
+		closedir(dir_itr);
 		
 		*cnt = count - 1;
 	}
@@ -30,58 +30,58 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 	if (!wbfs_fs)
 	{
 		/* Open primary directory */
-		DIR_ITER *dir_itr = diropen(directory.c_str());
+		DIR *dir_itr = opendir(directory.c_str());
 		if (!dir_itr) return;
 
 		safe_vector<string> compares = stringToVector(containing, '|');
 		safe_vector<string> temp_pathlist;
 
 		char entry[1024] = {0};
-		struct stat filestat;
+		struct dirent *ent;
 
 		/* Read primary entries */
-		while(dirnext(dir_itr, entry, &filestat) == 0)
+		while((ent = readdir(dir_itr)) != NULL)
 		{
-			if (entry[0] == '.') continue;
-			if (strlen(entry) < 6) continue;			
+			if (ent->d_name[0] == '.') continue;
+			if (strlen(ent->d_name) < 6) continue;			
 
-			if(!S_ISDIR(filestat.st_mode))
+			if(!S_ISDIR(ent->d_type))
 			{
 				for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
-					if (strcasestr(entry, (*compare).c_str()) != NULL)
+					if (strcasestr(ent->d_name, (*compare).c_str()) != NULL)
 					{
-						pathlist.push_back(sfmt("%s/%s", directory.c_str(), entry));
+						pathlist.push_back(sfmt("%s/%s", directory.c_str(), ent->d_name));
 						break;
 					}
 			}
 			else
 			{
-				temp_pathlist.push_back(sfmt("%s/%s", directory.c_str(), entry));
+				temp_pathlist.push_back(sfmt("%s/%s", directory.c_str(), ent->d_name));
 			}
 		}
-		dirclose(dir_itr);
+		closedir(dir_itr);
 
 		if(temp_pathlist.size() > 0)
 		{
 			for(safe_vector<string>::iterator templist = temp_pathlist.begin(); templist != temp_pathlist.end(); templist++)
 			{
-				dir_itr = diropen((*templist).c_str());
+				dir_itr = opendir((*templist).c_str());
 				if (!dir_itr) continue;
 
 				/* Read secondary entries */
-				while(dirnext(dir_itr, entry, &filestat) == 0)
+				while((ent = readdir(dir_itr)) != NULL)
 				{
-					if(S_ISDIR(filestat.st_mode)) continue;
-					if (strlen(entry) < 8) continue;
+					if(S_ISDIR(ent->d_type)) continue;
+					if (strlen(ent->d_name) < 8) continue;
 
 					for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
-						if (strcasestr(entry, (*compare).c_str()) != NULL)
+						if (strcasestr(ent->d_name, (*compare).c_str()) != NULL)
 						{
-							pathlist.push_back(sfmt("%s/%s", (*templist).c_str(), entry));							
+							pathlist.push_back(sfmt("%s/%s", (*templist).c_str(), ent->d_name));
 							break;
 						}
 				}
-				dirclose(dir_itr);
+				closedir(dir_itr);
 			}
 		}
 	}

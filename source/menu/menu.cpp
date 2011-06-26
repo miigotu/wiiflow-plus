@@ -1111,6 +1111,9 @@ void CMenu::_initCF(void)
  	m_gamelistdump = m_cfg.getBool("GENERAL", m_current_view == COVERFLOW_USB ? "dump_gamelist" : "dump_chanlist", true);
 	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
 
+	if (!m_titles.loaded()) m_titles.load(sfmt("%s/" TITLES_FILENAME, m_settingsDir.c_str()).c_str());
+	if (!m_custom_titles.loaded()) m_custom_titles.load(sfmt("%s/" CTITLES_FILENAME, m_settingsDir.c_str()).c_str());
+
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
 	for (u32 i = 0; i < m_gameList.size(); ++i)
 	{
@@ -1465,11 +1468,8 @@ bool CMenu::_loadList(void)
 
 	if (m_current_view != COVERFLOW_HOMEBREW)
 	{
-		bool load_titles = m_titles.load(sfmt("%s/titles.ini", m_settingsDir.c_str()).c_str());
-		bool load_custom_titles = m_custom_titles.load(sfmt("%s/custom_titles.ini", m_settingsDir.c_str()).c_str());
-		
-		gprintf("Loaded titles.ini: %s\n", load_titles ? "success" : "failed");
-		gprintf("Loaded custom titles.ini: %s\n", load_custom_titles ? "success" : "failed");
+		if (!m_titles.loaded()) m_titles.load(sfmt("%s/" TITLES_FILENAME, m_settingsDir.c_str()).c_str());
+		if (!m_custom_titles.loaded()) m_custom_titles.load(sfmt("%s/" CTITLES_FILENAME, m_settingsDir.c_str()).c_str());
 	}
 
 	bool retval;
@@ -1489,11 +1489,6 @@ bool CMenu::_loadList(void)
 			retval = _loadGameList();
 			break;
 	}
-	
-	gprintf("Clear titles\n");
-	m_titles.clear();
-	gprintf("Clear custom titles\n");
-	m_custom_titles.clear();
 	
 	return retval;
 }

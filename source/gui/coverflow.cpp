@@ -1776,10 +1776,7 @@ void CCoverFlow::_playSound(void)
 	if (m_soundVolume > 0)
 	{
 		m_snd2 = !m_snd2;
-		if (m_snd2)
-			_playSound(m_sound1);
-		else
-			_playSound(m_sound2);
+		_playSound(m_snd2 ? m_sound1 : m_sound2);
 	}
 }
 

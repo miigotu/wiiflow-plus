@@ -6,6 +6,7 @@
 #ifndef SAFE_VECTOR
 #define SAFE_VECTOR
 
+#include <string>
 #include <vector>
 
 template <class T>
