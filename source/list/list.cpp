@@ -1,5 +1,6 @@
 #include "list.hpp"
 #include "gecko.h"
+#include "WiiTDB.hpp"
 
 template <typename T>
 void CList<T>::CountGames(string directory, bool wbfs_fs, u32 *cnt)
@@ -20,7 +21,7 @@ void CList<T>::CountGames(string directory, bool wbfs_fs, u32 *cnt)
 		}
 		closedir(dir_itr);
 		
-		*cnt = count - 1;
+		*cnt = count ? count - 1 : 0;
 	}
 }
 
@@ -99,17 +100,27 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 }
 
 template <>
-void CList<string>::GetHeaders(safe_vector<string> pathlist, safe_vector<string> &headerlist, findtitle_callback_t, void *)
+void CList<string>::GetHeaders(safe_vector<string> pathlist, safe_vector<string> &headerlist, string)
 {
 	gprintf("Getting headers for CList<string>\n");
 	headerlist = pathlist;
 }
 
 template <>
-void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist, findtitle_callback_t /*callback*/, void */*callback_data*/)
+void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist, string m_settingsDir)
 {
 	dir_discHdr tmp;
 	u32 count = 0;
+	
+	string GTitle;
+	string wiitdbpath = sfmt("%s/wiitdb.xml", m_settingsDir.c_str());
+	
+	WiiTDB WiiTDB_xml;
+	
+	if(!WiiTDB_xml.OpenFile("usb1:/wiiflow/settings/wiitdb.xml"))
+	{
+		gprintf("Cache: Failed to open wiitdb.xml\n");
+	}
 
 	gprintf("Getting headers for paths in pathlist (%d)\n", pathlist.size());
 
@@ -151,6 +162,15 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			if (memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) == 0)
 			{
 				// Skip uLoader configuration
+				continue;
+			}
+			
+			if(WiiTDB_xml.GetTitle((char *)tmp.hdr.id, GTitle))
+			{				
+				strcpy(tmp.hdr.title, GTitle.c_str());
+				gprintf("Found title in WiiTDB.xml for title: %s\n", tmp.hdr.title);
+				tmp.hdr.magic = 0x5D1C9EA3;
+				headerlist.push_back(tmp);
 				continue;
 			}
 

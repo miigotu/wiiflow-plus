@@ -1,7 +1,7 @@
 #include "cachedlist.hpp"
 
 template <class T>
-void CachedList<T>::Load(string path, string containing, findtitle_callback_t callback, void* callback_data)																/* Load All */
+void CachedList<T>::Load(string path, string containing)																/* Load All */
 {
 	gprintf("\nLoading files containing %s in %s\n", containing.c_str(), path.c_str());
 	m_loaded = false;
@@ -22,11 +22,11 @@ void CachedList<T>::Load(string path, string containing, findtitle_callback_t ca
 		gprintf("Calling list to update filelist\n");
 		safe_vector<string> pathlist;
 		list.GetPaths(pathlist, containing, path, m_wbfsFS);
-		list.GetHeaders(pathlist, *this, callback, callback_data);
+		list.GetHeaders(pathlist, *this, m_settingsDir);
 		
 		// Load titles and custom_titles files
 		m_loaded = true;
-		Save();
+		if(pathlist.size() > 0) Save();
 	}
 	else
 	{
@@ -34,12 +34,24 @@ void CachedList<T>::Load(string path, string containing, findtitle_callback_t ca
 		CCache<T>(*this, m_database, &gcnt, rcnt, LOAD);
 		if(rcnt != gcnt) 
 		{
-			gprintf("Real game count: %d Games in cache: %d. Rebuilding cache\n", rcnt, gcnt);
+			gprintf("Folder count: %d, Games in cache: %d. Load paths and check for invalid entries\n", rcnt, gcnt);
 			safe_vector<string> pathlist;
 			list.GetPaths(pathlist, containing, path, m_wbfsFS);
-			list.GetHeaders(pathlist, *this);
-			m_loaded = true;
-			Save();
+			if(pathlist.size() != gcnt) 
+			{
+				gprintf("Correct entries: %d. Game count has been changed. Update database\n", pathlist.size());
+				remove(m_database.c_str());
+				list.GetHeaders(pathlist, *this, m_settingsDir);
+				m_loaded = true;
+				if(pathlist.size() > 0) Save(); Save();
+			}
+			else 
+			{
+				// Todo: Make an error popup to warn about this?
+
+				gprintf("WARNING: Game folder '%s' contains %d invalid entries.\n", path.c_str(), rcnt - pathlist.size());
+				CCache<T>(*this, m_database, &gcnt, pathlist.size(), LOAD);
+			}			
 		}
 		
 	}

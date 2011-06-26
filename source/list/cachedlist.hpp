@@ -5,7 +5,7 @@
 #include "cache.hpp"
 #include "safe_vector.hpp"
 #include "gecko.h"
-#include "config.hpp"
+//#include "config.hpp"
 
 using namespace std;
 
@@ -13,9 +13,9 @@ template <typename T = dir_discHdr>
 class CachedList : public safe_vector<T>
 {
   public:
-	void Init(string cachedir){m_cacheDir = cachedir; m_loaded = false; m_update = false; m_database = "";}
+	void Init(string cachedir, string settingsdir){m_cacheDir = cachedir; m_settingsDir = settingsdir; m_loaded = false; m_update = false; m_database = "";}
 
-    void Load(string path, string containing, findtitle_callback_t callback = NULL, void* callback_data = NULL);
+    void Load(string path, string containing);
     void Unload(){if(m_loaded) {this->clear(); m_loaded = false; m_database = "";}};
     void Save() {if(m_loaded && m_update) CCache<T>(*this, m_database, &gcnt, rcnt, SAVE);}				/* Save All */
 
@@ -33,7 +33,8 @@ class CachedList : public safe_vector<T>
     CList<T> list;
     string m_database;
     string m_cacheDir;
-	Config m_cfg;
+	string m_settingsDir;
+	//Config m_cfg;
 	
 	u32 rcnt;
 	u32 gcnt;

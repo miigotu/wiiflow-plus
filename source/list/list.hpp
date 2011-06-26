@@ -16,7 +16,7 @@
 #include "text.hpp"
 #include "cache.hpp"
 
-typedef bool (*findtitle_callback_t)(void *callback_data, u8 *id, char *title, int size);
+//typedef bool (*findtitle_callback_t)(void *callback_data, u8 *id, char *title, int size);
 
 using namespace std;
 template <typename T>
@@ -27,7 +27,7 @@ class CList
 		~CList(){};
 		void CountGames(string directory, bool wbfs_fs, u32 *cnt);
 		void GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs = false);
-		void GetHeaders(safe_vector<string> pathlist, safe_vector<T> &headerlist, findtitle_callback_t callback = NULL, void *callback_data = NULL);
+		void GetHeaders(safe_vector<string> pathlist, safe_vector<T> &headerlist, string m_settingsDir);
 	private:
 		void Check_For_ID(u8 *id, string path, string one, string two);
 

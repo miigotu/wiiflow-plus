@@ -614,7 +614,7 @@ void CMenu::_directlaunch(const string &id)
 			strncasecmp(DeviceHandler::Instance()->PathToFSName(path.c_str()), "WBFS", 4) == 0);
 
 		m_gameList.clear();
-		list.GetHeaders(pathlist, m_gameList);
+		list.GetHeaders(pathlist, m_gameList, m_settingsDir);
 		if(m_gameList.size() > 0)
 		{
 			gprintf("Game found on partition #%i\n", i);

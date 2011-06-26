@@ -31,7 +31,7 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 	SetVolume(m_music_volume);
 	
 	MusicDirectory dir = (MusicDirectory) cfg.getInt("GENERAL", "music_directories", NORMAL_MUSIC | THEME_MUSIC);
-	m_music_files.Init(cfg.getString("GENERAL", "dir_list_cache"));
+	m_music_files.Init(cfg.getString("GENERAL", "dir_list_cache"), cfg.getString("GENERAL", "dir_settings"));
 
 	if (dir & THEME_MUSIC)
 		// CList::Instance()->GetPaths(m_music_files, ".ogg|.mp3|.mod|.xm|.s3m|.wav|.aiff", themeMusicDir);

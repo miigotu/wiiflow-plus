@@ -244,7 +244,7 @@ void CMenu::init()
 	makedir((char *)m_wipDir.c_str());
 
 	makedir((char *)m_listCacheDir.c_str());
-	m_gameList.Init(m_listCacheDir);
+	m_gameList.Init(m_listCacheDir, m_settingsDir);
 
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
@@ -1516,7 +1516,7 @@ bool CMenu::_loadGameList(void)
 	currentPartition = m_cfg.getInt("GENERAL", "partition", 1);
 	gprintf("Opening partition %d\n", currentPartition);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
-	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso", CMenu::_findTitlesById, this);
+	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso");
 	return m_gameList.size() > 0 ? true : false;
 }
 
