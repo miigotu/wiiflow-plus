@@ -100,13 +100,14 @@ clean:
 all: $(EXT2BIN)
 
 install:
-	cp ../include/ext2.h $(DEVKITPRO)/libogc/include
-	cp ../lib/wii/libext2fs.a $(DEVKITPRO)/libogc/lib/wii
-	cp ../lib/cube/libext2fs.a $(DEVKITPRO)/libogc/lib/cube
+	cp ../include/ext2.h ../../../include
+	cp ext2_frag.h ../../../include
+	cp ../lib/wii/libext2fs.a ../../../lib 
 
 wii-install:
-	cp ../include/ext2.h $(DEVKITPRO)/libogc/include
-	cp ../lib/wii/libext2fs.a $(DEVKITPRO)/libogc/lib/wii
+	cp ../include/ext2.h ../../../include
+	cp ext2_frag.h ../../../include
+	cp ../lib/wii/libext2fs.a ../../../lib
 
 #---------------------------------------------------------------------------------
 else

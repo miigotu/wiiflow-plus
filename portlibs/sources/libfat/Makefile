@@ -24,9 +24,9 @@ clean :
 		rm -f $(OFILES) $(ARC)
 
 install :
-		mkdir -p  $(LIBOGC_LIB)  $(LIBOGC_INC)
-		cp -f $(ARC) $(LIBOGC_LIB)/
-		cp -f $(HDR) $(LIBOGC_INC)/
+		cp -f $(ARC) ../../lib 
+		cp -f $(HDR) ../../include
+		cp -f fatfile_frag.h ../../include
 
 %.o : %.c
 		$(CC) $(CFLAGS) -c $< -o $@

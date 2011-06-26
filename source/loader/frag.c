@@ -17,8 +17,7 @@
 #include "wdvd.h"
 #include "gecko.h"
 #include "ext2_frag.h"
-
-int _FAT_get_fragments(const char *path, _frag_append_t append_fragment, void *callback_data);
+#include "fatfile_frag.h"
 
 FragList *frag_list = NULL;
 
