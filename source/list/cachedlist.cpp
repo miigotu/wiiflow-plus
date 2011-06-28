@@ -26,7 +26,7 @@ void CachedList<T>::Load(string path, string containing)																/* Load 
 		gprintf("Calling list to update filelist\n");
 		safe_vector<string> pathlist;
 		list.GetPaths(pathlist, containing, path, m_wbfsFS);
-		list.GetHeaders(pathlist, *this, m_settingsDir);
+		list.GetHeaders(pathlist, *this, m_settingsDir, m_wiiTDB);
 		
 		// Load titles and custom_titles files
 		m_loaded = true;
@@ -45,7 +45,7 @@ void CachedList<T>::Load(string path, string containing)																/* Load 
 			{
 				gprintf("Correct entries: %d. Game count has been changed. Update database\n", pathlist.size());
 				remove(m_database.c_str());
-				list.GetHeaders(pathlist, *this, m_settingsDir);
+				list.GetHeaders(pathlist, *this, m_settingsDir, m_wiiTDB);
 				m_loaded = true;
 				if(pathlist.size() > 0) Save(); Save();
 			}

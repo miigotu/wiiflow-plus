@@ -189,7 +189,10 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
-$(OUTPUT).elf: $(OFILES)
+$(OUTPUT).elf: $(OFILES) alt_ios_gen.o
+
+#---------------------------------------------------------------------------------
+$(BUILD)/alt_ios_gen.o: alt_ios_gen.c
 
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .png extension

@@ -52,7 +52,7 @@ typedef struct _GameXMLInfo
 	safe_vector<string> WifiFeatures;
 	int Players;
 	safe_vector<Accessoire> Accessoires;
-	long CaseColor;
+	int CaseColor;
 
 } GameXMLInfo;
 

@@ -132,7 +132,8 @@ int CMenu::main(void)
 		_initAsyncNetwork();
 
 	SetupInput();
-	//m_wiitdb.OpenFile(sfmt("%s/wiitdb.xml", m_settingsDir.c_str()).c_str());
+	m_wiitdb.OpenFile(sfmt("%s/wiitdb.xml", m_settingsDir.c_str()).c_str());
+	m_wiitdb.SetLanguageCode(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str());
 	MusicPlayer::Instance()->Play();
 	_loadList();
 	_showMain();

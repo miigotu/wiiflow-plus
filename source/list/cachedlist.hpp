@@ -6,6 +6,7 @@
 #include "safe_vector.hpp"
 #include "gecko.h"
 //#include "config.hpp"
+#include "WiiTDB.hpp"
 
 using namespace std;
 
@@ -13,7 +14,7 @@ template <typename T = dir_discHdr>
 class CachedList : public safe_vector<T>
 {
   public:
-	void Init(string cachedir, string settingsdir){m_cacheDir = cachedir; m_settingsDir = settingsdir; m_loaded = false; m_update = false; m_database = ""; force_update = false;}
+	void Init(string cachedir, string settingsDir, WiiTDB *wiiTDB){m_cacheDir = cachedir; m_settingsDir = settingsDir; m_wiiTDB = wiiTDB; m_loaded = false; m_update = false; m_database = "";}
 	void Update() { force_update = true; } /* Force db update on next load */
     void Load(string path, string containing);
     void Unload(){if(m_loaded) {this->clear(); m_loaded = false; m_database = "";}};
@@ -35,6 +36,7 @@ class CachedList : public safe_vector<T>
     string m_database;
     string m_cacheDir;
 	string m_settingsDir;
+	WiiTDB *m_wiiTDB;
 	//Config m_cfg;
 	
 	u32 rcnt;

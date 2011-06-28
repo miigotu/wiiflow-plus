@@ -244,7 +244,7 @@ void CMenu::init()
 	makedir((char *)m_wipDir.c_str());
 
 	makedir((char *)m_listCacheDir.c_str());
-	m_gameList.Init(m_listCacheDir, m_settingsDir);
+	m_gameList.Init(m_listCacheDir, m_settingsDir, &m_wiitdb);
 
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
@@ -1232,7 +1232,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		m_gameSound.Play(m_bnrSndVol);
 		m_gameSoundTmp.Unload();
 	}
-	else if (!withCF || !m_gameSelected)
+	else if (/*!withCF || */!m_gameSelected) // Remove withCF check, to prevent gamesound from stopping when something has happened
 		m_gameSound.Stop();
 	LWP_MutexUnlock(m_gameSndMutex);
 

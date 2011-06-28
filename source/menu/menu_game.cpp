@@ -304,8 +304,10 @@ void CMenu::_game(bool launch)
 			if (m_wiitdb.IsLoaded())
 			{
 				_hideGame();
+				m_gameSelected = true; // Force gamesound to keep playing
 				_gameinfo();
 				_showGame();
+				if (!m_gameSound.IsPlaying()) startGameSound = -6;
 			}
 		}
 		else if (BTN_MINUS_PRESSED)
@@ -383,8 +385,10 @@ void CMenu::_game(bool launch)
 			{
 				_hideGame();
 				_waitForGameSoundExtract();
+				m_gameSelected = true;
 				_gameSettings();
 				_showGame();
+				if (!m_gameSound.IsPlaying()) startGameSound = -6;
 			}
 			else if (launch || m_btnMgr.selected(m_gameBtnPlay) || (!WPadIR_Valid(0) && !WPadIR_Valid(1) && !WPadIR_Valid(2) && !WPadIR_Valid(3) && m_btnMgr.selected((u32)-1)))
 			{
@@ -475,8 +479,7 @@ void CMenu::_game(bool launch)
 			wdm_count = 0;
 			m_gameSelected = false;
 			m_fa.unload();
-			_setBg(m_mainBg, m_mainBgLQ);
-			
+			_setBg(m_mainBg, m_mainBgLQ);			
 		}
 		if (m_show_zone_game)
 		{
@@ -614,7 +617,7 @@ void CMenu::_directlaunch(const string &id)
 			strncasecmp(DeviceHandler::Instance()->PathToFSName(path.c_str()), "WBFS", 4) == 0);
 
 		m_gameList.clear();
-		list.GetHeaders(pathlist, m_gameList, m_settingsDir);
+		list.GetHeaders(pathlist, m_gameList, m_settingsDir, &m_wiitdb);
 		if(m_gameList.size() > 0)
 		{
 			gprintf("Game found on partition #%i\n", i);
