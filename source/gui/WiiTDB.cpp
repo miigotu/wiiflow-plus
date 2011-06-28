@@ -90,11 +90,11 @@ bool WiiTDB::OpenFile(const char * filepath)
 
 		gprintf("Checking game offsets\n");
         LoadGameOffsets(OffsetsPath.c_str());
-		if (!isParsed)
+		/*if (!isParsed)
 		{
 			gprintf("Checking titles.ini\n");
 			CheckTitlesIni(OffsetsPath.c_str());
-		}
+		}*/
     }
 	else
 	{
@@ -142,7 +142,7 @@ bool WiiTDB::LoadGameOffsets(const char * path)
     FILE * fp = fopen(OffsetDBPath.c_str(), "rb");
     if(!fp)
     {
-        bool result = ParseFile(path);
+        bool result = ParseFile();
         if(result)
             SaveGameOffsets(OffsetDBPath.c_str());
 
@@ -158,7 +158,7 @@ bool WiiTDB::LoadGameOffsets(const char * path)
     if(ExistingVersion != Version)
     {
         fclose(fp);
-        bool result = ParseFile(path);
+        bool result = ParseFile();
         if(result)
             SaveGameOffsets(OffsetDBPath.c_str());
 
@@ -170,7 +170,7 @@ bool WiiTDB::LoadGameOffsets(const char * path)
     if(NodeCount == 0)
     {
         fclose(fp);
-        bool result = ParseFile(path);
+        bool result = ParseFile();
         if(result)
             SaveGameOffsets(OffsetDBPath.c_str());
 
@@ -182,7 +182,7 @@ bool WiiTDB::LoadGameOffsets(const char * path)
     if(fread(&OffsetMap[0], 1, NodeCount*sizeof(GameOffsets), fp) != NodeCount*sizeof(GameOffsets))
     {
         fclose(fp);
-        bool result = ParseFile(path);
+        bool result = ParseFile();
         if(result)
             SaveGameOffsets(OffsetDBPath.c_str());
 
@@ -229,7 +229,7 @@ bool WiiTDB::SaveGameOffsets(const char * path)
     return true;
 }
 
-bool WiiTDB::CheckTitlesIni(const char * path)
+/*bool WiiTDB::CheckTitlesIni(const char * path)
 {
     if(!path)
         return false;
@@ -246,7 +246,7 @@ bool WiiTDB::CheckTitlesIni(const char * path)
 	titles.unload();
 
 	return update ? ParseFile(path) : true;
-}
+}*/
 
 unsigned long long WiiTDB::GetWiiTDBVersion()
 {
@@ -422,18 +422,16 @@ char * WiiTDB::SeekLang(char * text, const char * langcode)
     return NULL;
 }
 
-bool WiiTDB::ParseFile(const char * path)
+bool WiiTDB::ParseFile()
 {
     OffsetMap.clear();
 
-    if(!file || path == NULL)
+    if(!file)
         return false;
 
     char * Line = new (std::nothrow) char[MAXREADSIZE+1];
     if(!Line)
         return false;
-
-	gprintf("Parsing WiiTDB (recreating offsets and titles.ini)\n");
 
     bool readnew = false;
     int i, currentPos = 0;
@@ -441,23 +439,6 @@ bool WiiTDB::ParseFile(const char * path)
     const char * gameNode = NULL;
     const char * idNode = NULL;
     const char * gameEndNode = NULL;
-
-	isParsed = true;
-
-    string TitlesPath = path;
-    if(strlen(path) > 0 && path[strlen(path)-1] != '/')
-        TitlesPath += '/';
-    TitlesPath += TITLES_FILENAME;
-
-	remove(TitlesPath.c_str());
-
-	Config titles;
-	titles.load(TitlesPath.c_str());
-	
-    unsigned long long ExistingVersion = GetWiiTDBVersion();
-	char version[16] = {0};
-	sprintf(version, "%llu", ExistingVersion);
-	titles.setString("GENERAL", "version", version);
 
     while((read = GetData(Line, currentPos, MAXREADSIZE)) > 0)
     {
@@ -491,25 +472,6 @@ bool WiiTDB::ParseFile(const char * path)
             OffsetMap[size].gameID[i] = '\0';
             OffsetMap[size].gamenode = currentPos+(gameNode-Line);
             OffsetMap[size].nodesize = (gameEndNode-gameNode);
-			
-			// Find the title
-			char * fullnode = strndup(gameNode, gameEndNode-gameNode);
-			if (fullnode != NULL)
-			{
-				string title;
-				if (FindTitle(fullnode, title, LangCode))
-				{
-					titles.setString("TITLES", OffsetMap[size].gameID, title);
-				}
-				CColor color = CColor(FindCaseColor(fullnode));
-				if (color != 0xFFFFFFFF)
-				{
-					titles.setColor("COVERS", OffsetMap[size].gameID, color);
-				}
-				
-				SAFE_FREE(fullnode);
-			}
-			
             gameNode = gameEndNode;
         }
 
@@ -518,8 +480,6 @@ bool WiiTDB::ParseFile(const char * path)
 
         currentPos += read;
     }
-
-	titles.save();
 
     delete [] Line;
 

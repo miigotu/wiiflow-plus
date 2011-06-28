@@ -42,7 +42,8 @@ struct discHdr
 	u8 h3_verify;
 
 	/* Padding */
-	u8 unused3[30];
+	long casecolor;
+	u8 unused3[22];
 } ATTRIBUTE_PACKED;
 
 struct dir_discHdr

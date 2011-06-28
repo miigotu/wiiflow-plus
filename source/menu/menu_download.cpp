@@ -1110,6 +1110,15 @@ int CMenu::_wiitdbDownloaderAsync()
 				gprintf("Refreshing wiitdb\n");
 				m_wiitdb.CloseFile();
 				m_wiitdb.OpenFile(sfmt("%s/wiitdb.xml", m_settingsDir.c_str()).c_str());
+				
+				// Update cache
+				m_gameList.Update();
+				LWP_MutexLock(m_mutex);
+				_setThrdMsg(_t("dlmsg24", L"Updating cache..."), 0.f);
+				LWP_MutexUnlock(m_mutex);
+				m_current_view = COVERFLOW_USB;
+				_loadList();
+				_initCF();
 			}
 		}
 	}

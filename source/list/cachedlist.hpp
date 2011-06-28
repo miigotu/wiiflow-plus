@@ -13,8 +13,8 @@ template <typename T = dir_discHdr>
 class CachedList : public safe_vector<T>
 {
   public:
-	void Init(string cachedir, string settingsdir){m_cacheDir = cachedir; m_settingsDir = settingsdir; m_loaded = false; m_update = false; m_database = "";}
-
+	void Init(string cachedir, string settingsdir){m_cacheDir = cachedir; m_settingsDir = settingsdir; m_loaded = false; m_update = false; m_database = ""; force_update = false;}
+	void Update() { force_update = true; } /* Force db update on next load */
     void Load(string path, string containing);
     void Unload(){if(m_loaded) {this->clear(); m_loaded = false; m_database = "";}};
     void Save() {if(m_loaded && m_update) CCache<T>(*this, m_database, &gcnt, rcnt, SAVE);}				/* Save All */
@@ -30,6 +30,7 @@ class CachedList : public safe_vector<T>
     bool m_loaded;
     bool m_update;
     bool m_wbfsFS;
+	bool force_update;
     CList<T> list;
     string m_database;
     string m_cacheDir;

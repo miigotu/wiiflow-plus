@@ -1111,9 +1111,6 @@ void CMenu::_initCF(void)
  	m_gamelistdump = m_cfg.getBool("GENERAL", m_current_view == COVERFLOW_USB ? "dump_gamelist" : "dump_chanlist", true);
 	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
 
-	if (!m_titles.loaded()) m_titles.load(sfmt("%s/" TITLES_FILENAME, m_settingsDir.c_str()).c_str());
-	if (!m_custom_titles.loaded()) m_custom_titles.load(sfmt("%s/" CTITLES_FILENAME, m_settingsDir.c_str()).c_str());
-
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
 	for (u32 i = 0; i < m_gameList.size(); ++i)
 	{
@@ -1128,34 +1125,21 @@ void CMenu::_initCF(void)
 			if (m_category != 0)
 			{
 				const char *categories = m_cat.getString("CATEGORIES", id, "").c_str();
-				if (strlen(categories) != 12 || categories[m_category] == '0') { // 12 categories max!
+				if (strlen(categories) != 12 || categories[m_category] == '0') 
+				{ // 12 categories max!
 					continue;
 				}
 			}
-			wstringEx w = m_custom_titles.getWString("TITLES", id, m_titles.getWString("TITLES", id));
 
-			if (w.empty())
-			{
-				if (m_current_view == COVERFLOW_CHANNEL) // Required, since Channel titles are already in wchar_t
-				{
-					wchar_t channelname[IMET_MAX_NAME_LEN];
-					mbstowcs(channelname, m_gameList[i].hdr.title, IMET_MAX_NAME_LEN);
-					string sid = id.substr(0, 4);
-					w = m_custom_titles.getWString("TITLES", sid, m_titles.getWString("TITLES", sid, channelname));
-				}
-				else
-				{
-					string lid = id.substr(0, 6);
-					w = m_custom_titles.getWString("TITLES", lid, m_titles.getWString("TITLES", lid, string(m_gameList[i].hdr.title, sizeof m_gameList[0].hdr.title)));
-				}
-			}
+			wstringEx w = wstringEx(m_gameList[i].hdr.title);
+
 			int playcount = m_gcfg1.getInt("PLAYCOUNT", id, 0);
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
 
 			if(m_gamelistdump)
 				m_dump.setWString(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", m_current_view == COVERFLOW_CHANNEL ? id.substr(0, 4) : id, w);
-
-			CColor cover = m_custom_titles.getColor("COVERS", id, m_titles.getColor("COVERS", id, CColor(0xFFFFFFFF)));
+			
+			CColor cover =  m_gameList[i].hdr.casecolor;
 			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), cover, playcount, lastPlayed);
 		}
 	}
@@ -1466,12 +1450,6 @@ bool CMenu::_loadList(void)
 
 	gprintf("Loading items of view %d\n", m_current_view);
 
-	if (m_current_view != COVERFLOW_HOMEBREW)
-	{
-		if (!m_titles.loaded()) m_titles.load(sfmt("%s/" TITLES_FILENAME, m_settingsDir.c_str()).c_str());
-		if (!m_custom_titles.loaded()) m_custom_titles.load(sfmt("%s/" CTITLES_FILENAME, m_settingsDir.c_str()).c_str());
-	}
-
 	bool retval;
 	switch(m_current_view)
 	{
@@ -1491,24 +1469,6 @@ bool CMenu::_loadList(void)
 	}
 	
 	return retval;
-}
-
-bool CMenu::_findTitlesById(void *obj, u8 *id, char *title, int size)
-{
-	gprintf("Searching title for game '%s': ", id);
-
-	CMenu *m = (CMenu *) obj;
-	wstringEx w = m->m_custom_titles.getWString("TITLES", (const char *) id, m->m_titles.getWString("TITLES", (const char *) id));
-	if (w.empty())
-	{
-		gprintf("not found\n");
-		return false;
-	}
-	int len = w.size();
-	gprintf("found, len = %d, title = '%s'\n", len, w.c_str());
-	memcpy(title, w.c_str(), (len < size ? len : size) * sizeof(wchar_t));
-	gprintf("Copied title, check: '%s'\n", title);
-	return true;
 }
 
 bool CMenu::_loadGameList(void)

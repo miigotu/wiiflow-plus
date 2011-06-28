@@ -59,7 +59,7 @@ private:
 	CFanart m_fa;
 	CachedList<dir_discHdr> m_gameList;
 	Config m_cfg;
-	Config m_custom_titles;
+	//Config m_custom_titles;
 	Config m_loc;
 	Config m_loclist;
 	Config m_cat;
@@ -770,7 +770,7 @@ private:
 	static int _coverDownloaderAll(CMenu *m);
 	static int _coverDownloaderMissing(CMenu *m);
 	static bool _downloadProgress(void *obj, int size, int position);
-	static bool _findTitlesById(void *obj, u8 *id, char *title, int size);
+	//static bool _findTitlesById(void *obj, u8 *id, char *title, int size);
 	static int _wiitdbDownloader(CMenu *m);
 	int _wiitdbDownloaderAsync();
 

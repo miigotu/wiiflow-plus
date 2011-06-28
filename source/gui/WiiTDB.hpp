@@ -134,7 +134,7 @@ class WiiTDB
 		//! Is a database loaded
 		bool IsLoaded();
     private:
-        bool ParseFile(const char * path);
+        bool ParseFile();
         bool LoadGameOffsets(const char * path);
         bool SaveGameOffsets(const char * path);
 		bool CheckTitlesIni(const char * path);

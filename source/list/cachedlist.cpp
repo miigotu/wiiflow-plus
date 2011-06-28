@@ -9,6 +9,10 @@ void CachedList<T>::Load(string path, string containing)																/* Load 
 	
 	gprintf("Database file: %s\n", m_database.c_str());
 	m_wbfsFS = strncasecmp(DeviceHandler::Instance()->PathToFSName(path.c_str()), "WBFS", 4) == 0;
+	
+	if(force_update)
+		remove(m_database.c_str());
+	
 	if(!m_wbfsFS)
 	{
 		struct stat filestat;
