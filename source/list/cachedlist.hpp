@@ -14,7 +14,7 @@ template <typename T = dir_discHdr>
 class CachedList : public safe_vector<T>
 {
   public:
-	void Init(string cachedir, string settingsDir, WiiTDB *wiiTDB){m_cacheDir = cachedir; m_settingsDir = settingsDir; m_wiiTDB = wiiTDB; m_loaded = false; m_update = false; m_database = "";}
+	void Init(string cachedir, string settingsDir, WiiTDB *wiiTDB){m_cacheDir = cachedir; m_settingsDir = settingsDir; m_wiiTDB = wiiTDB; m_loaded = false; m_update = false; force_update = false; m_database = "";}
 	void Update() { force_update = true; } /* Force db update on next load */
     void Load(string path, string containing);
     void Unload(){if(m_loaded) {this->clear(); m_loaded = false; m_database = "";}};

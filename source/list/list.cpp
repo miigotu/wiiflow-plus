@@ -245,8 +245,17 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			if(ret != 0) continue;
 			
 			if (tmp.hdr.magic == 0x5D1C9EA3	&& memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) != 0)
+			{
+				// Get info from custom titles
+				GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
+				int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, 0).intVal();			
+				if(GTitle.size() > 0 || (wiiTDB != NULL && wiiTDB->GetTitle((char *)tmp.hdr.id, GTitle)))
+				{				
+					strcpy(tmp.hdr.title, GTitle.c_str());
+					tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB->GetCaseColor((char *)tmp.hdr.id);
+				}
 				headerlist.push_back(tmp);
-			
+			}			
 			continue;
 		}
 	}
