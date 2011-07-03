@@ -303,14 +303,11 @@ void CMenu::_game(bool launch)
 		}
 		else if (BTN_PLUS_PRESSED)
 		{
-			if (m_wiitdb.IsLoaded())
-			{
-				_hideGame();
-				m_gameSelected = true; // Force gamesound to keep playing
-				_gameinfo();
-				_showGame();
-				if (!m_gameSound.IsPlaying()) startGameSound = -6;
-			}
+			_hideGame();
+			m_gameSelected = true; // Force gamesound to keep playing
+			_gameinfo();
+			_showGame();
+			if (!m_gameSound.IsPlaying()) startGameSound = -6;
 		}
 		else if (BTN_MINUS_PRESSED)
 		{
@@ -619,7 +616,7 @@ void CMenu::_directlaunch(const string &id)
 			strncasecmp(DeviceHandler::Instance()->PathToFSName(path.c_str()), "WBFS", 4) == 0);
 
 		m_gameList.clear();
-		list.GetHeaders(pathlist, m_gameList, m_settingsDir, &m_wiitdb);
+		list.GetHeaders(pathlist, m_gameList, m_settingsDir, m_curLanguage);
 		if(m_gameList.size() > 0)
 		{
 			gprintf("Game found on partition #%i\n", i);

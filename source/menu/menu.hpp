@@ -20,7 +20,6 @@
 #include "gct.h"
 #include "DeviceHandler.hpp"
 #include "musicplayer.h"
-#include "WiiTDB.hpp"
 
 extern "C" {extern u8 currentPartition;}
 extern bool bootHB;
@@ -58,6 +57,7 @@ private:
 	CCoverFlow m_cf;
 	CFanart m_fa;
 	CachedList<dir_discHdr> m_gameList;
+	u32 m_gameCount;
 	Config m_cfg;
 	//Config m_custom_titles;
 	Config m_loc;
@@ -69,7 +69,6 @@ private:
 	Config m_titles;
 	Config m_version;
 	Channels m_channels;
-	WiiTDB m_wiitdb;
 	safe_vector<std::string> m_homebrewArgs;
 	u8 m_aa;
 	bool m_directLaunch;

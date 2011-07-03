@@ -57,6 +57,7 @@ private:
 	bool m_playbackFinished;
 	
 	GuiSound *m_music;
+	u32 *m_songCount;
 };
 
 #endif

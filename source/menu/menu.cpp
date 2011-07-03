@@ -244,7 +244,7 @@ void CMenu::init()
 	makedir((char *)m_wipDir.c_str());
 
 	makedir((char *)m_listCacheDir.c_str());
-	m_gameList.Init(m_listCacheDir, m_settingsDir, &m_wiitdb);
+	m_gameList.Init(m_listCacheDir, m_settingsDir, m_curLanguage);
 
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
@@ -1427,7 +1427,9 @@ bool CMenu::_loadChannelList(void)
 	memset(buffer.get(), 0, len);
 
 	m_gameList.clear();
+	m_gameList.Init(m_listCacheDir, m_settingsDir, m_curLanguage);
 	m_gameList.reserve(count);
+
 	dir_discHdr *b = (dir_discHdr *)buffer.get();
 	for (u32 i = 0; i < count; ++i)
 	{
@@ -1447,6 +1449,7 @@ bool CMenu::_loadChannelList(void)
 bool CMenu::_loadList(void)
 {
 	m_gameList.clear();
+	m_gameList.Init(m_listCacheDir, m_settingsDir, m_curLanguage);
 
 	gprintf("Loading items of view %d\n", m_current_view);
 
@@ -1476,7 +1479,7 @@ bool CMenu::_loadGameList(void)
 	currentPartition = m_cfg.getInt("GENERAL", "partition", 1);
 	gprintf("Opening partition %d\n", currentPartition);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
-	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso");
+	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso", &m_gameCount);
 	return m_gameList.size() > 0 ? true : false;
 }
 
@@ -1484,7 +1487,7 @@ bool CMenu::_loadHomebrewList()
 {
 	currentPartition = m_cfg.getInt("GENERAL", "homebrew_partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
-	m_gameList.Load(sfmt(HOMEBREW_DIR, DeviceName[currentPartition]), ".dol");
+	m_gameList.Load(sfmt(HOMEBREW_DIR, DeviceName[currentPartition]), ".dol", &m_gameCount);
 	return m_gameList.size() > 0 ? true : false;
 }
 

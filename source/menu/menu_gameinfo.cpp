@@ -1,11 +1,11 @@
 #include "menu.hpp"
 
 #include <wiiuse/wpad.h>
-#include "gui/WiiTDB.hpp"
 
-#include "sys.h"
+#include "WiiTDB.hpp"
 #include "alt_ios.h"
 #include "gecko.h"
+#include "sys.h"
 
 extern const u8		wifi1_png[];
 extern const u8		wifi2_png[];
@@ -203,6 +203,7 @@ void CMenu::_hideGameInfo(bool instant)
 void CMenu::_showGameInfo(void)
 {
 	_setBg(m_gameinfoBg, m_gameinfoBg);
+
 	_textGameInfo();
 	
 	if(titlecheck)
@@ -286,8 +287,11 @@ void CMenu::_textGameInfo(void)
 	cnt_controlsreq = 0;
 	cnt_controls = 0;
 
-	titlecheck = m_wiitdb.GetGameXMLInfo(m_cf.getId().c_str(), &gameinfo);
+	WiiTDB m_wiitdb;
+	m_wiitdb.OpenFile(sfmt("%s/wiitdb.xml", m_settingsDir.c_str()).c_str());
+	m_wiitdb.SetLanguageCode(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str());
 		
+	titlecheck = m_wiitdb.IsLoaded() && m_wiitdb.GetGameXMLInfo(m_cf.getId().c_str(), &gameinfo);
 	if(titlecheck)
 	{
 		gprintf("ID: %s\nTitle: %s\n", gameinfo.GameID.c_str(), gameinfo.Title.c_str());
@@ -307,17 +311,17 @@ void CMenu::_textGameInfo(void)
 		
 		switch(CONF_GetRegion())
 		{
-		case 0:
-		case 4:
-		case 5:
-			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), year, month, day), true);
-			break;
-		case 1:
-			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), month, day, year), true);
-			break;
-		case 2:
-			m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), day, month, year), true);
-			break;
+			case 0:
+			case 4:
+			case 5:
+				m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), year, month, day), true);
+				break;
+			case 1:
+				m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), month, day, year), true);
+				break;
+			case 2:
+				m_btnMgr.setText(m_gameinfoLblRlsdate, wfmt(_fmt("gameinfo4",L"Release Date: %i-%i-%i"), day, month, year), true);
+				break;
 		}
 		
 		//Ratings
@@ -398,7 +402,7 @@ void CMenu::_textGameInfo(void)
 		else 
 			m_btnMgr.setTexture(m_gameinfoLblWifiplayers, emptyTex);
 
-		u8 wiimote=0,
+		u8	wiimote=0,
 			nunchuk=0,
             classiccontroller=0,
             balanceboard=0,
@@ -600,4 +604,7 @@ void CMenu::_textGameInfo(void)
 	}
 	else
 		m_btnMgr.setText(m_gameinfoLblTitle, wfmt(L"%s", "No Gameinfo"), true);
+
+	m_wiitdb.CloseFile();
+
 }

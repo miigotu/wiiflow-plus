@@ -1106,10 +1106,6 @@ int CMenu::_wiitdbDownloaderAsync()
 
 				// We don't need the zipfile anymore
 				remove(zippath.c_str());
-
-				gprintf("Refreshing wiitdb\n");
-				m_wiitdb.CloseFile();
-				m_wiitdb.OpenFile(sfmt("%s/wiitdb.xml", m_settingsDir.c_str()).c_str());
 				
 				// Update cache
 				m_gameList.Update();

@@ -5,29 +5,6 @@
 #include "defines.h"
 
 template <typename T>
-void CList<T>::CountGames(string directory, bool wbfs_fs, u32 *cnt)
-{
-	if (!wbfs_fs) 
-	{
-		u32 count = 0;
-		DIR *dir_itr = opendir(directory.c_str());
-		if (!dir_itr) return;
-	
-		struct dirent *ent;
-		
-		while((ent = readdir(dir_itr)) != NULL)
-		{
-			if (ent->d_name[0] == '.') continue;
-			if (strlen(ent->d_name) < 6) continue;
-			count++;
-		}
-		closedir(dir_itr);
-		
-		*cnt = count ? count - 1 : 0;
-	}
-}
-
-template <typename T>
 void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs)
 {
 	if (!wbfs_fs)
@@ -102,14 +79,14 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 }
 
 template <>
-void CList<string>::GetHeaders(safe_vector<string> pathlist, safe_vector<string> &headerlist, string, WiiTDB *)
+void CList<string>::GetHeaders(safe_vector<string> pathlist, safe_vector<string> &headerlist, string, string)
 {
 	gprintf("Getting headers for CList<string>\n");
 	headerlist = pathlist;
 }
 
 template <>
-void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist, string settingsDir, WiiTDB *wiiTDB)
+void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist, string settingsDir, string curLanguage)
 {
 	dir_discHdr tmp;
 	u32 count = 0;
@@ -123,11 +100,15 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 	{
 		custom_titles.load(custom_titles_path.c_str());
 	}
-	
+
 	gprintf("Getting headers for paths in pathlist (%d)\n", pathlist.size());
 
 	if(pathlist.size() < 1) return;
 	headerlist.reserve(pathlist.size() + headerlist.size());
+
+	WiiTDB wiiTDB;
+	wiiTDB.OpenFile(sfmt("%s/wiitdb.xml", settingsDir.c_str()).c_str());
+	wiiTDB.SetLanguageCode(curLanguage.c_str());
 
 	for(safe_vector<string>::iterator itr = pathlist.begin(); itr != pathlist.end(); itr++)
 	{
@@ -171,10 +152,10 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
 			int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, 0).intVal();
 			
-			if(GTitle.size() > 0 || (wiiTDB != NULL && wiiTDB->GetTitle((char *)tmp.hdr.id, GTitle)))
+			if(GTitle.size() > 0 || (wiiTDB.IsLoaded() && wiiTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
 			{				
 				strcpy(tmp.hdr.title, GTitle.c_str());
-				tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB->GetCaseColor((char *)tmp.hdr.id);
+				tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.IsLoaded() ? wiiTDB.GetCaseColor((char *)tmp.hdr.id) : 0;
 				//gprintf("Found title in WiiTDB.xml: %s\n", tmp.hdr.title);
 				//gprintf("Case color:  0x%x\n", tmp.hdr.casecolor);
 				tmp.hdr.magic = 0x5D1C9EA3;
@@ -249,16 +230,18 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				// Get info from custom titles
 				GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
 				int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, 0).intVal();			
-				if(GTitle.size() > 0 || (wiiTDB != NULL && wiiTDB->GetTitle((char *)tmp.hdr.id, GTitle)))
+				if(GTitle.size() > 0 || (wiiTDB.IsLoaded() && wiiTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
 				{				
 					strcpy(tmp.hdr.title, GTitle.c_str());
-					tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB->GetCaseColor((char *)tmp.hdr.id);
+					tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.IsLoaded() ? wiiTDB.GetCaseColor((char *)tmp.hdr.id) : 0;
 				}
 				headerlist.push_back(tmp);
 			}			
 			continue;
 		}
 	}
+
+	wiiTDB.CloseFile();
 	
 	pathlist.clear();
 }

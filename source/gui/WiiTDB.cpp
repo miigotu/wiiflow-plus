@@ -1014,7 +1014,7 @@ int WiiTDB::FindCaseColor(char * data)
 
 int WiiTDB::GetCaseColor(const char * id)
 {
-    int color = -1;
+    int color = 0;
 
     if(!id)
         return color;
@@ -1034,9 +1034,7 @@ bool WiiTDB::GetGameXMLInfo(const char * id, GameXMLInfo * gameInfo)
     if(!id || !gameInfo)
         return false;
 
-    for(int i = 0; i < 6 && id[i] != 0; ++i)
-        gameInfo->GameID.push_back(id[i]);
-    gameInfo->GameID.push_back('\0');
+	gameInfo->GameID = id;
 
     GetTitle(id, gameInfo->Title);
     GetSynopsis(id, gameInfo->Synopsis);
