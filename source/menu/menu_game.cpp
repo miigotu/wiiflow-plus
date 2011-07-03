@@ -44,6 +44,8 @@ extern const u8 favoritesoffs_png[];
 extern const u8 delete_png[];
 extern const u8 deletes_png[];
 
+extern u32 sector_size;
+
 static u64 sm_title_id  ATTRIBUTE_ALIGN(32);
 
 const string CMenu::_translations[23] = {
@@ -864,7 +866,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	setLanguage(language);
 
 	// Do every disc related action before reloading IOS
-	if (!dvd && get_frag_list((u8 *) hdr->hdr.id, (char *) hdr->path) < 0)
+	if (!dvd && get_frag_list((u8 *) hdr->hdr.id, (char *) hdr->path, sector_size) < 0)
 		return;
 
 	#ifdef DBG_FRAG

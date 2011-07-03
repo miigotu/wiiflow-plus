@@ -21,12 +21,12 @@
 #include "wbfs_ext.h"
 #include "utils.h"
 #include "disc.h"
-#include "frag.h"
 #include "gecko.h"
 
-// max fat fname = 256
 #define MAX_FAT_PATH 1024
 #define TITLE_LEN 64
+
+extern u32 sector_size;
 
 char wbfs_fs_drive[16];
 char wbfs_ext_dir[16] = "/wbfs";
@@ -34,13 +34,10 @@ char invalid_path[] = "/\\:|<>?*\"'";
 
 split_info_t split;
 
-static u32 fat_sector_size = 512;
-
 struct statvfs wbfs_ext_vfs;
 
 s32 __WBFS_ReadDVD(void *fp, u32 lba, u32 len, void *iobuf);
 
-extern FragList *frag_list;
 #define STRCOPY(DEST,SRC) strcopy(DEST,SRC,sizeof(DEST)) 
 char* strcopy(char *dest, const char *src, int size)
 {
@@ -134,7 +131,7 @@ wbfs_t* WBFS_Ext_OpenPart(char *fname)
 
 	wbfs_t *part = wbfs_open_partition(
 			split_read_sector, nop_write_sector, //readonly //split_write_sector,
-			&split, fat_sector_size, split.total_sec, 0, 0);
+			&split, sector_size, split.total_sec, 0, 0);
 
 	if (!part) split_close(&split);
 
@@ -208,7 +205,7 @@ s32 WBFS_Ext_AddGame(progress_callback_t spinner, void *spinner_data)
 	}
 
 	wbfs_t *part = wbfs_open_partition(split_read_sector, split_write_sector,
-									&split, fat_sector_size, n_sector, 0, 1);
+									&split, sector_size, n_sector, 0, 1);
 	if (!part)
 	{
 		split_close(&split);
@@ -236,7 +233,7 @@ s32 WBFS_Ext_DVD_Size(u64 *comp_size, u64 *real_size)
 	// as a placeholder for wbfs_size_disc
 	wbfs_t *part = wbfs_open_partition(
 			nop_read_sector, nop_write_sector,
-			NULL, fat_sector_size, n_sector, 0, 1);
+			NULL, sector_size, n_sector, 0, 1);
 	if (!part) return -1;
 
 	u32 comp_sec = 0, last_sec = 0;

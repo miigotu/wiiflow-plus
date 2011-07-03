@@ -3,7 +3,7 @@
  Common definitions and included files for the FATlib
 
  Copyright (c) 2006 Michael "Chishm" Chisholm
-	
+
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
 
@@ -29,8 +29,7 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-#define BYTES_PER_READ 512
-#include "fat.h"
+#include <fat.h>
 #include <stddef.h>
 #include <stdint.h>
 

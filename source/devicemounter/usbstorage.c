@@ -51,7 +51,7 @@ static char fs2[] ATTRIBUTE_ALIGN(32) = "/dev/usb123";
 static char fs3[] ATTRIBUTE_ALIGN(32) = "/dev/usb/ehc";
  
 static s32 hid = -1, fd = -1;
-static u32 sector_size;
+u32 sector_size;
 static void *usb_buf2;
 
 extern void* SYS_AllocArena2MemLo(u32 size,u32 align);

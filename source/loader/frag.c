@@ -153,7 +153,7 @@ int frag_remap(FragList *ff, FragList *log, FragList *phy)
 	return 0;
 }
 
-int get_frag_list(u8 *id, char *path)
+int get_frag_list(u8 *id, char *path, const u32 hdd_sector_size)
 {
 	if (wbfs_part_fs == PART_FS_WBFS) return 0;
 
@@ -229,7 +229,7 @@ int get_frag_list(u8 *id, char *path)
 			goto out;
 		}
 		frag_init(fw, MAX_FRAG);
-		ret = wbfs_get_fragments(disc, &_frag_append, fw);
+		ret = wbfs_get_fragments(disc, &_frag_append, fw, hdd_sector_size);
 		if (ret) 
 		{
 			ret_val = -5;

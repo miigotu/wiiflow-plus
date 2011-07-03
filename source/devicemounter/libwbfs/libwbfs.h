@@ -223,7 +223,7 @@ u32 wbfs_size_disc(wbfs_t*p,read_wiidisc_callback_t read_src_wii_disc,
 				  u32 *comp_size, u32 *real_size);
 
 typedef int (*_frag_append_t)(void *ff, u32 offset, u32 sector, u32 count);
-int wbfs_get_fragments(wbfs_disc_t *d, _frag_append_t append_fragment, void *callback_data);
+int wbfs_get_fragments(wbfs_disc_t *d, _frag_append_t append_fragment, void *callback_data, u32 hdd_sector_size);
 
 extern wbfs_t wbfs_iso_file;
 u32 wbfs_disc_sector_used(wbfs_disc_t *d, u32 *num_blk);

@@ -696,11 +696,11 @@ error:
         return ret;
 }
 
-int wbfs_get_fragments(wbfs_disc_t *d, _frag_append_t append_fragment, void *callback_data)
+int wbfs_get_fragments(wbfs_disc_t *d, _frag_append_t append_fragment, void *callback_data, u32 hdd_sector_size)
 {
 	if (!d) return -1;
 	wbfs_t *p = d->p;
-	int src_wbs_nlb = p->wbfs_sec_sz / p->hd_sec_sz;
+	int src_wbs_nlb = p->wbfs_sec_sz / hdd_sector_size;
 	int i, ret, last = 0;
 	for( i=0; i< p->n_wbfs_sec_per_disc; i++)
 	{

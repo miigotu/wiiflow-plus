@@ -18,7 +18,6 @@
 #include "wbfs.h"
 #include "wdvd.h"
 #include "splits.h"
-#include "frag.h"
 
 #include "wbfs_ext.h"
 #include "sys.h"
@@ -30,6 +29,8 @@
 
 /* WBFS device */
 s32 wbfsDev = WBFS_MIN_DEVICE;
+
+extern u32 sector_size;
 
 // partition
 int wbfs_part_fs  = PART_FS_WBFS;
@@ -45,9 +46,6 @@ wbfs_t *hdd = NULL;
 /* WBFS callbacks */
 static rw_sector_callback_t readCallback  = NULL;
 static rw_sector_callback_t writeCallback = NULL;
-
-/* Variables */
-static u32 sector_size = SDHC_SECTOR_SIZE;
 
 s32 __WBFS_ReadDVD(void *fp, u32 lba, u32 len, void *iobuf)
 {
@@ -232,8 +230,19 @@ s32 WBFS_Init(wbfs_t * handle, u32 part_fs, u32 part_idx, u32 part_lba, u32 part
 
 s32 WBFS_Format(u32 lba, u32 size)
 {
+	u32 wbfs_sector_size = sector_size;
+	u32 partition_num_sec = size;
+
+    //! If size is over 500GB in sectors and sector size is 512
+    //! set 2048 as hdd sector size
+    if(size > 1048576000 && sector_size == 512)
+    {
+        wbfs_sector_size = 2048;
+        partition_num_sec = size/(2048/sector_size);
+    }
+	
 	/* Reset partition */
-	wbfs_t *partition = wbfs_open_partition(readCallback, writeCallback, NULL, sector_size, size, lba, 1);
+	wbfs_t *partition = wbfs_open_partition(readCallback, writeCallback, NULL, wbfs_sector_size, partition_num_sec, lba, 1);
 	if (!partition) return -1;
 
 	/* Free memory */

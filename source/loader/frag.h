@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "libwbfs/libwbfs.h"
+#include "gctypes.h"
 
 typedef struct
 {
@@ -43,7 +43,7 @@ int frag_get(FragList *ff, u32 offset, u32 count,
 		u32 *poffset, u32 *psector, u32 *pcount);
 
 int frag_remap(FragList *ff, FragList *log, FragList *phy);
-int get_frag_list(u8 *id, char *path);
+int get_frag_list(u8 *id, char *path, const u32 hdd_sector_size);
 int set_frag_list(u8 *id);
 
 #ifdef __cplusplus
