@@ -5,7 +5,6 @@
 #include "cache.hpp"
 #include "safe_vector.hpp"
 #include "gecko.h"
-#include "WiiTDB.hpp"
 
 using namespace std;
 
@@ -13,21 +12,21 @@ template <typename T = dir_discHdr>
 class CachedList : public safe_vector<T>
 {
   public:
-	void Init(string cachedir, string settingsDir, string curLanguage)							/* Initialize Private Variables */
+	void Init(string cachedir, string settingsDir, string curLanguage)						/* Initialize Private Variables */
 	{
 		m_cacheDir = cachedir;
 		m_settingsDir = settingsDir;
-		m_curLanguage = curLanguage;
+		m_curLanguage = m_lastLanguage = curLanguage;
 		m_loaded = false;
-		m_update = false;
-		force_update = false;
 		m_database = "";
+		force_update = false;
+		
 	}
 
 	void Update() { force_update = true; }													/* Force db update on next load */
-    void Load(string path, string containing, u32 *count);
+    void Load(string path, string containing);
     void Unload(){if(m_loaded) {this->clear(); m_loaded = false; m_database = "";}};
-    void Save() {if(m_loaded && m_update) CCache<T>(*this, m_database, count, SAVE);}		/* Save All */
+    void Save() {if(m_loaded) CCache<T>(*this, m_database, SAVE);}							/* Save All */
 
     void Get(T tmp, u32 index) {if(m_loaded) CCache<T>(tmp, m_database, index, LOAD);}		/* Load One */
     void Set(T tmp, u32 index) {if(m_loaded) CCache<T>(tmp, m_database, index, SAVE);}		/* Save One */
@@ -48,8 +47,7 @@ class CachedList : public safe_vector<T>
     string m_cacheDir;
 	string m_settingsDir;
 	string m_curLanguage;
-
-	u32 *count;
+	string m_lastLanguage;
 };
 
 #endif

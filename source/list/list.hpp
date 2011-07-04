@@ -15,7 +15,6 @@
 #include "disc.h"
 #include "text.hpp"
 #include "cache.hpp"
-#include "WiiTDB.hpp"
 
 using namespace std;
 template <typename T>

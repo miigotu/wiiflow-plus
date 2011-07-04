@@ -107,6 +107,8 @@ int CMenu::_configAdv(void)
 	safe_vector<string> themes;
 	string prevTheme = m_cfg.getString("GENERAL", "theme");
 
+	bool lang_changed = false;
+
 	listThemes(m_themeDir.c_str(), themes);
 	int curTheme = 0;
 	for (u32 i = 0; i < themes.size(); ++i)
@@ -162,46 +164,28 @@ int CMenu::_configAdv(void)
 				m_cfg.setString("GENERAL", "theme", themes[curTheme]);
 				_showConfigAdv();
 			}
-			else if (m_btnMgr.selected(m_configAdvBtnCurLanguageP))
+			else if (m_btnMgr.selected(m_configAdvBtnCurLanguageP) || m_btnMgr.selected(m_configAdvBtnCurLanguageM))
 			{
-				int lang = (int)loopNum((u32)m_cfg.getInt("GENERAL", "language", 0) + 1, ARRAY_SIZE(CMenu::_translations));
+				s8 offset = m_btnMgr.selected(m_configAdvBtnCurLanguageP) ? 1 : -1;
+				int lang = (int)loopNum((u32)m_cfg.getInt("GENERAL", "language", 0) + offset, ARRAY_SIZE(CMenu::_translations));
 				m_curLanguage = CMenu::_translations[lang];
 				if (m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str()))
-					m_cfg.setInt("GENERAL", "language", lang);
-				else
 				{
-					while (lang !=0)
-					{
-						lang = (int)loopNum((u32)lang + 1, ARRAY_SIZE(CMenu::_translations));
-						m_curLanguage = CMenu::_translations[lang];
-						struct stat langs;
-						if (stat(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str(), &langs) == 0)
-							break;
-					}
 					m_cfg.setInt("GENERAL", "language", lang);
-					m_curLanguage = CMenu::_translations[lang];
-					m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str());
+					lang_changed = true;
 				}
-				_updateText();
-				_showConfigAdv();
-			}
-			else if (m_btnMgr.selected(m_configAdvBtnCurLanguageM))
-			{
-				int lang = (int)loopNum((u32)m_cfg.getInt("GENERAL", "language", 0) - 1, ARRAY_SIZE(CMenu::_translations));
-				m_curLanguage = CMenu::_translations[lang];
-				if (m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str()))
-					m_cfg.setInt("GENERAL", "language", lang);
 				else
 				{
 					while (lang !=0)
 					{
-						lang = (int)loopNum((u32)lang - 1, ARRAY_SIZE(CMenu::_translations));
+						lang = (int)loopNum((u32)lang + offset, ARRAY_SIZE(CMenu::_translations));
 						m_curLanguage = CMenu::_translations[lang];
 						struct stat langs;
 						if (stat(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str(), &langs) == 0)
 							break;
 					}
 					m_cfg.setInt("GENERAL", "language", lang);
+					lang_changed = true;
 					m_curLanguage = CMenu::_translations[lang];
 					m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str());
 				}
@@ -217,8 +201,14 @@ int CMenu::_configAdv(void)
 		}
 	}
 	_hideConfigAdv();
-	if (m_gameList.empty())
+	if (m_gameList.empty() || lang_changed)
+	{
+		if(lang_changed)
+			m_gameList.SetLanguage(m_curLanguage);
 		_loadList();
+	}
+	lang_changed = false;
+
 	return nextPage;
 }
 

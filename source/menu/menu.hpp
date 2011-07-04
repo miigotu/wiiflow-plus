@@ -57,9 +57,7 @@ private:
 	CCoverFlow m_cf;
 	CFanart m_fa;
 	CachedList<dir_discHdr> m_gameList;
-	u32 m_gameCount;
 	Config m_cfg;
-	//Config m_custom_titles;
 	Config m_loc;
 	Config m_loclist;
 	Config m_cat;

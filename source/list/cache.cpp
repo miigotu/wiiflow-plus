@@ -23,7 +23,7 @@ CCache<T>::CCache(T &tmp, string path, u32 index, CMode mode) /* Load/Save One *
 }
 
 template <typename T>
-CCache<T>::CCache(safe_vector<T> &list, string path, u32 *count, CMode mode) /* Load/Save All */
+CCache<T>::CCache(safe_vector<T> &list, string path , CMode mode) /* Load/Save All */
 {
 	filename = path;
 	//gprintf("Openning DB: %s\n", filename.c_str());
@@ -34,7 +34,7 @@ CCache<T>::CCache(safe_vector<T> &list, string path, u32 *count, CMode mode) /* 
 	switch(mode)
 	{
 		case LOAD:
-			LoadAll(list , count);
+			LoadAll(list);
 			break;
 		case SAVE:
 			SaveAll(list);
@@ -94,6 +94,7 @@ template <typename T>
 void CCache<T>::SaveAll(safe_vector<T> list)
 {
 	//gprintf("Updating DB: %s\n", filename.c_str());
+	if(!cache) return;
 	fwrite((void *)&list[0], 1, list.size() * sizeof(T), cache);
 }
 
@@ -101,13 +102,16 @@ template <typename T>
 void CCache<T>::SaveOne(T tmp, u32 index)
 {
 	//gprintf("Updating Item number %u in DB: %s\n", index, filename.c_str());
+	if(!cache) return;
 	fseek(cache, index * sizeof(T), SEEK_SET);
 	fwrite((void *)&tmp, 1, sizeof(T), cache);
 }
 
 template <typename T>
-void CCache<T>::LoadAll(safe_vector<T> &list , u32 *count)
+void CCache<T>::LoadAll(safe_vector<T> &list)
 {
+	if(!cache) return;
+
 	//gprintf("Loading DB: %s\n", filename.c_str());
 
 	T tmp;
@@ -115,10 +119,10 @@ void CCache<T>::LoadAll(safe_vector<T> &list , u32 *count)
 	u64 fileSize = ftell(cache);
 	fseek(cache, 0, SEEK_SET);
 
-	*count = fileSize / sizeof(T);
+	u32 count = (u32)(fileSize / sizeof(T));
 	
-	list.reserve(*count +  list.size());
-	for(u32 i = 0; i < *count; i++)
+	list.reserve(count + list.size());
+	for(u32 i = 0; i < count; i++)
 	{
 		LoadOne(tmp, i);
 		list.push_back(tmp);
@@ -129,6 +133,8 @@ void CCache<T>::LoadAll(safe_vector<T> &list , u32 *count)
 template <typename T>
 void CCache<T>::LoadOne(T &tmp, u32 index)
 {
+	if(!cache) return;
+
 	//gprintf("Fetching Item number %u in DB: %s\n", index, filename.c_str());
 	fseek(cache, index * sizeof(T), SEEK_SET);
 	fread((void *)&tmp, 1, sizeof(T), cache);
@@ -140,6 +146,8 @@ void CCache<T>::AddOne(safe_vector<T> &list, T tmp)
 {
 	//gprintf("Adding Item number %u in DB: %s\n", list.size()+1, filename.c_str());
 	list.push_back(tmp);
+
+	if(!cache) return;
 	fwrite((void *)&tmp, 1, sizeof(T), cache);  // FILE* is opened as "ab+" so its always written to the EOF.
 }
 
@@ -152,4 +160,3 @@ void CCache<T>::RemoveOne(safe_vector<T> &list, u32 index)
 }
 
 template class CCache<dir_discHdr>;
-template class CCache<string>;

@@ -1,7 +1,8 @@
 #include "cachedlist.hpp"
+#include <typeinfo>
 
 template <class T>
-void CachedList<T>::Load(string path, string containing, u32 *count)													/* Load All */
+void CachedList<T>::Load(string path, string containing)													/* Load All */
 {
 	gprintf("\nLoading files containing %s in %s\n", containing.c_str(), path.c_str());
 	m_loaded = false;
@@ -10,21 +11,22 @@ void CachedList<T>::Load(string path, string containing, u32 *count)												
 	gprintf("Database file: %s\n", m_database.c_str());
 	m_wbfsFS = strncasecmp(DeviceHandler::Instance()->PathToFSName(path.c_str()), "WBFS", 4) == 0;
 	
-	if(force_update)
-	{
-		remove(m_database.c_str());
-		force_update = false;
-	}
-	
 	if(!m_wbfsFS)
 	{
+		if(force_update)
+			remove(m_database.c_str());
+
 		struct stat filestat, cache;
 
 		if(stat(path.c_str(), &filestat) == -1) return;
-		m_update = (stat(m_database.c_str(), &cache) == -1 || filestat.st_mtime > cache.st_mtime);
+		m_update = force_update || m_lastLanguage != m_curLanguage || stat(m_database.c_str(), &cache) == -1 || filestat.st_mtime > cache.st_mtime;
 	}
 
-	if(m_update || m_wbfsFS)
+	force_update = false;
+
+	bool music = typeid(T) == typeid(std::string);
+
+	if(m_update || m_wbfsFS || music)
 	{
 		gprintf("Calling list to update filelist\n");
 		safe_vector<string> pathlist;
@@ -33,10 +35,17 @@ void CachedList<T>::Load(string path, string containing, u32 *count)												
 		
 		// Load titles and custom_titles files
 		m_loaded = true;
-		if(pathlist.size() > 0) Save();
+		m_update = false;
+		m_lastLanguage = m_curLanguage;
+
+		if(!music && pathlist.size() > 0)
+		{
+			Save();
+			pathlist.clear();
+		}
 	}
 	else
-		CCache<T>(*this, m_database, count, LOAD);
+		CCache<T>(*this, m_database, LOAD);
 
 	m_loaded = true;
 }

@@ -96,34 +96,16 @@ int CMenu::_config7(void)
 		{
 			if (m_btnMgr.selected(m_configBtnBack))
 				break;
-			else if (m_btnMgr.selected(m_config7BtnPartitionP))
+			else if (m_btnMgr.selected(m_config7BtnPartitionP) || m_btnMgr.selected(m_config7BtnPartitionM))
 			{
 				if(m_current_view == COVERFLOW_USB || m_current_view == COVERFLOW_HOMEBREW)
 				{
-					currentPartition = loopNum(currentPartition + 1, (int)USB8);
+					s8 offset = m_btnMgr.selected(m_config7BtnPartitionP) ? 1 : -1;
+					currentPartition = loopNum(currentPartition + offset, (int)USB8);
 					if(!DeviceHandler::Instance()->IsInserted(currentPartition))
 						while(!DeviceHandler::Instance()->IsInserted(currentPartition))
-							currentPartition = loopNum(currentPartition + 1, (int)USB8);
-					//const char *partition = DeviceName[currentPartition];
-					//gprintf("Next item: %s\n", partition);
-					gprintf("Next item: %s\n", DeviceName[currentPartition]);
-					if(m_current_view == COVERFLOW_USB)
-						m_cfg.setInt("GENERAL", "partition", currentPartition);
-					else if(m_current_view == COVERFLOW_HOMEBREW)
-						m_cfg.setInt("GENERAL", "homebrew_partition", currentPartition);
-					_showConfig7();
-				}
-			}
-			else if (m_btnMgr.selected(m_config7BtnPartitionM))
-			{
-				if(m_current_view == COVERFLOW_USB || m_current_view == COVERFLOW_HOMEBREW)
-				{
-					currentPartition = loopNum(currentPartition - 1, (int)USB8);
-					if(!DeviceHandler::Instance()->IsInserted(currentPartition))
-						while(!DeviceHandler::Instance()->IsInserted(currentPartition))
-							currentPartition = loopNum(currentPartition - 1, (int)USB8);
-					//const char *partition = DeviceName[currentPartition];
-					//gprintf("Next item: %s\n", partition);
+							currentPartition = loopNum(currentPartition + offset, (int)USB8);
+
 					gprintf("Next item: %s\n", DeviceName[currentPartition]);
 					if(m_current_view == COVERFLOW_USB)
 						m_cfg.setInt("GENERAL", "partition", currentPartition);
@@ -143,7 +125,7 @@ int CMenu::_config7(void)
 	{
 		const char *newpartition = "NULL";
 		if(m_current_view == COVERFLOW_USB)
-			newpartition = DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", currentPartition)];
+			newpartition = DeviceName[m_cfg.getInt("GENERAL", "partition", currentPartition)];
 		else if(m_current_view == COVERFLOW_HOMEBREW)
 			newpartition = DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", currentPartition)];
 		gprintf("Switching partition to %s\n", newpartition);

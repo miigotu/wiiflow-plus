@@ -82,7 +82,12 @@ template <>
 void CList<string>::GetHeaders(safe_vector<string> pathlist, safe_vector<string> &headerlist, string, string)
 {
 	gprintf("Getting headers for CList<string>\n");
-	headerlist = pathlist;
+
+	if(pathlist.size() < 1) return;
+	headerlist.reserve(pathlist.size() + headerlist.size());
+
+	for(safe_vector<string>::iterator itr = pathlist.begin(); itr != pathlist.end(); itr++)
+		headerlist.push_back((*itr).c_str());
 }
 
 template <>
@@ -93,11 +98,12 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 	
 	string GTitle;
 
-	string custom_titles_path = sfmt("%s/" CTITLES_FILENAME, settingsDir.c_str());
+	string custom_titles_path;
 
 	Config custom_titles;
 	if (settingsDir.size() > 0)
 	{
+		custom_titles_path = sfmt("%s/" CTITLES_FILENAME, settingsDir.c_str());
 		custom_titles.load(custom_titles_path.c_str());
 	}
 
@@ -107,8 +113,12 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 	headerlist.reserve(pathlist.size() + headerlist.size());
 
 	WiiTDB wiiTDB;
-	wiiTDB.OpenFile(sfmt("%s/wiitdb.xml", settingsDir.c_str()).c_str());
-	wiiTDB.SetLanguageCode(curLanguage.c_str());
+	if (settingsDir.size() > 0)
+	{
+		wiiTDB.OpenFile(sfmt("%s/wiitdb.xml", settingsDir.c_str()).c_str());
+		if(curLanguage.size() == 0) curLanguage = "EN";
+		wiiTDB.SetLanguageCode(curLanguage.c_str());
+	}
 
 	for(safe_vector<string>::iterator itr = pathlist.begin(); itr != pathlist.end(); itr++)
 	{
@@ -135,16 +145,10 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				}
 			}
 
-			if (tmp.hdr.id[0] == 0)
+//			gprintf("Get information for '%s'\n", tmp.hdr.id);
+			if (!isalnum(tmp.hdr.id[0]) || tmp.hdr.id[0] == 0 || memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) == 0)
 			{
 				gprintf("Skipping file: '%s'\n", (*itr).c_str());
-				continue;
-			}
-			
-//			gprintf("Get information for '%s'\n", tmp.hdr.id);
-			if (memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) == 0)
-			{
-				// Skip uLoader configuration
 				continue;
 			}			
 			
@@ -155,7 +159,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			if(GTitle.size() > 0 || (wiiTDB.IsLoaded() && wiiTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
 			{				
 				strcpy(tmp.hdr.title, GTitle.c_str());
-				tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.IsLoaded() ? wiiTDB.GetCaseColor((char *)tmp.hdr.id) : 0;
+				tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.GetCaseColor((char *)tmp.hdr.id);
 				//gprintf("Found title in WiiTDB.xml: %s\n", tmp.hdr.title);
 				//gprintf("Case color:  0x%x\n", tmp.hdr.casecolor);
 				tmp.hdr.magic = 0x5D1C9EA3;
@@ -191,7 +195,6 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				continue;
 			}
 		}
-
 		else if((*itr).rfind(".dol")  != string::npos)
 		{
 			(*itr)[(*itr).find_last_of('/')] = 0;
@@ -211,6 +214,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			for (u32 i = 0; i < 6; ++i)
 				(*itr)[i] = toupper((*itr)[i]);
 			memcpy(tmp.hdr.id, (*itr).c_str(), 6);
+			tmp.hdr.casecolor = 0xff;
 
 			headerlist.push_back(tmp);
 			continue;
@@ -230,10 +234,10 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				// Get info from custom titles
 				GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
 				int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, 0).intVal();			
-				if(GTitle.size() > 0 || (wiiTDB.IsLoaded() && wiiTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
+				if(GTitle.size() > 0 || (wiiTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
 				{				
 					strcpy(tmp.hdr.title, GTitle.c_str());
-					tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.IsLoaded() ? wiiTDB.GetCaseColor((char *)tmp.hdr.id) : 0;
+					tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.GetCaseColor((char *)tmp.hdr.id);
 				}
 				headerlist.push_back(tmp);
 			}			
@@ -241,9 +245,8 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 		}
 	}
 
-	wiiTDB.CloseFile();
-	
-	pathlist.clear();
+	if(wiiTDB.IsLoaded())
+		wiiTDB.CloseFile();
 }
 
 template <typename T>

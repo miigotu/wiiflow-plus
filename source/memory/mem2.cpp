@@ -28,7 +28,8 @@ void MEM2_init(unsigned int mem2Size, unsigned int coverSize)
 	g_mem2gp.init(mem2Size);
 	g_mem2covers.init(coverSize);
 	g_mem1locovers.init(&__cdat_end + 0x100, &__init_start - 0x100);
-	g_mem1hicovers.init((void *)0x81200000, (void *)0x816FFFF0);
+	//g_mem1hicovers.init((void *)0x81200000, (void *)0x816FFFF0);
+	g_mem1hicovers.init((void *)0x81200000, (void *)0x815FFFF0);
 	memset(g_mem2obj, 0, sizeof g_mem2obj);
 }
 

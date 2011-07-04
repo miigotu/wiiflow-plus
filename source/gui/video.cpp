@@ -68,11 +68,14 @@ const float CVideo::_jitter8[8][2] = {
 const int CVideo::_stencilWidth = 128;
 const int CVideo::_stencilHeight = 128;
 
+static lwp_t waitThread = LWP_THREAD_NULL;
+SmartBuf ThreadStack;
+
 CVideo::CVideo(void) :
 	m_rmode(NULL), m_frameBuf(), m_curFB(0), m_fifo(NULL),
 	m_yScale(0.0f), m_xfbHeight(0), m_wide(false),
 	m_width2D(640), m_height2D(480), m_x2D(0), m_y2D(0), m_aa(0), m_aaAlpha(false),
-	m_aaWidth(0), m_aaHeight(0), m_waitMessageThrdStop(true)
+	m_aaWidth(0), m_aaHeight(0)
 {
 	memset(m_frameBuf, 0, sizeof m_frameBuf);
 }
@@ -442,8 +445,6 @@ void CVideo::render(void)
 
 void CVideo::_showWaitMessages(CVideo *m)
 {
-	m->m_waitMessageThrdStop = false;
-
 	u32 frames = m->m_waitMessageDelay * 50;
 	u32 waitFrames = frames;
 	
@@ -465,8 +466,6 @@ void CVideo::_showWaitMessages(CVideo *m)
 	}
 	while (m->m_showWaitMessage)
 	{
-		m->m_waitMessageThrdStop = false;
-
 		if (m->m_useWiiLight)
 		{
 			currentLightLevel += (fadeStep * fadeDirection);
@@ -511,13 +510,26 @@ void CVideo::_showWaitMessages(CVideo *m)
 		WIILIGHT_TurnOff();
 	}
 	m->m_waitMessages.clear();
-	m->m_waitMessageThrdStop = true;
 	gprintf("Stop showing images\n");
 }
 
 void CVideo::hideWaitMessage()
 {
 	m_showWaitMessage = false;
+
+
+	if (waitThread != LWP_THREAD_NULL)
+	{
+		if(LWP_ThreadIsSuspended(waitThread))
+			LWP_ResumeThread(waitThread);
+
+		LWP_JoinThread(waitThread, NULL);
+		waitThread = LWP_THREAD_NULL;
+	}
+
+	SMART_FREE(ThreadStack);
+
+	m_waitMessages.clear();
 	VIDEO_WaitVSync();
 }
 
@@ -528,10 +540,8 @@ void CVideo::waitMessage(float delay)
 
 void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool useWiiLight)
 {
-	m_showWaitMessage = false;
-	if (!m_waitMessageThrdStop)	while(!m_waitMessageThrdStop){}
-
-	m_waitMessages.clear();
+	if (waitThread != LWP_THREAD_NULL)
+		hideWaitMessage();
 
 	m_useWiiLight = useWiiLight;
 
@@ -559,16 +569,15 @@ void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool use
 		m_waitMessages = tex;
 		m_waitMessageDelay = delay;
 	}
-
-	m_waitMessages.resize(m_waitMessages.size());
 	
 	if (m_waitMessages.size() == 1)
 		waitMessage(m_waitMessages[0]);
 	else if (m_waitMessages.size() > 1)
 	{
-		m_showWaitMessage = true;
-		lwp_t thread = LWP_THREAD_NULL;
-		LWP_CreateThread(&thread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, 0, 8192, 80);
+		m_showWaitMessage = true;		
+		unsigned int stack_size = (unsigned int)8192;  //Try 32768?
+		ThreadStack = smartCoverAlloc(stack_size);
+		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, ThreadStack.get(), stack_size, 40);
 	}
 }
 
