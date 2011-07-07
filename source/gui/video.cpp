@@ -69,7 +69,7 @@ const int CVideo::_stencilWidth = 128;
 const int CVideo::_stencilHeight = 128;
 
 static lwp_t waitThread = LWP_THREAD_NULL;
-SmartBuf ThreadStack;
+SmartBuf waitThreadStack;
 
 CVideo::CVideo(void) :
 	m_rmode(NULL), m_frameBuf(), m_curFB(0), m_fifo(NULL),
@@ -517,7 +517,6 @@ void CVideo::hideWaitMessage()
 {
 	m_showWaitMessage = false;
 
-
 	if (waitThread != LWP_THREAD_NULL)
 	{
 		if(LWP_ThreadIsSuspended(waitThread))
@@ -527,7 +526,7 @@ void CVideo::hideWaitMessage()
 		waitThread = LWP_THREAD_NULL;
 	}
 
-	SMART_FREE(ThreadStack);
+	SMART_FREE(waitThreadStack);
 
 	m_waitMessages.clear();
 	VIDEO_WaitVSync();
@@ -576,8 +575,8 @@ void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool use
 	{
 		m_showWaitMessage = true;		
 		unsigned int stack_size = (unsigned int)8192;  //Try 32768?
-		ThreadStack = smartCoverAlloc(stack_size);
-		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, ThreadStack.get(), stack_size, 40);
+		waitThreadStack = smartCoverAlloc(stack_size);
+		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, waitThreadStack.get(), stack_size, 40);
 	}
 }
 

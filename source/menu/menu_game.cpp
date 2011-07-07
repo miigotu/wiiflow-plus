@@ -1134,7 +1134,7 @@ void CMenu::_playGameSound(void)
 	m_gameSoundHdr = m_cf.getHdr();
 	LWP_MutexUnlock(m_gameSndMutex);
 
-	m_cf.stopPicLoader();
+	m_cf.stopCoverLoader();
 	if (m_gameSoundThread == 0)
 		LWP_CreateThread(&m_gameSoundThread, (void *(*)(void *))CMenu::_loadGameSoundThrd, (void *)this, 0, 8 * 1024, 40);
 }

@@ -362,6 +362,7 @@ void CMenu::init()
 
 void CMenu::cleanup(void)
 {
+	m_cf.stopCoverLoader();
 	_waitForGameSoundExtract();
 	_stopSounds();
 	
@@ -1156,7 +1157,7 @@ void CMenu::_initCF(void)
 	m_cf.setSorting((Sorting)m_cfg.getInt("GENERAL", "sort", 0));
 	if (m_curGameId.empty() || !m_cf.findId(m_curGameId.c_str(), true))
 		m_cf.findId(m_cfg.getString("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "current_channel" : "current_game").c_str(), true);
-	m_cf.startPicLoader();
+	m_cf.startCoverLoader();
 }
 
 void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
@@ -1237,7 +1238,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	LWP_MutexUnlock(m_gameSndMutex);
 
 	if (withCF && m_gameSoundThread == 0)
-		m_cf.startPicLoader();
+		m_cf.startCoverLoader();
 
 	MusicPlayer::Instance()->Tick(m_video_playing || (m_gameSelected && 
 		(m_gameSoundTmp.IsLoaded() ||  m_gameSound.IsPlaying())));

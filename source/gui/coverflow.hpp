@@ -42,8 +42,8 @@ public:
 	bool empty(void) const { return m_items.empty(); }
 	// 
 	bool start(const char *id = 0);
-	void stopPicLoader(bool empty = false);
-	void startPicLoader(void);
+	void stopCoverLoader(bool empty = false);
+	void startCoverLoader(void);
 	// 
 	void simulateOtherScreenFormat(bool s);
 	// Commands
@@ -228,8 +228,7 @@ private:
 	int m_minDelay;
 	int m_jump;
 	mutex_t m_mutex;
-	volatile bool m_loadingPic;
-	volatile bool m_waitingToClear;
+	volatile bool m_loadingCovers;
 	volatile bool m_moved;
 	volatile int m_hqCover;
 	bool m_selected;
@@ -327,7 +326,7 @@ private:
 	static bool _sortByLastPlayed(CItem item1, CItem item2);
 	static bool _sortByGameID(CItem item1, CItem item2);
 private:
-	static int _picLoader(CCoverFlow *cf);
+	static int _coverLoader(CCoverFlow *cf);
 	static float _step(float cur, float tgt, float spd);
 private:
 	CCoverFlow(const CCoverFlow &);

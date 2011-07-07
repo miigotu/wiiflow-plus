@@ -20,7 +20,7 @@ void CMenu::_about(void)
 			if (!m_locked && m_btnMgr.selected(m_aboutBtnSystem))
 			{
 				// show system menu
-				m_cf.stopPicLoader(true);
+				m_cf.stopCoverLoader(true);
 				_hideAbout(false);
 				_system();
 				remove(m_ver.c_str());
@@ -30,7 +30,7 @@ void CMenu::_about(void)
 					break;
 				}
 				_showAbout();
-				m_cf.startPicLoader();
+				m_cf.startCoverLoader();
 			}
 		}
 	} while (true);

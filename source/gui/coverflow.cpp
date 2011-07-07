@@ -27,6 +27,9 @@ extern const u8 flatloading_png[];
 extern const u8 cffont_ttf[];
 extern const u32 cffont_ttf_size;
 
+static lwp_t coverLoaderThread = LWP_THREAD_NULL;
+SmartBuf coverLoaderThreadStack;
+
 static inline int loopNum(int i, int s)
 {
 	return i < 0 ? (s - (-i % s)) % s : i % s;
@@ -179,8 +182,7 @@ CCoverFlow::CCoverFlow(void)
 	m_minDelay = 5;
 	m_jump = 0;
 	m_mutex = 0;
-	m_loadingPic = false;
-	m_waitingToClear = false;
+	m_loadingCovers = false;
 	m_moved = false;
 	m_selected = false;
 	m_hideCover = false;
@@ -329,7 +331,7 @@ void CCoverFlow::setRange(u32 rows, u32 columns)
 		return;
 	if (!m_covers.empty())
 	{
-		stopPicLoader();
+		stopCoverLoader();
 		safe_vector<CCoverFlow::CCover> tmpCovers;
 		tmpCovers.resize(range);
 		if (rows >= 3)
@@ -345,7 +347,7 @@ void CCoverFlow::setRange(u32 rows, u32 columns)
 		m_range = range;
 		_loadAllCovers(m_covers[m_range / 2].index);
 		_updateAllTargets();
-		startPicLoader();
+		startCoverLoader();
 	}
 	else
 	{
@@ -598,10 +600,21 @@ void CCoverFlow::applySettings(void)
 	_updateAllTargets();
 }
 
-void CCoverFlow::stopPicLoader(bool empty)
+void CCoverFlow::stopCoverLoader(bool empty)
 {
-	m_waitingToClear = true;
-	while (m_loadingPic) usleep(1000);
+	m_loadingCovers = false;
+
+	if (coverLoaderThread != LWP_THREAD_NULL)
+	{
+		if(LWP_ThreadIsSuspended(coverLoaderThread))
+			LWP_ResumeThread(coverLoaderThread);
+
+		LWP_JoinThread(coverLoaderThread, NULL);
+		coverLoaderThread = LWP_THREAD_NULL;
+	}
+
+	SMART_FREE(coverLoaderThreadStack);
+
 	if (empty)
 		for (u32 i = 0; i < m_items.size(); ++i)
 		{
@@ -610,24 +623,23 @@ void CCoverFlow::stopPicLoader(bool empty)
 		}
 }
 
-void CCoverFlow::startPicLoader(void)
+void CCoverFlow::startCoverLoader(void)
 {
-	if (!m_loadingPic && !m_covers.empty())
-	{
-		m_moved = true;
-		m_loadingPic = true;
-		m_waitingToClear = false;
-		lwp_t thread = 0;
-		LWP_CreateThread(&thread, (void *(*)(void *))CCoverFlow::_picLoader, (void *)this, 0, 8192, 40);
-	}
+	if (m_covers.empty() || coverLoaderThread != LWP_THREAD_NULL) return;
+
+	m_loadingCovers = true;
+
+	unsigned int stack_size = (unsigned int)8192;
+	coverLoaderThreadStack = smartCoverAlloc(stack_size);
+	LWP_CreateThread(&coverLoaderThread, (void *(*)(void *))CCoverFlow::_coverLoader, (void *)this, coverLoaderThreadStack.get(), stack_size, 40);
+
 }
 
 void CCoverFlow::clear(void)
 {
-	stopPicLoader(true);
+	stopCoverLoader(true);
 	m_covers.clear();
 	m_items.clear();
-	m_waitingToClear = false;
 }
 
 void CCoverFlow::reserve(u32 capacity)
@@ -1731,7 +1743,7 @@ bool CCoverFlow::start(const char *id)
 	if (id == 0 || !findId(id, true))
 		_loadAllCovers(0);
 	_updateAllTargets();
-	startPicLoader();
+	startCoverLoader();
 	return true;
 }
 
@@ -2267,19 +2279,22 @@ bool CCoverFlow::fullCoverCached(const char *id)
 
 bool CCoverFlow::_loadCoverTexPNG(u32 i, bool box, bool hq)
 {
-	if (m_waitingToClear) return false;
+	if (!m_loadingCovers) return false;
 
 	u8 textureFmt = m_compressTextures ? GX_TF_CMPR : GX_TF_RGB565;
 	STexture tex;
 
 	const char *path = box ? m_items[i].boxPicPath.c_str() : m_items[i].picPath.c_str();
 	if (STexture::TE_OK != tex.fromPNGFile(path, textureFmt, ALLOC_COVER, 32)) return false;
-	if (m_waitingToClear) return false;
+
+	if (!m_loadingCovers) return false;
+
 	LWP_MutexLock(m_mutex);
 	m_items[i].texture = tex;
 	m_items[i].boxTexture = box;
 	m_items[i].state = CCoverFlow::STATE_Ready;
 	LWP_MutexUnlock(m_mutex);
+
 	// Save the texture to the cache folder for the next time
 	if (!m_cachePath.empty())
 	{
@@ -2347,10 +2362,10 @@ void CCoverFlow::_dropHQLOD(int i)
 
 CCoverFlow::CLRet CCoverFlow::_loadCoverTex(u32 i, bool box, bool hq)
 {
-	if (m_waitingToClear) return CL_ERROR;
-
+	if (!m_loadingCovers) return CL_ERROR;
 
 	bool allocFailed = false;
+
 	// Try to find the texture in the cache
 	if (!m_cachePath.empty())
 	{
@@ -2416,19 +2431,18 @@ CCoverFlow::CLRet CCoverFlow::_loadCoverTex(u32 i, bool box, bool hq)
 		}
 	}
 	if (allocFailed) return CCoverFlow::CL_NOMEM;
+
 	// If not found, load the PNG
 	return _loadCoverTexPNG(i, box, hq) ? CCoverFlow::CL_OK : CCoverFlow::CL_ERROR;
 }
 
-int CCoverFlow::_picLoader(CCoverFlow *cf)
+int CCoverFlow::_coverLoader(CCoverFlow *cf)
 {
 	bool box = cf->m_box;
 	CCoverFlow::CLRet ret;
 	u32 bufferSize = cf->m_range + cf->m_numBufCovers * 2;
 
-	if (!cf->m_loadingPic) return 0;
-
-	while (!cf->m_waitingToClear)
+	while (cf->m_loadingCovers)
 	{
 		u32 i;
 		ret = CCoverFlow::CL_OK;
@@ -2452,7 +2466,7 @@ int CCoverFlow::_picLoader(CCoverFlow *cf)
 		}
 		for (u32 j = 0; j <= lastVisible; ++j)
 		{
-			if (cf->m_waitingToClear || cf->m_moved || ret == CCoverFlow::CL_NOMEM)
+			if (!cf->m_loadingCovers || cf->m_moved || ret == CCoverFlow::CL_NOMEM)
 				break;
 			i = loopNum((j & 1) != 0 ? firstItem - (j + 1) / 2 : firstItem + j / 2, numItems);
 			if (cf->m_items[i].state != CCoverFlow::STATE_Loading && (i != (u32)newHQCover || newHQCover == cf->m_hqCover))
@@ -2462,13 +2476,12 @@ int CCoverFlow::_picLoader(CCoverFlow *cf)
 			if (ret == CCoverFlow::CL_ERROR)
 			{
 				ret = cf->_loadCoverTex(i, !box, i == (u32)newHQCover);
-				if (ret == CCoverFlow::CL_ERROR && !cf->m_waitingToClear)
+				if (ret == CCoverFlow::CL_ERROR && !cf->m_loadingCovers)
 					cf->m_items[i].state = CCoverFlow::STATE_NoCover;
 			}
 		}
 		if (ret == CCoverFlow::CL_NOMEM && bufferSize > 3)
 			bufferSize -= 2;
 	}
-	cf->m_loadingPic = false;
 	return 0;
 }

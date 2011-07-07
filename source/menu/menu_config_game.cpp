@@ -504,13 +504,13 @@ void CMenu::_gameSettings(void)
 			{
 				if (!dolsListed)
 				{
-					m_cf.stopPicLoader();	// Don't keep a thread that may be reading and writing to the USB HD while we access it a different way
+					m_cf.stopCoverLoader();	// Don't keep a thread that may be reading and writing to the USB HD while we access it a different way
 					dols.clear();
 					dols.push_back("main.dol");
 					_listDOL(dols, id);
 					sort(dols.begin(), dols.end());
 					dolsListed = true;
-					m_cf.startPicLoader();
+					m_cf.startCoverLoader();
 				}
 				int i = find(dols.begin(), dols.end(), m_gcfg2.getString(id, "dol")) - dols.begin();
 				if (m_btnMgr.selected(m_gameSettingsBtnAltDolP))
@@ -522,11 +522,11 @@ void CMenu::_gameSettings(void)
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnCover))
 			{
-				m_cf.stopPicLoader(true);
+				m_cf.stopCoverLoader(true);
 				_hideGameSettings();
 				_download(id);
 				_showGameSettings();
-				m_cf.startPicLoader();
+				m_cf.startCoverLoader();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnCheat))
 			{
@@ -595,11 +595,11 @@ void CMenu::_gameSettings(void)
 		{	
 			if (m_btnMgr.selected(m_gameSettingsBtnCover))
 			{
-					m_cf.stopPicLoader(true);	// Empty cover cache
+					m_cf.stopCoverLoader(true);	// Empty cover cache
 					remove(fmt("%s/%s.png", m_picDir.c_str(), m_cf.getId().c_str()));
 					remove(fmt("%s/%s.png", m_boxPicDir.c_str(), m_cf.getId().c_str()));
 					remove(fmt("%s/%s.wfc", m_cacheDir.c_str(), m_cf.getId().c_str()));
-					m_cf.startPicLoader();
+					m_cf.startCoverLoader();
 			}
 		}
 

@@ -408,7 +408,7 @@ void CMenu::_cfTheme(void)
 		{
 			if (m_btnMgr.selected(m_cfThemeBtnSave))
 			{
-				m_cf.stopPicLoader();
+				m_cf.stopCoverLoader();
 				m_theme.save();
 				break;
 			}
