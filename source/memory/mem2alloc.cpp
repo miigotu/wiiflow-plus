@@ -11,8 +11,8 @@ void CMEM2Alloc::init(unsigned int size)
 {
 	m_baseAddress = (SBlock *)(((u32)SYS_GetArena2Lo() + 31) & ~31);
 	m_endAddress = (SBlock *)((char *)m_baseAddress + std::min(size * 0x100000, SYS_GetArena2Size() & ~31));
-	if (m_endAddress > (SBlock *)0x93000000)	// See loader/disc.c
-		m_endAddress = (SBlock *)0x93000000;
+	if (m_endAddress > (SBlock *)0x93000000) //rest is reserved for usb/usb2/network and other stuff... (0xE0000 bytes)
+		m_endAddress = (SBlock *)0x93000000; // was 0x93300000 in code from GX  // Loader/disc.c:36 and 215 etc
 	SYS_SetArena2Lo(m_endAddress);
 	LWP_MutexInit(&m_mutex, 0);
 }
@@ -29,9 +29,9 @@ void CMEM2Alloc::cleanup(void)
 	LWP_MutexDestroy(m_mutex);
 	m_mutex = 0;
 	m_first = 0;
-//	// Try to release the range we took through SYS functions
-//	if (SYS_GetArena2Lo() == m_endAdress)
-//		SYS_SetArena2Lo(m_baseAddress);
+	// Try to release the range we took through SYS functions
+	if (SYS_GetArena2Lo() == m_endAddress)
+		SYS_SetArena2Lo(m_baseAddress);
 	m_baseAddress = 0;
 	m_endAddress = 0;
 }
@@ -111,9 +111,11 @@ void CMEM2Alloc::release(void *p)
 {
 	if (p == 0)
 		return;
+
 	LockMutex lock(m_mutex);
 	SBlock *i = (SBlock *)p - 1;
 	i->f = true;
+
     // If there are no other blocks following yet,
     // set the remaining size to free size. - Dimok
 	if(i->next == 0)
@@ -148,15 +150,18 @@ void *CMEM2Alloc::reallocate(void *p, unsigned int s)
 		s = 1;
 	if (p == 0)
 		return allocate(s);
+
 	i = (SBlock *)p - 1;
 	s = (s - 1) / sizeof (SBlock) + 1;
 	{
 		LockMutex lock(m_mutex);
+
 		// Check for out of memory (dimok)
 		if (i + s + 1 >= m_endAddress)
 		{
 			return 0;
 		}
+
 		// Last block
 		if (i->next == 0 && i + s + 1 < m_endAddress)
 		{

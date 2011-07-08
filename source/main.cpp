@@ -78,11 +78,7 @@ int old_main(int argc, char **argv)
 	mainIOSRev = IOS_GetRevision();
 	iosOK = iosOK && mainIOSRev >= mainIOSminRev;
 
-	// MEM2 usage :
-	// 36 MB for general purpose allocations
-	// 12 MB for covers (and temporary buffers)
-	// adds 15 MB from MEM1 to obtain 27 MB for covers (about 150 HQ covers on screen)
-	MEM2_init(36, 12);	// Max ~48
+	MEM2_init(48);
 
 	// Init video
 	vid.init();

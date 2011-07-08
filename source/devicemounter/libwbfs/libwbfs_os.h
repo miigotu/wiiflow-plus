@@ -16,7 +16,7 @@
 #define wbfs_free(x)		free(x)
 #define wbfs_ioalloc(x)		memalign(32, ((x) + 31) & ~31)
 #define wbfs_mem2alloc(x)	MEM2_alloc(x)
-#define wbfs_coveralloc(x)	COVER_allocMem2(x)
+
 #define wbfs_iofree(x)		free(x)
 #define wbfs_be16(x)		(*((u16*)(x)))
 #define wbfs_be32(x)		(*((u32*)(x)))

@@ -1,4 +1,3 @@
-
 #include "smartptr.hpp"
 
 SmartBuf smartMalloc(unsigned int size)
@@ -23,7 +22,7 @@ SmartBuf smartMem2Alloc(unsigned int size)
 
 SmartBuf smartCoverAlloc(unsigned int size)
 {
-	return SmartBuf((unsigned char *)COVER_alloc(size), SmartBuf::SRCALL_COVER);
+	return SmartBuf((unsigned char *)malloc(size), SmartBuf::SRCALL_COVER);
 }
 
 SmartBuf smartAnyAlloc(unsigned int size)

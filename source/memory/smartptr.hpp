@@ -29,14 +29,8 @@ public:
 					case SRCALL_NEW:
 						delete m_p;
 						break;
-					case SRCALL_MALLOC:
+					default: // wrapped free knows if it is a pointer in mem1 or mem2
 						free(m_p);
-						break;
-					case SRCALL_MEM2:
-						MEM2_free(m_p);
-						break;
-					case SRCALL_COVER:
-						COVER_free(m_p);
 						break;
 				}
 				delete m_refcount;

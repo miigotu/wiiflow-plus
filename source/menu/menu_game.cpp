@@ -649,7 +649,7 @@ extern "C" {extern void USBStorage_Deinit(void);}
 
 void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> arguments)
 {
-	COVER_clear();
+	//COVER_clear();
 	if(LoadHomebrew(filepath))
 	{
 		m_gcfg1.save();
@@ -687,7 +687,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 	m_cat.save();
 	m_cfg.save();
 
-	COVER_clear();
+	//COVER_clear();
 	
 	cleanup();
 	Close_Inputs();
@@ -905,7 +905,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		default:  minIOSRev = IOS_ODD_MIN_REV; break;
 	}
 
-	COVER_clear();
+	//COVER_clear();
 	if (IOS_GetRevision() < minIOSRev && minIOSRev != 0)
 	{
 		error(sfmt("IOS %i rev %i or higher is required.\nPlease install the latest version.", iosNum, minIOSRev));
