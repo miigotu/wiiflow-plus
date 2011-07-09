@@ -221,6 +221,7 @@ class FreeTypeGX {
 		FT_Face ftFace;			/**< FreeType reusable FT_Face typographic object. */
 		FT_GlyphSlot ftSlot;	/**< FreeType reusable FT_GlyphSlot glyph container object. */
 		FT_UInt ftPointSize;	/**< Requested size of the rendered font. */
+		FT_Pos ftWeight;		/**< Requested weight of the rendered font. */
 		bool ftKerningEnabled;	/**< Flag indicating the availability of font kerning data. */
 		float xScale;
 		float yScale;
@@ -252,8 +253,8 @@ class FreeTypeGX {
 
 		static wchar_t* charToWideChar(char* p);
 
-		uint16_t loadFont(uint8_t* fontBuffer, FT_Long bufferSize, FT_UInt pointSize, bool cacheAll = false);
-		uint16_t loadFont(const uint8_t* fontBuffer, FT_Long bufferSize, FT_UInt pointSize, bool cacheAll = false);
+		uint16_t loadFont(uint8_t* fontBuffer, FT_Long bufferSize, FT_UInt pointSize, FT_Pos weight = 0, uint32_t index = 0, bool cacheAll = false);
+		uint16_t loadFont(const uint8_t* fontBuffer, FT_Long bufferSize, FT_UInt pointSize, FT_Pos weight = 0, uint32_t index = 0, bool cacheAll = false);
 		
 		uint16_t drawText(uint16_t x, uint16_t y, wchar_t *text, GXColor color = ftgxWhite, uint16_t textStyling = FTGX_NULL);
 		uint16_t drawText(uint16_t x, uint16_t y, wchar_t const *text, GXColor color = ftgxWhite, uint16_t textStyling = FTGX_NULL);

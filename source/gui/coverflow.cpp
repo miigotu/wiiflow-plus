@@ -24,8 +24,10 @@ extern const u8 nopic_png[];
 extern const u8 loading_png[];
 extern const u8 flatnopic_png[];
 extern const u8 flatloading_png[];
-extern const u8 cffont_ttf[];
-extern const u32 cffont_ttf_size;
+
+extern bool titlefont_ttf_def;
+extern u8 *titlefont_ttf;
+extern u32 titlefont_ttf_size;
 
 static lwp_t coverLoaderThread = LWP_THREAD_NULL;
 SmartBuf coverLoaderThreadStack;
@@ -225,7 +227,7 @@ CCoverFlow::CCoverFlow(void)
 bool CCoverFlow::init(void)
 {
 	// Load font
-	m_font.fromBuffer(cffont_ttf, cffont_ttf_size, 32, 32);
+	m_font.fromBuffer(titlefont_ttf, titlefont_ttf_size, 32, 32, titlefont_ttf_def ? 8 : 0, titlefont_ttf_def ? 1 : 0);
 	m_fontColor = CColor(0xFFFFFFFF);
 	m_fanartFontColor = CColor(0xFFFFFFFF);
 	// 
@@ -2476,7 +2478,7 @@ int CCoverFlow::_coverLoader(CCoverFlow *cf)
 			if (ret == CCoverFlow::CL_ERROR)
 			{
 				ret = cf->_loadCoverTex(i, !box, i == (u32)newHQCover);
-				if (ret == CCoverFlow::CL_ERROR && !cf->m_loadingCovers)
+				if (ret == CCoverFlow::CL_ERROR && cf->m_loadingCovers)
 					cf->m_items[i].state = CCoverFlow::STATE_NoCover;
 			}
 		}

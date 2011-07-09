@@ -14,6 +14,8 @@
 #include "gecko.h"
 #include "defines.h"
 #include "music/SoundHandler.hpp"
+#include "fs.h"
+#include "U8Archive.h"
 
 // Sounds
 extern const u8 click_wav[];
@@ -42,16 +44,25 @@ extern const u8 pbarlefts_png[];
 extern const u8 pbarcenters_png[];
 extern const u8 pbarrights_png[];
 // Fonts
+
+/*
 extern const u8 butfont_ttf[];
 extern const u32 butfont_ttf_size;
 extern const u8 cffont_ttf[];
 extern const u32 cffont_ttf_size;
-const u8 *titlefont_ttf = butfont_ttf;
-const u32 titlefont_ttf_size = butfont_ttf_size;
-const u8 *lblfont_ttf = cffont_ttf;
-const u32 lblfont_ttf_size = cffont_ttf_size;
-const u8 *thxfont_ttf = cffont_ttf;
-const u32 thxfont_ttf_size = cffont_ttf_size;
+*/
+bool butfont_ttf_def = false;
+u8 *butfont_ttf = NULL;
+u32 butfont_ttf_size = 0;
+bool titlefont_ttf_def = false;
+u8 *titlefont_ttf = NULL; // butfont_ttf;
+u32 titlefont_ttf_size = 0; // butfont_ttf_size;
+bool lblfont_ttf_def = false;
+u8 *lblfont_ttf = NULL; //cffont_ttf;
+u32 lblfont_ttf_size = 0; //cffont_ttf_size;
+bool thxfont_ttf_def = false;
+u8 *thxfont_ttf = NULL; //cffont_ttf;
+u32 thxfont_ttf_size = 0; //cffont_ttf_size;
 
 using namespace std;
 
@@ -123,6 +134,8 @@ void CMenu::init()
 				makedir((char *)sfmt("%s:/%s", DeviceName[i], APPDATA_DIR2).c_str()); //Make the apps dir, so saving wiiflow.ini does not fail.
 				break;
 			}
+
+	_loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 
 	if(drive == check) // Should not happen
 	{
@@ -210,6 +223,8 @@ void CMenu::init()
 	m_wipDir = m_cfg.getString("GENERAL", "dir_wip", sfmt("%s/wip", m_txtCheatDir.c_str()));
 	m_listCacheDir = m_cfg.getString("GENERAL", "dir_list_cache", sfmt("%s/lists", m_cacheDir.c_str()));
 	//
+
+	DeviceHandler::SetWatchdog(m_cfg.getUInt("GENERAL", "watchdog_timeout", 10));
 
 	u8 partition = m_cfg.getInt("GENERAL", "partition");  //Auto find a valid partition and fix old ini partition settings.
 	if(partition < USB1 || partition > USB8 || partition > DeviceHandler::Instance()->GetMountedCount(partition))
@@ -360,23 +375,34 @@ void CMenu::init()
 	}
 }
 
-void CMenu::cleanup(void)
+void CMenu::cleanup(bool ios_reload)
 {
 	m_cf.stopCoverLoader();
 	_waitForGameSoundExtract();
 	_stopSounds();
 	
-	m_cameraSound.release();
+	if (!ios_reload)
+	{
+		m_cameraSound.release();
+	}
 	
 	MusicPlayer::DestroyInstance();
 	SoundHandler::DestroyInstance();
 	soundDeinit();
-	LWP_MutexDestroy(m_mutex);
-	m_mutex = 0;
-	LWP_MutexDestroy(m_gameSndMutex);
-	m_gameSndMutex = 0;
+	if (!ios_reload)
+	{
+		LWP_MutexDestroy(m_mutex);
+		m_mutex = 0;
+		LWP_MutexDestroy(m_gameSndMutex);
+		m_gameSndMutex = 0;
+	}
 
 	DeviceHandler::DestroyInstance(); // Destruction must be done manually, also unmounts all devices.
+
+	if (!ios_reload)
+	{
+		_cleanupDefaultFont();
+	}
 	_deinitNetwork();
 }
 
@@ -710,18 +736,25 @@ void CMenu::_buildMenus(void)
 	SThemeData theme;
 	
 	// Default fonts
-	theme.btnFont.fromBuffer(butfont_ttf, butfont_ttf_size, 24, 24);
-	theme.btnFont = _font(theme.fontSet, "GENERAL", "button_font", theme.btnFont);
+	theme.btnFont.fromBuffer(butfont_ttf, butfont_ttf_size, 24, 24, butfont_ttf_def ? 8 : 0, butfont_ttf_def ? 1 : 0);
+	theme.btnFont = _font(theme.fontSet, "GENERAL", "button_font", theme.btnFont, &butfont_ttf_def);
 	theme.btnFontColor = m_theme.getColor("GENERAL", "button_font_color", 0xD0BFDFFF);
-	theme.lblFont.fromBuffer(lblfont_ttf, lblfont_ttf_size, 24, 24);
-	theme.lblFont = _font(theme.fontSet, "GENERAL", "label_font", theme.lblFont);
+	theme.lblFont.fromBuffer(lblfont_ttf, lblfont_ttf_size, 24, 24, 8, lblfont_ttf_def ? 1 : 0);
+	theme.lblFont = _font(theme.fontSet, "GENERAL", "label_font", theme.lblFont, &lblfont_ttf_def);
 	theme.lblFontColor = m_theme.getColor("GENERAL", "label_font_color", 0xD0BFDFFF);
 	theme.txtFontColor = m_theme.getColor("GENERAL", "text_font_color", 0xFFFFFFFF);
-	theme.titleFont.fromBuffer(titlefont_ttf, titlefont_ttf_size, 36, 36);
-	theme.titleFont = _font(theme.fontSet, "GENERAL", "title_font", theme.titleFont);
+	theme.titleFont.fromBuffer(titlefont_ttf, titlefont_ttf_size, 36, 36, butfont_ttf_def ? 8 : 0, titlefont_ttf_def ? 1 : 0);
+	theme.titleFont = _font(theme.fontSet, "GENERAL", "title_font", theme.titleFont, &titlefont_ttf_def);
 	theme.titleFontColor = m_theme.getColor("GENERAL", "title_font_color", 0xD0BFDFFF);
-	theme.thxFont.fromBuffer(thxfont_ttf, thxfont_ttf_size, 18, 18);
-	theme.thxFont = _font(theme.fontSet, "GENERAL", "thxfont", theme.thxFont);
+	theme.thxFont.fromBuffer(thxfont_ttf, thxfont_ttf_size, 18, 18, butfont_ttf_def ? 4 : 0, thxfont_ttf_def ? 1 : 0);
+	theme.thxFont = _font(theme.fontSet, "GENERAL", "thxfont", theme.thxFont, &thxfont_ttf_def);
+	
+	if (!butfont_ttf_def && !lblfont_ttf_def && !titlefont_ttf_def && !thxfont_ttf_def)
+	{
+		// Cleanup default font
+		_cleanupDefaultFont();
+	}
+	
 	// Default Sounds
 	theme.clickSound = SmartPtr<GuiSound>(new GuiSound(click_wav, click_wav_size, false));
 	theme.clickSound = _sound(theme.soundSet, "GENERAL", "click_sound", theme.clickSound);
@@ -793,8 +826,16 @@ void CMenu::_buildMenus(void)
 
 SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, SFont def)
 {
+	bool unused;
+	return _font(fontSet, domain, key, def, &unused);
+}
+
+SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, SFont def, bool *notloaded)
+{
 	string filename;
 	u32 fontSize = 0;
+
+	*notloaded = false;
 
 	if (m_theme.loaded())
 	{
@@ -808,7 +849,10 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 		string lineSpacingKey = key;
 		lineSpacingKey += "_line_height";
 		u32 lineSpacing = min(max(6u, (u32)m_theme.getInt(domain, lineSpacingKey)), 300u);
-
+		string weightKey = key;
+		weightKey += "_weight";
+		u32 weight = min((u32)m_theme.getInt(domain, weightKey), 32u);
+		
 		SFont retFont;
 		if (!filename.empty())
 		{
@@ -818,7 +862,10 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 			{
 				retFont = i->second;
 				if (!!retFont.data)
+				{
 					retFont.lineSpacing = lineSpacing;
+					retFont.setWeight(weight);
+				}
 				return retFont;
 			}
 			// Then try to find the same font with a different size
@@ -826,12 +873,12 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 			if (i != fontSet.end() && i->first.first == filename)
 			{
 				retFont = i->second;
-				retFont.newSize(fontSize, lineSpacing);
+				retFont.newSize(fontSize, lineSpacing, weight);
 				fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
 				return retFont;
 			}
 			// TTF not found in memory, load it to create a new font
-			if (retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fontSize, lineSpacing))
+			if (retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fontSize, lineSpacing, weight))
 			{
 				fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
 				return retFont;
@@ -840,6 +887,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 	}
 	// Default font
 	fontSet[CMenu::FontDesc(filename, fontSize)] = def;
+	*notloaded = true;
 	return def;
 }
 
@@ -1606,4 +1654,79 @@ void CMenu::_showWaitMessage()
 		m_theme.getFloat("GENERAL", "waitmessage_delay", 0.f),
 		m_theme.getBool("GENERAL", "waitmessage_wiilight",	m_cfg.getBool("GENERAL", "waitmessage_wiilight", true))
 	);
+}
+
+typedef struct map_entry
+{
+	char filename[8];
+	u8 sha1[20];
+} map_entry_t;
+
+void CMenu::_loadDefaultFont(bool korean)
+{
+	u32 size;
+	bool retry = false;
+	
+	ISFS_Initialize();
+	
+	// Read content.map from ISFS
+	u8 *content = ISFS_GetFile((u8 *) "/shared1/content.map", &size, 0);
+	int items = size / sizeof(map_entry_t);
+		
+	gprintf("Open content.map, size %d, items %d\n", size, items);
+
+retry:	
+	bool kor_font = (korean && !retry) || (!korean && retry);
+	map_entry_t *cm = (map_entry_t *) content;
+	for (int i = 0; i < items; i++)
+	{
+		if (memcmp(cm[i].sha1, kor_font ? WIIFONT_HASH_KOR : WIIFONT_HASH, 20) == 0)
+		{
+			// Name found, load it and unpack it
+			char u8_font_filename[22] = {0};
+			strcpy(u8_font_filename, "/shared1/XXXXXXXX.app"); // Faster than sprintf
+            memcpy(u8_font_filename+9, cm[i].filename, 8);
+			
+			u8 *u8_font_archive = ISFS_GetFile((u8 *) u8_font_filename, &size, 0);
+			
+			gprintf("Opened fontfile: %s: %d bytes\n", u8_font_filename, size);
+			
+			if (u8_font_archive != NULL)
+			{
+				const u8 *font_file = u8_get_file_by_index(u8_font_archive, 1, &size); // There is only one file in that app
+				
+				gprintf("Extracted font: %d\n", size);
+				
+				u8 *font_copy = (u8 *) malloc(size);
+				memcpy(font_copy, font_file, size);
+				
+				butfont_ttf = titlefont_ttf = lblfont_ttf = thxfont_ttf = font_copy;
+				butfont_ttf_size = titlefont_ttf_size = lblfont_ttf_size = thxfont_ttf_size = size;
+				
+				butfont_ttf_def = titlefont_ttf_def = lblfont_ttf_def = thxfont_ttf_def = true;
+			}
+			free(u8_font_archive);
+			break;
+		}
+	}
+	
+	if (!retry)
+	{
+		retry = true;
+		goto retry;
+	}
+	
+	ISFS_Deinitialize();
+	
+	free(content);
+}
+
+void CMenu::_cleanupDefaultFont()
+{
+	if (lblfont_ttf_def) { SAFE_FREE(lblfont_ttf); lblfont_ttf_size = 0; }
+	else if (butfont_ttf_def) { SAFE_FREE(butfont_ttf); butfont_ttf_size = 0; }
+	else if (titlefont_ttf_def) { SAFE_FREE(titlefont_ttf); titlefont_ttf_size = 0; }
+	else if (thxfont_ttf_def) { SAFE_FREE(thxfont_ttf); thxfont_ttf_size = 0; }
+	
+	butfont_ttf_def = titlefont_ttf_def = lblfont_ttf_def = thxfont_ttf_def = false;
 }

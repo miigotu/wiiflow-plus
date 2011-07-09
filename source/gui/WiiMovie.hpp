@@ -4,6 +4,7 @@
 #include "gcvid.h"
 #include "Timer.h"
 #include "texture.hpp"
+#include "BufferCircle.hpp"
 
 using namespace std;
 
@@ -21,23 +22,28 @@ class WiiMovie
         void SetAspectRatio(float Aspect);
 		bool GetNextFrame(STexture *tex);
     protected:
-        void InternalUpdate();
 		static void * UpdateThread(void *arg);
 		static void * PlayingThread(void *arg);
-        void InternalThreadUpdate();
+        void FrameLoadLoop();
+        void ReadNextFrame();
         void LoadNextFrame();
 
+		u8 * ThreadStack;
+		u8 * PlayThreadStack;
 		lwp_t ReadThread;
 		lwp_t PlayThread;
 		mutex_t mutex;
 
         VideoFile * Video;
+		BufferCircle SoundBuffer;
+		float fps;
         Timer PlayTime;
         u32 VideoFrameCount;
         safe_vector<STexture> Frames;
 		bool Playing;
 		bool ExitRequested;
 		bool fullScreen;
+		int maxSoundSize;
 		int SndChannels;
 		int SndFrequence;
 		int volume;

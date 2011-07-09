@@ -470,7 +470,9 @@ void GuiSound::UncompressSoundbin(const u8 * snd, int len, bool isallocated)
     else
     {
         length = len-32;
+		if (length <= 0) return;
         sound = (u8 *) malloc(length);
+		if (!sound) return;		
         memcpy(sound, file, length);
     }
 

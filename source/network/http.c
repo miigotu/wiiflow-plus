@@ -165,6 +165,7 @@ struct block downloadfile(u8 *buffer, u32 bufferSize, const char *url, bool (*f)
 
 	//Do the request and get the response
 	send_message(connection, header);
+	if (bufferSize == 0) return emptyblock;
 	struct block buf;
 	buf.data = buffer;
 	buf.size = bufferSize;

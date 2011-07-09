@@ -99,6 +99,9 @@ void SoundHandler::AddDecoder(int voice, const u8 * snd, int len)
 {
     if(voice < 0 || voice >= MAX_DECODERS)
         return;
+	
+	if (snd == NULL || len == 0)
+		return;
 
     if(DecoderList[voice] != NULL)
         RemoveDecoder(voice);

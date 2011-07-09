@@ -39,7 +39,7 @@ public:
 	void init();
 	void error(const wstringEx &msg);
 	int main(void);
-	void cleanup(void);
+	void cleanup(bool ios_reload = false);
 	u32 m_current_view;
 private:
 	struct SZone
@@ -740,7 +740,10 @@ private:
 	float _getCFFloat(const std::string &domain, const std::string &key, float def, bool otherScrnFmt = false);
 	void _cfParam(bool inc, int i, const SCFParamDesc &p, int cfVersion, bool wide);
 	void _buildMenus(void);
+	void _loadDefaultFont(bool korean);
+	void _cleanupDefaultFont();
 	SFont _font(FontSet &fontSet, const char *domain, const char *key, SFont def);
+	SFont _font(FontSet &fontSet, const char *domain, const char *key, SFont def, bool *notloaded);
 	STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);
 	safe_vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key);
 	void _showWaitMessage();

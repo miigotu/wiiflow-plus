@@ -42,6 +42,8 @@ distribution.
 #define USB_IOCTL_UMS_READ_STRESS	(UMS_BASE+0x5)
 #define USB_IOCTL_UMS_SET_VERBOSE	(UMS_BASE+0x6)
 
+#define USB_IOCTL_UMS_WATCHDOG		(UMS_BASE+0x80)
+
 #define UMS_HEAPSIZE			0x8000
 #define USB_MEM2_SIZE           0x10000
 
@@ -118,6 +120,20 @@ s32 USBStorage_OpenDev()
 	if (fd < 0) fd = IOS_Open(fs2, 0);
 	if (fd < 0) fd = IOS_Open(fs3, 0);
 	return fd;
+}
+
+s32 USBStorage_SetWatchdog(u32 seconds)
+{
+	if (fd < 0) return fd;
+
+	static ioctlv vector[0x04] ATTRIBUTE_ALIGN(32);		
+	static int secs ATTRIBUTE_ALIGN(32);
+
+	secs = seconds;
+	vector[0].data = &secs;
+    vector[0].len = 4;
+
+	return IOS_Ioctlv(fd, USB_IOCTL_UMS_WATCHDOG, 4, 0, vector);
 }
 
 s32 USBStorage_Init(void)

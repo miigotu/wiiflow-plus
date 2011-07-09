@@ -334,6 +334,7 @@ void CMenu::_game(bool launch)
 					m_bgCrossFade = 10;
 					_mainLoopCommon(); // Redraw the background every frame
 				}
+				movie.Stop();
 				_showGame();
 				m_video_playing = false;
 				//m_gameSound.play(m_bnrSndVol);
@@ -881,11 +882,12 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 
 	net_wc24cleanup();
-	
+		
 	// Reload IOS, if requested
 	if ((iosNum != mainIOS))
 	{
 		gprintf("Reloading IOS into %d\n", iosNum);
+		cleanup(true);
 		if (!loadIOS(iosNum, true))
 		{
 			error(sfmt("Couldn't load IOS %i", iosNum));
@@ -915,6 +917,11 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	{
 		error(sfmt("IOS %i is not supported.\nPlease install a supported version.", iosNum));
 		Sys_LoadMenu();
+	}
+	
+	if (is_ios_type(IOS_TYPE_D2X))
+	{
+		wdm_entry = NULL;
 	}
 
 	bool blockIOSReload = m_gcfg2.getBool((const char *) hdr->hdr.id, "block_ios_reload", true);
@@ -1146,6 +1153,6 @@ void CMenu::_waitForGameSoundExtract(void)
 	if (m_gameSoundThread != 0)
 	{
 		error(L"Error while reading a game disc");
-		Sys_Reboot();
+		SYS_ResetSystem(SYS_RESTART, 0, 0);
 	}
 }

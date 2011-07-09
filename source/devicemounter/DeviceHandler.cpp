@@ -33,10 +33,12 @@
 
 #include "DeviceHandler.hpp"
 #include "wbfs.h"
+#include "usbstorage.h"
 
 extern const DISC_INTERFACE __io_sdhc;
 
 DeviceHandler * DeviceHandler::instance = NULL;
+unsigned int DeviceHandler::watchdog_timeout = 10;
 
 DeviceHandler::~DeviceHandler()
 {
@@ -156,6 +158,9 @@ bool DeviceHandler::MountUSB(int pos)
         usb = NULL;
         return false;
     }
+	
+	// Set the watchdog
+	InternalSetWatchdog(watchdog_timeout);
 
     if(pos >= usb->GetPartitionCount())
         return false;
@@ -225,6 +230,21 @@ void DeviceHandler::UnMountAllUSB()
 
     delete usb;
     usb = NULL;
+}
+
+bool DeviceHandler::InternalSetWatchdog(unsigned int timeout)
+{
+	if (Instance()->USB_Inserted())
+	{
+		return USBStorage_SetWatchdog(timeout) == 0;
+	}
+	return false;
+}
+
+bool DeviceHandler::SetWatchdog(unsigned int timeout)
+{
+	watchdog_timeout = timeout;
+	return InternalSetWatchdog(timeout);
 }
 
 int DeviceHandler::PathToDriveType(const char * path)

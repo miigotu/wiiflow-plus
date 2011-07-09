@@ -85,11 +85,22 @@ wchar_t* FreeTypeGX::charToWideChar(char* strChar) {
  * @param pointSize	The desired point size this wrapper's configured font face.
  * @param cacheAll	Optional flag to specify if all font characters should be cached when the class object is created. If specified as false the characters only become cached the first time they are used. If not specified default value is false.
  */
-uint16_t FreeTypeGX::loadFont(uint8_t* fontBuffer, FT_Long bufferSize, FT_UInt pointSize, bool cacheAll) {
+uint16_t FreeTypeGX::loadFont(uint8_t* fontBuffer, FT_Long bufferSize, FT_UInt pointSize, FT_Pos weight, uint32_t index, bool cacheAll) {
 	this->unloadFont();
-	this->ftPointSize = pointSize;
+	this->ftPointSize = pointSize != 0 ? pointSize : this->ftPointSize;
+	this->ftWeight = weight;
+
+	// check if the index is valid
+	if (index != 0)
+	{
+		FT_New_Memory_Face(this->ftLibrary, (FT_Byte *)fontBuffer, bufferSize, -1, &this->ftFace);
+		if (index >= (uint32_t) this->ftFace->num_faces)
+			index = this->ftFace->num_faces - 1; // Use the last face
+		FT_Done_Face(this->ftFace);
+		this->ftFace = NULL;
+	}
 	
-	FT_New_Memory_Face(this->ftLibrary, (FT_Byte *)fontBuffer, bufferSize, 0, &this->ftFace);
+	FT_New_Memory_Face(this->ftLibrary, (FT_Byte *)fontBuffer, bufferSize, index, &this->ftFace);
 	FT_Set_Pixel_Sizes(this->ftFace, 0, this->ftPointSize);
 
 	this->ftSlot = this->ftFace->glyph;
@@ -106,8 +117,8 @@ uint16_t FreeTypeGX::loadFont(uint8_t* fontBuffer, FT_Long bufferSize, FT_UInt p
  * 
  * \overload
  */
-uint16_t FreeTypeGX::loadFont(const uint8_t* fontBuffer, FT_Long bufferSize, FT_UInt pointSize, bool cacheAll) {
-	return this->loadFont((uint8_t *)fontBuffer, bufferSize, pointSize, cacheAll);
+uint16_t FreeTypeGX::loadFont(const uint8_t* fontBuffer, FT_Long bufferSize, FT_UInt pointSize, FT_Pos weight, uint32_t index, bool cacheAll) {
+	return this->loadFont((uint8_t *)fontBuffer, bufferSize, pointSize, weight, index, cacheAll);
 }
 
 /**
@@ -121,11 +132,11 @@ void FreeTypeGX::unloadFont() {
 	}
 	
 	this->fontData.clear();
-//	if (this->ftFace != 0)
-//	{
-//		FT_Done_Face(this->ftFace);
-//		this->ftFace = 0;
-//	}
+	if (this->ftFace != NULL)
+	{
+		FT_Done_Face(this->ftFace);
+		this->ftFace = NULL;
+	}
 }
 
 /**
@@ -209,7 +220,7 @@ ftgxCharData *FreeTypeGX::cacheGlyphData(wchar_t charCode) {
 		
 		if(this->ftSlot->format == FT_GLYPH_FORMAT_BITMAP) {
 			FT_Bitmap *glyphBitmap = &this->ftSlot->bitmap;
-			//FT_Bitmap_Embolden(this->ftLibrary, glyphBitmap, 8, 8);
+			FT_Bitmap_Embolden(this->ftLibrary, glyphBitmap, this->ftWeight, this->ftWeight);
 			
 			textureWidth = adjustTextureWidth(glyphBitmap->width, this->textureFormat);
 			textureHeight = adjustTextureHeight(glyphBitmap->rows, this->textureFormat);

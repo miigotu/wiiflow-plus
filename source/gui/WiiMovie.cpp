@@ -30,56 +30,92 @@
 #include <wiiuse/wpad.h>
 
 #include "WiiMovie.hpp"
+#include "MusicPlayer.h"
 #include "gecko.h"
 
-#define SND_BUFFERS     20
+#define SND_BUFFERS     8
+#define FRAME_BUFFERS	8
 
-static u8 which = 0;
-static safe_vector<s16> soundbuffer[2];
-static u16 sndsize[2] = {0, 0};
-static u16 MaxSoundSize = 0;
+static BufferCircle * soundBuffer = NULL;
 
 WiiMovie::WiiMovie(const char * filepath)
 {
     VideoFrameCount = 0;
+	fps = 0.0f;
     ExitRequested = false;
 	fullScreen = false;
     Playing = false;
     volume = 128;
+	ThreadStack = NULL;
+	PlayThread = LWP_THREAD_NULL;
+
+	gprintf("Opening video '%s'\n", filepath);
 
     string file(filepath);
     Video = openVideo(file);
     if(!Video)
     {
+		gprintf("Open video failed\n");
         ExitRequested = true;
 		return;
     }
 
     SndChannels = (Video->getNumChannels() == 2) ? VOICE_STEREO_16BIT : VOICE_MONO_16BIT;
     SndFrequence = Video->getFrequency();
-    MaxSoundSize = Video->getMaxAudioSamples()*2;
+	fps = Video->getFps();
+    maxSoundSize = Video->getMaxAudioSamples()*Video->getNumChannels()*2;
+	gprintf("Open video succeeded: sound channels: %d, Frequency: %d, FPS: %4.3f\n", SndChannels, SndFrequence, fps);
+
+	if (Video->hasSound())
+	{
+		gprintf("Video has sound\n");
+		soundBuffer = &SoundBuffer;
+		soundBuffer->Resize(SND_BUFFERS);
+		soundBuffer->SetBufferBlockSize(maxSoundSize * FRAME_BUFFERS);
+	}
+
+	PlayThreadStack = NULL;
+	ThreadStack = (u8 *) memalign(32, 32768);
+	if (!ThreadStack)
+		return;
 
     LWP_MutexInit(&mutex, true);
-	LWP_CreateThread (&ReadThread, UpdateThread, this, NULL, 0, LWP_PRIO_HIGHEST);
+	LWP_CreateThread (&ReadThread, UpdateThread, this, ThreadStack, 32768, LWP_PRIO_HIGHEST);
+	gprintf("Reading frames thread started\n");
 }
 
 WiiMovie::~WiiMovie()
 {
+	gprintf("Destructing WiiMovie object\n");
     Playing = true;
     ExitRequested = true;
+
+	Stop();
 
     LWP_ResumeThread(ReadThread);
     LWP_JoinThread(ReadThread, NULL);
     LWP_MutexDestroy(mutex);
 
     ASND_StopVoice(10);
+	MusicPlayer::Instance()->Play();
+	
+	if (ReadThread != LWP_THREAD_NULL)
+	{
+		LWP_ResumeThread(ReadThread);
+		LWP_JoinThread(ReadThread, NULL);
+	}
+	if (mutex != LWP_MUTEX_NULL)
+	{
+		LWP_MutexUnlock(mutex);
+		LWP_MutexDestroy(mutex);
+	}
+	if (ThreadStack != NULL)
+	{
+		free(ThreadStack);
+		ThreadStack = NULL;
+	}
 
-    for(u8 i = 0; i < 2; i++)
-    {
-        soundbuffer[i].clear();
-        sndsize[i] = 0;
-    }
-    which = 0;
+	soundBuffer = NULL;
 
     Frames.clear();
 
@@ -91,20 +127,40 @@ bool WiiMovie::Play(bool loop)
 {
     if(!Video) return false;
 
+	gprintf("Start playing video\n");
+
+	PlayThreadStack = (u8 *) memalign(32, 32768);
+	if (PlayThreadStack == NULL) return false;
+
     Playing = true;
     PlayTime.reset();
+
+	Video->loop = loop;
+
+	gprintf("Start playing thread\n");
+
     LWP_ResumeThread(ReadThread);
-	LWP_CreateThread(&PlayThread, PlayingThread, this, NULL, 0, 70);
-	
-	Video->loop = loop;	
+	LWP_CreateThread(&PlayThread, PlayingThread, this, PlayThreadStack, 32768, 70);
 	
 	return true;
 }
 
 void WiiMovie::Stop()
 {
-	LWP_JoinThread(PlayThread, NULL);
+	gprintf("Stopping WiiMovie video\n");
     ExitRequested = true;
+	if (PlayThread != LWP_THREAD_NULL)
+	{
+		LWP_JoinThread(PlayThread, NULL);
+	}
+	PlayThread = LWP_THREAD_NULL;
+	gprintf("Playing thread stopped\n");
+	
+	if (PlayThreadStack != NULL)
+	{
+		free(PlayThreadStack);
+		PlayThreadStack = NULL;
+	}
 }
 
 void WiiMovie::SetVolume(int vol)
@@ -167,38 +223,53 @@ void WiiMovie::SetAspectRatio(float Aspect)
     scaleX = (float) width/vidwidth;
 }
 
-extern "C" void THPSoundCallback(int)
+extern "C" void THPSoundCallback(int voice)
 {
-    if(soundbuffer[which].size() == 0 || sndsize[which] < MaxSoundSize*(SND_BUFFERS-1))
+	if (!soundBuffer || !soundBuffer->IsBufferReady()) return;
+	
+    if(ASND_AddVoice(voice, soundBuffer->GetBuffer(), soundBuffer->GetBufferSize()) != SND_OK)
         return;
+	
+	soundBuffer->LoadNext();
+}
 
-    if(ASND_AddVoice(10, (u8*) &soundbuffer[which][0], sndsize[which]) != SND_OK)
-        return;
-
-    which ^= 1;
-
-    sndsize[which] = 0;
+void WiiMovie::FrameLoadLoop()
+{
+	while (!ExitRequested)
+	{
+		LoadNextFrame();
+		
+		while (Frames.size() > FRAME_BUFFERS && !ExitRequested)
+			usleep(100);
+	}
 }
 
 void * WiiMovie::UpdateThread(void *arg)
 {
-	while(!((WiiMovie *) arg)->ExitRequested)
-        ((WiiMovie *) arg)->InternalThreadUpdate();
-
+	WiiMovie *movie = static_cast<WiiMovie *>(arg);
+	while (!movie->ExitRequested)
+	{
+		movie->ReadNextFrame();
+		usleep(100);
+	}
 	return NULL;
 }
 
 void * WiiMovie::PlayingThread(void *arg)
 {
-	((WiiMovie *) arg)->InternalUpdate();
+	WiiMovie *movie = static_cast<WiiMovie *>(arg);
+	movie->FrameLoadLoop();
+	
 	return NULL;
 }
 
-void WiiMovie::InternalThreadUpdate()
+void WiiMovie::ReadNextFrame()
 {
     if(!Playing) LWP_SuspendThread(ReadThread);
 
-    u32 FramesNeeded = (u32) (PlayTime.elapsed()*Video->getFps());
+    u32 FramesNeeded = (u32) (PlayTime.elapsed()*fps);
+
+	gprintf("Reading needed frames: %d\n", FramesNeeded);
 
     while(VideoFrameCount < FramesNeeded)
     {
@@ -208,33 +279,44 @@ void WiiMovie::InternalThreadUpdate()
 
         ++VideoFrameCount;
 
+		gprintf("Loaded video frame: %d\n", VideoFrameCount);
+
         if(Video->hasSound())
         {
-            if(sndsize[which] > MaxSoundSize*(SND_BUFFERS-1))
-                return;
-
-            if(soundbuffer[which].size() == 0)
-                soundbuffer[which].resize(Video->getMaxAudioSamples()*2*SND_BUFFERS);
-
-            sndsize[which] += Video->getCurrentBuffer(&soundbuffer[which][sndsize[which]/2])*2*2;
-
-            if(ASND_StatusVoice(10) == SND_UNUSED && sndsize[which] >= MaxSoundSize*(SND_BUFFERS-1))
+			u32 newWhich = SoundBuffer.Which();
+			int i = 0;
+			for (i = 0; i < SoundBuffer.Size()-2; ++i)
+			{
+				if (!SoundBuffer.IsBufferReady(newWhich)) break;
+				
+				newWhich = (newWhich + 1) % SoundBuffer.Size();
+			}
+			
+			if (i == SoundBuffer.Size() - 2) return;
+			
+			int currentSize = SoundBuffer.GetBufferSize(newWhich);
+			currentSize += Video->getCurrentBuffer((s16 *) (&SoundBuffer.GetBuffer(newWhich)[currentSize]))*SndChannels*2;
+			SoundBuffer.SetBufferSize(newWhich, currentSize);
+			
+			if(currentSize >= (FRAME_BUFFERS-1)*maxSoundSize)
+				SoundBuffer.SetBufferReady(newWhich, true);
+			
+            if(ASND_StatusVoice(10) == SND_UNUSED && SoundBuffer.IsBufferReady())
             {
                 ASND_StopVoice(10);
-                ASND_SetVoice(10, SndChannels, SndFrequence, 0, (u8 *) &soundbuffer[which][0], sndsize[which], volume, volume, THPSoundCallback);
-                which ^= 1;
+                ASND_SetVoice(10, SndChannels == 2 ? VOICE_STEREO_16BIT : VOICE_MONO_16BIT, SndFrequence, 0, SoundBuffer.GetBuffer(), SoundBuffer.GetBufferSize(), volume, volume, THPSoundCallback);
+                SoundBuffer.LoadNext();
             }
         }
     }
 
-    usleep(100);
+//    usleep(100);
 }
 
 void WiiMovie::LoadNextFrame()
 {
     if(!Video || !Playing)
     {
-        usleep(100);
         return;
     }
 
@@ -262,17 +344,6 @@ void WiiMovie::LoadNextFrame()
 	STexture frame;
 	if (frame.fromRAW(VideoF.getData(), VideoF.getWidth(), VideoF.getHeight()) == STexture::TE_OK)
 		Frames.push_back(frame);
-}
-
-void WiiMovie::InternalUpdate()
-{
-    while(!ExitRequested)
-    {
-        LoadNextFrame();
-
-        while(Frames.size() > 10 && !ExitRequested)
-            usleep(100);
-    }
 }
 
 bool WiiMovie::GetNextFrame(STexture *tex)

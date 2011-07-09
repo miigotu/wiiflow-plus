@@ -9,6 +9,7 @@ extern "C" {
 
 /* Prototypes */
 s32  USBStorage_GetCapacity(u32 *);
+s32  USBStorage_SetWatchdog(u32);
 s32  USBStorage_Init(void);
 void USBStorage_Deinit(void);
 s32  USBStorage_ReadSectors(u32, u32, void *);

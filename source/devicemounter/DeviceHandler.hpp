@@ -94,6 +94,7 @@ class DeviceHandler
 		const PartitionHandle * GetGCAHandle() { return gca; };
 		const PartitionHandle * GetGCBHandle() { return gcb; };
 
+		static bool SetWatchdog(unsigned int timeout);
 		static int PathToDriveType(const char * path);
         static const char * GetFSName(int dev);
 		static int GetFSType(int dev);
@@ -106,8 +107,10 @@ class DeviceHandler
     private:
         DeviceHandler() : sd(0), usb(0), gca(0), gcb(0) { };
         ~DeviceHandler();
+		static bool InternalSetWatchdog(unsigned int timeout);
 
 		static DeviceHandler * instance;
+		static unsigned int watchdog_timeout;
 
         PartitionHandle * sd;
         PartitionHandle * usb;

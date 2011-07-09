@@ -39,33 +39,10 @@
 #include "loader/fs.h"
 #include "loader/utils.h"
 #include "gecko.h"
+#include "U8Archive.h"
 
 #define IMET_OFFSET			0x40
 #define IMET_SIGNATURE		0x494d4554
-
-struct U8Header
-{
-	u32 fcc;
-	u32 rootNodeOffset;
-	u32 headerSize;
-	u32 dataOffset;
-	u8 zeroes[16];
-} __attribute__((packed));
-
-struct U8Entry
-{
-	struct
-	{
-		u32 fileType : 8;
-		u32 nameOffset : 24;
-	};
-	u32 fileOffset;
-	union
-	{
-		u32 fileLength;
-		u32 numEntries;
-	};
-} __attribute__((packed));
 
 Banner::Banner(u8 *bnr, u64 title)
 {
@@ -164,33 +141,10 @@ bool Banner::GetName(wchar_t *name, int language)
 	return false;
 }
 
-static char *u8Filename(const U8Entry *fst, int i)
-{
-	return (char *)(fst + fst[0].numEntries) + fst[i].nameOffset;
-}
-
 const u8 *Banner::GetFile(char *name, u32 *size)
 {
-	u32 i = 0;
-
 	const u8 *bnrArc = (const u8 *)(((u8 *) imet) + sizeof(IMET));
-	
-	const U8Header &bnrArcHdr = *(U8Header *)bnrArc;
-	if (bnrArcHdr.fcc != 0x55AA382D)
-	{
-		gprintf("Invalid U8 Archive in file\n");
-		return NULL;
-	}
-	
-	const U8Entry *fst = (const U8Entry *)(bnrArc + bnrArcHdr.rootNodeOffset);
-	for (i = 1; i < fst[0].numEntries; ++i)
-		if (fst[i].fileType == 0 && strcasecmp(u8Filename(fst, i), name) == 0)
-			break;
-	if (i >= fst[0].numEntries)
-		return NULL;
-		
-	*size = fst[i].fileLength;
-	return bnrArc + fst[i].fileOffset;
+	return u8_get_file(bnrArc, name, size);
 }
 
 Banner * Banner::GetBanner(u64 title, char *appname, bool isfs, bool imetOnly)

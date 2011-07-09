@@ -59,8 +59,8 @@ void Sys_Test(void)
 {
 	if(reset || shutdown) Close_Inputs();
 
-	if (reset) Sys_Reboot();
-	else if (shutdown) Sys_Shutdown();
+	if (reset) SYS_ResetSystem(SYS_RESTART, 0, 0);
+	else if (shutdown) SYS_ResetSystem(SYS_POWEROFF, 0, 0);
 }
 
 void Sys_ExitTo(int option)
@@ -118,40 +118,11 @@ void Sys_Init(void)
 	SYS_SetPowerCallback(__Sys_PowerCallback);
 }
 
-void Sys_Reboot(void)
-{
-	/* Restart console */
-	STM_RebootSystem();
-}
-
-void Sys_Shutdown(void)
-{
-	/* Poweroff console */
-	if(CONF_GetShutdownMode() == CONF_SHUTDOWN_IDLE)
-	{
-		s32 ret;
-
-		/* Set LED mode */
-		ret = CONF_GetIdleLedMode();
-		if(ret >= 0 && ret <= 2)
-			STM_SetLedMode(ret);
-
-		/* Shutdown to idle */
-		STM_ShutdownToIdle();
-	}
-	else
-	{
-		/* Shutdown to standby */
-		STM_ShutdownToStandby();
-	}
-}
-
 void Sys_LoadMenu(void)
 {
 	/* Return to the Wii system menu */
 	SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 }
-
 
 s32 Sys_GetCerts(signed_blob **certs, u32 *len)
 {

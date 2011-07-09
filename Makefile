@@ -39,8 +39,7 @@ SOURCES		:=	source \
 
 DATA		:=	data \
 				data/images \
-				data/sounds \
-				data/fonts
+				data/sounds
 
 INCLUDES	:=	source \
 				source/cheats \
