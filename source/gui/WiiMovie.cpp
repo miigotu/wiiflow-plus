@@ -30,7 +30,7 @@
 #include <wiiuse/wpad.h>
 
 #include "WiiMovie.hpp"
-#include "MusicPlayer.h"
+#include "musicplayer.h"
 #include "gecko.h"
 
 #define SND_BUFFERS     8
