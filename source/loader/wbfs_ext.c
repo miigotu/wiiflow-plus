@@ -217,9 +217,12 @@ s32 WBFS_Ext_AddGame(progress_callback_t spinner, void *spinner_data)
 	hdd = part; // used by spinner
 	s32 ret = wbfs_add_disc(part, __WBFS_ReadDVD, NULL, spinner, spinner_data, ONLY_GAME_PARTITION, 0);
 	hdd = old_hdd;
-	wbfs_trim(part);
+
+	if(ret == 0) wbfs_trim(part);
 
 	WBFS_Ext_ClosePart(part);
+	
+	if(ret < 0) WBFS_Ext_RemoveGame(NULL, gamepath);
 
 	return ret < 0 ? ret : 0;
 }

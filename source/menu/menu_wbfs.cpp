@@ -223,7 +223,9 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 	_hideWBFS();
 	if (done && (op == CMenu::WO_REMOVE_GAME || op == CMenu::WO_ADD_GAME))
 	{
-		m_cf.clear();
+		m_gameList.SetLanguage(m_curLanguage);
+		m_gameList.Update();
+
 		_loadList();
 		_initCF();
 		m_cf.findId(cfPos.c_str(), true);

@@ -1495,6 +1495,7 @@ bool CMenu::_loadChannelList(void)
 
 bool CMenu::_loadList(void)
 {
+	m_cf.clear();
 	m_gameList.clear();
 
 	gprintf("Loading items of view %d\n", m_current_view);

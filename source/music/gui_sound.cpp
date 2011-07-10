@@ -414,6 +414,7 @@ u8 * uncompressLZ77(const u8 *inBuf, u32 inLength, u32 * size)
 		return NULL;
 
 	u32 uncSize = le32(((const u32 *)inBuf)[1] << 8);
+	if(uncSize <= 0) return 0;
 
 	const u8 *inBufEnd = inBuf + inLength;
 	inBuf += 8;
@@ -461,18 +462,29 @@ u8 * uncompressLZ77(const u8 *inBuf, u32 inLength, u32 * size)
 void GuiSound::UncompressSoundbin(const u8 * snd, int len, bool isallocated)
 {
     const u8 * file = snd+32;
+
+	length = len-32;
+	if (length <= 0) return;
+
     if(*((u32 *) file) == 'LZ77')
     {
         u32 size = 0;
-        sound = uncompressLZ77(file, len-32, &size);
+        sound = uncompressLZ77(file, length, &size);
+		if (!sound)
+		{
+			length = 0;
+			return;
+		}
         length = size;
     }
     else
     {
-        length = len-32;
-		if (length <= 0) return;
         sound = (u8 *) malloc(length);
-		if (!sound) return;		
+		if (!sound)
+		{
+			length = 0;
+			return;
+		}
         memcpy(sound, file, length);
     }
 
