@@ -1,4 +1,3 @@
-
 #include "text.hpp"
 
 using namespace std;
@@ -189,13 +188,14 @@ safe_vector<wstringEx> stringToVector(const wstringEx &text, char sep)
 bool SFont::fromBuffer(const u8 *buffer, u32 bufferSize, u32 size, u32 lspacing, u32 w, u32 idx)
 {
 	size = min(max(6u, size), 1000u);
-	lspacing = min(max(6u, lspacing), 1000u);
-	lineSpacing = lspacing;
-	weight = w;
+	lineSpacing = min(max(6u, lspacing), 1000u);
+	weight = min(w, 32u);
 	index = idx;
+
 	SMART_FREE(font);
 	SMART_FREE(data);
 	dataSize = 0;
+
 	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);
 	if (!font) return false;
 	font->loadFont(buffer, bufferSize, size, weight, index, false);
@@ -207,8 +207,7 @@ bool SFont::newSize(u32 size, u32 lspacing, u32 w)
 	if (!data) return false;
 	size = min(max(6u, size), 1000u);
 	weight = w;
-	lspacing = min(max(6u, lspacing), 1000u);
-	lineSpacing = lspacing;
+	lineSpacing = min(max(6u, lspacing), 1000u);
 	SMART_FREE(font);
 	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);
 	if (!font) return false;
@@ -227,15 +226,16 @@ bool SFont::setWeight(u32 w)
 	return true;
 }
 
-bool SFont::fromFile(const char *filename, u32 size, u32 lspacing, u32 w)
+bool SFont::fromFile(const char *filename, u32 size, u32 lspacing, u32 w, u32 idx)
 {
 	size = min(max(6u, size), 1000u);
-	lspacing = min(max(6u, lspacing), 1000u);
 	weight = min(w, 32u);
+	index = idx = 0;
+
 	SMART_FREE(font);
 	SMART_FREE(data);
 	dataSize = 0;
-	lineSpacing = lspacing;
+	lineSpacing = min(max(6u, lspacing), 1000u);
 
 	FILE *file = fopen(filename, "rb");
 	if (file == NULL) return false;
@@ -254,7 +254,7 @@ bool SFont::fromFile(const char *filename, u32 size, u32 lspacing, u32 w)
 		SMART_FREE(data);
 		return false;
 	}
-	font->loadFont(data.get(), dataSize, size, weight, 0, false);
+	font->loadFont(data.get(), dataSize, size, weight, index, false);
 	return true;
 }
 
@@ -262,7 +262,7 @@ void CText::setText(SFont font, const wstringEx &t)
 {
 	CText::SWord w;
 	m_lines.clear();
-	m_font = font;
+	if (!!font.font) m_font = font;
 	if (!m_font.font) return;
 
 	firstLine = 0;
@@ -302,7 +302,7 @@ void CText::setText(SFont font, const wstringEx &t, u32 startline)
 	totalHeight = 0;
 
 	m_lines.clear();
-	m_font = font;
+	if (!!font.font) m_font = font;
 	if (!m_font.font) return;
 
 	firstLine = startline;

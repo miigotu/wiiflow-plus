@@ -160,7 +160,7 @@ bool GuiSound::Load(const char * filepath)
     u32 magic;
     FILE * f = fopen(filepath, "rb");
     if(!f)
-	{
+	{	gprintf("Failed to load file %s!!\n", filepath);
         return false;
 	}
 
@@ -168,15 +168,15 @@ bool GuiSound::Load(const char * filepath)
     fclose(f);
 
     SoundHandler::Instance()->AddDecoder(voice, filepath);
-
+	gprintf("using voice %d");
     SoundDecoder * decoder = SoundHandler::Instance()->Decoder(voice);
     if(!decoder)
-	{
+	{	gprintf("No Decoder!!!\n");
 		return false;
 	}
 	
     if(!decoder->IsBufferReady())
-    {
+    {	gprintf("Buffer not ready!!n");
         SoundHandler::Instance()->RemoveDecoder(voice);
         return false;
     }

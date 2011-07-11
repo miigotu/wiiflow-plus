@@ -20,8 +20,8 @@ struct SFont
 	u32 weight;
 	u32 index;
 public:
-	bool fromBuffer(const u8 *buffer, u32 bufferSize, u32 size, u32 lspacing, u32 weight = 0, u32 index = 0);
-	bool fromFile(const char *filename, u32 size, u32 lspacing, u32 weight = 0);
+	bool fromBuffer(const u8 *buffer, u32 bufferSize, u32 size, u32 lspacing, u32 w = 0, u32 idx = 0);
+	bool fromFile(const char *filename, u32 size, u32 lspacing, u32 w = 0, u32 idx = 0);
 	bool newSize(u32 size, u32 lspacing, u32 weight = 0);
 	bool setWeight(u32 weight);
 	SFont(void) : dataSize(0), lineSpacing(0), weight(0), index(0) { }

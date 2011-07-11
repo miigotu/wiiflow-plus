@@ -43,26 +43,10 @@ extern const u8 pbarright_png[];
 extern const u8 pbarlefts_png[];
 extern const u8 pbarcenters_png[];
 extern const u8 pbarrights_png[];
-// Fonts
 
-/*
-extern const u8 butfont_ttf[];
-extern const u32 butfont_ttf_size;
-extern const u8 cffont_ttf[];
-extern const u32 cffont_ttf_size;
-*/
-bool butfont_ttf_def = false;
-u8 *butfont_ttf = NULL;
-u32 butfont_ttf_size = 0;
-bool titlefont_ttf_def = false;
-u8 *titlefont_ttf = NULL; // butfont_ttf;
-u32 titlefont_ttf_size = 0; // butfont_ttf_size;
-bool lblfont_ttf_def = false;
-u8 *lblfont_ttf = NULL; //cffont_ttf;
-u32 lblfont_ttf_size = 0; //cffont_ttf_size;
-bool thxfont_ttf_def = false;
-u8 *thxfont_ttf = NULL; //cffont_ttf;
-u32 thxfont_ttf_size = 0; //cffont_ttf_size;
+// Fonts
+SmartBuf base_font;
+u32 base_font_size = 0;
 
 using namespace std;
 
@@ -428,21 +412,18 @@ void CMenu::_setAA(int aa)
 
 void CMenu::_loadCFCfg()
 {
-	SFont font;
 	const char *domain = "_COVERFLOW";
-	SmartPtr<GuiSound> cfFlipSnd, cfHoverSnd, cfSelectSnd, cfCancelSnd;
 
+	gprintf("Preparing to load sound from %s\n", sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_flip").c_str()).c_str());
 	m_cf.setCachePath(m_cacheDir.c_str(), !m_cfg.getBool("GENERAL", "keep_png", true), m_cfg.getBool("GENERAL", "compress_cache", false));
 	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
-	string filename = m_theme.getString(domain, "sound_flip");
-	cfFlipSnd = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str())));
-	filename = m_theme.getString(domain, "sound_hover");
-	cfHoverSnd = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str())));
-	filename = m_theme.getString(domain, "sound_select");
-	cfSelectSnd = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
-	filename = m_theme.getString(domain, "sound_cancel");
-	cfCancelSnd = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
-	m_cf.setSounds(cfFlipSnd, cfHoverSnd, cfSelectSnd, cfCancelSnd);
+	// Coverflow Sounds
+	m_cf.setSounds(
+		SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_flip").c_str()))),
+		SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_hover").c_str()))),
+		SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_select").c_str()))),
+		SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_cancel").c_str())))
+	);
 	// Textures
 	string texLoading = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "loading_cover_box").c_str());
 	string texNoCover = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "missing_cover_box").c_str());
@@ -450,11 +431,8 @@ void CMenu::_loadCFCfg()
 	string texNoCoverFlat = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "missing_cover_flat").c_str());
 	m_cf.setTextures(texLoading, texLoadingFlat, texNoCover, texNoCoverFlat);
 	// Font
-	filename = m_theme.getString(domain, "font");
-	if (!filename.empty())
-		font.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(),
-			m_theme.getInt(domain, "font_size", 32),
-			m_theme.getInt(domain, "font_line_height", 32));
+	FontSet dummy;
+	SFont font = _font(dummy, domain, "font", (u32)m_theme.getInt(domain, "font_size", 32), (u32)m_theme.getInt(domain, "font_line_height", 32), 8, 1);
 	m_cf.setFont(font, m_theme.getColor(domain, "font_color", CColor(0xFFFFFFFF)));
 	// 
 	m_numCFVersions = min(max(2, m_theme.getInt("_COVERFLOW", "number_of_modes", 2)), 8);
@@ -734,26 +712,21 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 void CMenu::_buildMenus(void)
 {
 	SThemeData theme;
+
+	if(!base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 	
 	// Default fonts
-	theme.btnFont.fromBuffer(butfont_ttf, butfont_ttf_size, 24, 24, butfont_ttf_def ? 8 : 0, butfont_ttf_def ? 1 : 0);
-	theme.btnFont = _font(theme.fontSet, "GENERAL", "button_font", theme.btnFont, &butfont_ttf_def);
+	theme.btnFont = _font(theme.fontSet, "GENERAL", "button_font", 24, 24, 8, 1);
 	theme.btnFontColor = m_theme.getColor("GENERAL", "button_font_color", 0xD0BFDFFF);
-	theme.lblFont.fromBuffer(lblfont_ttf, lblfont_ttf_size, 24, 24, 8, lblfont_ttf_def ? 1 : 0);
-	theme.lblFont = _font(theme.fontSet, "GENERAL", "label_font", theme.lblFont, &lblfont_ttf_def);
+
+	theme.lblFont = _font(theme.fontSet, "GENERAL", "label_font", 24, 24, 8, 1);
 	theme.lblFontColor = m_theme.getColor("GENERAL", "label_font_color", 0xD0BFDFFF);
-	theme.txtFontColor = m_theme.getColor("GENERAL", "text_font_color", 0xFFFFFFFF);
-	theme.titleFont.fromBuffer(titlefont_ttf, titlefont_ttf_size, 36, 36, butfont_ttf_def ? 8 : 0, titlefont_ttf_def ? 1 : 0);
-	theme.titleFont = _font(theme.fontSet, "GENERAL", "title_font", theme.titleFont, &titlefont_ttf_def);
+
+	theme.titleFont = _font(theme.fontSet, "GENERAL", "title_font", 36, 36, 8, 1);
 	theme.titleFontColor = m_theme.getColor("GENERAL", "title_font_color", 0xD0BFDFFF);
-	theme.thxFont.fromBuffer(thxfont_ttf, thxfont_ttf_size, 18, 18, butfont_ttf_def ? 4 : 0, thxfont_ttf_def ? 1 : 0);
-	theme.thxFont = _font(theme.fontSet, "GENERAL", "thxfont", theme.thxFont, &thxfont_ttf_def);
-	
-	if (!butfont_ttf_def && !lblfont_ttf_def && !titlefont_ttf_def && !thxfont_ttf_def)
-	{
-		// Cleanup default font
-		_cleanupDefaultFont();
-	}
+
+	theme.thxFont = _font(theme.fontSet, "GENERAL", "thxfont", 18, 18, 4,1);
+	theme.txtFontColor = m_theme.getColor("GENERAL", "text_font_color", 0xFFFFFFFF);
 	
 	// Default Sounds
 	theme.clickSound = SmartPtr<GuiSound>(new GuiSound(click_wav, click_wav_size, false));
@@ -824,71 +797,61 @@ void CMenu::_buildMenus(void)
 	_initGameInfoMenu(theme);
 }
 
-SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, SFont def)
+SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index)
 {
-	bool unused;
-	return _font(fontSet, domain, key, def, &unused);
-}
+	SFont retFont;
 
-SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, SFont def, bool *notloaded)
-{
-	string filename;
-	u32 fontSize = 0;
+	if(!base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 
-	*notloaded = false;
-
-	if (m_theme.loaded())
+	string filename = m_theme.getString(domain, key);
+	for (u32 c = 0; c < filename.size(); ++c)
+		if (filename[c] >= 'A' && filename[c] <= 'Z')
+			filename[c] |= 0x20;
+	string fontSizeKey = key;
+	fontSizeKey += "_size";
+	fontSize = min(max(6u, (u32)m_theme.getInt(domain, fontSizeKey)), 300u);
+	string lineSpacingKey = key;
+	lineSpacingKey += "_line_height";
+	lineSpacing = min(max(6u, (u32)m_theme.getInt(domain, lineSpacingKey)), 300u);
+	string weightKey = key;
+	weightKey += "_weight";
+	weight = max(8u,min((u32)m_theme.getInt(domain, weightKey), 32u));
+	
+	// Try to find the same font with the same size
+	CMenu::FontSet::iterator i = fontSet.find(CMenu::FontDesc(filename, fontSize));
+	if (i != fontSet.end())
 	{
-		filename = m_theme.getString(domain, key);
-		for (u32 c = 0; c < filename.size(); ++c)
-			if (filename[c] >= 'A' && filename[c] <= 'Z')
-				filename[c] |= 0x20;
-		string fontSizeKey = key;
-		fontSizeKey += "_size";
-		fontSize = min(max(6u, (u32)m_theme.getInt(domain, fontSizeKey)), 300u);
-		string lineSpacingKey = key;
-		lineSpacingKey += "_line_height";
-		u32 lineSpacing = min(max(6u, (u32)m_theme.getInt(domain, lineSpacingKey)), 300u);
-		string weightKey = key;
-		weightKey += "_weight";
-		u32 weight = min((u32)m_theme.getInt(domain, weightKey), 32u);
-		
-		SFont retFont;
-		if (!filename.empty())
+		retFont = i->second;
+		if (!!retFont.data)
 		{
-			// Try to find the same font with the same size
-			CMenu::FontSet::iterator i = fontSet.find(CMenu::FontDesc(filename, fontSize));
-			if (i != fontSet.end())
-			{
-				retFont = i->second;
-				if (!!retFont.data)
-				{
-					retFont.lineSpacing = lineSpacing;
-					retFont.setWeight(weight);
-				}
-				return retFont;
-			}
-			// Then try to find the same font with a different size
-			i = fontSet.lower_bound(CMenu::FontDesc(filename, 0));
-			if (i != fontSet.end() && i->first.first == filename)
-			{
-				retFont = i->second;
-				retFont.newSize(fontSize, lineSpacing, weight);
-				fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
-				return retFont;
-			}
-			// TTF not found in memory, load it to create a new font
-			if (retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fontSize, lineSpacing, weight))
-			{
-				fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
-				return retFont;
-			}
+			retFont.lineSpacing = lineSpacing;
+			retFont.setWeight(weight);
 		}
+		return retFont;
 	}
-	// Default font
-	fontSet[CMenu::FontDesc(filename, fontSize)] = def;
-	*notloaded = true;
-	return def;
+	// Then try to find the same font with a different size
+	i = fontSet.lower_bound(CMenu::FontDesc(filename, 0));
+	if (i != fontSet.end() && i->first.first == filename)
+	{
+		retFont = i->second;
+		retFont.newSize(fontSize, lineSpacing, weight);
+		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
+		return retFont;
+	}
+	// TTF not found in memory, load it to create a new font
+	if (!filename.empty() && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fontSize, lineSpacing, weight, index))
+	{
+		// Theme Font
+		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
+		return retFont;
+	}
+	else if (filename.empty() && retFont.fromBuffer(base_font.get(), base_font_size, fontSize, lineSpacing, weight, index))
+	{
+		// Default font
+		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
+		return retFont;
+	}
+	return retFont;
 }
 
 safe_vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char *key)
@@ -1002,7 +965,9 @@ u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, 
 	btnTexSet.leftSel = _texture(theme.texSet, domain, "texture_left_selected", theme.btnTexLS);
 	btnTexSet.rightSel = _texture(theme.texSet, domain, "texture_right_selected", theme.btnTexRS);
 	btnTexSet.centerSel = _texture(theme.texSet, domain, "texture_center_selected", theme.btnTexCS);
-	font = _font(theme.fontSet, domain, "font", font);
+
+	font = _font(theme.fontSet, domain, "font", 24, 24, 8, 1); //btnFont
+
 	SmartPtr<GuiSound> clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
 	SmartPtr<GuiSound> hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
 	
@@ -1044,7 +1009,7 @@ u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, c
 	y = m_theme.getInt(domain, "y", y);
 	width = m_theme.getInt(domain, "width", width);
 	height = m_theme.getInt(domain, "height", height);
-	font = _font(theme.fontSet, domain, "font", font);
+	font = _font(theme.fontSet, domain, "font", 24, 24, 8, 1); // lblFont
 	style = _textStyle(domain, "style", style);
 
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
@@ -1065,7 +1030,7 @@ u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, c
 	y = m_theme.getInt(domain, "y", y);
 	width = m_theme.getInt(domain, "width", width);
 	height = m_theme.getInt(domain, "height", height);
-	font = _font(theme.fontSet, domain, "font", font);
+	font = _font(theme.fontSet, domain, "font", 24, 24, 8, 1); // lblFont
 	STexture texBg = _texture(theme.texSet, domain, "background_texture", bg);
 	style = _textStyle(domain, "style", style);
 
@@ -1187,9 +1152,8 @@ void CMenu::_initCF(void)
 
 			if(m_gamelistdump)
 				m_dump.setWString(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", m_current_view == COVERFLOW_CHANNEL ? id.substr(0, 4) : id, w);
-			
-			CColor cover =  m_gameList[i].hdr.casecolor;
-			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), cover, playcount, lastPlayed);
+
+			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), m_gameList[i].hdr.casecolor, playcount, lastPlayed);
 		}
 	}
 	m_gcfg1.unload();
@@ -1661,7 +1625,7 @@ typedef struct map_entry
 {
 	char filename[8];
 	u8 sha1[20];
-} map_entry_t;
+} __attribute((packed)) map_entry_t;
 
 void CMenu::_loadDefaultFont(bool korean)
 {
@@ -1698,13 +1662,10 @@ retry:
 				
 				gprintf("Extracted font: %d\n", size);
 				
-				u8 *font_copy = (u8 *) malloc(size);
-				memcpy(font_copy, font_file, size);
-				
-				butfont_ttf = titlefont_ttf = lblfont_ttf = thxfont_ttf = font_copy;
-				butfont_ttf_size = titlefont_ttf_size = lblfont_ttf_size = thxfont_ttf_size = size;
-				
-				butfont_ttf_def = titlefont_ttf_def = lblfont_ttf_def = thxfont_ttf_def = true;
+				base_font = smartMalloc(size);
+				memcpy(base_font.get(), font_file, size);
+				if(!!base_font.get())
+					base_font_size = size;
 			}
 			free(u8_font_archive);
 			break;
@@ -1724,10 +1685,6 @@ retry:
 
 void CMenu::_cleanupDefaultFont()
 {
-	if (lblfont_ttf_def) { SAFE_FREE(lblfont_ttf); lblfont_ttf_size = 0; }
-	else if (butfont_ttf_def) { SAFE_FREE(butfont_ttf); butfont_ttf_size = 0; }
-	else if (titlefont_ttf_def) { SAFE_FREE(titlefont_ttf); titlefont_ttf_size = 0; }
-	else if (thxfont_ttf_def) { SAFE_FREE(thxfont_ttf); thxfont_ttf_size = 0; }
-	
-	butfont_ttf_def = titlefont_ttf_def = lblfont_ttf_def = thxfont_ttf_def = false;
+	SMART_FREE(base_font);
+	base_font_size = 0;
 }

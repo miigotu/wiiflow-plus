@@ -742,8 +742,7 @@ private:
 	void _buildMenus(void);
 	void _loadDefaultFont(bool korean);
 	void _cleanupDefaultFont();
-	SFont _font(FontSet &fontSet, const char *domain, const char *key, SFont def);
-	SFont _font(FontSet &fontSet, const char *domain, const char *key, SFont def, bool *notloaded);
+	SFont _font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index);
 	STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);
 	safe_vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key);
 	void _showWaitMessage();

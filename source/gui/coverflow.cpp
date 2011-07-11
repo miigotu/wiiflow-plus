@@ -25,9 +25,8 @@ extern const u8 loading_png[];
 extern const u8 flatnopic_png[];
 extern const u8 flatloading_png[];
 
-extern bool titlefont_ttf_def;
-extern u8 *titlefont_ttf;
-extern u32 titlefont_ttf_size;
+extern SmartBuf base_font;
+extern u32 base_font_size;
 
 static lwp_t coverLoaderThread = LWP_THREAD_NULL;
 SmartBuf coverLoaderThreadStack;
@@ -217,7 +216,7 @@ CCoverFlow::CCoverFlow(void)
 	m_range = m_rows * m_columns;
 	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 		m_mouse[chan] = -1;
-	m_snd2 = false;
+	sndCopyNum = 0;
 	m_soundVolume = 0xFF;
 	m_sorting = SORT_ALPHA;
 	// 
@@ -227,7 +226,7 @@ CCoverFlow::CCoverFlow(void)
 bool CCoverFlow::init(void)
 {
 	// Load font
-	m_font.fromBuffer(titlefont_ttf, titlefont_ttf_size, 32, 32, titlefont_ttf_def ? 8 : 0, titlefont_ttf_def ? 1 : 0);
+	m_font.fromBuffer(base_font.get(), base_font_size, 32, 32, 8, 1);
 	m_fontColor = CColor(0xFFFFFFFF);
 	m_fanartFontColor = CColor(0xFFFFFFFF);
 	// 
@@ -249,8 +248,8 @@ void CCoverFlow::simulateOtherScreenFormat(bool s)
 CCoverFlow::~CCoverFlow(void)
 {
 	clear();
-	m_sound1.release();
-	m_sound2.release();
+	for(u8 i = 0; i < 3; i++)
+		m_sound[i].release();
 	m_hoverSound.release();
 	m_selectSound.release();
 	m_cancelSound.release();
@@ -557,17 +556,17 @@ bool CCoverFlow::setSorting(Sorting sorting)
 
 void CCoverFlow::setSounds(const SmartPtr<GuiSound> &sound, const SmartPtr<GuiSound> &hoverSound, const SmartPtr<GuiSound> &selectSound, const SmartPtr<GuiSound> &cancelSound)
 {
-	m_sound1.release();
-	m_sound2.release();
+	for(u8 i = 0; i < 3; i++)
+		m_sound[i].release();
 	m_hoverSound.release();
 	m_selectSound.release();
 	m_cancelSound.release();
 
-	m_sound1 = sound;
-	m_sound2 = SmartPtr<GuiSound>(new GuiSound(sound.get()));
-	m_hoverSound = hoverSound;
-	m_selectSound = selectSound;
-	m_cancelSound = cancelSound;
+	for(u8 i = 0; i < 3; i++)
+		m_sound[i] = SmartPtr<GuiSound>(new GuiSound(sound.get()));
+	m_hoverSound = SmartPtr<GuiSound>(new GuiSound(hoverSound.get()));
+	m_selectSound = SmartPtr<GuiSound>(new GuiSound(selectSound.get()));
+	m_cancelSound = SmartPtr<GuiSound>(new GuiSound(cancelSound.get()));
 }
 
 void CCoverFlow::setSoundVolume(u8 vol)
@@ -577,20 +576,19 @@ void CCoverFlow::setSoundVolume(u8 vol)
 
 void CCoverFlow::_stopSound(SmartPtr<GuiSound> snd)
 {
-	if (snd->IsLoaded())
-		snd->Stop();
+	snd->Stop();
 }
 
 void CCoverFlow::_playSound(SmartPtr<GuiSound> snd)
 {
-	if (snd->IsLoaded())
-		snd->Play(m_soundVolume);
+	snd->Play(m_soundVolume);
 }
 
 void CCoverFlow::stopSound(void)
 {
-	_stopSound(m_sound1);
-	_stopSound(m_sound2);
+	for(u8 i = 0; i < 3; i++)
+		_stopSound(m_sound[i]);
+
 	_stopSound(m_hoverSound);
 }
 
@@ -1784,13 +1782,15 @@ void CCoverFlow::right(void)
 	LockMutex lock(m_mutex);
 	_right(m_minDelay, m_rows >= 3 ? m_rows - 2 : 1);
 }
-
+#include "gecko.h"
 void CCoverFlow::_playSound(void)
 {
 	if (m_soundVolume > 0)
 	{
-		m_snd2 = !m_snd2;
-		_playSound(m_snd2 ? m_sound1 : m_sound2);
+		sndCopyNum++;
+		if(sndCopyNum == 3) sndCopyNum = 0;
+		_playSound( m_sound[sndCopyNum] );
+		gprintf("\n\nPlaying flipsound copy # %u\n\n", sndCopyNum);
 	}
 }
 
