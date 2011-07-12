@@ -656,7 +656,7 @@ int ocarina_do_code()
 	{
 		memcpy(codelist, code_buf, code_size);
 		DCFlushRange(codelist, (u32)codelistend - (u32)codelist);
-		SAFE_FREE(code_buf);
+		free(code_buf);
 	}
 
 	// TODO What's this???

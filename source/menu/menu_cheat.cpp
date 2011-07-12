@@ -45,7 +45,7 @@ u32 CMenu::_downloadCheatFileAsync(void *obj)
 	}
 	
 	u32 bufferSize = 0x080000;	// Maximum download size 512kb
-	SmartBuf buffer = smartCoverAlloc(bufferSize);
+	SmartBuf buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
 		m->m_thrdWorking = false;

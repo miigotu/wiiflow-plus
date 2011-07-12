@@ -80,7 +80,7 @@ void WBFS_Ext_CloseDisc(wbfs_disc_t* disc)
 	if (part == &wbfs_iso_file)
 	{
 		close((int)disc->header);
-		SAFE_FREE(disc);
+		free(disc);
 		return;
 	}
 

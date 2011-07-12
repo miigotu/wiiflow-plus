@@ -13,6 +13,7 @@
 
 #include "gecko.h"
 #include "defines.h"
+#include "fonts.h"
 #include "music/SoundHandler.hpp"
 #include "fs.h"
 #include "U8Archive.h"
@@ -432,7 +433,12 @@ void CMenu::_loadCFCfg()
 	m_cf.setTextures(texLoading, texLoadingFlat, texNoCover, texNoCoverFlat);
 	// Font
 	FontSet dummy;
-	SFont font = _font(dummy, domain, "font", (u32)m_theme.getInt(domain, "font_size", 32), (u32)m_theme.getInt(domain, "font_line_height", 32), 8, 1);
+	SFont font = _font(dummy, domain, "font",
+		(u32)m_theme.getInt(domain, "font_size", TITLEFONT_PT_SZ),
+		(u32)m_theme.getInt(domain, "font_line_height", TITLEFONT_PT_SZ),
+		FONT_BOLD,
+		1
+	);
 	m_cf.setFont(font, m_theme.getColor(domain, "font_color", CColor(0xFFFFFFFF)));
 	// 
 	m_numCFVersions = min(max(2, m_theme.getInt("_COVERFLOW", "number_of_modes", 2)), 8);
@@ -716,16 +722,16 @@ void CMenu::_buildMenus(void)
 	if(!base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 	
 	// Default fonts
-	theme.btnFont = _font(theme.fontSet, "GENERAL", "button_font", 24, 24, 8, 1);
+	theme.btnFont = _font(theme.fontSet, "GENERAL", "button_font", BUTTONFONT);
 	theme.btnFontColor = m_theme.getColor("GENERAL", "button_font_color", 0xD0BFDFFF);
 
-	theme.lblFont = _font(theme.fontSet, "GENERAL", "label_font", 24, 24, 8, 1);
+	theme.lblFont = _font(theme.fontSet, "GENERAL", "label_font", LABELFONT);
 	theme.lblFontColor = m_theme.getColor("GENERAL", "label_font_color", 0xD0BFDFFF);
 
-	theme.titleFont = _font(theme.fontSet, "GENERAL", "title_font", 36, 36, 8, 1);
+	theme.titleFont = _font(theme.fontSet, "GENERAL", "title_font", TITLEFONT);
 	theme.titleFontColor = m_theme.getColor("GENERAL", "title_font_color", 0xD0BFDFFF);
 
-	theme.thxFont = _font(theme.fontSet, "GENERAL", "thxfont", 18, 18, 4,1);
+	theme.thxFont = _font(theme.fontSet, "GENERAL", "thxfont", THANKSFONT);
 	theme.txtFontColor = m_theme.getColor("GENERAL", "text_font_color", 0xFFFFFFFF);
 	
 	// Default Sounds
@@ -803,30 +809,49 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 
 	if(!base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 
+	bool useDefault = false;
 	string filename = m_theme.getString(domain, key);
+	if(filename.empty())
+	{
+		useDefault = true;
+		filename = key;
+	}
+
 	for (u32 c = 0; c < filename.size(); ++c)
 		if (filename[c] >= 'A' && filename[c] <= 'Z')
 			filename[c] |= 0x20;
+
 	string fontSizeKey = key;
 	fontSizeKey += "_size";
-	fontSize = min(max(6u, (u32)m_theme.getInt(domain, fontSizeKey)), 300u);
+
+	u32 def_fontSize = fontSize;
+	fontSize = (u32)m_theme.getInt(domain, fontSizeKey);
+	fontSize = fontSize <= 0 ? def_fontSize : fontSize;
+	fontSize = min(max(6u, fontSize), 300u);
+
 	string lineSpacingKey = key;
 	lineSpacingKey += "_line_height";
-	lineSpacing = min(max(6u, (u32)m_theme.getInt(domain, lineSpacingKey)), 300u);
+
+	u32 def_lineSpacing = lineSpacing;
+	lineSpacing = (u32)m_theme.getInt(domain, lineSpacingKey);
+	lineSpacing = lineSpacing <= 0 ? def_lineSpacing : lineSpacing;
+	lineSpacing = min(max(6u, lineSpacing), 300u);
+
 	string weightKey = key;
 	weightKey += "_weight";
-	weight = max(8u,min((u32)m_theme.getInt(domain, weightKey), 32u));
-	
+
+	u32 def_weight = weight;
+	weight = (u32)m_theme.getInt(domain, weightKey);
+	weight = weight <= 0 ? def_weight : weight;
+	weight = max(1u,min(weight, 32u));
+
 	// Try to find the same font with the same size
 	CMenu::FontSet::iterator i = fontSet.find(CMenu::FontDesc(filename, fontSize));
 	if (i != fontSet.end())
 	{
 		retFont = i->second;
-		if (!!retFont.data)
-		{
-			retFont.lineSpacing = lineSpacing;
-			retFont.setWeight(weight);
-		}
+		retFont.lineSpacing = lineSpacing;
+		retFont.setWeight(weight);
 		return retFont;
 	}
 	// Then try to find the same font with a different size
@@ -839,13 +864,13 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 		return retFont;
 	}
 	// TTF not found in memory, load it to create a new font
-	if (!filename.empty() && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fontSize, lineSpacing, weight, index))
+	if (!useDefault && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fontSize, lineSpacing, weight, index))
 	{
 		// Theme Font
 		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
 		return retFont;
 	}
-	else if (filename.empty() && retFont.fromBuffer(base_font.get(), base_font_size, fontSize, lineSpacing, weight, index))
+	if(retFont.fromBuffer(base_font.get(), base_font_size, fontSize, lineSpacing, weight, index))
 	{
 		// Default font
 		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
@@ -966,7 +991,7 @@ u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, 
 	btnTexSet.rightSel = _texture(theme.texSet, domain, "texture_right_selected", theme.btnTexRS);
 	btnTexSet.centerSel = _texture(theme.texSet, domain, "texture_center_selected", theme.btnTexCS);
 
-	font = _font(theme.fontSet, domain, "font", 24, 24, 8, 1); //btnFont
+	font = _font(theme.fontSet, domain, "font", BUTTONFONT);
 
 	SmartPtr<GuiSound> clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
 	SmartPtr<GuiSound> hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
@@ -1009,7 +1034,7 @@ u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, c
 	y = m_theme.getInt(domain, "y", y);
 	width = m_theme.getInt(domain, "width", width);
 	height = m_theme.getInt(domain, "height", height);
-	font = _font(theme.fontSet, domain, "font", 24, 24, 8, 1); // lblFont
+	font = _font(theme.fontSet, domain, "font", LABELFONT);
 	style = _textStyle(domain, "style", style);
 
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
@@ -1030,7 +1055,7 @@ u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, c
 	y = m_theme.getInt(domain, "y", y);
 	width = m_theme.getInt(domain, "width", width);
 	height = m_theme.getInt(domain, "height", height);
-	font = _font(theme.fontSet, domain, "font", 24, 24, 8, 1); // lblFont
+	font = _font(theme.fontSet, domain, "font", LABELFONT);
 	STexture texBg = _texture(theme.texSet, domain, "background_texture", bg);
 	style = _textStyle(domain, "style", style);
 
@@ -1181,7 +1206,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	m_cf.setFanartTextColor(m_fa.getTextColor(m_theme.getColor("_COVERFLOW", "font_color", CColor(0xFFFFFFFF))));
 
 	_updateBg();
-	
+
 	m_fa.hideCover() ? 	m_cf.hideCover() : m_cf.showCover();
 
 	if (withCF) m_cf.makeEffectTexture(m_vid, m_lqBg);
@@ -1270,6 +1295,9 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		if (!!m_cameraSound)
 			m_cameraSound->Play(255);
 	}
+	#ifdef SHOWMEM
+	m_btnMgr.setText(m_mem2FreeSize, wfmt(L"Mem2 Free: %u, Mem1 Free: %u", MEM2_freesize(), SYS_GetArena1Size()), true);
+	#endif
 }
 
 void CMenu::_setBg(const STexture &tex, const STexture &lqTex)
@@ -1538,7 +1566,7 @@ bool CMenu::_loadFile(SmartBuf &buffer, u32 &size, const char *path, const char 
 	fseek(fp, 0, SEEK_END);
 	u32 fileSize = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
-	SmartBuf fileBuf = smartCoverAlloc(fileSize);
+	SmartBuf fileBuf = smartAnyAlloc(fileSize);
 	if (!fileBuf)
 	{
 		SAFE_CLOSE(fp);
@@ -1662,7 +1690,7 @@ retry:
 				
 				gprintf("Extracted font: %d\n", size);
 				
-				base_font = smartMalloc(size);
+				base_font = smartAnyAlloc(size);
 				memcpy(base_font.get(), font_file, size);
 				if(!!base_font.get())
 					base_font_size = size;

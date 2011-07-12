@@ -14,7 +14,6 @@
 #define ALIGN32(x) (((x) + 31) & ~31)
 
 #define SMART_FREE(P) if(!!P) P.release();
-#define SAFE_FREE(P) if(P != NULL){free(P);P=NULL;}
 #define SAFE_DELETE(P) if(P != NULL){delete P;P=NULL;}
 #define SAFE_CLOSE(P) if(P != NULL){fclose(P); P=NULL;}
 
@@ -42,3 +41,4 @@ bool str_replace_all(char *str, const char *olds, const char *news, int size);
 #endif	/* __cplusplus */
 
 #endif
+

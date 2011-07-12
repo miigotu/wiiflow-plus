@@ -239,9 +239,6 @@ STexture::TexErr STexture::fromRAW(const u8 *buffer, u32 w, u32 h, u8 f, Alloc a
 		case ALLOC_MALLOC:
 			tmpData = smartMemAlign32(GX_GetTexBufferSize(w, h, f, GX_FALSE, 0));
 			break;
-		case ALLOC_COVER:
-			tmpData = smartCoverAlloc(GX_GetTexBufferSize(w, h, f, GX_FALSE, 0));
-			break;
 	}
 	if (!tmpData) return STexture::TE_NOMEM;
 
@@ -271,7 +268,6 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 {
 	PNGUPROP imgProp;
 	SmartBuf tmpData;
-	SmartBuf tmpData2;
 	u8 maxLODTmp = 0;
 	u8 minLODTmp = 0;
 	u32 baseWidth;
@@ -311,7 +307,7 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 			newWidth >>= 1;
 			newHeight >>= 1;
 		}
-		tmpData2 = smartAnyAlloc(imgProp.imgWidth * imgProp.imgHeight * 4);
+		SmartBuf tmpData2 = smartAnyAlloc(imgProp.imgWidth * imgProp.imgHeight * 4);
 		switch (alloc)
 		{
 			case ALLOC_MEM2:
@@ -320,12 +316,11 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 			case ALLOC_MALLOC:
 				tmpData = smartMemAlign32(fixGX_GetTexBufferSize(newWidth, newHeight, f, GX_TRUE, maxLODTmp - minLODTmp));
 				break;
-			case ALLOC_COVER:
-				tmpData = smartCoverAlloc(fixGX_GetTexBufferSize(newWidth, newHeight, f, GX_TRUE, maxLODTmp - minLODTmp));
-				break;
 		}
 		if (!tmpData || !tmpData2)
 		{
+			SMART_FREE(tmpData);
+			SMART_FREE(tmpData2);
 			PNGU_ReleaseImageContext(ctx);
 			return STexture::TE_NOMEM;
 		}
@@ -377,9 +372,6 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 				break;
 			case ALLOC_MALLOC:
 				tmpData = smartMemAlign32(GX_GetTexBufferSize(pngWidth, pngHeight, f, GX_FALSE, maxLOD));
-				break;
-			case ALLOC_COVER:
-				tmpData = smartCoverAlloc(GX_GetTexBufferSize(pngWidth, pngHeight, f, GX_FALSE, maxLOD));
 				break;
 		}
 		if (!tmpData)

@@ -206,7 +206,7 @@ bool SFont::newSize(u32 size, u32 lspacing, u32 w)
 {
 	if (!data) return false;
 	size = min(max(6u, size), 1000u);
-	weight = w;
+	weight = min(w, 32u);
 	lineSpacing = min(max(6u, lspacing), 1000u);
 	SMART_FREE(font);
 	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);

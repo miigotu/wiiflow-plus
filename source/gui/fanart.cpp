@@ -38,11 +38,11 @@ bool CFanart::load(Config &m_globalConfig, const char *path, const char *id)
 	const char *dir = fmt("%s/%s", path, id);
 	STexture fanBg, fanBgLq;
 	
-	STexture::TexErr texErr = fanBg.fromPNGFile(sfmt("%s/background.png", dir).c_str(), GX_TF_RGBA8, ALLOC_MEM2);
+	STexture::TexErr texErr = fanBg.fromPNGFile(sfmt("%s/background.png", dir).c_str(), GX_TF_RGBA8);
 	if (texErr == STexture::TE_ERROR)
 	{
 		dir = fmt("%s/%.3s", path, id);
-		texErr = fanBg.fromPNGFile(sfmt("%s/background.png", dir).c_str(), GX_TF_RGBA8, ALLOC_MEM2);
+		texErr = fanBg.fromPNGFile(sfmt("%s/background.png", dir).c_str(), GX_TF_RGBA8);
 	}
 
 	if (texErr == STexture::TE_OK)
@@ -50,7 +50,7 @@ bool CFanart::load(Config &m_globalConfig, const char *path, const char *id)
 		m_cfg.load(sfmt("%s/%s.ini", dir, id).c_str());
 		if (!m_cfg.loaded()) m_cfg.load(sfmt("%s/%.3s.ini", dir, id).c_str());
 
-		fanBgLq.fromPNGFile(sfmt("%s/background_lq.png", dir).c_str(), GX_TF_RGBA8, ALLOC_MEM2);
+		fanBgLq.fromPNGFile(sfmt("%s/background_lq.png", dir).c_str(), GX_TF_RGBA8);
 		
 		for (int i = 1; i <= 6; i++)
 		{
@@ -176,7 +176,7 @@ void CFanart::draw(bool front)
 CFanartElement::CFanartElement(Config &cfg, const char *dir, int artwork)
 	: m_artwork(artwork), m_isValid(false)
 {
-	m_isValid = m_art.fromPNGFile(sfmt("%s/artwork%d.png", dir, artwork).c_str(), GX_TF_RGBA8, ALLOC_MEM2) == STexture::TE_OK;
+	m_isValid = m_art.fromPNGFile(sfmt("%s/artwork%d.png", dir, artwork).c_str(), GX_TF_RGBA8) == STexture::TE_OK;
 	if (!m_isValid)	return;
 
 	const char *section = fmt("artwork%d", artwork);

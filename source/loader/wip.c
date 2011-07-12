@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "utils.h" //SAFE_FREE
+#include "utils.h" //SAFE_CLOSE
 #include "gecko.h"
 
 typedef struct
@@ -67,7 +67,7 @@ void wip_reset_counter()
 void free_wip()
 {
 	if(CodeList)
-        SAFE_FREE(CodeList);
+        free(CodeList);
 
     CodesCount = 0;
     ProcessedLength = 0;
@@ -111,7 +111,7 @@ int load_wip_patches(u8 *dir, u8 *gameid)
         WIP_Code * tmp = realloc(CodeList, (CodesCount+1)*sizeof(WIP_Code));
         if(!tmp)
         {
-            if(CodeList) SAFE_FREE(CodeList);
+            if(CodeList) free(CodeList);
             SAFE_CLOSE(fp);
             return -1;
         }

@@ -1,6 +1,6 @@
 #ifndef __MENU_HPP
 #define __MENU_HPP
-
+//#define SHOWMEM 1
 #include <wiiuse/wpad.h>
 #include <ogc/pad.h>
 
@@ -149,6 +149,9 @@ private:
 	u32 m_mainBtnFavoritesOn;
 	u32 m_mainBtnFavoritesOff;
 	u32 m_mainLblLetter;
+#ifdef SHOWMEM
+	u32 m_mem2FreeSize;
+#endif
 	u32 m_mainLblNotice;
 	u32 m_mainBtnNext;
 	u32 m_mainBtnPrev;

@@ -72,7 +72,7 @@ int FS_Read_File(const char *filepath, void **buffer, int *length)
 
 	if(ret != *length)
 	{
-		SAFE_FREE(*buffer);
+		free(*buffer);
 		ret=-3;
 	}
 	else ret = 0;
@@ -115,7 +115,7 @@ int FS_Copy_File(const char *filepath_ori, const char *filepath_dest)
 	fp_in = fopen(filepath_ori, "r");
 	if(!fp_in)
 	{
-		SAFE_FREE(buffer);
+		free(buffer);
 		return -1;
 	}
 
@@ -163,7 +163,7 @@ int FS_Copy_File(const char *filepath_ori, const char *filepath_dest)
 error:
 	SAFE_CLOSE(fp_in);
 	SAFE_CLOSE(fp_out);
-	SAFE_FREE(buffer);
+	free(buffer);
 	if(ret < -2) remove(filepath_dest);
 
 	return ret;

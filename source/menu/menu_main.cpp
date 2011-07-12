@@ -70,10 +70,11 @@ static bool show_homebrew = false;
 void CMenu::_showMain(void)
 {
 	_hideWaitMessage();
-	
+#ifdef SHOWMEM	
+	m_btnMgr.show(m_mem2FreeSize);
+#endif
 	m_vid.set2DViewport(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480),
 		m_cfg.getInt("GENERAL", "tv_x", 0), m_cfg.getInt("GENERAL", "tv_y", 0));
-
 	_setBg(m_gameBg, m_gameBgLQ);
 	m_btnMgr.show(m_mainBtnConfig);
 	m_btnMgr.show(m_mainBtnInfo);
@@ -698,6 +699,9 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainBtnFavoritesOff = _addPicButton(theme, "MAIN/FAVORITES_OFF", texFavOff, texFavOffS, 300, 412, 56, 56);
 	m_mainLblLetter = _addLabel(theme, "MAIN/LETTER", theme.titleFont, L"", 540, 40, 80, 80, CColor(0xFFFFFFFF), FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, emptyTex);
 	m_mainLblNotice = _addLabel(theme, "MAIN/NOTICE", theme.titleFont, L"", 340, 40, 280, 80, CColor(0xFFFFFFFF), FTGX_JUSTIFY_RIGHT | FTGX_ALIGN_MIDDLE, emptyTex);
+#ifdef SHOWMEM	
+	m_mem2FreeSize = _addLabel(theme, "MEM2", theme.titleFont, L"", 40, 300, 480, 80, CColor(0xFFFFFFFF), FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, emptyTex);
+#endif
 	// 
 	m_mainPrevZone.x = m_theme.getInt("MAIN/ZONES", "prev_x", -32);
 	m_mainPrevZone.y = m_theme.getInt("MAIN/ZONES", "prev_y", -32);
@@ -745,6 +749,9 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_mainLblInit, "MAIN/MESSAGE", 0, 0, 0.f, 0.f);
 	_setHideAnim(m_mainLblLetter, "MAIN/LETTER", 0, 0, 0.f, 0.f);
 	_setHideAnim(m_mainLblNotice, "MAIN/NOTICE", 0, 0, 0.f, 0.f);
+#ifdef SHOWMEM
+	_setHideAnim(m_mem2FreeSize, "MEM2", 0, 0, 0.f, 0.f);
+#endif
 	_hideMain(true);
 	_textMain();
 }

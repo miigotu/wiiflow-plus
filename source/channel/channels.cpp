@@ -94,7 +94,7 @@ u64* Channels::GetChannelList(u32* count)
 	u64* channels = (u64*)malloc(countall * sizeof(u64));
 	if (!channels)
 	{
-		SAFE_FREE(titles);
+		free(titles);
 		return NULL;
 	}
 
@@ -115,7 +115,7 @@ u64* Channels::GetChannelList(u32* count)
 		}
 	}
 
-	SAFE_FREE(titles);
+	free(titles);
 
 	return (u64*)realloc(channels, *count * sizeof(u64));
 }
@@ -146,7 +146,7 @@ bool Channels::GetAppNameFromTmd(u64 title, char* app)
 			sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, tmd_file->contents[i].cid);
 			ret = true;
 		}
-		SAFE_FREE(data);
+		free(data);
 	}
 
 	return ret;
@@ -226,7 +226,7 @@ void Channels::Search(u32 channelType, string lang)
 		}
 	}
 
-	SAFE_FREE(list);
+	free(list);
 }
 
 wchar_t * Channels::GetName(int index)

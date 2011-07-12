@@ -1,4 +1,4 @@
-// 2 MEM2 allocators, one for general purpose, one for covers
+// 1 MEM2 allocator, one for general purpose
 // Aligned and padded to 32 bytes, as required by many functions
 
 #ifndef __MEM2_HPP
@@ -16,12 +16,13 @@ void *MEM2_alloc(unsigned int s);
 void *MEM2_realloc(void *p, unsigned int s);
 void MEM2_free(void *p);
 unsigned int MEM2_usableSize(void *p);
+unsigned int MEM2_freesize();
 
 #ifdef __cplusplus
 }
 #endif
 
 
-enum Alloc { ALLOC_MALLOC, ALLOC_MEM2, ALLOC_COVER };
+enum Alloc { ALLOC_MALLOC, ALLOC_MEM2 };
 
 #endif // !defined(__MEM2_HPP)

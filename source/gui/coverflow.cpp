@@ -13,6 +13,7 @@
 #include "boxmesh.hpp"
 #include "wstringEx.hpp"
 #include "lockMutex.hpp"
+#include "fonts.h"
 //#include "gecko.h"
 
 using namespace std;
@@ -226,7 +227,7 @@ CCoverFlow::CCoverFlow(void)
 bool CCoverFlow::init(void)
 {
 	// Load font
-	m_font.fromBuffer(base_font.get(), base_font_size, 32, 32, 8, 1);
+	m_font.fromBuffer(base_font.get(), base_font_size, TITLEFONT);
 	m_fontColor = CColor(0xFFFFFFFF);
 	m_fanartFontColor = CColor(0xFFFFFFFF);
 	// 
@@ -630,7 +631,7 @@ void CCoverFlow::startCoverLoader(void)
 	m_loadingCovers = true;
 
 	unsigned int stack_size = (unsigned int)8192;
-	coverLoaderThreadStack = smartCoverAlloc(stack_size);
+	coverLoaderThreadStack = smartAnyAlloc(stack_size);
 	LWP_CreateThread(&coverLoaderThread, (void *(*)(void *))CCoverFlow::_coverLoader, (void *)this, coverLoaderThreadStack.get(), stack_size, 40);
 
 }
@@ -1721,19 +1722,19 @@ bool CCoverFlow::start(const char *id)
 
 	if (m_box)
 	{
-		if (m_pngLoadCover.empty() || STexture::TE_OK != m_loadingTexture.fromPNGFile(m_pngLoadCover.c_str(), GX_TF_CMPR, ALLOC_COVER, 32, 512))
-			if (STexture::TE_OK != m_loadingTexture.fromPNG(loading_png, GX_TF_CMPR, ALLOC_COVER, 32, 512)) return false;
+		if (m_pngLoadCover.empty() || STexture::TE_OK != m_loadingTexture.fromPNGFile(m_pngLoadCover.c_str(), GX_TF_CMPR, ALLOC_MEM2, 32, 512))
+			if (STexture::TE_OK != m_loadingTexture.fromPNG(loading_png, GX_TF_CMPR, ALLOC_MEM2, 32, 512)) return false;
 
-		if (m_pngNoCover.empty() || STexture::TE_OK != m_noCoverTexture.fromPNGFile(m_pngNoCover.c_str(), GX_TF_CMPR, ALLOC_COVER, 32, 512))
-			if (STexture::TE_OK != m_noCoverTexture.fromPNG(nopic_png, GX_TF_CMPR, ALLOC_COVER, 32, 512)) return false;
+		if (m_pngNoCover.empty() || STexture::TE_OK != m_noCoverTexture.fromPNGFile(m_pngNoCover.c_str(), GX_TF_CMPR, ALLOC_MEM2, 32, 512))
+			if (STexture::TE_OK != m_noCoverTexture.fromPNG(nopic_png, GX_TF_CMPR, ALLOC_MEM2, 32, 512)) return false;
 	}
 	else
 	{
-		if (m_pngLoadCoverFlat.empty() || STexture::TE_OK != m_loadingTexture.fromPNGFile(m_pngLoadCoverFlat.c_str(), GX_TF_CMPR, ALLOC_COVER, 32, 512))
-			if (STexture::TE_OK != m_loadingTexture.fromPNG(flatloading_png, GX_TF_CMPR, ALLOC_COVER, 32, 512)) return false;
+		if (m_pngLoadCoverFlat.empty() || STexture::TE_OK != m_loadingTexture.fromPNGFile(m_pngLoadCoverFlat.c_str(), GX_TF_CMPR, ALLOC_MEM2, 32, 512))
+			if (STexture::TE_OK != m_loadingTexture.fromPNG(flatloading_png, GX_TF_CMPR, ALLOC_MEM2, 32, 512)) return false;
 
-		if (m_pngNoCoverFlat.empty() || STexture::TE_OK != m_noCoverTexture.fromPNGFile(m_pngNoCoverFlat.c_str(), GX_TF_CMPR, ALLOC_COVER, 32, 512))
-			if (STexture::TE_OK != m_noCoverTexture.fromPNG(flatnopic_png, GX_TF_CMPR, ALLOC_COVER, 32, 512)) return false;
+		if (m_pngNoCoverFlat.empty() || STexture::TE_OK != m_noCoverTexture.fromPNGFile(m_pngNoCoverFlat.c_str(), GX_TF_CMPR, ALLOC_MEM2, 32, 512))
+			if (STexture::TE_OK != m_noCoverTexture.fromPNG(flatnopic_png, GX_TF_CMPR, ALLOC_MEM2, 32, 512)) return false;
 	}
 		
 	m_covers.clear();
@@ -2242,7 +2243,7 @@ bool CCoverFlow::preCacheCover(const char *id, const u8 *png, bool full)
 	STexture tex;
 	u8 textureFmt = m_compressTextures ? GX_TF_CMPR : GX_TF_RGB565;
 
-	if (STexture::TE_OK != tex.fromPNG(png, textureFmt, ALLOC_COVER, 32)) return false;
+	if (STexture::TE_OK != tex.fromPNG(png, textureFmt, ALLOC_MEM2, 32)) return false;
 
 	u32 bufSize = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
 	uLongf zBufferSize = m_compressCache ? bufSize + bufSize / 100 + 12 : bufSize;
@@ -2287,7 +2288,7 @@ bool CCoverFlow::_loadCoverTexPNG(u32 i, bool box, bool hq)
 	STexture tex;
 
 	const char *path = box ? m_items[i].boxPicPath.c_str() : m_items[i].picPath.c_str();
-	if (STexture::TE_OK != tex.fromPNGFile(path, textureFmt, ALLOC_COVER, 32)) return false;
+	if (STexture::TE_OK != tex.fromPNGFile(path, textureFmt, ALLOC_MEM2, 32)) return false;
 
 	if (!m_loadingCovers) return false;
 
@@ -2302,7 +2303,7 @@ bool CCoverFlow::_loadCoverTexPNG(u32 i, bool box, bool hq)
 	{
 		u32 bufSize = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
 		uLongf zBufferSize = m_compressCache ? bufSize + bufSize / 100 + 12 : bufSize;
-		SmartBuf zBuffer = m_compressCache ? smartMalloc(zBufferSize) : tex.data;
+		SmartBuf zBuffer = m_compressCache ? smartAnyAlloc(zBufferSize) : tex.data;
 		if (!!zBuffer && (!m_compressCache || compress(zBuffer.get(), &zBufferSize, tex.data.get(), bufSize) == Z_OK))
 		{
 			FILE *file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), m_items[i].hdr->hdr.id).c_str(), "wb");
@@ -2354,7 +2355,7 @@ void CCoverFlow::_dropHQLOD(int i)
 
 	u32 prevTexLen = fixGX_GetTexBufferSize(prevTex.width, prevTex.height, prevTex.format, prevTex.maxLOD > 0 ? GX_TRUE : GX_FALSE, prevTex.maxLOD);
 	u32 newTexLen = fixGX_GetTexBufferSize(newTex.width, newTex.height, newTex.format, newTex.maxLOD > 0 ? GX_TRUE : GX_FALSE, newTex.maxLOD);
-	newTex.data = smartCoverAlloc(newTexLen);
+	newTex.data = smartAnyAlloc(newTexLen);
 	if (!newTex.data) return;
 	if (!prevTex.data) return;
 	memcpy(newTex.data.get(), prevTex.data.get() + (prevTexLen - newTexLen), newTexLen);
@@ -2395,7 +2396,7 @@ CCoverFlow::CLRet CCoverFlow::_loadCoverTex(u32 i, bool box, bool hq)
 					if (!hq) CCoverFlow::_calcTexLQLOD(tex);
 					u32 texLen = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
 					
-					tex.data = smartCoverAlloc(texLen);
+					tex.data = smartAnyAlloc(texLen);
 					SmartBuf ptrTex = (header.zipped != 0) ? smartMem2Alloc(bufSize) : tex.data;
 
 					if (!ptrTex || !tex.data)

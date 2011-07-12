@@ -216,7 +216,7 @@ s32 GetTMD(u64 TicketID, signed_blob **Output, u32 *Length)
 	ret = ES_GetStoredTMD(TicketID, TMD, TMD_Length);
 	if (ret < 0)
 	{
-		SAFE_FREE(TMD);
+		free(TMD);
 		return ret;
 	}
 
@@ -249,7 +249,7 @@ s32 checkIOS(u32 IOS)
 	} else {
 		ret = -2;
 	}
-	SAFE_FREE(TMD);
+	free(TMD);
 	return ret;
 }
 
@@ -491,7 +491,7 @@ char* get_iosx_info_from_tmd(int ios_slot, u32 *version)
 	brute_tmd(tt);
 	int match = memcmp(TMD, TMD_copy, TMD_size) == 0;
 	//if (!match) dbg_printf("\nbrute match: %d %u %u\n", match, t->fill3, tt->fill3);
-	SAFE_FREE(TMD_copy);
+	free(TMD_copy);
 	SHA1((u8 *)TMD, TMD_size, hash);
 	if (!match && hash[0] == 0) {
 		is_modmii = 1;
@@ -561,7 +561,7 @@ retry:
 	}
 
 out:
-	SAFE_FREE(TMD);
+	free(TMD);
 	if (info && is_modmii) {
 		if (!strstr(info, "modmii")) {
 			strcpy(info_str, info);

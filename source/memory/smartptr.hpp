@@ -69,9 +69,7 @@ typedef SmartPtr<unsigned char> SmartBuf;
 
 SmartBuf smartMalloc(unsigned int size);
 SmartBuf smartMemAlign32(unsigned int size);
-SmartBuf smartMemAlignPad32(unsigned int size);
 SmartBuf smartMem2Alloc(unsigned int size);
-SmartBuf smartCoverAlloc(unsigned int size);
 SmartBuf smartAnyAlloc(unsigned int size);
 
 #endif // !defined(__SMARTPTR_HPP)

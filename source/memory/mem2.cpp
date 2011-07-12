@@ -6,8 +6,8 @@
 #include <string.h>
 #include <ogc/system.h>
 
-#define MAX_MEM1_ARENA_LO	((void *) (0x81700000-0x100000))      // Preserve 1MB for other stuff if MEM1 almost out
-#define MEM2_PRIORITY_SIZE	0x40
+#define MAX_MEM1_ARENA_LO	(void *)0x81700000
+#define MEM2_PRIORITY_SIZE	0x20
 
 // Forbid the use of MEM2 through malloc
 u32 MALLOC_MEM2 = 0;
@@ -69,25 +69,19 @@ extern __typeof(malloc_usable_size) __real_malloc_usable_size;
 void *__wrap_malloc(size_t size)
 {
 	void *p;
-	if ((SYS_GetArena1Lo() > MAX_MEM1_ARENA_LO) || (g_bigGoesToMem2 && size > MEM2_PRIORITY_SIZE))
+	if ((SYS_GetArena1Lo() >= MAX_MEM1_ARENA_LO) || (g_bigGoesToMem2 && size >= MEM2_PRIORITY_SIZE))
 	{
 		p = MEM2_alloc(size);
-		if (p != 0) {
-			return p;
-		}
-		return __real_malloc(size);
+		return p != 0 ? p : __real_malloc(size);
 	}
 	p = __real_malloc(size);
-	if (p != 0) {
-		return p;
-	}
-	return MEM2_alloc(size);
+	return p != 0 ? p : MEM2_alloc(size);
 }
 
 void *__wrap_calloc(size_t n, size_t size)
 {
 	void *p;
-	if ((SYS_GetArena1Lo() > MAX_MEM1_ARENA_LO) || (g_bigGoesToMem2 && size > MEM2_PRIORITY_SIZE))
+	if ((SYS_GetArena1Lo() >= MAX_MEM1_ARENA_LO) || (g_bigGoesToMem2 && (n * size) >= MEM2_PRIORITY_SIZE))
 	{
 		p = MEM2_alloc(n * size);
 		if (p != 0)
@@ -97,52 +91,36 @@ void *__wrap_calloc(size_t n, size_t size)
 		}
 		return __real_calloc(n, size);
 	}
+
 	p = __real_calloc(n, size);
-	if (p != 0) {
-		return p;
-	}
+	if (p != 0) return p;
+
 	p = MEM2_alloc(n * size);
-	if (p != 0) {
-		memset(p, 0, n * size);
-	}
+	if (p != 0) memset(p, 0, n * size);
 	return p;
 }
 
 void *__wrap_memalign(size_t a, size_t size)
 {
 	void *p;
-	if ((SYS_GetArena1Lo() > MAX_MEM1_ARENA_LO) || (g_bigGoesToMem2 && size > MEM2_PRIORITY_SIZE))
+	if ((SYS_GetArena1Lo() >= MAX_MEM1_ARENA_LO) || (g_bigGoesToMem2 && size >= MEM2_PRIORITY_SIZE))
 	{
 		if (a <= 32 && 32 % a == 0)
 		{
 			p = MEM2_alloc(size);
-			if (p != 0) {
-				return p;
-			}
+			if (p != 0) return p;
 		}
 		return __real_memalign(a, size);
 	}
 	p = __real_memalign(a, size);
-	if (p != 0 || a > 32 || 32 % a != 0) {
-		return p;
-	}
-
-	return MEM2_alloc(size);
+	return p != 0 ? p : MEM2_alloc(size);
 }
 
 void __wrap_free(void *p)
 {
-    if(!p)
-        return;
-
-	if (((u32)p & 0x10000000) != 0)
-	{
-		MEM2_free(p);
-	}
-	else
-	{
-		__real_free(p);
-	}
+    if(!p) return;
+	((u32)p & 0x10000000) != 0 ? MEM2_free(p) : __real_free(p);
+	p = NULL;
 }
 
 void *__wrap_realloc(void *p, size_t size)
@@ -185,9 +163,7 @@ void *__wrap_realloc(void *p, size_t size)
 
 size_t __wrap_malloc_usable_size(void *p)
 {
-	if (((u32)p & 0x10000000) != 0)
-		return MEM2_usableSize(p);
-	return __real_malloc_usable_size(p);
+	return ((u32)p & 0x10000000) != 0 ? MEM2_usableSize(p) : __real_malloc_usable_size(p);
 }
 
 } ///extern "C"

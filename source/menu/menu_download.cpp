@@ -268,7 +268,7 @@ static bool checkPNGFile(const char *filename)
 	fseek(file, 0, SEEK_SET);
 	if (fileSize > 0)
 	{
-		buffer = smartCoverAlloc(fileSize);
+		buffer = smartAnyAlloc(fileSize);
 		if (!!buffer) fread(buffer.get(), 1, fileSize, file);
 	}
 	SAFE_CLOSE(file);
@@ -356,7 +356,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 	float dlWeight = 1.f - listWeight;
 
 	u32 bufferSize = 0x280000;	// Maximum download size 2 MB
-	SmartBuf buffer = smartCoverAlloc(bufferSize);
+	SmartBuf buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);
@@ -699,7 +699,7 @@ s8 CMenu::_versionTxtDownloaderInit(CMenu *m) //Handler to download versions txt
 s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 {
 	u32 bufferSize = 0x001000;	// Maximum download size 4kb
-	SmartBuf buffer = smartCoverAlloc(bufferSize);
+	SmartBuf buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
 		LWP_MutexLock(m_mutex);

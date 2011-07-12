@@ -143,9 +143,6 @@ static u32 do_fst(wiidisc_t *d, u8 *fst, const char *names, u32 i)
 				case ALLOC_MEM2:
 					d->extracted_buffer = wbfs_mem2alloc(size);
 					break;
-				case ALLOC_COVER:
-					d->extracted_buffer = wbfs_malloc(size);
-					break;
 			}
 			if (d->extracted_buffer != 0)
 			{
