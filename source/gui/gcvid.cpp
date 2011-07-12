@@ -298,7 +298,7 @@ const u8* VideoFrame::getData() const
 
 void VideoFrame::dealloc()
 {
-	free(_data);
+	SAFE_FREE(_data);
 	_w = _h = _p = 0;
 }
 

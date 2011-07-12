@@ -120,7 +120,6 @@ void __wrap_free(void *p)
 {
     if(!p) return;
 	((u32)p & 0x10000000) != 0 ? MEM2_free(p) : __real_free(p);
-	p = NULL;
 }
 
 void *__wrap_realloc(void *p, size_t size)

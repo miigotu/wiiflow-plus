@@ -73,9 +73,7 @@ Mp3Decoder::~Mp3Decoder()
     mad_frame_finish(&Frame);
     mad_stream_finish(&Stream);
 
-    if(ReadBuffer)
-        free(ReadBuffer);
-    ReadBuffer = NULL;
+    SAFE_FREE(ReadBuffer);
 }
 
 void Mp3Decoder::OpenFile()

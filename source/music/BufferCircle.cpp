@@ -50,8 +50,7 @@ void BufferCircle::SetBufferBlockSize(int size)
 
     for(int i = 0; i < Size(); i++)
     {
-        if(SoundBuffer[i] != NULL)
-            free(SoundBuffer[i]);
+        SAFE_FREE(SoundBuffer[i]);
 
         SoundBuffer[i] = (u8 *) memalign(32, ALIGN32(BufferBlockSize));
         BufferSize[i] = 0;
@@ -86,8 +85,7 @@ void BufferCircle::RemoveBuffer(int pos)
     if(!Valid(pos))
         return;
 
-    if(SoundBuffer[pos] != NULL)
-        free(SoundBuffer[pos]);
+    SAFE_FREE(SoundBuffer[pos]);
 
     SoundBuffer.erase(SoundBuffer.begin()+pos);
     BufferSize.erase(BufferSize.begin()+pos);
@@ -108,10 +106,7 @@ void BufferCircle::FreeBuffer()
 {
     for(int i = 0; i < Size(); i++)
     {
-        if(SoundBuffer[i] != NULL)
-            free(SoundBuffer[i]);
-
-        SoundBuffer[i] = NULL;
+		SAFE_FREE(SoundBuffer[i]);
         BufferSize[i] = 0;
         BufferReady[i] = false;
     }

@@ -27,10 +27,10 @@ public:
 				switch (m_srcAlloc)
 				{
 					case SRCALL_NEW:
-						delete m_p;
+						SAFE_DELETE(m_p);
 						break;
 					default: // wrapped free knows if it is a pointer in mem1 or mem2
-						free(m_p);
+						SAFE_FREE(m_p);
 						break;
 				}
 				delete m_refcount;

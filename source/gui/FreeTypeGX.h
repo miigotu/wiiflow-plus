@@ -156,6 +156,7 @@
 #include FT_FREETYPE_H
 #include FT_BITMAP_H
 #include "Metaphrasis.h"
+#include "utils.h"
 
 #include <malloc.h>
 #include <string.h>

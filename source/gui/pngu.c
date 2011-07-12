@@ -14,9 +14,10 @@ More info : http://frontier-dev.net
 #include "pngu.h"
 #include "png.h"
 #include "mem2.hpp"
+#include "utils.h"
 
 #define malloc MEM2_alloc
-#define free MEM2_free
+#define free MEM2_SAFE_FREE
 
 // Constants
 #define PNGU_SOURCE_BUFFER			1
@@ -90,7 +91,7 @@ IMGCTX PNGU_SelectImageFromDevice (const char *filename)
 	ctx->filename = malloc (strlen (filename) + 1);
 	if (!ctx->filename)
 	{
-		free(ctx);
+		SAFE_FREE(ctx);
 		return NULL;
 	}
 	strcpy(ctx->filename, filename);
@@ -1123,8 +1124,8 @@ int pngu_decode (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, PNGU_u32 stripAlph
 	{
 		error:
 		memcpy(png_jmpbuf(ctx->png_ptr), save_jmp, sizeof(save_jmp));
-		free(ctx->row_pointers);
-		free(ctx->img_data);
+		SAFE_FREE(ctx->row_pointers);
+		SAFE_FREE(ctx->img_data);
 		pngu_free_info (ctx);
 		//printf("*** This is a corrupted image!!\n"); sleep(5);
 		return mem_err ? PNGU_LIB_ERROR : -666;

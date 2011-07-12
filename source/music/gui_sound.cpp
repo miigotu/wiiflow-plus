@@ -137,10 +137,9 @@ void GuiSound::FreeMemory()
 	if (!Sys_Exiting())
 		SoundHandler::Instance()->RemoveDecoder(voice);
 
-    if(allocated && sound != NULL)
+    if(allocated)
     {
-        free(sound);
-        sound = NULL;
+        SAFE_FREE(sound);
         allocated = false;
     }
 	filepath = "";
@@ -248,8 +247,7 @@ bool GuiSound::LoadSoundEffect(const u8 * snd, s32 len)
         u8 * tmpsnd = (u8 *) realloc(sound, done+4096);
         if(!tmpsnd)
         {
-            free(sound);
-            sound = NULL;
+            SAFE_FREE(sound);
             return false;
         }
 
@@ -489,19 +487,22 @@ void GuiSound::UncompressSoundbin(const u8 * snd, int len, bool isallocated)
     }
 
     if(isallocated)
-        free((u8 *) snd);
+	{
+		void *p = (void *) snd;
+        SAFE_FREE(p);
+	}
 
     allocated = true;
 }
 
 void soundInit(void)
 {
-        ASND_Init();
-        ASND_Pause(0);
+	ASND_Init();
+	ASND_Pause(0);
 }
 
 void soundDeinit(void)
 {
-        ASND_Pause(1);
-        ASND_End();
+	ASND_Pause(1);
+	ASND_End();
 }

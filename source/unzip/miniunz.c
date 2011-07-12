@@ -49,7 +49,7 @@ int makedir (char *newdir)
         buffer[len-1] = '\0';
     }
     if (mymkdir(buffer) == 0) {
-        free(buffer);
+        SAFE_FREE(buffer);
         return 1;
     }
 
@@ -63,14 +63,14 @@ int makedir (char *newdir)
         *p = 0;
         if ((mymkdir(buffer) == -1) && (errno == ENOENT)) {
 //            printf("couldn't create directory %s\n",buffer);
-            free(buffer);
+            SAFE_FREE(buffer);
             return 0;
         }
         if (hold == 0)
             break;
         *p++ = hold;
     }
-    free(buffer);
+    SAFE_FREE(buffer);
     return 1;
 }
 
@@ -133,7 +133,7 @@ static int do_extract_currentfile(unzFile uf,const int* popt_extract_without_pat
 //            printf("creating directory: %s\n",path);
             mymkdir(path);
 
-			free(path);
+			SAFE_FREE(path);
         }
     } else {
         char* write_filename;
@@ -192,7 +192,7 @@ static int do_extract_currentfile(unzFile uf,const int* popt_extract_without_pat
 				char *ptr = strstr(path, filename_withoutpath);
 				*ptr = '\0';
                 makedir(path);
-				free(path);
+				SAFE_FREE(path);
 				
                 *(filename_withoutpath-1)=c;
                 fout=fopen(write_filename,"wb");
@@ -232,8 +232,8 @@ static int do_extract_currentfile(unzFile uf,const int* popt_extract_without_pat
         } else
             unzCloseCurrentFile(uf); /* don't lose the error */
     }
-	free(filename_withpath);
-    free(buf);
+	SAFE_FREE(filename_withpath);
+    SAFE_FREE(buf);
     return err;
 }
 

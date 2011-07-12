@@ -49,6 +49,8 @@
 extern "C" {
 #endif
 
+#include "utils.h"
+
 #ifndef _ZLIB_H
 #include "zlib.h"
 #endif

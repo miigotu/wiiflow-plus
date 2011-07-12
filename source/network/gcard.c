@@ -62,5 +62,5 @@ void add_game_to_card(const char *gameid)
 			downloadfile(NULL, 0, (char *) url, NULL, NULL);
 		}
 	}
-	free(url);
+	SAFE_FREE(url);
 }

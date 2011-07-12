@@ -250,10 +250,10 @@ CCoverFlow::~CCoverFlow(void)
 {
 	clear();
 	for(u8 i = 0; i < 3; i++)
-		m_sound[i].release();
-	m_hoverSound.release();
-	m_selectSound.release();
-	m_cancelSound.release();
+		SMART_FREE(m_sound[i]);
+	SMART_FREE(m_hoverSound);
+	SMART_FREE(m_selectSound);
+	SMART_FREE(m_cancelSound);
 	LWP_MutexDestroy(m_mutex);
 }
 

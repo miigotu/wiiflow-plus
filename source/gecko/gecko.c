@@ -73,8 +73,7 @@ void gprintf( const char *format, ... )
 	}
 	va_end(va);
 
-	if(tmp)
-	free(tmp);
+	SAFE_FREE(tmp);
 } 
 
 char ascii(char s) {

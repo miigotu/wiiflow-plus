@@ -191,7 +191,7 @@ void scan_for_shared(bool is_usb)
 		{
 			if(len_data == (sizeof(shared_entry) * shared_entries) && len_data !=0 && !memcmp(data, shared_list, len_data))
 				n = 0;
-			free(data);
+			SAFE_FREE(data);
 		}
 
 		if(n) fp=fopen(dir_path, "w"); // update the database list
@@ -223,7 +223,7 @@ void scan_for_shared(bool is_usb)
 			SAFE_CLOSE(fp);
 		}
 	}
-	free(shared_list);
+	SAFE_FREE(shared_list);
 }
 
 int FFS_Install_Wad(char *filename, bool is_usb)
@@ -267,7 +267,7 @@ int FFS_Install_Wad(char *filename, bool is_usb)
 	fseek(fp_in, offset, SEEK_SET);
 	if(fread(tik, 1, header->tik_len, fp_in) != header->tik_len)
 	{
-		free(tik);
+		SAFE_FREE(tik);
 		error = 3;
 		goto error;
 	}
@@ -303,7 +303,7 @@ int FFS_Install_Wad(char *filename, bool is_usb)
 	sprintf(dir_path, "%s/ticket/%08x/%08x.tik", is_usb ? "usb:" : "sd:", title_id[0], title_id[1]);
 	if(FS_Write_File(dir_path, tik, header->tik_len) < 0)
 	{
-		free(tik);
+		SAFE_FREE(tik);
 		error = 9;
 		goto error;
 	}
@@ -318,7 +318,7 @@ int FFS_Install_Wad(char *filename, bool is_usb)
 	sprintf(dir_path, "%s/shared/%08x", is_usb ? "usb:" : "sd:", title_id[0]);
 	makedir(dir_path);
 
-	free(tik);
+	SAFE_FREE(tik);
 
 	decrypt = memalign(32, 256*1024+32);
 	if(!decrypt)
@@ -425,10 +425,10 @@ int FFS_Install_Wad(char *filename, bool is_usb)
 	
 error:
 
-	free(mem);
-	free(decrypt);
-	free(tmd_data);
-	free(header);
+	SAFE_FREE(mem);
+	SAFE_FREE(decrypt);
+	SAFE_FREE(tmd_data);
+	SAFE_FREE(header);
 
 	SAFE_CLOSE(fp_in);
 	SAFE_CLOSE(fp_out);

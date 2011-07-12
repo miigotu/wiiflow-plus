@@ -1,4 +1,5 @@
 #include "dns.h"
+#include "utils.h"
 
 /**
  * Resolves a domainname to an ip address
@@ -76,7 +77,7 @@ u32 getipbynamecached(char *domain)
 	newnode->domain = malloc(strlen(domain)+1);
 	if(newnode->domain == NULL)
 	{
-		free(newnode);
+		SAFE_FREE(newnode);
 		return ip;
 	}
 	strcpy(newnode->domain, domain);
@@ -109,8 +110,8 @@ u32 getipbynamecached(char *domain)
 			previousnode->nextnode = NULL;
 		}
 		
-		free(node->domain);
-		free(node);
+		SAFE_FREE(node->domain);
+		SAFE_FREE(node);
 		dnsentrycount--;
 	}
 

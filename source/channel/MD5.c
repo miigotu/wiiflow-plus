@@ -585,7 +585,7 @@ unsigned char * MD5fromFile(unsigned char *dst, const char *src)
 	} while(read > 0);
 
     SAFE_CLOSE(file);
-    free(buffer);
+    SAFE_FREE(buffer);
 
     (void)auth_md5CloseCtx( ctx, dst );       /* Close the context.   */
 

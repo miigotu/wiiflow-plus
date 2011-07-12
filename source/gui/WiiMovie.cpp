@@ -111,7 +111,7 @@ WiiMovie::~WiiMovie()
 	}
 	if (ThreadStack != NULL)
 	{
-		free(ThreadStack);
+		SAFE_FREE(ThreadStack);
 		ThreadStack = NULL;
 	}
 
@@ -155,12 +155,8 @@ void WiiMovie::Stop()
 	}
 	PlayThread = LWP_THREAD_NULL;
 	gprintf("Playing thread stopped\n");
-	
-	if (PlayThreadStack != NULL)
-	{
-		free(PlayThreadStack);
-		PlayThreadStack = NULL;
-	}
+
+	SAFE_FREE(PlayThreadStack);
 }
 
 void WiiMovie::SetVolume(int vol)

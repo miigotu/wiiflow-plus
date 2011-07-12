@@ -368,7 +368,7 @@ void CMenu::cleanup(bool ios_reload)
 	
 	if (!ios_reload)
 	{
-		m_cameraSound.release();
+		SMART_FREE(m_cameraSound);
 	}
 	
 	MusicPlayer::DestroyInstance();
@@ -1695,7 +1695,7 @@ retry:
 				if(!!base_font.get())
 					base_font_size = size;
 			}
-			free(u8_font_archive);
+			SAFE_FREE(u8_font_archive);
 			break;
 		}
 	}
@@ -1708,7 +1708,7 @@ retry:
 	
 	ISFS_Deinitialize();
 	
-	free(content);
+	SAFE_FREE(content);
 }
 
 void CMenu::_cleanupDefaultFont()

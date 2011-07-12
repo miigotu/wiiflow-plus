@@ -59,10 +59,7 @@ BNSDecoder::~BNSDecoder()
     while(Decoding)
         usleep(100);
 
-    if(SoundData.buffer != NULL)
-        free(SoundData.buffer);
-
-    SoundData.buffer = NULL;
+    SAFE_FREE(SoundData.buffer);
 }
 
 void BNSDecoder::OpenFile()

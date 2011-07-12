@@ -29,6 +29,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <network.h>
+#include "wifi_gecko.h"
 
 static int connection = -1;
 static int init = 0;
@@ -130,6 +131,5 @@ void wifi_printf(const char * format, ...)
 	}
 	va_end(va);
 
-	if(tmp)
-	free(tmp);
+	SAFE_FREE(tmp);
 }

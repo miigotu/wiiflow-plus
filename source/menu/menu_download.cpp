@@ -290,7 +290,7 @@ bool CMenu::_isNetworkAvailable()
 	if (buf && size > 4)
 	{
 		retval = buf[4] > 0; // There is a valid connection defined.
-		free(buf);
+		SAFE_FREE(buf);
 	}
 	return retval;
 }

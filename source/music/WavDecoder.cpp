@@ -25,7 +25,6 @@
  ***************************************************************************/
 #include <string.h>
 #include "WavDecoder.hpp"
-#include "utils.h"
 
 WavDecoder::WavDecoder(const char * filepath)
     : SoundDecoder(filepath)

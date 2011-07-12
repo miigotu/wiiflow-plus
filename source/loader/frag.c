@@ -247,10 +247,10 @@ int get_frag_list(u8 *id, char *path, const u32 hdd_sector_size)
 	ret_val = 0;
 
 out:
-	if (ret_val) free(frag_list);
-	free(fs);
-	free(fa);
-	free(fw);
+	if (ret_val) SAFE_FREE(frag_list);
+	SAFE_FREE(fs);
+	SAFE_FREE(fa);
+	SAFE_FREE(fw);
 
 	return ret_val;
 }

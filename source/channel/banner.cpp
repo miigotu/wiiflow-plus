@@ -84,7 +84,7 @@ Banner::Banner(u8 *bnr, u64 title)
 
 Banner::~Banner()
 {
-	free(opening);
+	SAFE_FREE(opening);
 }
 
 bool Banner::IsValid()
@@ -157,7 +157,7 @@ Banner * Banner::GetBanner(u64 title, char *appname, bool isfs, bool imetOnly)
 		buf = ISFS_GetFile((u8 *) appname, &size, imetOnly ? sizeof(IMET) + IMET_OFFSET : 0);
 		if (size == 0) 
 		{
-			free(buf);
+			SAFE_FREE(buf);
 			return NULL;
 		}
 	}

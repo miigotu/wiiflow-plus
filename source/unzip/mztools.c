@@ -123,7 +123,7 @@ uLong* bytesRecovered;
                             } else {
                                 err = Z_ERRNO;
                             }
-                            free(data);
+                            SAFE_FREE(data);
                             if (err != Z_OK) {
                                 break;
                             }
