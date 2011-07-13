@@ -548,7 +548,6 @@ private:
 	SmartPtr<GuiSound> m_cameraSound;
 	dir_discHdr *m_gameSoundHdr;
 	lwp_t m_gameSoundThread;
-	mutex_t m_gameSndMutex;
 	u8 m_bnrSndVol;
 	
 	bool m_video_playing;
@@ -752,7 +751,6 @@ private:
 public:
 	void _hideWaitMessage();
 private:
-	static void _showWaitMessages(CMenu *m);
 	SmartPtr<GuiSound> _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, SmartPtr<GuiSound> def);
 	u16 _textStyle(const char *domain, const char *key, u16 def);
 	u32 _addButton(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color);
@@ -796,10 +794,9 @@ private:
 	static u32 _downloadCheatFileAsync(void *obj);
 	// 
 	void _playGameSound(void);
-	void _loadGameSound(dir_discHdr *);
-	void _waitForGameSoundExtract(void);
-	//
-	static int _loadGameSoundThrd(CMenu *m);
+	void CheckGameSoundThread(void);
+	void CheckThreads(void);
+	static void _gameSoundThread(CMenu *m);
 	//
 	static void _load_installed_cioses();
 	//

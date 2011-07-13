@@ -68,6 +68,7 @@ public:
 	void waitMessage(float delay);
 	void waitMessage(const safe_vector<STexture> &tex, float delay, bool useWiiLight = true);
 	void waitMessage(const STexture &tex);
+	void CheckWaitThread(void);
 	s32 TakeScreenshot(const char *);
 	void shiftViewPort(float x, float y);
 private:
@@ -95,7 +96,7 @@ private:
 	float m_vpH;
 	float m_waitMessageDelay;
 	bool m_showWaitMessage;
-	bool m_waitMessageThrdStop;
+	volatile bool m_showingWaitMessages;
 	bool m_useWiiLight;
 	safe_vector<STexture> m_waitMessages;
 	// 

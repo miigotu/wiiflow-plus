@@ -67,8 +67,8 @@ CMenu::CMenu(CVideo &vid) :
 	m_thrdNetwork = false;
 	m_mutex = 0;
 	m_showtimer = 0;
-	m_gameSoundThread = 0;
-	m_gameSndMutex = 0;
+	m_gameSoundThread = LWP_THREAD_NULL;
+	m_gameSoundHdr = NULL;
 	m_numCFVersions = 0;
 	m_bgCrossFade = 0;
 	m_bnrSndVol = 0;
@@ -330,7 +330,6 @@ void CMenu::init()
 	Sys_ExitTo(exit_to);
 
 	LWP_MutexInit(&m_mutex, 0);
-	LWP_MutexInit(&m_gameSndMutex, 0);
 
 	m_cf.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255));
 	m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
@@ -363,7 +362,9 @@ void CMenu::init()
 void CMenu::cleanup(bool ios_reload)
 {
 	m_cf.stopCoverLoader();
-	_waitForGameSoundExtract();
+
+	do CheckThreads(); while(m_gameSoundThread != LWP_THREAD_NULL);
+
 	_stopSounds();
 	
 	if (!ios_reload)
@@ -378,8 +379,6 @@ void CMenu::cleanup(bool ios_reload)
 	{
 		LWP_MutexDestroy(m_mutex);
 		m_mutex = 0;
-		LWP_MutexDestroy(m_gameSndMutex);
-		m_gameSndMutex = 0;
 	}
 
 	DeviceHandler::DestroyInstance(); // Destruction must be done manually, also unmounts all devices.
@@ -1262,23 +1261,23 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		Sys_Test();
 	}
 
-	LWP_MutexLock(m_gameSndMutex);
-	if (withCF && m_gameSelected && m_gameSoundTmp.IsLoaded() && m_gameSoundThread == 0 && !m_gameSound.IsPlaying() && MusicPlayer::Instance()->GetVolume() == 0)
+	if (withCF && m_gameSelected && m_gameSoundTmp.IsLoaded() && !m_gameSound.IsPlaying() && MusicPlayer::Instance()->GetVolume() == 0)
 	{
 		m_gameSound.Stop();
 		m_gameSound = m_gameSoundTmp;
 		m_gameSound.Play(m_bnrSndVol);
 		m_gameSoundTmp.Unload();
 	}
-	else if (/*!withCF || */!m_gameSelected) // Remove withCF check, to prevent gamesound from stopping when something has happened
+	else if (!m_gameSelected) // Remove withCF check, to prevent gamesound from stopping when something has happened
 		m_gameSound.Stop();
-	LWP_MutexUnlock(m_gameSndMutex);
 
-	if (withCF && m_gameSoundThread == 0)
+	CheckThreads();
+
+	if (withCF && m_gameSoundThread == LWP_THREAD_NULL)
 		m_cf.startCoverLoader();
 
 	MusicPlayer::Instance()->Tick(m_video_playing || (m_gameSelected && 
-		(m_gameSoundTmp.IsLoaded() ||  m_gameSound.IsPlaying())));
+		m_gameSoundTmp.IsLoaded()) ||  m_gameSound.IsPlaying());
 	
 	//Take Screenshot
 	if (gc_btnsPressed & PAD_TRIGGER_Z)

@@ -304,7 +304,7 @@ void CMenu::_game(bool launch)
 		else if (BTN_PLUS_PRESSED)
 		{
 			_hideGame();
-			m_gameSelected = true; // Force gamesound to keep playing
+			m_gameSelected = true;
 			_gameinfo();
 			_showGame();
 			if (!m_gameSound.IsPlaying()) startGameSound = -6;
@@ -363,7 +363,7 @@ void CMenu::_game(bool launch)
 				if (!m_locked)
 				{
 					_hideGame();
-					_waitForGameSoundExtract();
+					do CheckThreads(); while(m_gameSoundThread != LWP_THREAD_NULL);
 					if (_wbfsOp(CMenu::WO_REMOVE_GAME))
 					{
 						m_gameSound.Stop();
@@ -384,7 +384,6 @@ void CMenu::_game(bool launch)
 			else if (m_btnMgr.selected(m_gameBtnSettings))
 			{
 				_hideGame();
-				_waitForGameSoundExtract();
 				m_gameSelected = true;
 				_gameSettings();
 				_showGame();
@@ -453,22 +452,22 @@ void CMenu::_game(bool launch)
 						m_cf.flip();
 			}
 		}
-		if (m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -8) && (BTN_UP_REPEAT || RIGHT_STICK_UP))
+		if ((startGameSound == 1 || startGameSound < -8) && (BTN_UP_REPEAT || RIGHT_STICK_UP))
 		{
 			m_cf.up();
 			startGameSound = -10;
 		}
-		if (m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -8) && (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT))
+		if ((startGameSound == 1 || startGameSound < -8) && (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT))
 		{
 			m_cf.right();
 			startGameSound = -10;
 		}
-		if (m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -8) && (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN))
+		if ((startGameSound == 1 || startGameSound < -8) && (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN))
 		{
 			m_cf.down();
 			startGameSound = -10;
 		}
-		if (m_gameSoundThread == 0 && (startGameSound == 1 || startGameSound < -8) && (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT))
+		if ((startGameSound == 1 || startGameSound < -8) && (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT))
 		{
 			m_cf.left();
 			startGameSound = -10;
@@ -543,7 +542,6 @@ void CMenu::_game(bool launch)
 	m_gcfg1.unload();
 	
 	free_wdm();
-	_waitForGameSoundExtract();
 	_hideGame();
 }
 
@@ -824,7 +822,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	u32 cheatSize = 0, gameconfigSize = 0, dolSize = 0;
 	bool iosLoaded = false;
 
-	_waitForGameSoundExtract();
+	do CheckThreads(); while(m_gameSoundThread != LWP_THREAD_NULL);
 	if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
 	if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
 	m_cfg.setString("GENERAL", "current_game", id);
@@ -1093,66 +1091,67 @@ inline u32 le32(u32 i)
 	return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i & 0xFF0000) >> 8) | ((i & 0xFF000000) >> 24);
 }
 
-void CMenu::_loadGameSound(dir_discHdr *hdr)
+SmartBuf gameSoundThreadStack;
+
+void CMenu::_gameSoundThread(CMenu *m)
 {
 	u32 sndSize = 0;
+	m->m_gameSoundHdr = m->m_cf.getHdr();
 
-	Banner *banner = m_current_view == COVERFLOW_USB ? _extractBnr(hdr) : m_current_view == COVERFLOW_CHANNEL ? _extractChannelBnr(hdr->hdr.chantitle) : NULL;
+	Banner *banner = m->m_current_view == COVERFLOW_USB ?
+		_extractBnr(m->m_gameSoundHdr) : m->m_current_view == COVERFLOW_CHANNEL ?
+		_extractChannelBnr(m->m_gameSoundHdr->hdr.chantitle) : NULL;
 
 	if (banner == NULL || !banner->IsValid())
 	{
 		gprintf("no valid banner found\n");
+		m->m_gameSoundHdr = NULL;
 		return;
 	}
-	_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str()));
+	_extractBannerTitle(banner, GetLanguage(m->m_loc.getString(m->m_curLanguage, "wiitdb_code", "EN").c_str()));
 	
 	const u8 *soundBin = banner->GetFile((char *) "sound.bin", &sndSize);
 
 	if (soundBin == NULL || ((IMD5Header *)soundBin)->fcc != 'IMD5')
+	{
+		m->m_gameSoundHdr = NULL;
+		delete banner;
 		return;
+	}
 
-	m_gameSoundTmp.Load(soundBin, sndSize, false);
+	m->m_gameSoundTmp.Load(soundBin, sndSize, false);
 	delete banner;
-}
 
-int CMenu::_loadGameSoundThrd(CMenu *m)
-{
-	dir_discHdr *hdr = m->m_gameSoundHdr;
-
-	LWP_MutexLock(m->m_gameSndMutex);
 	m->m_gameSoundHdr = NULL;
-	LWP_MutexUnlock(m->m_gameSndMutex);
-
-	m->_loadGameSound(hdr);
-
-	LWP_MutexLock(m->m_gameSndMutex);
-	m->m_gameSoundHdr = NULL;
-	LWP_MutexUnlock(m->m_gameSndMutex);
-
-	m->m_gameSoundThread = 0;
-	return 0;
 }
 
 void CMenu::_playGameSound(void)
 {
-	if (m_bnrSndVol == 0) return;
-
-	LWP_MutexLock(m_gameSndMutex);
-	m_gameSoundHdr = m_cf.getHdr();
-	LWP_MutexUnlock(m_gameSndMutex);
+	if (m_bnrSndVol == 0 || m_gameSoundHdr != NULL || m_gameSoundThread != LWP_THREAD_NULL) return;
 
 	m_cf.stopCoverLoader();
-	if (m_gameSoundThread == 0)
-		LWP_CreateThread(&m_gameSoundThread, (void *(*)(void *))CMenu::_loadGameSoundThrd, (void *)this, 0, 8 * 1024, 40);
+
+	unsigned int stack_size = (unsigned int)8192;
+	gameSoundThreadStack = smartAnyAlloc(stack_size);
+	LWP_CreateThread(&m_gameSoundThread, (void *(*)(void *))CMenu::_gameSoundThread, (void *)this, gameSoundThreadStack.get(), stack_size, 40);
 }
 
-void CMenu::_waitForGameSoundExtract(void)
+void CMenu::CheckGameSoundThread()
 {
-	for (int i = 0; i < 30 && m_gameSoundThread != 0; ++i)	// 3 s
-		usleep(100000);
-	if (m_gameSoundThread != 0)
+	if (m_gameSoundHdr == NULL && m_gameSoundThread != LWP_THREAD_NULL)
 	{
-		error(L"Error while reading a game disc");
-		SYS_ResetSystem(SYS_RESTART, 0, 0);
+		if(LWP_ThreadIsSuspended(m_gameSoundThread))
+			LWP_ResumeThread(m_gameSoundThread);
+
+		LWP_JoinThread(m_gameSoundThread, NULL);
+
+		SMART_FREE(gameSoundThreadStack);
+		m_gameSoundThread = LWP_THREAD_NULL;
 	}
+}
+
+void CMenu::CheckThreads()
+{
+	CheckGameSoundThread();
+	m_vid.CheckWaitThread();
 }

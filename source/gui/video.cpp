@@ -75,7 +75,7 @@ CVideo::CVideo(void) :
 	m_rmode(NULL), m_frameBuf(), m_curFB(0), m_fifo(NULL),
 	m_yScale(0.0f), m_xfbHeight(0), m_wide(false),
 	m_width2D(640), m_height2D(480), m_x2D(0), m_y2D(0), m_aa(0), m_aaAlpha(false),
-	m_aaWidth(0), m_aaHeight(0)
+	m_aaWidth(0), m_aaHeight(0), m_showWaitMessage(false), m_showingWaitMessages(false)
 {
 	memset(m_frameBuf, 0, sizeof m_frameBuf);
 }
@@ -445,6 +445,7 @@ void CVideo::render(void)
 
 void CVideo::_showWaitMessages(CVideo *m)
 {
+	m->m_showingWaitMessages = true;
 	u32 frames = m->m_waitMessageDelay * 50;
 	u32 waitFrames = frames;
 	
@@ -511,25 +512,29 @@ void CVideo::_showWaitMessages(CVideo *m)
 	}
 	m->m_waitMessages.clear();
 	gprintf("Stop showing images\n");
+	m->m_showingWaitMessages = false;
 }
 
 void CVideo::hideWaitMessage()
 {
 	m_showWaitMessage = false;
+}
 
-	if (waitThread != LWP_THREAD_NULL)
+void CVideo::CheckWaitThread()
+{
+	if (!m_showingWaitMessages && waitThread != LWP_THREAD_NULL)
 	{
 		if(LWP_ThreadIsSuspended(waitThread))
 			LWP_ResumeThread(waitThread);
 
 		LWP_JoinThread(waitThread, NULL);
+
+		SMART_FREE(waitThreadStack);
 		waitThread = LWP_THREAD_NULL;
+
+		m_waitMessages.clear();
+		VIDEO_WaitVSync();
 	}
-
-	SMART_FREE(waitThreadStack);
-
-	m_waitMessages.clear();
-	VIDEO_WaitVSync();
 }
 
 void CVideo::waitMessage(float delay)
@@ -539,8 +544,8 @@ void CVideo::waitMessage(float delay)
 
 void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool useWiiLight)
 {
-	if (waitThread != LWP_THREAD_NULL)
-		hideWaitMessage();
+	hideWaitMessage();
+	do CheckWaitThread(); while(m_showingWaitMessages);
 
 	m_useWiiLight = useWiiLight;
 
