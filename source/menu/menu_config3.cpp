@@ -29,8 +29,6 @@ void CMenu::_hideConfig3(bool instant)
 	m_btnMgr.hide(m_config3LblVideo, instant);
 	m_btnMgr.hide(m_config3BtnVideoP, instant);
 	m_btnMgr.hide(m_config3BtnVideoM, instant);
-	m_btnMgr.hide(m_config3LblErr2Fix, instant);
-	m_btnMgr.hide(m_config3BtnErr2Fix, instant);
 	m_btnMgr.hide(m_config3LblOcarina, instant);
 	m_btnMgr.hide(m_config3BtnOcarina, instant);
 	for (u32 i = 0; i < ARRAY_SIZE(m_config3LblUser); ++i)
@@ -55,8 +53,6 @@ void CMenu::_showConfig3(void)
 	m_btnMgr.show(m_config3LblVideo);
 	m_btnMgr.show(m_config3BtnVideoP);
 	m_btnMgr.show(m_config3BtnVideoM);
-	m_btnMgr.show(m_config3LblErr2Fix);
-	m_btnMgr.show(m_config3BtnErr2Fix);
 	m_btnMgr.show(m_config3LblOcarina);
 	m_btnMgr.show(m_config3BtnOcarina);
 	for (u32 i = 0; i < ARRAY_SIZE(m_config3LblUser); ++i)
@@ -69,7 +65,6 @@ void CMenu::_showConfig3(void)
 	m_btnMgr.setText(m_config3LblVideo, _t(CMenu::_videoModes[i].id, CMenu::_videoModes[i].text));
 	i = min(max(0, m_cfg.getInt("GENERAL", "game_language", 0)), (int)ARRAY_SIZE(CMenu::_languages) - 1);
 	m_btnMgr.setText(m_config3LblLanguage, _t(CMenu::_languages[i].id, CMenu::_languages[i].text));
-	m_btnMgr.setText(m_config3BtnErr2Fix, m_cfg.getBool("GENERAL", "error_002_fix", true) ? _t("on", L"On") : _t("off", L"Off"));
 	m_btnMgr.setText(m_config3BtnOcarina, m_cfg.getBool("GENERAL", "cheat") ? _t("on", L"On") : _t("off", L"Off"));
 }
 
@@ -123,11 +118,6 @@ int CMenu::_config3(void)
 				m_cfg.setInt("GENERAL", "video_mode", (int)loopNum((u32)m_cfg.getInt("GENERAL", "video_mode", 0) - 1, ARRAY_SIZE(CMenu::_videoModes)));
 				_showConfig3();
 			}
-			else if (m_btnMgr.selected(m_config3BtnErr2Fix))
-			{
-				m_cfg.setBool("GENERAL", "error_002_fix", !m_cfg.getBool("GENERAL", "error_002_fix", true));
-				_showConfig3();
-			}
 			else if (m_btnMgr.selected(m_config3BtnOcarina))
 			{
 				m_cfg.setBool("GENERAL", "cheat", !m_cfg.getBool("GENERAL", "cheat"));
@@ -151,8 +141,6 @@ void CMenu::_initConfig3Menu(CMenu::SThemeData &theme)
 	m_config3LblLanguage = _addLabel(theme, "CONFIG3/GAME_LANG_BTN", theme.btnFont, L"", 386, 190, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_config3BtnLanguageM = _addPicButton(theme, "CONFIG3/GAME_LANG_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 190, 56, 56);
 	m_config3BtnLanguageP = _addPicButton(theme, "CONFIG3/GAME_LANG_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 190, 56, 56);
-	m_config3LblErr2Fix = _addLabel(theme, "CONFIG3/ERR2FIX", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_config3BtnErr2Fix = _addButton(theme, "CONFIG3/ERR2FIX_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
 	m_config3LblOcarina = _addLabel(theme, "CONFIG3/OCARINA", theme.lblFont, L"", 40, 310, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_config3BtnOcarina = _addButton(theme, "CONFIG3/OCARINA_BTN", theme.btnFont, L"", 330, 310, 270, 56, theme.btnFontColor);
 	// 
@@ -164,8 +152,6 @@ void CMenu::_initConfig3Menu(CMenu::SThemeData &theme)
 	_setHideAnim(m_config3LblLanguage, "CONFIG3/GAME_LANG_BTN", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_config3BtnLanguageM, "CONFIG3/GAME_LANG_MINUS", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_config3BtnLanguageP, "CONFIG3/GAME_LANG_PLUS", 0, 0, 1.f, -1.f);
-	_setHideAnim(m_config3LblErr2Fix, "CONFIG3/ERR2FIX", 100, 0, -2.f, 0.f);
-	_setHideAnim(m_config3BtnErr2Fix, "CONFIG3/ERR2FIX_BTN", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_config3LblOcarina, "CONFIG3/OCARINA", 100, 0, -2.f, 0.f);
 	_setHideAnim(m_config3BtnOcarina, "CONFIG3/OCARINA_BTN", 0, 0, 1.f, -1.f);
 	_hideConfig3(true);
@@ -176,6 +162,5 @@ void CMenu::_textConfig3(void)
 {
 	m_btnMgr.setText(m_config3LblGameVideo, _t("cfgb3", L"Default video mode"));
 	m_btnMgr.setText(m_config3LblGameLanguage, _t("cfgb4", L"Default game language"));
-	m_btnMgr.setText(m_config3LblErr2Fix, _t("cfgd2", L"Error 002 fix"));
 	m_btnMgr.setText(m_config3LblOcarina, _t("cfgb1", L"Ocarina"));
 }

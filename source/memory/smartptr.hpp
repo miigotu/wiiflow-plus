@@ -13,7 +13,7 @@
 template <class T> class SmartPtr
 {
 public:
-	enum SrcAlloc { SRCALL_NEW, SRCALL_MALLOC, SRCALL_MEM2, SRCALL_COVER };
+	enum SrcAlloc { SRCALL_MALLOC, SRCALL_MEM2, SRCALL_NEW };
 	T &operator*(void) const { return *m_p; }
 	T *operator->(void) const { return m_p; }
 	bool operator!(void) const { return m_p == NULL; }

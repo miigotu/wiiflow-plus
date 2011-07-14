@@ -29,9 +29,7 @@
 #include <ogc/ipc.h>
 #include "fst.h"
 
-#include "mload.h"
 #include "gecko.h"
-#include "mload_modules.h"
 #include "sys.h"
 
 #include "patchcode.h"
@@ -668,59 +666,4 @@ int ocarina_do_code()
 
 	// hooks are patched in dogamehooks()
 	return 1;
-}
-
-u8 bcaCode[64] ATTRIBUTE_ALIGN(32);
-
-u32 do_bca_code(u8 *gameid)
-{
-	if (is_ios_type(IOS_TYPE_HERMES) && IOS_GetRevision() >= 4)
-	{
-		Set_DIP_BCA_Datas(gameid);
-	}
-	return 0;
-}
-
-u32 load_bca_code(u8 *bcaPath, u8 *gameid)
-{
-	if (is_ios_type(IOS_TYPE_HERMES) && IOS_GetRevision() >= 4)
-	{
-		FILE *fp = NULL;
-		u32 filesize;
-		char filepath[150];
-		memset(filepath, 0, 150);
-
-		sprintf(filepath, "%s/%s.bca", bcaPath, (char *) gameid);
-
-		if (!fp) {
-			// Set default bcaCode
-			memset(bcaCode, 0, 64);
-			bcaCode[0x33] = 1;
-			return -1;
-		}
-
-		if (fp)
-		{
-			u32 ret = 0;
-
-			fseek(fp, 0, SEEK_END);
-			filesize = ftell(fp);
-
-			if (filesize == 64)
-			{
-				fseek(fp, 0, SEEK_SET);
-				ret = fread(bcaCode, 1, 64, fp);
-			}
-			SAFE_CLOSE(fp);
-
-			if (ret != 64)
-			{
-				// Set default bcaCode
-				memset(bcaCode, 0, 64);
-				bcaCode[0x33] = 1;
-				return -2;
-			}
-		}
-	}
-	return 0;
 }

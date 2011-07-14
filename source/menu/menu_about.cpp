@@ -99,10 +99,5 @@ void CMenu::_textAbout(void)
 
 	u32 ver;
 	char* InfoIos=get_iosx_info_from_tmd(mainIOS, &ver);
-	if (is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() >= 18) 
-		m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"Wanin IOS%i %s"), mainIOS, InfoIos), true);
-	else if	(is_ios_type(IOS_TYPE_HERMES) && IOS_GetRevision() >= 5)
-		m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"Hermes IOS%i %s"), mainIOS, InfoIos), true);
-	else
-		m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"IOS%i base %s"), mainIOS, InfoIos), true);
+	m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"IOS%i base %s"), mainIOS, InfoIos), true);
 }

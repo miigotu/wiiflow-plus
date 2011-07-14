@@ -9,7 +9,6 @@
 #include "loader/playlog.h"
 #include "sha1.h"
 #include "fs.h"
-#include "mload.h"
 
 #define TITLE_ID(x,y)		(((u64)(x) << 32) | (y))
 #define TITLE_HIGH(x)		((u32)((x) >> 32))
@@ -149,51 +148,6 @@ s32 Sys_GetCerts(signed_blob **certs, u32 *len)
 	}
 
 	return ret;
-}
-
-extern u32 get_ios_base();
-
-bool Sys_SupportsExternalModule(bool part_select)
-{
-	u32 revision = IOS_GetRevision();
-	
-	bool retval = (part_select && is_ios_type(IOS_TYPE_WANIN) && revision >= 17) || (is_ios_type(IOS_TYPE_WANIN) && revision >= 18) || (is_ios_type(IOS_TYPE_HERMES) && revision >= 4);
-	gprintf("IOS Version: %d, Revision %d, Base: %d, returning %d\n", IOS_GetVersion(), revision, get_ios_base(), retval);
-	return retval;
-}
-
-int get_ios_type()
-{
-	switch (IOS_GetVersion()) {
-		case 245:
-		case 246:
-		case 247:
-		case 248:
-		case 249:
-		case 250:
-			if(IOS_GetRevision() > D2X_MIN_VERSION && IOS_GetRevision() < D2X_MAX_VERSION)
-				return IOS_TYPE_D2X;
-			else
-				return IOS_TYPE_WANIN;
-		case 222:
-		case 223:
-			if (IOS_GetRevision() == 1)
-				return IOS_TYPE_KWIIRK;
-			else 
-				return IOS_TYPE_HERMES;
-		case 224:
-			return IOS_TYPE_HERMES;
-		default:
-			if(IOS_GetRevision() > D2X_MIN_VERSION && IOS_GetRevision() < D2X_MAX_VERSION)
-				return IOS_TYPE_D2X;
-			else
-				return IOS_TYPE_WANIN;	
-	}
-}
-
-int is_ios_type(int type)
-{
-	return (get_ios_type() == type);
 }
 
 s32 GetTMD(u64 TicketID, signed_blob **Output, u32 *Length)
@@ -601,20 +555,6 @@ bool get_iosinfo(int ios, signed_blob *TMD, iosinfo_t *iosinfo)
 			SAFE_FREE(buffer);
         }
         return retval;
-}
-
-bool shadow_mload()
-{
-		if (!is_ios_type(IOS_TYPE_HERMES)) return false;
-		int v51 = (5 << 4) & 1;
-		if (mload_get_version() >= v51)
-		{
-				// shadow /dev/mload supported in hermes cios v5.1
-				//IOS_Open("/dev/usb123/OFF",0);// this disables ehc completely
-				IOS_Open("/dev/mload/OFF",0);
-				return true;
-		}
-		return false;
 }
 
 void get_all_ios_info_str(int i, char *str, int size)

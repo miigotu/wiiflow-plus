@@ -8,11 +8,9 @@
 #include "patchcode.h"
 #include "disc.h"
 #include "videopatch.h"
-#include "wdm.h"
 #include "wip.h"
 #include "wbfs.h"
 #include "sys.h"
-#include "mload_modules.h"
 #include "gecko.h"
 
 typedef struct _SPatchCfg
@@ -42,17 +40,15 @@ static u8 *appldr = (u8 *)0x81200000;
 /* Variables */
 static u32 buffer[0x20] ATTRIBUTE_ALIGN(32);
 
-static void dolPatches(void *dst, int len, void *params);
-static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes, u8 patchDiscCheck);
+static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes);
 static bool Remove_001_Protection(void *Address, int Size);
-static void Anti_002_fix(void *Address, int Size);
 static bool PrinceOfPersiaPatch();
 
 static void __noprint(const char *fmt, ...)
 {
 }
 
-s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 gameIOS, u8 patchDiscCheck, char *altDolDir)
+s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes, u8 gameIOS)
 {
 	void *dst = NULL;
 	int len = 0;
@@ -96,70 +92,28 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 	{
 		/* Read data from DVD */
 		WDVD_Read(dst, len, (u64)(offset << 2));
-		maindolpatches(dst, len, cheat, vidMode, vmode, vipatch, countryString, error002Fix, patchVidModes, patchDiscCheck);
+		maindolpatches(dst, len, cheat, vidMode, vmode, vipatch, countryString, patchVidModes);
 		
 		if ((u32) dst < dolStart) dolStart = (u32) dst;
 		if ((u32) dst + len > dolEnd) dolEnd = (u32) dst + len;
 	}
 	PrinceOfPersiaPatch();
 
-	/* Alternative dol */
-	if (altdol != 0)
-	{
-		wip_reset_counter();
-	
-		SPatchCfg patchCfg;
-		patchCfg.cheat = cheat;
-		patchCfg.vidMode = vidMode;
-		patchCfg.vmode = vmode;
-		patchCfg.vipatch = vipatch;
-		patchCfg.countryString = countryString;
-		patchCfg.patchVidModes = patchVidModes;
-		patchCfg.patchDiscCheck = patchDiscCheck;
-		void *altEntry = (void *)load_dol(altdol, altdolLen, dolPatches, &patchCfg);
-		if (altEntry == 0) return -1;
-		*entry = altEntry;
-		
-		if(rtrn) PatchReturnTo((void *) altdol, altdolLen, rtrn);
-	}
-	else
-	{
-		/* Set entry point from apploader */
-		*entry = appldr_final();
-
-		/* This patch should be run on the entire dol at 1 time */
-		if (rtrn) PatchReturnTo((void *) dolStart, dolEnd - dolStart, rtrn);
-	}
+	/* Set entry point from apploader */
+	*entry = appldr_final();
 	
 	if(gameIOS != 0)
 	{
-		gprintf("GameIOS set to %d, will try to block IOS reload\n", gameIOS);
-		if (is_ios_type(IOS_TYPE_HERMES))
-		{
-			gprintf("Block IOS reload for Hermes");
-			enable_ES_ioctlv_vector();
-		} 
-		else if (is_ios_type(IOS_TYPE_D2X) && IOS_GetRevision() % 100 > 5)
-		{
-			gprintf("Block IOS reload for D2X, rev %d", IOS_GetRevision() % 100);
-			IOSReloadBlock(gameIOS);
-		}
+		gprintf("Block IOS reload for D2X, rev %d", IOS_GetRevision() % 100);
+		IOSReloadBlock(gameIOS);
 	}
 
 	/* ERROR 002 fix (WiiPower) */
-	if (error002Fix) *(u32 *)0x80003140 = *(u32 *)0x80003188;
+	*(u32 *)0x80003140 = *(u32 *)0x80003188;
 			
 	DCFlushRange((void*)0x80000000, 0x3f00);
 
 	return 0;
-}
-
-static void dolPatches(void *dst, int len, void *params)
-{
-	const SPatchCfg *p = (const SPatchCfg *)params;
-
-	maindolpatches(dst, len, p->cheat, p->vidMode, p->vmode, p->vipatch, p->countryString, false, p->patchVidModes, p->patchDiscCheck);
-	DCFlushRange(dst, len);
 }
 
 static void PatchCountryStrings(void *Address, int Size)
@@ -237,20 +191,6 @@ static void PatchCountryStrings(void *Address, int Size)
 		}
 }
 
-static void patch_NoDiscinDrive(void *buffer, u32 len)
-{
-	static const u8 oldcode[] = {0x54, 0x60, 0xF7, 0xFF, 0x40, 0x82, 0x00, 0x0C, 0x54, 0x60, 0x07, 0xFF, 0x41, 0x82, 0x00, 0x0C};
-	static const u8 newcode[] = {0x54, 0x60, 0xF7, 0xFF, 0x40, 0x82, 0x00, 0x0C, 0x54, 0x60, 0x07, 0xFF, 0x48, 0x00, 0x00, 0x0C};
-	int n;
-
-   /* Patch cover register */
-	for (n = 0; n < len - sizeof oldcode; n += 4) // n is not 4 aligned here, so you can get an out of buffer thing
-	{
-		if (memcmp(buffer + n, (void *)oldcode, sizeof oldcode) == 0)
-			memcpy(buffer + n, (void *)newcode, sizeof newcode);
-	}
-}
-
 static bool PrinceOfPersiaPatch()
 {
     if (memcmp("SPX", (char *)0x80000000, 3) == 0 || memcmp("RPW", (char *)0x80000000, 3) == 0)
@@ -317,22 +257,15 @@ bool NewSuperMarioBrosPatch(void *Address, int Size)
 	return false;
 }
 
-static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, bool err002fix, u8 patchVidModes, u8 patchDiscCheck)
+static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes)
 {
 	DCFlushRange(dst, len);
-	
-	// Patch NoDiscInDrive only for IOS 249 < rev13 or IOS 222/223/224
-	if (patchDiscCheck && 
-		((is_ios_type(IOS_TYPE_WANIN) && IOS_GetRevision() < 13) ||
-	    (is_ios_type(IOS_TYPE_HERMES))))
-		patch_NoDiscinDrive(dst, len);
-	
+
 	patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
 
 	if (cheat) dogamehooks(dst, len);
 	if (vipatch) vidolpatcher(dst, len);
 	if (configbytes[0] != 0xCD) langpatcher(dst, len);
-	if (err002fix && ((IOS_GetVersion() == 249 && IOS_GetRevision() < 13) || IOS_GetVersion() == 250)) Anti_002_fix(dst, len);
 	if (countryString) PatchCountryStrings(dst, len); // Country Patch by WiiPower
 
 	Remove_001_Protection(dst, len);
@@ -359,19 +292,4 @@ static bool Remove_001_Protection(void *Address, int Size)
 			return true;
 		}
 	return false;
-}
-
-static void Anti_002_fix(void *Address, int Size)
-{
-	static const u8 SearchPattern[] = {0x2C, 0x00, 0x00, 0x00, 0x48, 0x00, 0x02, 0x14, 0x3C, 0x60, 0x80, 0x00};
-	static const u8 PatchData[] = 	{0x2C, 0x00, 0x00, 0x00, 0x40, 0x82, 0x02, 0x14, 0x3C, 0x60, 0x80, 0x00};
-	void *Addr = Address;
-	void *Addr_end = Address + Size;
-
-	while (Addr <= Addr_end - sizeof SearchPattern)
-	{
-		if (memcmp(Addr, SearchPattern, sizeof SearchPattern) == 0) 
-			memcpy(Addr, PatchData, sizeof PatchData);
-		Addr += 4;
-	}
 }

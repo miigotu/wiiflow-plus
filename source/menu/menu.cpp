@@ -201,10 +201,7 @@ void CMenu::init()
 	m_fanartDir = m_cfg.getString("GENERAL", "dir_fanart", sfmt("%s/fanart", m_dataDir.c_str()));
 	m_screenshotDir = m_cfg.getString("GENERAL", "dir_screenshot", sfmt("%s/screenshots", m_dataDir.c_str()));
 	m_txtCheatDir = m_cfg.getString("GENERAL", "dir_txtcheat", sfmt("%s/codes", m_dataDir.c_str()));
-	m_altDolDir = m_cfg.getString("GENERAL", "dir_altdol", sfmt("%s/alt_dols", m_txtCheatDir.c_str()));
-	m_bcaDir = m_cfg.getString("GENERAL", "dir_bca", sfmt("%s/bca", m_txtCheatDir.c_str()));
 	m_cheatDir = m_cfg.getString("GENERAL", "dir_cheat", sfmt("%s/gct", m_txtCheatDir.c_str()));
-	m_wdmDir = m_cfg.getString("GENERAL", "dir_wdm", sfmt("%s/wdm", m_txtCheatDir.c_str()));
 	m_wipDir = m_cfg.getString("GENERAL", "dir_wip", sfmt("%s/wip", m_txtCheatDir.c_str()));
 	m_listCacheDir = m_cfg.getString("GENERAL", "dir_list_cache", sfmt("%s/lists", m_cacheDir.c_str()));
 	//
@@ -237,10 +234,7 @@ void CMenu::init()
 	makedir((char *)m_fanartDir.c_str());
 	makedir((char *)m_screenshotDir.c_str());
 	makedir((char *)m_txtCheatDir.c_str());
-	makedir((char *)m_altDolDir.c_str());
-	makedir((char *)m_bcaDir.c_str());
 	makedir((char *)m_cheatDir.c_str());
-	makedir((char *)m_wdmDir.c_str());
 	makedir((char *)m_wipDir.c_str());
 
 	makedir((char *)m_listCacheDir.c_str());
@@ -312,7 +306,6 @@ void CMenu::init()
 	MusicPlayer::Instance()->Init(m_cfg, m_musicDir, sfmt("%s/music", m_themeDataDir.c_str()));
 
 	_load_installed_cioses();	
-	m_loaded_ios_base = get_ios_base();
 
 	_buildMenus();
 	_loadCFCfg();
@@ -1261,14 +1254,9 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		Sys_Test();
 	}
 
-	if (withCF && m_gameSelected && m_gameSoundTmp.IsLoaded() && !m_gameSound.IsPlaying() && MusicPlayer::Instance()->GetVolume() == 0)
-	{
-		m_gameSound.Stop();
-		m_gameSound = m_gameSoundTmp;
+	if (withCF && m_gameSelected && (m_gameSoundHdr == NULL) && !m_gameSound.IsPlaying() && MusicPlayer::Instance()->GetVolume() == 0)
 		m_gameSound.Play(m_bnrSndVol);
-		m_gameSoundTmp.Unload();
-	}
-	else if (!m_gameSelected) // Remove withCF check, to prevent gamesound from stopping when something has happened
+	else if (!m_gameSelected)
 		m_gameSound.Stop();
 
 	CheckThreads();
@@ -1277,7 +1265,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		m_cf.startCoverLoader();
 
 	MusicPlayer::Instance()->Tick(m_video_playing || (m_gameSelected && 
-		m_gameSoundTmp.IsLoaded()) ||  m_gameSound.IsPlaying());
+		m_gameSound.IsLoaded()) ||  m_gameSound.IsPlaying());
 	
 	//Take Screenshot
 	if (gc_btnsPressed & PAD_TRIGGER_Z)
@@ -1620,7 +1608,6 @@ void CMenu::_load_installed_cioses()
 			if (title_l == 0 || title_l == 2 || title_l == 0x100 || title_l == 0x101) continue;
 			
 			// We have an ios
-			
 			u32 version = t->title_version;
 			if (tmd_buf[4] == 0 && (version < 100 || version == 0xFFFF || (version > D2X_MIN_VERSION && version < D2X_MAX_VERSION))) // Signature is empty
 			{

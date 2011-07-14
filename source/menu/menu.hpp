@@ -90,15 +90,12 @@ private:
 	std::string m_musicDir;
 	std::string m_txtCheatDir;
 	std::string m_cheatDir;
-	std::string m_bcaDir;
 	std::string m_wipDir;
-	std::string m_altDolDir;
 	std::string m_videoDir;
 	std::string m_fanartDir;
 	std::string m_screenshotDir;
 	std::string m_settingsDir;
 	std::string m_languagesDir;
-	std::string m_wdmDir;
 	std::string m_listCacheDir;
 	/* Updates */
 	const char* m_old_update_url;
@@ -201,8 +198,6 @@ private:
 	u32 m_config3LblVideo;
 	u32 m_config3BtnVideoP;
 	u32 m_config3BtnVideoM;
-	u32 m_config3LblErr2Fix;
-	u32 m_config3BtnErr2Fix;
 	u32 m_config3LblOcarina;
 	u32 m_config3BtnOcarina;
 	u32 m_config3LblUser[4];
@@ -286,9 +281,6 @@ private:
 	u32 m_gameBtnSettings;
 	u32 m_gameBtnBack;
 	u32 m_gameLblUser[4];
-	u32 m_gameLblWdm;
-	u32 m_gameBtnWdmM;
-	u32 m_gameBtnWdmP;
 // Parental code menu	
 	u32 m_codeLblTitle;
 	u32 m_codeBtnKey[10];
@@ -340,26 +332,18 @@ private:
 	u32 m_gameSettingsLblVideo;
 	u32 m_gameSettingsBtnVideoP;
 	u32 m_gameSettingsBtnVideoM;
-	u32 m_gameSettingsLblGameAltDol;
-	u32 m_gameSettingsLblAltDol;
-	u32 m_gameSettingsBtnAltDolP;
-	u32 m_gameSettingsBtnAltDolM;
 	u32 m_gameSettingsLblOcarina;
 	u32 m_gameSettingsBtnOcarina;
 	u32 m_gameSettingsLblVipatch;
 	u32 m_gameSettingsBtnVipatch;
 	u32 m_gameSettingsLblCountryPatch;
 	u32 m_gameSettingsBtnCountryPatch;
-	u32 m_gameSettingsLblErr2Fix;
-	u32 m_gameSettingsBtnErr2Fix;
 	u32 m_gameSettingsLblGameIOS;
 	u32 m_gameSettingsLblIOS;
 	u32 m_gameSettingsBtnIOSP;
 	u32 m_gameSettingsBtnIOSM;
 	u32 m_gameSettingsLblCover;
 	u32 m_gameSettingsBtnCover;
-	u32 m_gameSettingsLblBlockIOSReload;
-	u32 m_gameSettingsBtnBlockIOSReload;
 	u32 m_gameSettingsLblPatchVidModes;
 	u32 m_gameSettingsLblPatchVidModesVal;
 	u32 m_gameSettingsBtnPatchVidModesM;
@@ -544,7 +528,6 @@ private:
 	volatile bool m_thrdMessageAdded;
 	volatile bool m_gameSelected;
 	GuiSound m_gameSound;
-	GuiSound m_gameSoundTmp;
 	SmartPtr<GuiSound> m_cameraSound;
 	dir_discHdr *m_gameSoundHdr;
 	lwp_t m_gameSoundThread;
@@ -553,7 +536,6 @@ private:
 	bool m_video_playing;
 	
 	u32 m_loaded_ios_base;
-	u32 m_locDol;
 private:
 	enum WBFS_OP { WO_ADD_GAME, WO_REMOVE_GAME, WO_FORMAT };
 	typedef std::pair<std::string, u32> FontDesc;
@@ -788,7 +770,6 @@ private:
 	static void _addDiscProgress(int status, int total, void *user_data);
 	static int _gameInstaller(void *obj);
 	wstringEx _optBoolToString(int b);
-	void _listDOL(safe_vector<std::string> &v, const std::string &gameId);
 	void _stopSounds(void);
 	//
 	static u32 _downloadCheatFileAsync(void *obj);

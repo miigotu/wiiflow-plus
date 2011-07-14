@@ -48,17 +48,12 @@ fi
 
 if [ $GENERATE -eq 1 ];
 then
-	IOSVERSION="ODD"
-	if [ $VERSION -eq 249 -o $VERSION -eq 250 -o $VERSION -eq 222 -o $VERSION -eq 223 -o $VERSION -eq 224 ];
-	then
-		IOSVERSION=$VERSION
-	fi
 
 	cat <<EOF > $FILENAME
 #include "alt_ios.h"
 
 int mainIOS = $VERSION;
-int mainIOSminRev = IOS_${IOSVERSION}_MIN_REV;
+int mainIOSminRev = D2X_MIN_REV;
 
 bool use_port1 = $PORT;
 EOF

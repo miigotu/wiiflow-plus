@@ -4,7 +4,6 @@
 
 #include "loader/sys.h"
 #include "loader/wdvd.h"
-#include "loader/mload_modules.h"
 #include "loader/alt_ios.h"
 #include "loader/playlog.h"
 #include <ogc/machine/processor.h>
@@ -13,18 +12,16 @@
 #include "network/http.h"
 #include "network/gcard.h"
 #include "DeviceHandler.hpp"
-#include "loader/mload_modules.h"
 #include "loader/wbfs.h"
+#include "wip.h"
 
 #include "loader/frag.h"
 #include "loader/fst.h"
-#include "loader/wdm.h"
-#include "loader/wip.h"
 
 #include "gui/WiiMovie.hpp"
 #include "gui/WiiTDB.hpp"
 #include "channels.h"
-
+#include "alt_ios.h"
 #include "gecko.h"
 #include "homebrew.h"
 #include "defines.h"
@@ -45,7 +42,7 @@ extern const u8 delete_png[];
 extern const u8 deletes_png[];
 
 extern u32 sector_size;
-
+extern int mainIOS;
 static u64 sm_title_id  ATTRIBUTE_ALIGN(32);
 
 const string CMenu::_translations[23] = {
@@ -131,10 +128,7 @@ const int CMenu::_ios[6] = {0, 249, 250, 222, 223, 224};
 
 safe_vector<u32> CMenu::_installed_cios;
 
-wdm_entry_t *wdm_entry = NULL;
-u32 current_wdm = 0;
 u8 banner_title[84];
-bool wdm_loaded;
 
 static inline int loopNum(int i, int s)
 {
@@ -202,9 +196,6 @@ void CMenu::_hideGame(bool instant)
 	m_btnMgr.hide(m_gameBtnFavoriteOff, instant);
 	m_btnMgr.hide(m_gameBtnAdultOn, instant);
 	m_btnMgr.hide(m_gameBtnAdultOff, instant);
-	m_btnMgr.hide(m_gameLblWdm, instant);
-	m_btnMgr.hide(m_gameBtnWdmM, instant);
-	m_btnMgr.hide(m_gameBtnWdmP, instant);
 	for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
 		if (m_gameLblUser[i] != -1u)
 			m_btnMgr.hide(m_gameLblUser[i], instant);
@@ -226,28 +217,6 @@ void CMenu::_showGame(void)
 	else
 		_setBg(m_mainBg, m_mainBgLQ);
 		
-	// Load WDM file
-	wdm_loaded = load_wdm(m_wdmDir.c_str(), m_cf.getId().c_str()) == 0;
-	if (m_current_view == COVERFLOW_USB && wdm_loaded && wdm_count > 1)
-	{
-		m_btnMgr.show(m_gameLblWdm);
-		m_btnMgr.show(m_gameBtnWdmM);
-		m_btnMgr.show(m_gameBtnWdmP);
-	
-		m_gcfg1.getInt("WDM", m_cf.getId(), (int *) &current_wdm);
-		
-		if (current_wdm > wdm_count - 1) current_wdm = 0;
-		wdm_entry = &wdm_entries[current_wdm];
-		
-		m_btnMgr.setText(m_gameLblWdm, wstringEx(wdm_entry->name));
-	}
-	else
-	{
-		m_btnMgr.hide(m_gameLblWdm, true);
-		m_btnMgr.hide(m_gameBtnWdmM, true);
-		m_btnMgr.hide(m_gameBtnWdmP, true);
-	}
-
 	m_btnMgr.show(m_gameBtnPlay);
 	m_btnMgr.show(m_gameBtnBack);
 	for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
@@ -397,8 +366,6 @@ void CMenu::_game(bool launch)
 				m_cf.clear();
 				_showWaitMessage();
 
-				if (wdm_count > 1) m_gcfg1.setInt("WDM", id, current_wdm);
-
 				if (m_current_view != COVERFLOW_HOMEBREW && m_cfg.getBool("GENERAL", "write_playlog", true))
 				{
 					if (banner_title[0] == 0) // No title set?
@@ -433,18 +400,6 @@ void CMenu::_game(bool launch)
 				_initCF();
 				m_cf.select();
 			}
-			else if (m_btnMgr.selected(m_gameBtnWdmM))
-			{
-				current_wdm = (current_wdm == 0) ? wdm_count - 1 : current_wdm - 1;
-				wdm_entry = &wdm_entries[current_wdm];
-				m_btnMgr.setText(m_gameLblWdm, wstringEx(wdm_entry->name));
-			}
-			else if (m_btnMgr.selected(m_gameBtnWdmP))
-			{
-				current_wdm = (current_wdm == wdm_count - 1) ? 0 : current_wdm + 1;
-				wdm_entry = &wdm_entries[current_wdm];
-				m_btnMgr.setText(m_gameLblWdm, wstringEx(wdm_entry->name));
-			}
 			else 
 			{
 				for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
@@ -475,7 +430,6 @@ void CMenu::_game(bool launch)
 		if (startGameSound == -10)
 		{
 			m_gameSound.Stop();
-			wdm_count = 0;
 			m_gameSelected = false;
 			m_fa.unload();
 			_setBg(m_mainBg, m_mainBgLQ);			
@@ -506,18 +460,6 @@ void CMenu::_game(bool launch)
 					m_btnMgr.show(m_gameBtnDelete);
 					m_btnMgr.show(m_gameBtnSettings);
 				}
-				if (wdm_count > 1 )//&& m_gameSelected == true)
-				{
-					m_btnMgr.show(m_gameLblWdm);
-					m_btnMgr.show(m_gameBtnWdmM);
-					m_btnMgr.show(m_gameBtnWdmP);
-				}
-				else
-				{
-					m_btnMgr.hide(m_gameLblWdm, true);
-					m_btnMgr.hide(m_gameBtnWdmM, true);
-					m_btnMgr.hide(m_gameBtnWdmP, true);
-				}
 			}
 		}
 		else
@@ -530,9 +472,6 @@ void CMenu::_game(bool launch)
 			m_btnMgr.hide(m_gameBtnSettings);
 			m_btnMgr.hide(m_gameBtnPlay);
 			m_btnMgr.hide(m_gameBtnBack);
-			m_btnMgr.hide(m_gameLblWdm);
-			m_btnMgr.hide(m_gameBtnWdmM);
-			m_btnMgr.hide(m_gameBtnWdmP);					
 			for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
 				if (m_gameLblUser[i] != -1u)
 					m_btnMgr.hide(m_gameLblUser[i]);
@@ -541,62 +480,7 @@ void CMenu::_game(bool launch)
 	m_gcfg1.save();
 	m_gcfg1.unload();
 	
-	free_wdm();
 	_hideGame();
-}
-
-static u32 stringcompare(const string &s1, const string &s2)
-{
-	u32 index = 0;
-	while (true)
-	{
-		if (s1[index] == 0 || s2[index] == 0)
-				return 0;
-		if (s1[index] != '?' && s2[index] != '?' && toupper((u8)s1[index]) != toupper((u8)s2[index]))
-				return -1;
-		index++;
-	}
-}
-
-static SmartBuf extractDOL(const char *dolName, u32 &size, dir_discHdr *hdr, s32 source, bool dvd)
-{
-	void *dol = NULL;
-	if (!dvd && source == ALT_DOL_DISC)
-	{
-		wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)hdr->hdr.id, (char *) hdr->path);
-		size = wbfs_extract_file(disc, (char *) dolName, &dol);
-		WBFS_CloseDisc(disc);
-	}
-	return SmartBuf((u8 *) dol);
-}
-
-static void addDolToList(void *o, const char *fileName)
-{
-	safe_vector<string> &v = *(safe_vector<string> *)o;
-	v.push_back(fileName);
-}
-
-static bool findDOL(const char *dolNameToMatch, string &altdol, dir_discHdr *hdr)
-{
-	safe_vector<string> dols;
-	dols.push_back("main.dol");
-
-	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)hdr->hdr.id, (char *)hdr->path);
-	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
-	wd_list_dols(wdisc, ALL_PARTITIONS, addDolToList, (void *)&dols);
-	wd_close_disc(wdisc);
-	WBFS_CloseDisc(disc);
-	
-	// Now loop through the dols, and find the correct name
-	for (safe_vector<string>::iterator itr = dols.begin(); itr != dols.end(); itr++)
-	{
-		if (stringcompare(dolNameToMatch, (*itr)) == 0)
-		{
-			altdol = (*itr);
-			return true;
-		}
-	}
-	return false;
 }
 
 void CMenu::_directlaunch(const string &id)
@@ -745,10 +629,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
 	bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("GENERAL", "cheat", false));
 	bool countryPatch = m_gcfg2.testOptBool(id, "country_patch", m_cfg.getBool("GENERAL", "country_patch", false));
-	bool err002Fix = m_gcfg2.testOptBool(id, "error_002_fix", m_cfg.getBool("GENERAL", "error_002_fix", true));
-	bool patchDiscCheck = !m_gcfg2.testOptBool(id, "disable_dvd_patch", false);
 	u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
-	string altdol = m_gcfg2.getString(id, "dol");
 	int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
 	
@@ -756,14 +637,13 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if (m_gcfg2.getInt(id, "ios", &iosIdx) && (u32) iosIdx < ARRAY_SIZE(CMenu::_ios))
 		m_gcfg2.setInt(id, "ios", CMenu::_ios[iosIdx]);
 	
-	int iosNum = mainIOS;
-	if (m_gcfg2.getInt(id, "ios", &iosNum) && find(_installed_cios.begin(), _installed_cios.end(), iosNum) == _installed_cios.end())
-		iosNum = mainIOS;
-	
+	int gameIOS = mainIOS;
+	if (m_gcfg2.getInt(id, "ios", &gameIOS) && find(_installed_cios.begin(), _installed_cios.end(), gameIOS) == _installed_cios.end())
+		gameIOS = mainIOS;
+
 	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 1); // hooktype is defined in patchcode.h
 	debuggerselect = m_gcfg2.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
-	m_locDol = ALT_DOL_DISC;
 
 	/* enable_ffs:
 	bit 0   -> 0 SD 1-> USB
@@ -809,17 +689,10 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		//cheat = false;
 		//hooktype = 0;
 		debuggerselect = false;
-		patchDiscCheck = false;
 	}
 
-	/*int rtrnID = 0;
-	if (!m_directLaunch)
-		if (rtrn != NULL && strlen(rtrn) == 4)
-			rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];*/
-
-
-	SmartBuf cheatFile, gameconfig, dolFile;
-	u32 cheatSize = 0, gameconfigSize = 0, dolSize = 0;
+	SmartBuf cheatFile, gameconfig;
+	u32 cheatSize = 0, gameconfigSize = 0;
 	bool iosLoaded = false;
 
 	do CheckThreads(); while(m_gameSoundThread != LWP_THREAD_NULL);
@@ -832,29 +705,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if (has_enabled_providers() && _initNetwork() == 0)
 		add_game_to_card(id.c_str());
 
-	if (load_wdm(m_wdmDir.c_str(), id.c_str()) == 0)
-	{
-		wdm_entry_t *wdm_entry = NULL;
-		s32 current_wdm = -1;
-		m_gcfg1.getInt("WDM", id, (int *) &current_wdm);
-		if (wdm_count == 1)
-			wdm_entry = &wdm_entries[wdm_count-1];
-		else
-			wdm_entry = current_wdm == -1 || current_wdm > (s32) wdm_count - 1 ? NULL : &wdm_entries[current_wdm];
-
-		if (wdm_entry != NULL)
-		{
-			gprintf("WDM Entry found, searching for dol with name '%s'\n", wdm_entry->dolname);
-			findDOL(wdm_entry->dolname, altdol, hdr);
-		}
-
-		free_wdm();
-	}
-	if (strcasecmp(altdol.c_str(), "main.dol") == 0)
-		altdol.clear();
-	
-	if (!altdol.empty()) dolFile = extractDOL(altdol.c_str(), dolSize, hdr, m_locDol, dvd);
-	
 	m_gcfg1.save();
 	m_gcfg2.save();
 	m_cat.save();
@@ -873,60 +723,33 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
 
 	_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt");
-	
-	load_bca_code((u8 *) m_bcaDir.c_str(), (u8 *) &hdr->hdr.id);
-	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) &hdr->hdr.id);
+
+	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) &hdr->hdr.id);	
 	app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
 	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 
 	net_wc24cleanup();
 		
 	// Reload IOS, if requested
-	if ((iosNum != mainIOS))
+	if ((gameIOS != mainIOS))
 	{
-		gprintf("Reloading IOS into %d\n", iosNum);
+		gprintf("Reloading IOS into %d\n", gameIOS);
 		cleanup(true);
-		if (!loadIOS(iosNum, true))
+		if (!loadIOS(gameIOS, true))
 		{
-			error(sfmt("Couldn't load IOS %i", iosNum));
+			error(sfmt("Couldn't load IOS %i", gameIOS));
 			return;
 		}
 		iosLoaded = true;
 	}
 	
-	int minIOSRev = 0;
-	switch (IOS_GetVersion())
-	{
-		case 222: minIOSRev = IOS_222_MIN_REV; break;
-		case 223: minIOSRev = IOS_223_MIN_REV; break;
-		case 224: minIOSRev = IOS_224_MIN_REV; break;
-		case 249: minIOSRev = IOS_249_MIN_REV; break;
-		case 250: minIOSRev = IOS_250_MIN_REV; break;
-		default:  minIOSRev = IOS_ODD_MIN_REV; break;
-	}
-
 	//COVER_clear();
-	if (IOS_GetRevision() < minIOSRev && minIOSRev != 0)
+	if (IOS_GetRevision() < D2X_MIN_REV)
 	{
-		error(sfmt("IOS %i rev %i or higher is required.\nPlease install the latest version.", iosNum, minIOSRev));
+		error(sfmt("d2x rev %i or higher is required.\nPlease install the latest version.", gameIOS, D2X_MIN_REV));
 		Sys_LoadMenu();
-	}
-	else if (minIOSRev == 0)
-	{
-		error(sfmt("IOS %i is not supported.\nPlease install a supported version.", iosNum));
-		Sys_LoadMenu();
-	}
-	
-	if (is_ios_type(IOS_TYPE_D2X))
-	{
-		wdm_entry = NULL;
 	}
 
-	bool blockIOSReload = m_gcfg2.getBool((const char *) hdr->hdr.id, "block_ios_reload", true);
-	u8 gameIOS = blockIOSReload ? iosNum : 0;
-	
-	gprintf("Setting gameIOS to %d\n", gameIOS);
-	
 	int rtrnID = 0;
 	
 	if (!m_directLaunch) {
@@ -944,15 +767,10 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 			s32 ESHandle = IOS_Open("/dev/es", 0);
 
 			int ret = IOS_Ioctlv(ESHandle, 0xA1, 1, 0, vector);
-			if (ret!=-101) {
+			if (ret!=-101)
 				gprintf("Return to channel enabled. Using new d2x way\n");
-				rtrn = NULL;
-				rtrnID = 0;
-			}
 			else
-			{
-				gprintf("Return to channel enabled. Using old way\n");
-			}
+				gprintf("Return to channel failed\n");
 				
 			IOS_Close(ESHandle);
 		}
@@ -988,16 +806,8 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	} 
 	else 
 	{
-		// hide cios devices
- 		/* if (shadow_mload())
-			disable_ffs_patch(); */
-		/*if (ffs_emulation)
-			 if (load_fatffs_module((u8 *)id.c_str()) != -1)
-				enable_ffs(nand_mode); */
-		
 		gprintf("Booting game\n");
-		char *altDolDir = (char *) m_altDolDir.c_str();
-		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, err002Fix, dolFile.get(), dolSize, patchVidMode, rtrnID, patchDiscCheck, gameIOS, altDolDir, wdm_entry == NULL ? 1 : wdm_entry->parameter) < 0)
+		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, patchVidMode, 0) < 0)
 			Sys_LoadMenu();
 	}
 }
@@ -1044,9 +854,6 @@ void CMenu::_initGameMenu(CMenu::SThemeData &theme)
 	m_gameBtnAdultOff = _addPicButton(theme, "GAME/ADULTONLY_OFF", texAdultOff, texAdultOffSel, 532, 170, 48, 48);
 	m_gameBtnSettings = _addPicButton(theme, "GAME/SETTINGS_BTN", texSettings, texSettingsSel, 460, 242, 48, 48);
 	m_gameBtnDelete = _addPicButton(theme, "GAME/DELETE_BTN", texDelete, texDeleteSel, 532, 242, 48, 48);
-	m_gameLblWdm = _addLabel(theme, "GAME/WDM_NAME", theme.btnFont, L"", 68, 410, 200, 48, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);;
-	m_gameBtnWdmM = _addPicButton(theme, "GAME/WDM_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 20, 410, 48, 48);
-	m_gameBtnWdmP = _addPicButton(theme, "GAME/WDM_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 268, 410, 48, 48);
 
 	m_gameButtonsZone.x = m_theme.getInt("GAME/ZONES", "buttons_x", 0);
 	m_gameButtonsZone.y = m_theme.getInt("GAME/ZONES", "buttons_y", 0);
@@ -1063,9 +870,6 @@ void CMenu::_initGameMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_gameBtnAdultOff, "GAME/ADULTONLY_OFF", 0, 0, -1.5f, -1.5f);
 	_setHideAnim(m_gameBtnSettings, "GAME/SETTINGS_BTN", 0, 0, -1.5f, -1.5f);
 	_setHideAnim(m_gameBtnDelete, "GAME/DELETE_BTN", 0, 0, -1.5f, -1.5f);
-	_setHideAnim(m_gameLblWdm, "GAME/WDM_NAME", 0, 0, 1.f, -1.f);
-	_setHideAnim(m_gameBtnWdmM, "GAME/WDM_MINUS", 0, 0, 1.f, -1.f);
-	_setHideAnim(m_gameBtnWdmP, "GAME/WDM_PLUS", 0, 0, 1.f, -1.f);
 	_hideGame(true);
 	_textGame();
 }
@@ -1105,6 +909,7 @@ void CMenu::_gameSoundThread(CMenu *m)
 	if (banner == NULL || !banner->IsValid())
 	{
 		gprintf("no valid banner found\n");
+		SAFE_DELETE(banner);
 		m->m_gameSoundHdr = NULL;
 		return;
 	}
@@ -1112,16 +917,17 @@ void CMenu::_gameSoundThread(CMenu *m)
 	
 	const u8 *soundBin = banner->GetFile((char *) "sound.bin", &sndSize);
 
-	if (soundBin == NULL || ((IMD5Header *)soundBin)->fcc != 'IMD5')
+	if (soundBin == NULL || (((IMD5Header *)soundBin)->fcc != 'IMD5' && ((IMD5Header *)soundBin)->fcc != 'RIFF'))
 	{
+		gprintf("Failed to load banner sound!\n\n");
+		gprintf("FCC = %s\n", ((IMD5Header *)soundBin)->fcc);
+		SAFE_DELETE(banner);
 		m->m_gameSoundHdr = NULL;
-		delete banner;
 		return;
 	}
 
-	m->m_gameSoundTmp.Load(soundBin, sndSize, false);
-	delete banner;
-
+	m->m_gameSound.Load(soundBin, sndSize, false);
+	SAFE_DELETE(banner);
 	m->m_gameSoundHdr = NULL;
 }
 
@@ -1132,6 +938,7 @@ void CMenu::_playGameSound(void)
 	m_cf.stopCoverLoader();
 
 	unsigned int stack_size = (unsigned int)8192;
+	SMART_FREE(gameSoundThreadStack);
 	gameSoundThreadStack = smartAnyAlloc(stack_size);
 	LWP_CreateThread(&m_gameSoundThread, (void *(*)(void *))CMenu::_gameSoundThread, (void *)this, gameSoundThreadStack.get(), stack_size, 40);
 }

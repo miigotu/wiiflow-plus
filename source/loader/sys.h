@@ -7,12 +7,6 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#define IOS_TYPE_UNK    	0
-#define IOS_TYPE_WANIN  	1
-#define IOS_TYPE_HERMES 	2
-#define IOS_TYPE_KWIIRK 	3
-#define IOS_TYPE_D2X		4
-
 #define D2X_MIN_VERSION 	21000
 #define D2X_MAX_VERSION 	21100
 
@@ -34,7 +28,6 @@ extern "C" {
 	void Sys_Test(void);
 	void Sys_Exit(int);
 	void Sys_ExitTo(int);
-	bool Sys_SupportsExternalModule(bool part_select);
 
 	s32  Sys_GetCerts(signed_blob **, u32 *);
     s32 GetTMD(u64 TicketID, signed_blob **Output,  u32 *Length);
@@ -42,14 +35,11 @@ extern "C" {
 	void Open_Inputs(void);
 	void Close_Inputs(void);
     char* str_seek_end(char **str, int *size);
-	int get_ios_type();
-	int is_ios_type(int type);
 
 	void get_all_ios_info_str(int i, char *str, int size);
 	char* get_ios_info_from_tmd();
 	u32 get_ios_info(signed_blob *TMD, u32 size);
 	char* get_iosx_info_from_tmd(int ios_slot, u32 *version);
-	bool shadow_mload();
 
 typedef struct _iosinfo_t {
         u32 magicword; //0x1ee7c105

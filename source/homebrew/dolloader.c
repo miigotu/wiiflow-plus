@@ -37,8 +37,6 @@ u32 load_dol_image (const void *dolstart, struct __argv *argv)
 			memmove((void *) dolfile->data_start[i],dolstart+dolfile->data_pos[i],dolfile->data_size[i]);
 			DCFlushRange((void *) dolfile->data_start[i],dolfile->data_size[i]);
 		}
-		//memset ((void *) dolfile->bss_start, 0, dolfile->bss_size);
-		//DCFlushRange((void *) dolfile->bss_start, dolfile->bss_size);
 
 		if (argv && argv->argvMagic == ARGV_MAGIC)
 		{

@@ -78,16 +78,8 @@ void __Disc_SetLowMem(bool dvd)
 	*(vu32 *)0x800030F0 = 0x0000001C;
 	*(vu32 *)0x8000318C = 0x00000000;
 	*(vu32 *)0x80003190 = 0x00000000;
-	
 	// Fix for Sam & Max (WiiPower)
-	// (only works if started from DVD)
-
-	// Fix for Sam & Max (WiiPower)
-	// (doesn't work on hermes cios - causes #001 error on fakesigned? games)
-	if (!is_ios_type(IOS_TYPE_HERMES)) {
-			*(vu32*)0x80003184 = 0x80000000;        // Game ID Address
-	}
-
+	*(vu32 *)0x80003184 = 0x80000000;
 	/* Flush cache */
 	DCFlushRange((void *)0x80000000, 0x3F00);
 }
@@ -299,11 +291,7 @@ s32 Disc_SetUSB(const u8 *id)
 	if (WBFS_DEVICE_USB && wbfs_part_fs)
 		return set_frag_list((u8 *) id);
 
-	s32 part = -1;
-	if (is_ios_type(IOS_TYPE_HERMES))
-		part = wbfs_part_idx ? wbfs_part_idx - 1 : 0;
-
-	return WDVD_SetUSBMode(WBFS_DEVICE_USB, (u8 *) id, part);
+	return WDVD_SetUSBMode(WBFS_DEVICE_USB, (u8 *) id, -1);
 }
 
 s32 Disc_ReadHeader(void *outbuf)
@@ -357,7 +345,7 @@ s32 Disc_IsGC(void)
 	return Disc_Type(1);
 }
 
-s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidMode, u32 rtrn, u8 patchDiscCheck, bool dvd, u8 ios, char *altDolDir, u32 wdm_parameter)
+s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidMode, bool dvd, u8 ios)
 {
 	entry_point p_entry;
 
@@ -374,12 +362,11 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	__Disc_SelectVMode(vidMode);
 
 	/* Run apploader */
-	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vmode, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidMode, rtrn, ios, patchDiscCheck, altDolDir);
+	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vmode, vipatch, countryString, patchVidMode, ios);
 	free_wip();
 	
 	if (ret < 0) return ret;
 
-	do_bca_code();
 	if (cheat != 0 && hooktype != 0)
 		ocarina_do_code();
 
@@ -411,8 +398,6 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 
 	// fix for PeppaPig
 	memcpy((void*)0x800000F4,(char *) &temp_data, 4);
-
-	*(u32*)0xCC003024 = wdm_parameter; /* Originally from tueidj */
 
 	appentrypoint = (u32) p_entry;
 	
@@ -448,7 +433,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	return 0;
 }
 
-s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, bool error002Fix, const u8 *altdol, u32 altdolLen, u8 patchVidModes, u32 rtrn, u8 patchDiscCheck, u8 ios, char *altDolDir, u32 wdm_parameter)
+s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidModes, u8 ios)
 {
 	u64 offset;
 
@@ -457,5 +442,5 @@ s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipa
 	if (ret < 0) return ret;
 
 	/* Boot partition */
-	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, error002Fix, altdol, altdolLen, patchVidModes, rtrn, patchDiscCheck, dvd, ios, altDolDir, wdm_parameter);
+	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, patchVidModes, dvd, ios);
 }

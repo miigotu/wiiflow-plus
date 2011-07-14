@@ -33,10 +33,6 @@ void CMenu::_hideGameSettings(bool instant)
 	m_btnMgr.hide(m_gameSettingsLblVideo, instant);
 	m_btnMgr.hide(m_gameSettingsBtnVideoP, instant);
 	m_btnMgr.hide(m_gameSettingsBtnVideoM, instant);
-	m_btnMgr.hide(m_gameSettingsLblGameAltDol, instant);
-	m_btnMgr.hide(m_gameSettingsLblAltDol, instant);
-	m_btnMgr.hide(m_gameSettingsBtnAltDolP, instant);
-	m_btnMgr.hide(m_gameSettingsBtnAltDolM, instant);
 	m_btnMgr.hide(m_gameSettingsLblOcarina, instant);
 	m_btnMgr.hide(m_gameSettingsBtnOcarina, instant);
 	m_btnMgr.hide(m_gameSettingsLblCheat, instant);
@@ -45,16 +41,12 @@ void CMenu::_hideGameSettings(bool instant)
 	m_btnMgr.hide(m_gameSettingsBtnVipatch, instant);
 	m_btnMgr.hide(m_gameSettingsLblCountryPatch, instant);
 	m_btnMgr.hide(m_gameSettingsBtnCountryPatch, instant);
-	m_btnMgr.hide(m_gameSettingsLblErr2Fix, instant);
-	m_btnMgr.hide(m_gameSettingsBtnErr2Fix, instant);
 	m_btnMgr.hide(m_gameSettingsLblGameIOS, instant);
 	m_btnMgr.hide(m_gameSettingsLblIOS, instant);
 	m_btnMgr.hide(m_gameSettingsBtnIOSP, instant);
 	m_btnMgr.hide(m_gameSettingsBtnIOSM, instant);
 	m_btnMgr.hide(m_gameSettingsLblCover, instant);
 	m_btnMgr.hide(m_gameSettingsBtnCover, instant);
-	m_btnMgr.hide(m_gameSettingsLblBlockIOSReload, instant);
-	m_btnMgr.hide(m_gameSettingsBtnBlockIOSReload, instant);
 	m_btnMgr.hide(m_gameSettingsLblPatchVidModes, instant);
 	m_btnMgr.hide(m_gameSettingsLblPatchVidModesVal, instant);
 	m_btnMgr.hide(m_gameSettingsBtnPatchVidModesM, instant);
@@ -118,10 +110,6 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.show(m_gameSettingsBtnLanguageM);
 		m_btnMgr.show(m_gameSettingsLblOcarina);
 		m_btnMgr.show(m_gameSettingsBtnOcarina);
-		m_btnMgr.show(m_gameSettingsLblGameAltDol);
-		m_btnMgr.show(m_gameSettingsLblAltDol);
-		m_btnMgr.show(m_gameSettingsBtnAltDolP);
-		m_btnMgr.show(m_gameSettingsBtnAltDolM);
 		m_btnMgr.show(m_gameSettingsLblCheat);
 		m_btnMgr.show(m_gameSettingsBtnCheat);
 	}
@@ -133,10 +121,6 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.hide(m_gameSettingsBtnLanguageM);
 		m_btnMgr.hide(m_gameSettingsLblOcarina);
 		m_btnMgr.hide(m_gameSettingsBtnOcarina);
-		m_btnMgr.hide(m_gameSettingsLblGameAltDol);
-		m_btnMgr.hide(m_gameSettingsLblAltDol);
-		m_btnMgr.hide(m_gameSettingsBtnAltDolP);
-		m_btnMgr.hide(m_gameSettingsBtnAltDolM);
 		m_btnMgr.hide(m_gameSettingsLblCheat);
 		m_btnMgr.hide(m_gameSettingsBtnCheat);
 	}
@@ -146,8 +130,6 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.show(m_gameSettingsBtnVipatch);
 		m_btnMgr.show(m_gameSettingsLblCountryPatch);
 		m_btnMgr.show(m_gameSettingsBtnCountryPatch);
-		m_btnMgr.show(m_gameSettingsLblErr2Fix);
-		m_btnMgr.show(m_gameSettingsBtnErr2Fix);
 		m_btnMgr.show(m_gameSettingsLblGameIOS);
 		m_btnMgr.show(m_gameSettingsLblIOS);
 		m_btnMgr.show(m_gameSettingsBtnIOSP);
@@ -159,8 +141,6 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.hide(m_gameSettingsBtnVipatch);
 		m_btnMgr.hide(m_gameSettingsLblCountryPatch);
 		m_btnMgr.hide(m_gameSettingsBtnCountryPatch);
-		m_btnMgr.hide(m_gameSettingsLblErr2Fix);
-		m_btnMgr.hide(m_gameSettingsBtnErr2Fix);
 		m_btnMgr.hide(m_gameSettingsLblGameIOS);
 		m_btnMgr.hide(m_gameSettingsLblIOS);
 		m_btnMgr.hide(m_gameSettingsBtnIOSP);
@@ -170,8 +150,6 @@ void CMenu::_showGameSettings(void)
 	{
 		m_btnMgr.show(m_gameSettingsLblCover);
 		m_btnMgr.show(m_gameSettingsBtnCover);
-		m_btnMgr.show(m_gameSettingsLblBlockIOSReload);
-		m_btnMgr.show(m_gameSettingsBtnBlockIOSReload);
 		m_btnMgr.show(m_gameSettingsLblPatchVidModes);
 		m_btnMgr.show(m_gameSettingsLblPatchVidModesVal);
 		m_btnMgr.show(m_gameSettingsBtnPatchVidModesM);
@@ -185,8 +163,6 @@ void CMenu::_showGameSettings(void)
 	{
 		m_btnMgr.hide(m_gameSettingsLblCover);
 		m_btnMgr.hide(m_gameSettingsBtnCover);
-		m_btnMgr.hide(m_gameSettingsLblBlockIOSReload);
-		m_btnMgr.hide(m_gameSettingsBtnBlockIOSReload);
 		m_btnMgr.hide(m_gameSettingsLblPatchVidModes);
 		m_btnMgr.hide(m_gameSettingsLblPatchVidModesVal);
 		m_btnMgr.hide(m_gameSettingsBtnPatchVidModesM);
@@ -299,13 +275,10 @@ void CMenu::_showGameSettings(void)
 	m_btnMgr.setText(m_gameSettingsBtnOcarina, _optBoolToString(m_gcfg2.getOptBool(id, "cheat")));
 	m_btnMgr.setText(m_gameSettingsBtnVipatch, _optBoolToString(m_gcfg2.getOptBool(id, "vipatch", 0)));
 	m_btnMgr.setText(m_gameSettingsBtnCountryPatch, _optBoolToString(m_gcfg2.getOptBool(id, "country_patch", 0)));
-	m_btnMgr.setText(m_gameSettingsBtnErr2Fix, _optBoolToString(m_gcfg2.getOptBool(id, "error_002_fix")));
-	m_btnMgr.setText(m_gameSettingsBtnBlockIOSReload, m_gcfg2.getBool(id, "block_ios_reload", true) ? _t("on", L"On") : _t("off", L"Off"));
 	i = min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblVideo, _t(CMenu::_videoModes[i].id, CMenu::_videoModes[i].text));
 	i = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblLanguage, _t(CMenu::_languages[i].id, CMenu::_languages[i].text));
-	m_btnMgr.setText(m_gameSettingsLblAltDol, m_gcfg2.getString(id, "dol", "main.dol"));
 
 	int iosIdx = 0;
 	if (m_gcfg2.getInt(id, "ios", &iosIdx) && (u32) iosIdx < ARRAY_SIZE(CMenu::_ios))
@@ -354,12 +327,9 @@ void CMenu::_showGameSettings(void)
 void CMenu::_gameSettings(void)
 {
 	m_gcfg2.load(sfmt("%s/gameconfig2.ini", m_settingsDir.c_str()).c_str());
-	bool dolsListed = false;
-	safe_vector<string> dols;
 	string id(m_cf.getId());
 
 	m_gameSettingsPage = 1;
-	dols.push_back(m_gcfg2.getString(id, "dol", "main.dol"));
 	_showGameSettings();
 	while (true)
 	{
@@ -426,24 +396,6 @@ void CMenu::_gameSettings(void)
 					m_gcfg2.setBool(id, "country_patch", true);
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnErr2Fix))
-			{
-				int intoption = loopNum(m_gcfg2.getOptBool(id, "error_002_fix") + 1, 3);
-				if (intoption !=0 && intoption !=1)
-					m_gcfg2.remove(id, "error_002_fix");
-				else
-					m_gcfg2.setOptBool(id, "error_002_fix", intoption);
-				_showGameSettings();
-			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnBlockIOSReload))
-			{
-				bool booloption = m_gcfg2.getBool(id, "block_ios_reload");
-				if (!booloption)
-					m_gcfg2.remove(id, "block_ios_reload");
-				else
-					m_gcfg2.setBool(id, "block_ios_reload", false);
-				_showGameSettings();
-			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnLanguageP))
 			{
 				m_gcfg2.setInt(id, "language", (int)loopNum((u32)m_gcfg2.getInt(id, "language", 0) + 1, ARRAY_SIZE(CMenu::_languages)));
@@ -498,26 +450,6 @@ void CMenu::_gameSettings(void)
 			else if (m_btnMgr.selected(m_gameSettingsBtnPatchVidModesM))
 			{
 				m_gcfg2.setInt(id, "patch_video_modes", (int)loopNum((u32)m_gcfg2.getInt(id, "patch_video_modes", 0) - 1, ARRAY_SIZE(CMenu::_vidModePatch)));
-				_showGameSettings();
-			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnAltDolP) || m_btnMgr.selected(m_gameSettingsBtnAltDolM))
-			{
-				if (!dolsListed)
-				{
-					m_cf.stopCoverLoader();	// Don't keep a thread that may be reading and writing to the USB HD while we access it a different way
-					dols.clear();
-					dols.push_back("main.dol");
-					_listDOL(dols, id);
-					sort(dols.begin(), dols.end());
-					dolsListed = true;
-					m_cf.startCoverLoader();
-				}
-				int i = find(dols.begin(), dols.end(), m_gcfg2.getString(id, "dol")) - dols.begin();
-				if (m_btnMgr.selected(m_gameSettingsBtnAltDolP))
-					++i;
-				else
-					--i;
-				m_gcfg2.setString(id, "dol", dols[loopNum(i, (int)dols.size())]);
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnCover))
@@ -619,10 +551,6 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	m_gameSettingsLblLanguage = _addLabel(theme, "GAME_SETTINGS/GAME_LANG_BTN", theme.btnFont, L"", 386, 130, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnLanguageM = _addPicButton(theme, "GAME_SETTINGS/GAME_LANG_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 130, 56, 56);
 	m_gameSettingsBtnLanguageP = _addPicButton(theme, "GAME_SETTINGS/GAME_LANG_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 130, 56, 56);
-	m_gameSettingsLblGameAltDol = _addLabel(theme, "GAME_SETTINGS/ALT_DOL", theme.lblFont, L"", 40, 190, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsLblAltDol = _addLabel(theme, "GAME_SETTINGS/ALT_DOL_BTN", theme.btnFont, L"", 386, 190, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
-	m_gameSettingsBtnAltDolM = _addPicButton(theme, "GAME_SETTINGS/ALT_DOL_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 190, 56, 56);
-	m_gameSettingsBtnAltDolP = _addPicButton(theme, "GAME_SETTINGS/ALT_DOL_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 190, 56, 56);
 	m_gameSettingsLblOcarina = _addLabel(theme, "GAME_SETTINGS/OCARINA", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsBtnOcarina = _addButton(theme, "GAME_SETTINGS/OCARINA_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
 	m_gameSettingsLblCheat = _addLabel(theme, "GAME_SETTINGS/CHEAT", theme.lblFont, L"", 40, 310, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
@@ -630,8 +558,6 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	// Page 2
 	m_gameSettingsLblCountryPatch = _addLabel(theme, "GAME_SETTINGS/COUNTRY_PATCH", theme.lblFont, L"", 40, 130, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsBtnCountryPatch = _addButton(theme, "GAME_SETTINGS/COUNTRY_PATCH_BTN", theme.btnFont, L"", 380, 130, 220, 56, theme.btnFontColor);
-	m_gameSettingsLblErr2Fix = _addLabel(theme, "GAME_SETTINGS/ERR2FIX", theme.lblFont, L"", 40, 190, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnErr2Fix = _addButton(theme, "GAME_SETTINGS/ERR2FIX_BTN", theme.btnFont, L"", 380, 190, 220, 56, theme.btnFontColor);
 	m_gameSettingsLblVipatch = _addLabel(theme, "GAME_SETTINGS/VIPATCH", theme.lblFont, L"", 40, 250, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsBtnVipatch = _addButton(theme, "GAME_SETTINGS/VIPATCH_BTN", theme.btnFont, L"", 380, 250, 220, 56, theme.btnFontColor);
 	m_gameSettingsLblGameIOS = _addLabel(theme, "GAME_SETTINGS/IOS", theme.lblFont, L"", 40, 310, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
@@ -641,8 +567,6 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	// Page 3
 	m_gameSettingsLblCover = _addLabel(theme, "GAME_SETTINGS/COVER", theme.lblFont, L"", 40, 130, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsBtnCover = _addButton(theme, "GAME_SETTINGS/COVER_BTN", theme.btnFont, L"", 330, 130, 270, 56, theme.btnFontColor);
-	m_gameSettingsLblBlockIOSReload = _addLabel(theme, "GAME_SETTINGS/BLOCK_IOSRELOAD", theme.lblFont, L"", 40, 190, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnBlockIOSReload = _addButton(theme, "GAME_SETTINGS/BLOCK_IOSRELOAD_BTN", theme.btnFont, L"", 330, 190, 270, 56, theme.btnFontColor);
 	m_gameSettingsLblPatchVidModes = _addLabel(theme, "GAME_SETTINGS/PATCH_VIDEO_MODE", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsLblPatchVidModesVal = _addLabel(theme, "GAME_SETTINGS/PATCH_VIDEO_MODE_BTN", theme.btnFont, L"", 386, 250, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnPatchVidModesM = _addPicButton(theme, "GAME_SETTINGS/PATCH_VIDEO_MODE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 250, 56, 56);
@@ -713,18 +637,12 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_gameSettingsLblLanguage, "GAME_SETTINGS/GAME_LANG_BTN", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnLanguageM, "GAME_SETTINGS/GAME_LANG_MINUS", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnLanguageP, "GAME_SETTINGS/GAME_LANG_PLUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblGameAltDol, "GAME_SETTINGS/ALT_DOL", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblAltDol, "GAME_SETTINGS/ALT_DOL_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnAltDolM, "GAME_SETTINGS/ALT_DOL_MINUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnAltDolP, "GAME_SETTINGS/ALT_DOL_PLUS", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsLblOcarina, "GAME_SETTINGS/OCARINA", -200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnOcarina, "GAME_SETTINGS/OCARINA_BTN", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsLblCheat, "GAME_SETTINGS/CHEAT", -200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnCheat, "GAME_SETTINGS/CHEAT_BTN", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsLblCountryPatch, "GAME_SETTINGS/COUNTRY_PATCH", -200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnCountryPatch, "GAME_SETTINGS/COUNTRY_PATCH_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblErr2Fix, "GAME_SETTINGS/ERR2FIX", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnErr2Fix, "GAME_SETTINGS/ERR2FIX_BTN", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsLblVipatch, "GAME_SETTINGS/VIPATCH", -200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnVipatch, "GAME_SETTINGS/VIPATCH_BTN", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsLblGameIOS, "GAME_SETTINGS/IOS", -200, 0, 1.f, 0.f);
@@ -733,8 +651,6 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_gameSettingsBtnIOSP, "GAME_SETTINGS/IOS_PLUS", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsLblCover, "GAME_SETTINGS/COVER", -200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnCover, "GAME_SETTINGS/COVER_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblBlockIOSReload, "GAME_SETTINGS/BLOCK_IOSRELOAD", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnBlockIOSReload, "GAME_SETTINGS/BLOCK_IOSRELOAD_BTN", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsLblPage, "GAME_SETTINGS/PAGE_BTN", 0, 200, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnPageM, "GAME_SETTINGS/PAGE_MINUS", 0, 200, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnPageP, "GAME_SETTINGS/PAGE_PLUS", 0, 200, 1.f, 0.f);
@@ -776,12 +692,9 @@ void CMenu::_textGameSettings(void)
 	m_btnMgr.setText(m_gameSettingsLblGameLanguage, _t("cfgg3", L"Language"));
 	m_btnMgr.setText(m_gameSettingsLblCountryPatch, _t("cfgg4", L"Patch country strings"));
 	m_btnMgr.setText(m_gameSettingsLblOcarina, _t("cfgg5", L"Ocarina"));
-	m_btnMgr.setText(m_gameSettingsLblErr2Fix, _t("cfgg6", L"Error 002 fix"));
 	m_btnMgr.setText(m_gameSettingsLblVipatch, _t("cfgg7", L"Vipatch"));
 	m_btnMgr.setText(m_gameSettingsBtnBack, _t("cfgg8", L"Back"));
-	m_btnMgr.setText(m_gameSettingsLblGameAltDol, _t("cfgg9", L"DOL"));
 	m_btnMgr.setText(m_gameSettingsLblGameIOS, _t("cfgg10", L"IOS"));
-	m_btnMgr.setText(m_gameSettingsLblBlockIOSReload, _t("cfgg11", L"Block IOS reload"));
 	m_btnMgr.setText(m_gameSettingsLblCover, _t("cfgg12", L"Download cover"));
 	m_btnMgr.setText(m_gameSettingsBtnCover, _t("cfgg13", L"Download"));
 	m_btnMgr.setText(m_gameSettingsLblPatchVidModes, _t("cfgg14", L"Patch video modes"));
@@ -795,20 +708,4 @@ void CMenu::_textGameSettings(void)
 	m_btnMgr.setText(m_gameSettingsLblDebugger, _t("cfgg22", L"Debugger"));
 	for (int i = 1; i < 12; ++i)
 		m_btnMgr.setText(m_gameSettingsLblCategory[i], m_cat.getWString("GENERAL", fmt("cat%d",i), wfmt(L"Category %i",i).c_str()));
-}
-
-static void addDolToList(void *o, const char *fileName)
-{
-	safe_vector<string> &v = *(safe_vector<string> *)o;
-	v.push_back(fileName);
-}
-
-void CMenu::_listDOL(safe_vector<string> &v, const string &gameId)
-{
-	dir_discHdr *hdr = m_cf.getHdr();
-	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *)gameId.c_str(), (char *) hdr->path);
-	wiidisc_t *wdisc = wd_open_disc((int (*)(void *, u32, u32, void *))wbfs_disc_read, disc);
-	wd_list_dols(wdisc, ALL_PARTITIONS, addDolToList, (void *)&v);
-	wd_close_disc(wdisc);
-	WBFS_CloseDisc(disc);
 }

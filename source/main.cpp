@@ -26,15 +26,7 @@ void parse_ios_arg(int arg, int *ios, int *min_rev)
 {
 	*ios = arg;
 	gprintf("Passed IOS: %i\n", *ios);
-	switch (arg)
-	{
-		case 222: *min_rev = IOS_222_MIN_REV; break;
-		case 223: *min_rev = IOS_223_MIN_REV; break;
-		case 224: *min_rev = IOS_224_MIN_REV; break;
-		case 249: *min_rev = IOS_249_MIN_REV; break;
-		case 250: *min_rev = IOS_250_MIN_REV; break;
-		default:  *min_rev = IOS_ODD_MIN_REV; break;
-	}
+	*min_rev = D2X_MIN_REV;
 	gprintf("Passed IOS Minimum Rev: %i\n", *min_rev);
 }
 
@@ -71,7 +63,7 @@ int old_main(int argc, char **argv)
 					gameid = NULL;
 		}
 	}
-	gprintf("Loading cIOS: %d, Port: %d\n", mainIOS, is_ios_type(IOS_TYPE_HERMES) ? use_port1 : 0);
+	gprintf("Loading cIOS: %d, Port: %d\n", mainIOS, use_port1);
 
 	// Load Custom IOS
 	bool iosOK = loadIOS(mainIOS, false);

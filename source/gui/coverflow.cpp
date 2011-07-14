@@ -626,11 +626,12 @@ void CCoverFlow::stopCoverLoader(bool empty)
 
 void CCoverFlow::startCoverLoader(void)
 {
-	if (m_covers.empty() || coverLoaderThread != LWP_THREAD_NULL) return;
+	if (m_covers.empty() || coverLoaderThread != LWP_THREAD_NULL || m_loadingCovers) return;
 
 	m_loadingCovers = true;
 
 	unsigned int stack_size = (unsigned int)8192;
+	SMART_FREE(coverLoaderThreadStack);
 	coverLoaderThreadStack = smartAnyAlloc(stack_size);
 	LWP_CreateThread(&coverLoaderThread, (void *(*)(void *))CCoverFlow::_coverLoader, (void *)this, coverLoaderThreadStack.get(), stack_size, 40);
 
