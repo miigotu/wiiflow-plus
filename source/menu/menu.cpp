@@ -78,6 +78,7 @@ CMenu::CMenu(CVideo &vid) :
 	m_initialCoverStatusComplete = false;
 	m_reload = false;
 	bootHB = false;
+	m_gamesound_changed = false;
 }
 
 extern "C" { int makedir(char *newdir); }
@@ -1254,8 +1255,11 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		Sys_Test();
 	}
 
-	if (withCF && m_gameSelected && (m_gameSoundHdr == NULL) && !m_gameSound.IsPlaying() && MusicPlayer::Instance()->GetVolume() == 0)
+	if (withCF && m_gameSelected && m_gamesound_changed && (m_gameSoundHdr == NULL) && !m_gameSound.IsPlaying() && MusicPlayer::Instance()->GetVolume() == 0)
+	{
 		m_gameSound.Play(m_bnrSndVol);
+		m_gamesound_changed = false;
+	}
 	else if (!m_gameSelected)
 		m_gameSound.Stop();
 

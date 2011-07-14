@@ -899,6 +899,7 @@ SmartBuf gameSoundThreadStack;
 
 void CMenu::_gameSoundThread(CMenu *m)
 {
+	m->m_gamesound_changed = false;
 	u32 sndSize = 0;
 	m->m_gameSoundHdr = m->m_cf.getHdr();
 
@@ -920,7 +921,6 @@ void CMenu::_gameSoundThread(CMenu *m)
 	if (soundBin == NULL || (((IMD5Header *)soundBin)->fcc != 'IMD5' && ((IMD5Header *)soundBin)->fcc != 'RIFF'))
 	{
 		gprintf("Failed to load banner sound!\n\n");
-		gprintf("FCC = %s\n", ((IMD5Header *)soundBin)->fcc);
 		SAFE_DELETE(banner);
 		m->m_gameSoundHdr = NULL;
 		return;
@@ -928,11 +928,13 @@ void CMenu::_gameSoundThread(CMenu *m)
 
 	m->m_gameSound.Load(soundBin, sndSize, false);
 	SAFE_DELETE(banner);
+	m->m_gamesound_changed = true;
 	m->m_gameSoundHdr = NULL;
 }
 
 void CMenu::_playGameSound(void)
 {
+	m_gamesound_changed = false;
 	if (m_bnrSndVol == 0 || m_gameSoundHdr != NULL || m_gameSoundThread != LWP_THREAD_NULL) return;
 
 	m_cf.stopCoverLoader();

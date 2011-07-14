@@ -531,6 +531,7 @@ private:
 	SmartPtr<GuiSound> m_cameraSound;
 	dir_discHdr *m_gameSoundHdr;
 	lwp_t m_gameSoundThread;
+	bool m_gamesound_changed;
 	u8 m_bnrSndVol;
 	
 	bool m_video_playing;
