@@ -776,8 +776,8 @@ private:
 	static u32 _downloadCheatFileAsync(void *obj);
 	// 
 	void _playGameSound(void);
-	void CheckGameSoundThread(void);
-	void CheckThreads(void);
+	void CheckGameSoundThread(bool force = false);
+	void CheckThreads(bool force = false);
 	static void _gameSoundThread(CMenu *m);
 	//
 	static void _load_installed_cioses();

@@ -520,10 +520,12 @@ void CVideo::hideWaitMessage()
 	m_showWaitMessage = false;
 }
 
-void CVideo::CheckWaitThread()
+void CVideo::CheckWaitThread(bool force)
 {
-	if (!m_showingWaitMessages && waitThread != LWP_THREAD_NULL)
+	if (force || (!m_showingWaitMessages && waitThread != LWP_THREAD_NULL))
 	{
+		m_showWaitMessage = false;
+
 		if(LWP_ThreadIsSuspended(waitThread))
 			LWP_ResumeThread(waitThread);
 
@@ -545,7 +547,7 @@ void CVideo::waitMessage(float delay)
 void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool useWiiLight)
 {
 	hideWaitMessage();
-	do CheckWaitThread(); while(m_showingWaitMessages);
+	CheckWaitThread(true);
 
 	m_useWiiLight = useWiiLight;
 

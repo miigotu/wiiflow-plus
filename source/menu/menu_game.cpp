@@ -332,7 +332,7 @@ void CMenu::_game(bool launch)
 				if (!m_locked)
 				{
 					_hideGame();
-					do CheckThreads(); while(m_gameSoundThread != LWP_THREAD_NULL);
+					CheckGameSoundThread(true);
 					if (_wbfsOp(CMenu::WO_REMOVE_GAME))
 					{
 						m_gameSound.Stop();
@@ -695,7 +695,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	u32 cheatSize = 0, gameconfigSize = 0;
 	bool iosLoaded = false;
 
-	do CheckThreads(); while(m_gameSoundThread != LWP_THREAD_NULL);
+	CheckGameSoundThread(true);
 	if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
 	if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
 	m_cfg.setString("GENERAL", "current_game", id);
@@ -945,9 +945,9 @@ void CMenu::_playGameSound(void)
 	LWP_CreateThread(&m_gameSoundThread, (void *(*)(void *))CMenu::_gameSoundThread, (void *)this, gameSoundThreadStack.get(), stack_size, 40);
 }
 
-void CMenu::CheckGameSoundThread()
+void CMenu::CheckGameSoundThread(bool force)
 {
-	if (m_gameSoundHdr == NULL && m_gameSoundThread != LWP_THREAD_NULL)
+	if (force || (m_gameSoundHdr == NULL && m_gameSoundThread != LWP_THREAD_NULL))
 	{
 		if(LWP_ThreadIsSuspended(m_gameSoundThread))
 			LWP_ResumeThread(m_gameSoundThread);
@@ -959,8 +959,8 @@ void CMenu::CheckGameSoundThread()
 	}
 }
 
-void CMenu::CheckThreads()
+void CMenu::CheckThreads(bool force)
 {
-	CheckGameSoundThread();
-	m_vid.CheckWaitThread();
+	CheckGameSoundThread(force);
+	m_vid.CheckWaitThread(force);
 }

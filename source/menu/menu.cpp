@@ -357,7 +357,7 @@ void CMenu::cleanup(bool ios_reload)
 {
 	m_cf.stopCoverLoader();
 
-	do CheckThreads(); while(m_gameSoundThread != LWP_THREAD_NULL);
+	CheckGameSoundThread(true);
 
 	_stopSounds();
 	

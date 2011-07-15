@@ -605,23 +605,23 @@ void CCoverFlow::stopCoverLoader(bool empty)
 {
 	m_loadingCovers = false;
 
-	if (coverLoaderThread != LWP_THREAD_NULL)
+	if (coverLoaderThread != LWP_THREAD_NULL &&	!m_loadingCovers)
 	{
 		if(LWP_ThreadIsSuspended(coverLoaderThread))
 			LWP_ResumeThread(coverLoaderThread);
 
 		LWP_JoinThread(coverLoaderThread, NULL);
 		coverLoaderThread = LWP_THREAD_NULL;
+
+		SMART_FREE(coverLoaderThreadStack);
+
+		if (empty)
+			for (u32 i = 0; i < m_items.size(); ++i)
+			{
+				SMART_FREE(m_items[i].texture.data);
+				m_items[i].state = CCoverFlow::STATE_Loading;
+			}
 	}
-
-	SMART_FREE(coverLoaderThreadStack);
-
-	if (empty)
-		for (u32 i = 0; i < m_items.size(); ++i)
-		{
-			SMART_FREE(m_items[i].texture.data);
-			m_items[i].state = CCoverFlow::STATE_Loading;
-		}
 }
 
 void CCoverFlow::startCoverLoader(void)
