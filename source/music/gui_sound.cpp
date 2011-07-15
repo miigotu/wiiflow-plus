@@ -49,7 +49,7 @@ static inline int GetFirstUnusedVoice()
         if(VoiceUsed[i] == false)
             return i;
     }
-
+	gprintf("ALL VOICES USED UP!!\n");
     return -1;
 }
 
@@ -73,9 +73,8 @@ extern "C" void SoundCallback(s32 voice)
 }
 
 GuiSound::GuiSound()
+	: filepath(), sound(NULL), length(0), voice(-1), volume(0), loop(0), SoundEffectLength(0), allocated(0)
 {
-	voice = -1;
-	Init();
 }
 
 GuiSound::GuiSound(string filepath, int v)
@@ -93,8 +92,9 @@ GuiSound::GuiSound(const u8 * snd, s32 len, bool isallocated, int v)
 }
 
 GuiSound::GuiSound(GuiSound *g)
-{
+{	
 	voice = -1;
+
 	Init();
 	if (g == NULL) return;
 	
@@ -111,6 +111,7 @@ GuiSound::GuiSound(GuiSound *g)
 GuiSound::~GuiSound()
 {
 	FreeMemory();
+	VoiceUsed[voice] = false;
 }
 
 void GuiSound::Init()
@@ -167,7 +168,7 @@ bool GuiSound::Load(const char * filepath)
     fclose(f);
 
     SoundHandler::Instance()->AddDecoder(voice, filepath);
-	gprintf("using voice %d");
+	gprintf("Loading %s using voice %d\n", filepath, voice);
     SoundDecoder * decoder = SoundHandler::Instance()->Decoder(voice);
     if(!decoder)
 	{	gprintf("No Decoder!!!\n");

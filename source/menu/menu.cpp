@@ -939,6 +939,7 @@ SmartPtr<GuiSound> CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, 
 	CMenu::SoundSet::iterator i = soundSet.find(filename);
 	if (i == soundSet.end())
 	{
+		SMART_FREE(def);
 		SmartPtr<GuiSound> sound = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
 		soundSet[filename] = sound;
 		return sound;
