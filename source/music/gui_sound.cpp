@@ -72,9 +72,11 @@ extern "C" void SoundCallback(s32 voice)
         SoundHandler::Instance()->ThreadSignal();
 }
 
+//	: filepath(), sound(NULL), length(0), voice(-1), volume(0), loop(0), SoundEffectLength(0), allocated(0)
 GuiSound::GuiSound()
-	: filepath(), sound(NULL), length(0), voice(-1), volume(0), loop(0), SoundEffectLength(0), allocated(0)
 {
+	voice = -1;
+	Init();
 }
 
 GuiSound::GuiSound(string filepath, int v)
