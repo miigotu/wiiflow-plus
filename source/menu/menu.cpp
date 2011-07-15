@@ -309,7 +309,6 @@ void CMenu::init()
 	_load_installed_cioses();	
 
 	_buildMenus();
-	_loadCFCfg();
 
 	m_locked = m_cfg.getString("GENERAL", "parent_code", "").size() >= 4;
 	m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble", true));
@@ -404,18 +403,18 @@ void CMenu::_setAA(int aa)
 	}
 }
 
-void CMenu::_loadCFCfg()
+void CMenu::_loadCFCfg(SThemeData &theme)
 {
 	const char *domain = "_COVERFLOW";
 
-	gprintf("Preparing to load sound from %s\n", sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_flip").c_str()).c_str());
+	gprintf("Preparing to load sounds from %s\n", sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_flip").c_str()).c_str());
 	m_cf.setCachePath(m_cacheDir.c_str(), !m_cfg.getBool("GENERAL", "keep_png", true), m_cfg.getBool("GENERAL", "compress_cache", false));
 	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
 	// Coverflow Sounds
 	m_cf.setSounds(
 		SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_flip").c_str()))),
-		SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_hover").c_str()))),
-		SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_select").c_str()))),
+		_sound(theme.soundSet, domain, "sound_hover", hover_wav, hover_wav_size, string("default_btn_hover"), false),
+		_sound(theme.soundSet, domain, "sound_select", click_wav, click_wav_size, string("default_btn_click"), false),
 		SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_cancel").c_str())))
 	);
 	// Textures
@@ -425,14 +424,7 @@ void CMenu::_loadCFCfg()
 	string texNoCoverFlat = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "missing_cover_flat").c_str());
 	m_cf.setTextures(texLoading, texLoadingFlat, texNoCover, texNoCoverFlat);
 	// Font
-	FontSet dummy;
-	SFont font = _font(dummy, domain, "font",
-		(u32)m_theme.getInt(domain, "font_size", TITLEFONT_PT_SZ),
-		(u32)m_theme.getInt(domain, "font_line_height", TITLEFONT_PT_SZ),
-		FONT_BOLD,
-		1
-	);
-	m_cf.setFont(font, m_theme.getColor(domain, "font_color", CColor(0xFFFFFFFF)));
+	m_cf.setFont(_font(theme.fontSet, domain, "font", TITLEFONT), m_theme.getColor(domain, "font_color", CColor(0xFFFFFFFF)));
 	// 
 	m_numCFVersions = min(max(2, m_theme.getInt("_COVERFLOW", "number_of_modes", 2)), 8);
 	for (u32 i = 1; i <= m_numCFVersions; ++i)
@@ -728,12 +720,9 @@ void CMenu::_buildMenus(void)
 	theme.txtFontColor = m_theme.getColor("GENERAL", "text_font_color", 0xFFFFFFFF);
 	
 	// Default Sounds
-	theme.clickSound = SmartPtr<GuiSound>(new GuiSound(click_wav, click_wav_size, false));
-	theme.clickSound = _sound(theme.soundSet, "GENERAL", "click_sound", theme.clickSound);
-	theme.hoverSound = SmartPtr<GuiSound>(new GuiSound(hover_wav, hover_wav_size, false));
-	theme.hoverSound = _sound(theme.soundSet, "GENERAL", "hover_sound", theme.hoverSound);
-	theme.cameraSound = SmartPtr<GuiSound>(new GuiSound(camera_wav, camera_wav_size, false));
-	theme.cameraSound = _sound(theme.soundSet, "GENERAL", "camera_sound", theme.cameraSound);
+	theme.clickSound	= _sound(theme.soundSet, "GENERAL", "click_sound", click_wav, click_wav_size, string("default_btn_click"), false);
+	theme.hoverSound	= _sound(theme.soundSet, "GENERAL", "hover_sound", hover_wav, hover_wav_size, string("default_btn_hover"), false);
+	theme.cameraSound	= _sound(theme.soundSet, "GENERAL", "camera_sound", camera_wav, camera_wav_size, string("default_camera"), false);
 	m_cameraSound = theme.cameraSound;
 	// Default textures
 	theme.btnTexL.fromPNG(butleft_png);
@@ -794,6 +783,8 @@ void CMenu::_buildMenus(void)
 	_initCategorySettingsMenu(theme);
 	_initSystemMenu(theme);
 	_initGameInfoMenu(theme);
+	
+	_loadCFCfg(theme);
 }
 
 SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index)
@@ -927,10 +918,11 @@ STexture CMenu::_texture(CMenu::TexSet &texSet, const char *domain, const char *
 	return def;
 }
 
-SmartPtr<GuiSound> CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, SmartPtr<GuiSound> def)
+// Only for loading defaults and GENERAL domains!!
+SmartPtr<GuiSound> CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, const u8 * snd, u32 len, string name, bool isAllocated)
 {
 	string filename = m_theme.getString(domain, key);
-	if (filename.empty()) return def;
+	if (filename.empty()) filename = name;
 
 	for (u32 c = 0; c < filename.size(); ++c)
 		if (filename[c] >= 'A' && filename[c] <= 'Z')
@@ -939,10 +931,33 @@ SmartPtr<GuiSound> CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, 
 	CMenu::SoundSet::iterator i = soundSet.find(filename);
 	if (i == soundSet.end())
 	{
-		SMART_FREE(def);
-		SmartPtr<GuiSound> sound = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
-		soundSet[filename] = sound;
-		return sound;
+		if(filename != name) soundSet[filename] = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
+		else soundSet[filename] = SmartPtr<GuiSound>(new GuiSound(snd, len, filename, isAllocated));
+		return soundSet[filename];
+	}
+	return i->second;
+}
+
+//For buttons and labels only!!
+SmartPtr<GuiSound> CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, string name)
+{
+	string filename = m_theme.getString(domain, key);
+	if (filename.empty())
+	{
+		if(name.find_last_of('/') != string::npos)
+			name = name.substr(name.find_last_of('/')+1);
+		return soundSet[name];  // General/Default are already cached!
+	}
+
+	for (u32 c = 0; c < filename.size(); ++c)
+		if (filename[c] >= 'A' && filename[c] <= 'Z')
+			filename[c] |= 0x20;
+
+	CMenu::SoundSet::iterator i = soundSet.find(filename);
+	if (i == soundSet.end())
+	{
+		soundSet[filename] = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
+		return soundSet[filename];
 	}
 	return i->second;
 }
@@ -987,8 +1002,8 @@ u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, 
 
 	font = _font(theme.fontSet, domain, "font", BUTTONFONT);
 
-	SmartPtr<GuiSound> clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
-	SmartPtr<GuiSound> hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
+	SmartPtr<GuiSound> clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound->GetName());
+	SmartPtr<GuiSound> hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound->GetName());
 	
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	if (btnPos & FTGX_JUSTIFY_RIGHT)
@@ -1007,8 +1022,8 @@ u32 CMenu::_addPicButton(CMenu::SThemeData &theme, const char *domain, STexture 
 	height = m_theme.getInt(domain, "height", height);
 	STexture tex1 = _texture(theme.texSet, domain, "texture_normal", texNormal);
 	STexture tex2 = _texture(theme.texSet, domain, "texture_selected", texSelected);
-	SmartPtr<GuiSound> clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound);
-	SmartPtr<GuiSound> hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound);
+	SmartPtr<GuiSound> clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound->GetName());
+	SmartPtr<GuiSound> hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound->GetName());
 
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	if (btnPos & FTGX_JUSTIFY_RIGHT)

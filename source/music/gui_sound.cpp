@@ -72,7 +72,6 @@ extern "C" void SoundCallback(s32 voice)
         SoundHandler::Instance()->ThreadSignal();
 }
 
-//	: filepath(), sound(NULL), length(0), voice(-1), volume(0), loop(0), SoundEffectLength(0), allocated(0)
 GuiSound::GuiSound()
 {
 	voice = -1;
@@ -86,11 +85,12 @@ GuiSound::GuiSound(string filepath, int v)
 	Load(filepath.c_str());
 }
 
-GuiSound::GuiSound(const u8 * snd, s32 len, bool isallocated, int v)
+GuiSound::GuiSound(const u8 * snd, u32 len, string name, bool isallocated, int v)
 {
 	voice = v;
 	Init();
 	Load(snd, len, isallocated);
+	this->filepath = name;
 }
 
 GuiSound::GuiSound(GuiSound *g)
@@ -189,7 +189,7 @@ bool GuiSound::Load(const char * filepath)
 	return true;
 }
 
-bool GuiSound::Load(const u8 * snd, s32 len, bool isallocated)
+bool GuiSound::Load(const u8 * snd, u32 len, bool isallocated)
 {
     FreeMemory();
 	this->voice = voice;
@@ -234,7 +234,7 @@ bool GuiSound::Load(const u8 * snd, s32 len, bool isallocated)
 	return true;
 }
 
-bool GuiSound::LoadSoundEffect(const u8 * snd, s32 len)
+bool GuiSound::LoadSoundEffect(const u8 * snd, u32 len)
 {
 	FreeMemory();
 
@@ -460,7 +460,7 @@ u8 * uncompressLZ77(const u8 *inBuf, u32 inLength, u32 * size)
 	return buffer;
 }
 
-void GuiSound::UncompressSoundbin(const u8 * snd, int len, bool isallocated)
+void GuiSound::UncompressSoundbin(const u8 * snd, u32 len, bool isallocated)
 {
     const u8 * file = snd+32;
 

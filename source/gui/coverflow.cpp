@@ -249,7 +249,7 @@ void CCoverFlow::simulateOtherScreenFormat(bool s)
 CCoverFlow::~CCoverFlow(void)
 {
 	clear();
-	for(u8 i = 0; i < 3; i++)
+	for(u8 i = 0; i < 4; i++)
 		SMART_FREE(m_sound[i]);
 	SMART_FREE(m_hoverSound);
 	SMART_FREE(m_selectSound);
@@ -557,17 +557,12 @@ bool CCoverFlow::setSorting(Sorting sorting)
 
 void CCoverFlow::setSounds(const SmartPtr<GuiSound> &sound, const SmartPtr<GuiSound> &hoverSound, const SmartPtr<GuiSound> &selectSound, const SmartPtr<GuiSound> &cancelSound)
 {
-	for(u8 i = 0; i < 3; i++)
-		m_sound[i].release();
-	m_hoverSound.release();
-	m_selectSound.release();
-	m_cancelSound.release();
-
-	for(u8 i = 0; i < 3; i++)
+	m_sound[0] = sound;
+	for(u8 i = 1; i < 4; i++)
 		m_sound[i] = SmartPtr<GuiSound>(new GuiSound(sound.get()));
-	m_hoverSound = SmartPtr<GuiSound>(new GuiSound(hoverSound.get()));
-	m_selectSound = SmartPtr<GuiSound>(new GuiSound(selectSound.get()));
-	m_cancelSound = SmartPtr<GuiSound>(new GuiSound(cancelSound.get()));
+	m_hoverSound = hoverSound;
+	m_selectSound = selectSound;
+	m_cancelSound = cancelSound;
 }
 
 void CCoverFlow::setSoundVolume(u8 vol)
@@ -587,7 +582,7 @@ void CCoverFlow::_playSound(SmartPtr<GuiSound> snd)
 
 void CCoverFlow::stopSound(void)
 {
-	for(u8 i = 0; i < 3; i++)
+	for(u8 i = 0; i < 4; i++)
 		_stopSound(m_sound[i]);
 
 	_stopSound(m_hoverSound);
@@ -1790,7 +1785,7 @@ void CCoverFlow::_playSound(void)
 	if (m_soundVolume > 0)
 	{
 		sndCopyNum++;
-		if(sndCopyNum == 3) sndCopyNum = 0;
+		if(sndCopyNum == 4) sndCopyNum = 0;
 		_playSound( m_sound[sndCopyNum] );
 		gprintf("\n\nPlaying flipsound copy # %u\n\n", sndCopyNum);
 	}

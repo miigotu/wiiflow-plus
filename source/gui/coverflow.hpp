@@ -273,7 +273,7 @@ private:
 	Vector3D m_flipCoverAngle;
 	Vector3D m_flipCoverScale;
 	u8 sndCopyNum;
-	SmartPtr<GuiSound> m_sound[3];
+	SmartPtr<GuiSound> m_sound[4];
 	SmartPtr<GuiSound> m_hoverSound;
 	SmartPtr<GuiSound> m_selectSound;
 	SmartPtr<GuiSound> m_cancelSound;

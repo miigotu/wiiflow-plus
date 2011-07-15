@@ -718,7 +718,7 @@ private:
 	void _launchChannel(dir_discHdr *hdr);
 	void _launchHomebrew(const char *filepath, safe_vector<std::string> arguments);
 	void _setAA(int aa);
-	void _loadCFCfg(void);
+	void _loadCFCfg(SThemeData &theme);
 	void _loadCFLayout(int version, bool forceAA = false, bool otherScrnFmt = false);
 	Vector3D _getCFV3D(const std::string &domain, const std::string &key, const Vector3D &def, bool otherScrnFmt = false);
 	int _getCFInt(const std::string &domain, const std::string &key, int def, bool otherScrnFmt = false);
@@ -734,7 +734,8 @@ private:
 public:
 	void _hideWaitMessage();
 private:
-	SmartPtr<GuiSound> _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, SmartPtr<GuiSound> def);
+	SmartPtr<GuiSound> _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, const u8 * snd, u32 len, string name, bool isAllocated);
+	SmartPtr<GuiSound> _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, string name);
 	u16 _textStyle(const char *domain, const char *key, u16 def);
 	u32 _addButton(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color);
 	u32 _addPicButton(SThemeData &theme, const char *domain, STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height);

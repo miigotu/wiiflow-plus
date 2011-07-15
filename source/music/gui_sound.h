@@ -41,15 +41,16 @@ class GuiSound
 		//!\param sound Pointer to the sound data
 		//!\param filesize Length of sound data
         GuiSound(std::string filepath, int voice = -1);
-		GuiSound(const u8 * sound, int filesize, bool allocated = false, int voice = -1);
+		GuiSound(const u8 * snd, u32 len, std::string name, bool allocated = false, int voice = -1);
+
 		//!Destructor
 		~GuiSound();
 		//!Load a file and replace the old one
 		bool Load(const char * filepath);
 		//!Load a file and replace the old one
-		bool Load(const u8 * sound, int filesize, bool allocated = true);
+		bool Load(const u8 * snd, u32 len, bool allocated = true);
 		//!For quick playback of the internal soundeffects
-		bool LoadSoundEffect(const u8 * snd, s32 len);
+		bool LoadSoundEffect(const u8 * snd, u32 len);
 		//!Start sound playback
 		void Play();
 		//!Start sound playback
@@ -63,10 +64,9 @@ class GuiSound
 		//!Checks if a sound is currently loaded
 		//!\return true if sound is loaded, false otherwise
 		bool IsLoaded() { return sound != NULL; };
-
-		//!Set the pointer to sound data to NULL !CAUTION!
-		//!\Only for when copying instances.
-		void Unload() { sound = NULL; };
+		//!Get the filepath for finding sounds which already have an instance.
+		//!\return the current instance's filepath
+		std::string GetName() { return filepath; };
 		//!Checks if the sound is currently playing
 		//!\return true if sound is playing, false otherwise
 		bool IsPlaying();
@@ -84,14 +84,14 @@ class GuiSound
 		//!Initializes the GuiSound object by setting the default values
 		void Init();
 		//!Special sound case for sound.bin
-        void UncompressSoundbin(const u8 * snd, int len, bool isallocated);
+        void UncompressSoundbin(const u8 * snd, u32 len, bool isallocated);
 	protected:
         //!Stops sound and frees all memory/closes files
         void FreeMemory();
 
 		std::string filepath;
 		u8 * sound; //!< Pointer to the sound data
-		int length; //!< Length of sound data
+		u32 length; //!< Length of sound data
 		s32 voice; //!< Currently assigned ASND voice channel
 		int volume; //!< Sound volume (0-100)
 		u8 loop; //!< Loop sound playback
