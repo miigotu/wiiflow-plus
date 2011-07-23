@@ -52,30 +52,32 @@ class Channels
 		Channels();
 		~Channels();
 
-		void Init(u32 channelType, string lang);
-		bool CanIdentify();
+		void Init(u32 channelType, string lang, bool reload = false);
 		
-		void Launch(int index);
+		u32 * Load(u64 title, char* id);
+		bool Launch(u32 *data, u64 chantitle, u8 vidMode, bool cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidMode);
+		
 		int Count();
 		wchar_t *GetName(int index);
 		char *GetId(int index);
 		u64 GetTitle(int index);
 		Channel *GetChannel(int index);
-		
+
 		static Banner * GetBanner(u64 title, bool imetOnly = false);
 	private:
 		bool init;
 		u32 channelType;
 		string langCode;
-		bool isIdentified;
-		
+
 		safe_vector<Channel> channels;
 		
 		static int GetLanguage(const char *lang);
 		u64* GetChannelList(u32* count);
-		static bool GetAppNameFromTmd(u64 title, char* app);
+		static bool GetAppNameFromTmd(u64 title, char* app, bool dol = false, u16* bootcontent = NULL);
 		static bool GetChannelNameFromApp(u64 title, wchar_t* name, int language);
+
 		void Search(u32 channelType, string lang);
+		
 };
 
 #endif

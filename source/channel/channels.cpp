@@ -44,6 +44,8 @@
 #include "config.hpp"
 #include "text.hpp"
 
+#include "channel_launcher.h"
+
 #define DOWNLOADED_CHANNELS	0x00010001
 #define SYSTEM_CHANNELS		0x00010002
 #define RF_NEWS_CHANNEL		0x48414741
@@ -54,12 +56,11 @@ extern "C" void ShowError(const wstringEx &error);
 
 Channels::Channels()
 {
-	/*u32 ret = ES_Identify((u32*)Certificates, sizeof(Certificates), (u32*)Tmd, sizeof(Tmd), (u32*)Ticket, sizeof(Ticket), 0);
-	isIdentified = ret == 0;*/
 }
 
-void Channels::Init(u32 channelType, string lang)
+void Channels::Init(u32 channelType, string lang, bool reload)
 {
+	if (reload) init = !reload;
 	if (!init || channelType != this->channelType ||
 		lang != this->langCode)
 	{
@@ -75,12 +76,24 @@ void Channels::Init(u32 channelType, string lang)
 Channels::~Channels()
 {
 }
-/*
-bool Channels::CanIdentify()
+
+u32 * Channels::Load(u64 title, char *id)
 {
-	return isIdentified;
+	char app[ISFS_MAXPATH];
+	u32 Size;
+	u16 bootcontent;
+
+	if(!GetAppNameFromTmd(title, app, true, &bootcontent))
+		return NULL;
+
+	return GetDol(title, id, &Size, bootcontent, false);	
 }
-*/
+
+bool Channels::Launch(u32 *data, u64 chantitle, u8 vidMode, bool cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidMode)
+{
+	return BootChannel(data, chantitle, vidMode, cheat, cheatSize, vipatch, countryString, patchVidMode);
+}
+
 u64* Channels::GetChannelList(u32* count)
 {
 	u32 countall;
@@ -103,12 +116,12 @@ u64* Channels::GetChannelList(u32* count)
 	*count = 0;
 	for (u32 i = 0; i < countall; i++)
 	{
-		u32 type = titles[i] >> 32;
+		u32 type = TITLE_UPPER(titles[i]);
 
 		if (type == DOWNLOADED_CHANNELS || type == SYSTEM_CHANNELS)
 		{
-			if ((titles[i] & 0xFFFFFFFF) == RF_NEWS_CHANNEL ||	// skip region free news and forecast channel
-				(titles[i] & 0xFFFFFFFF) == RF_FORECAST_CHANNEL)
+			if (TITLE_LOWER(titles[i]) == RF_NEWS_CHANNEL ||	// skip region free news and forecast channel
+				TITLE_LOWER(titles[i]) == RF_FORECAST_CHANNEL)
 				continue;
 
 			channels[(*count)++] = titles[i];
@@ -120,12 +133,12 @@ u64* Channels::GetChannelList(u32* count)
 	return (u64*)realloc(channels, *count * sizeof(u64));
 }
 
-bool Channels::GetAppNameFromTmd(u64 title, char* app)
+bool Channels::GetAppNameFromTmd(u64 title, char* app, bool dol, u16* bootcontent)
 {
 	char tmd[ISFS_MAXPATH];
 
-	u32 high = (u32)(title >> 32);
-	u32 low  = (u32)(title & 0xFFFFFFFF);
+	u32 high = TITLE_UPPER(title);
+	u32 low  = TITLE_LOWER(title);
 
 	bool ret = false;
 
@@ -137,14 +150,26 @@ bool Channels::GetAppNameFromTmd(u64 title, char* app)
 	{
 		if (size > 0x208)
 		{
-			u16 i;
-			struct _tmd * tmd_file = (struct _tmd *) SIGNATURE_PAYLOAD(data);
-			for(i = 0; i < tmd_file->num_contents; ++i)
-				if(tmd_file->contents[i].index == 0)
-					break;
+			if (dol)
+			{
+				struct _tmd * tmd_file = (struct _tmd *) SIGNATURE_PAYLOAD(data);
+				*bootcontent = tmd_file->contents[tmd_file->boot_index].cid;
+				sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, (u32)*bootcontent);
+				gprintf("Dol-App Path: %s\n", app);
+				ret = true;
+			}
+			else
+			{
+				u16 i;
+				struct _tmd * tmd_file = (struct _tmd *) SIGNATURE_PAYLOAD(data);
+				for(i = 0; i < tmd_file->num_contents; ++i)
+					if(tmd_file->contents[i].index == 0)
+						break;
 
-			sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, tmd_file->contents[i].cid);
-			ret = true;
+				sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, tmd_file->contents[i].cid);
+				gprintf("Banner-App Path: %s\n", app);
+				ret = true;
+			}
 		}
 		SAFE_FREE(data);
 	}
@@ -161,7 +186,6 @@ Banner * Channels::GetBanner(u64 title, bool imetOnly)
 		gprintf("No title found\n");
 		return NULL;
 	}
-
 	return Banner::GetBanner(title, app, true, imetOnly);
 }
 
@@ -211,7 +235,7 @@ void Channels::Search(u32 channelType, string lang)
 
 	for (u32 i = 0; i < count; i++)
 	{
-		if (channelType == 0 || channelType == (list[i] >> 32))
+		if (channelType == 0 || channelType == TITLE_UPPER(list[i]))
 		{
 			Channel channel;
 			if (GetChannelNameFromApp(list[i], channel.name, language))

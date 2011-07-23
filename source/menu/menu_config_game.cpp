@@ -57,8 +57,6 @@ void CMenu::_hideGameSettings(bool instant)
 	m_btnMgr.hide(m_gameSettingsBtnHooktypeP, instant);
 	m_btnMgr.hide(m_gameSettingsBtnCategoryMain, instant);
 	m_btnMgr.hide(m_gameSettingsLblCategoryMain, instant);
-	m_btnMgr.hide(m_gameSettingsLblDvdPatch, instant);
-	m_btnMgr.hide(m_gameSettingsBtnDvdPatch, instant);
 	m_btnMgr.hide(m_gameSettingsBtnReturnTo, instant);
 	m_btnMgr.hide(m_gameSettingsLblReturnTo, instant);
 	m_btnMgr.hide(m_gameSettingsLblDebugger, instant);
@@ -130,10 +128,13 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.show(m_gameSettingsBtnVipatch);
 		m_btnMgr.show(m_gameSettingsLblCountryPatch);
 		m_btnMgr.show(m_gameSettingsBtnCountryPatch);
-		m_btnMgr.show(m_gameSettingsLblGameIOS);
-		m_btnMgr.show(m_gameSettingsLblIOS);
-		m_btnMgr.show(m_gameSettingsBtnIOSP);
-		m_btnMgr.show(m_gameSettingsBtnIOSM);
+		if(m_current_view == COVERFLOW_USB)
+		{
+			m_btnMgr.show(m_gameSettingsLblGameIOS);
+			m_btnMgr.show(m_gameSettingsLblIOS);
+			m_btnMgr.show(m_gameSettingsBtnIOSP);
+			m_btnMgr.show(m_gameSettingsBtnIOSM);
+		}
 	}
 	else
 	{
@@ -180,10 +181,12 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.show(m_gameSettingsLblHooktypeVal);
 		m_btnMgr.show(m_gameSettingsBtnHooktypeM);
 		m_btnMgr.show(m_gameSettingsBtnHooktypeP);
-		m_btnMgr.show(m_gameSettingsLblDvdPatch);
-		m_btnMgr.show(m_gameSettingsBtnDvdPatch);
-		m_btnMgr.show(m_gameSettingsBtnReturnTo);
-		m_btnMgr.show(m_gameSettingsLblReturnTo);
+
+		if(m_cfg.getBool("NAND", "Disable_EMU"))
+		{
+			m_btnMgr.show(m_gameSettingsBtnReturnTo);
+			m_btnMgr.show(m_gameSettingsLblReturnTo);
+		}
 
 	}
 	else
@@ -194,8 +197,6 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.hide(m_gameSettingsLblHooktypeVal);
 		m_btnMgr.hide(m_gameSettingsBtnHooktypeM);
 		m_btnMgr.hide(m_gameSettingsBtnHooktypeP);
-		m_btnMgr.hide(m_gameSettingsLblDvdPatch);
-		m_btnMgr.hide(m_gameSettingsBtnDvdPatch);
 		m_btnMgr.hide(m_gameSettingsBtnReturnTo);
 		m_btnMgr.hide(m_gameSettingsLblReturnTo);
 	}
@@ -290,9 +291,8 @@ void CMenu::_showGameSettings(void)
 	safe_vector<u32>::iterator itr = _installed_cios.end();
 	i = mainIOS;
 	if (m_gcfg2.getInt(id, "ios", &i) && (itr = find(_installed_cios.begin(), _installed_cios.end(), i)) == _installed_cios.end())
-	{
 		i = mainIOS;
-	}
+
 	u32 ver;
 	char* InfoIos=get_iosx_info_from_tmd(i, &ver);
 	if (i == mainIOS)
@@ -313,13 +313,10 @@ void CMenu::_showGameSettings(void)
 	char *categories = (char *) m_cat.getString("CATEGORIES", id, "").c_str();
 	memset(&m_gameSettingCategories, '0', sizeof(m_gameSettingCategories));
 	if (strlen(categories) == sizeof(m_gameSettingCategories))
-	{
 		memcpy(&m_gameSettingCategories, categories, sizeof(m_gameSettingCategories));
-	}
-	for (int i=0; i<12; ++i) {
+	for (int i=0; i<12; ++i)
 		m_btnMgr.setText(m_gameSettingsBtnCategory[i], _optBoolToString(m_gameSettingCategories[i] == '1'));
-	}
-	m_btnMgr.setText(m_gameSettingsBtnDvdPatch,  m_gcfg2.getBool(id, "disable_dvd_patch", false) ? _t("on", L"On") : _t("def", L"Default"));
+
 	m_btnMgr.setText(m_gameSettingsBtnReturnTo,  m_gcfg2.getBool(id, "returnto", true) ? _t("def", L"Default") : _t("on", L"On"));		
 	m_btnMgr.setText(m_gameSettingsLblDebuggerV, m_gcfg2.getBool(id, "debugger", false) ? _t("gecko", L"Gecko") : _t("def", L"Default"));		
 }
@@ -476,11 +473,6 @@ void CMenu::_gameSettings(void)
 				m_gcfg2.setInt(id, "hooktype", (int)loopNum((u32)m_gcfg2.getInt(id, "hooktype", 1) - 1, ARRAY_SIZE(CMenu::_hooktype)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnDvdPatch))
-			{
-				m_gcfg2.setBool(id, "disable_dvd_patch", !m_gcfg2.getBool(id, "disable_dvd_patch", false));
-				_showGameSettings();
-			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnReturnTo))
 			{
 				_hideGameSettings();
@@ -582,8 +574,6 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	m_gameSettingsLblHooktypeVal = _addLabel(theme, "GAME_SETTINGS/HOOKTYPE_BTN", theme.btnFont, L"", 386, 190, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnHooktypeM = _addPicButton(theme, "GAME_SETTINGS/HOOKTYPE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 190, 56, 56);
 	m_gameSettingsBtnHooktypeP = _addPicButton(theme, "GAME_SETTINGS/HOOKTYPE_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 190, 56, 56);
-	m_gameSettingsLblDvdPatch = _addLabel(theme, "GAME_SETTINGS/DVD_PATCH", theme.lblFont, L"", 40, 250, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnDvdPatch = _addButton(theme, "GAME_SETTINGS/DVD_PATCH_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
 	m_gameSettingsLblReturnTo = _addLabel(theme, "GAME_SETTINGS/RETURN_TO", theme.lblFont, L"", 40, 310, 270, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsBtnReturnTo = _addButton(theme, "GAME_SETTINGS/RETURN_TO_BTN", theme.btnFont, L"", 330, 310, 270, 56, theme.btnFontColor);
 	//Page 5
@@ -663,8 +653,6 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_gameSettingsLblHooktypeVal, "GAME_SETTINGS/HOOKTYPE_BTN", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnHooktypeM, "GAME_SETTINGS/HOOKTYPE_MINUS", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnHooktypeP, "GAME_SETTINGS/HOOKTYPE_PLUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblDvdPatch, "GAME_SETTINGS/DVD_PATCH", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnDvdPatch, "GAME_SETTINGS/DVD_PATCH_BTN", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsLblReturnTo, "GAME_SETTINGS/RETURN_TO", -200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnReturnTo, "GAME_SETTINGS/RETURN_TO_BTN", 200, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsLblDebugger, "GAME_SETTINGS/GAME_DEBUGGER", -200, 0, 1.f, 0.f);
@@ -703,7 +691,6 @@ void CMenu::_textGameSettings(void)
 	m_btnMgr.setText(m_gameSettingsLblCategoryMain, _t("cfgg17", L"Categories"));
 	m_btnMgr.setText(m_gameSettingsBtnCategoryMain, _t("cfgg16", L"Select"));
 	m_btnMgr.setText(m_gameSettingsLblHooktype, _t("cfgg18", L"Hook Type"));
-	m_btnMgr.setText(m_gameSettingsLblDvdPatch, _t("cfgg19", L"Disable DVD Patch"));
 	m_btnMgr.setText(m_gameSettingsLblReturnTo, _t("cfgg20", L"Disable Return To"));
 	m_btnMgr.setText(m_gameSettingsLblDebugger, _t("cfgg22", L"Debugger"));
 	for (int i = 1; i < 12; ++i)

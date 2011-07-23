@@ -51,7 +51,7 @@ static u8	Tmd_Buffer[0x49e4 + 0x1C] ALIGNED(32);
 #define        Bus_Speed		((u32*)0x800000f8)
 #define        CPU_Speed		((u32*)0x800000fc)
 
-void __Disc_SetLowMem(bool dvd)
+void __Disc_SetLowMem()
 {
 	/* Setup low memory */
 	*(vu32 *)0x80000030 = 0x00000000; // Arena Low
@@ -78,13 +78,14 @@ void __Disc_SetLowMem(bool dvd)
 	*(vu32 *)0x800030F0 = 0x0000001C;
 	*(vu32 *)0x8000318C = 0x00000000;
 	*(vu32 *)0x80003190 = 0x00000000;
+	
 	// Fix for Sam & Max (WiiPower)
 	*(vu32 *)0x80003184 = 0x80000000;
 	/* Flush cache */
 	DCFlushRange((void *)0x80000000, 0x3F00);
 }
 
-void __Disc_SelectVMode(u8 videoselected)
+GXRModeObj * __Disc_SelectVMode(u8 videoselected, u64 chantitle)
 {
     vmode = VIDEO_GetPreferredMode(0);
 
@@ -113,12 +114,19 @@ void __Disc_SelectVMode(u8 videoselected)
 			break;
 	}
 
+	char Region;
+	if(chantitle != 0)
+		Region = ((u32)(chantitle) & 0xFFFFFFFF) % 256;
+	else Region = diskid[3];
+
     switch (videoselected)
 	{
 		case 0: // DEFAULT (DISC/GAME)
 			/* Select video mode */
-			switch (diskid[3])
+			switch (Region)
 			{
+				case 'W':
+					break; // Don't overwrite wiiware video modes.
 				// PAL
 				case 'D':
 				case 'F':
@@ -166,6 +174,8 @@ void __Disc_SelectVMode(u8 videoselected)
 			break;
 	}
 	disc_vmode = vmode;
+
+	return vmode;
 }
 
 void __Disc_SetVMode(void)
@@ -345,7 +355,7 @@ s32 Disc_IsGC(void)
 	return Disc_Type(1);
 }
 
-s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidMode, bool dvd, u8 ios)
+s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidMode, u8 ios)
 {
 	entry_point p_entry;
 
@@ -356,10 +366,10 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	//Close_Inputs();
 	
 	/* Setup low memory */;
-	__Disc_SetLowMem(dvd);
+	__Disc_SetLowMem();
 
 	/* Select an appropriate video mode */
-	__Disc_SelectVMode(vidMode);
+	__Disc_SelectVMode(vidMode, 0);
 
 	/* Run apploader */
 	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vmode, vipatch, countryString, patchVidMode, ios);
@@ -433,7 +443,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	return 0;
 }
 
-s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidModes, u8 ios)
+s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidModes, u8 ios)
 {
 	u64 offset;
 
@@ -442,5 +452,5 @@ s32 Disc_WiiBoot(bool dvd, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipa
 	if (ret < 0) return ret;
 
 	/* Boot partition */
-	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, patchVidModes, dvd, ios);
+	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, patchVidModes, ios);
 }

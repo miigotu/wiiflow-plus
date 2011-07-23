@@ -55,8 +55,11 @@ void CMenu::_showConfig7(void)
 		m_btnMgr.setText(m_config7LblPartition, wfmt(L"%s", DeviceName[m_cfg.getInt("GENERAL", "partition", 1)]));
 	else if(m_current_view == COVERFLOW_HOMEBREW)
 		m_btnMgr.setText(m_config7LblPartition, wfmt(L"%s", DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", 1)]));
-	else
-		m_btnMgr.setText(m_config7LblPartition, wfmt(L"NAND"));
+	else if(m_current_view == COVERFLOW_CHANNEL)
+	{
+		bool disable = m_cfg.getBool("NAND", "Disable_EMU", true);
+		m_btnMgr.setText(m_config7LblPartition, wfmt(L"%s", disable ? "NAND" : DeviceName[m_cfg.getInt("NAND", "nand_partition", 1)]));
+	}
 	
 	m_btnMgr.setText(m_config7BtnAsyncNet, m_cfg.getBool("GENERAL", "async_network", false) ? _t("on", L"On") : _t("off", L"Off"));
 }
@@ -113,6 +116,18 @@ int CMenu::_config7(void)
 						m_cfg.setInt("GENERAL", "homebrew_partition", currentPartition);
 					_showConfig7();
 				}
+				else if (m_current_view == COVERFLOW_CHANNEL)
+				{
+					s8 offset = m_btnMgr.selected(m_config7BtnPartitionP) ? 1 : -1;
+					currentPartition = loopNum(currentPartition + offset, (int)USB8);
+					if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+						while(!DeviceHandler::Instance()->IsInserted(currentPartition))
+							currentPartition = loopNum(currentPartition + offset, (int)USB8);
+
+					gprintf("Next item: %s\n", DeviceName[currentPartition]);
+					m_cfg.setInt("NAND", "nand_partition", currentPartition);
+					_showConfig7();
+				}
 			}
 			else if (m_btnMgr.selected(m_config7BtnAsyncNet))
 			{
@@ -128,6 +143,8 @@ int CMenu::_config7(void)
 			newpartition = DeviceName[m_cfg.getInt("GENERAL", "partition", currentPartition)];
 		else if(m_current_view == COVERFLOW_HOMEBREW)
 			newpartition = DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", currentPartition)];
+		else if(m_current_view == COVERFLOW_CHANNEL)
+			newpartition = DeviceName[m_cfg.getInt("NAND", "nand_partition", currentPartition)];
 		gprintf("Switching partition to %s\n", newpartition);
 		_loadList();
 	}

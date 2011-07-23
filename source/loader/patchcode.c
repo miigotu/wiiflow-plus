@@ -126,6 +126,7 @@ bool dogamehooks(void *addr, u32 len)
 			case 0x00:
 				hookpatched = true;
 				break;
+
 			case 0x01:
 				if(memcmp(addr_start, viwiihooks, sizeof(viwiihooks))==0)
 				{
@@ -138,6 +139,7 @@ bool dogamehooks(void *addr, u32 len)
 					hookpatched = true;
 				}
 				break;
+
 			case 0x02:
 
 				if(memcmp(addr_start, kpadhooks, sizeof(kpadhooks))==0)
@@ -157,6 +159,7 @@ bool dogamehooks(void *addr, u32 len)
 					hookpatched = true;
 				}
 				break;
+
 			case 0x03:
 
 				if(memcmp(addr_start, joypadhooks, sizeof(joypadhooks))==0)
@@ -170,6 +173,7 @@ bool dogamehooks(void *addr, u32 len)
 					hookpatched = true;
 				}
 				break;
+
 			case 0x04:
 
 				if(memcmp(addr_start, gxdrawhooks, sizeof(gxdrawhooks))==0)
@@ -183,6 +187,7 @@ bool dogamehooks(void *addr, u32 len)
 					hookpatched = true;
 				}
 				break;
+
 			case 0x05:
 
 				if(memcmp(addr_start, gxflushhooks, sizeof(gxflushhooks))==0)
@@ -196,6 +201,7 @@ bool dogamehooks(void *addr, u32 len)
 					hookpatched = true;
 				}
 				break;
+
 			case 0x06:
 
 				if(memcmp(addr_start, ossleepthreadhooks, sizeof(ossleepthreadhooks))==0)
@@ -209,6 +215,7 @@ bool dogamehooks(void *addr, u32 len)
 					hookpatched = true;
 				}
 				break;
+
 			case 0x07:
 
 				if(memcmp(addr_start, axnextframehooks, sizeof(axnextframehooks))==0)
@@ -222,6 +229,7 @@ bool dogamehooks(void *addr, u32 len)
 					hookpatched = true;
 				}
 				break;
+
 			case 0x08:
 
 				//if(memcmp(addr_start, customhook, customhooksize)==0)
@@ -312,6 +320,250 @@ void vidolpatcher(void *addr, u32 len)
 
 		addr_start += 4;
 	}
+}
+
+//---------------------------------------------------------------------------------
+bool dochannelhooks(void *addr, u32 len, bool bootcontentloaded)
+//---------------------------------------------------------------------------------
+{
+	void *addr_start = addr;
+	void *addr_end = addr+len;
+	bool patched = false;
+	bool multidolpatched = false;
+	
+	while(addr_start < addr_end)
+	{
+		switch(hooktype)
+		{
+			case 0x00:	
+				break;
+
+			case 0x01:	
+				if(memcmp(addr_start, viwiihooks, sizeof(viwiihooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					patched = true;
+				}
+				break;
+
+			case 0x02:
+				if(memcmp(addr_start, kpadhooks, sizeof(kpadhooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					patched = true;
+				}
+
+				if(memcmp(addr_start, kpadoldhooks, sizeof(kpadoldhooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					patched = true;
+				}
+				break;
+				
+			case 0x03:
+				if(memcmp(addr_start, joypadhooks, sizeof(joypadhooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					patched = true;
+				}
+				break;
+
+			case 0x04:
+				if(memcmp(addr_start, gxdrawhooks, sizeof(gxdrawhooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					patched = true;
+				}
+				break;
+
+			case 0x05:
+				if(memcmp(addr_start, gxflushhooks, sizeof(gxflushhooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					patched = true;
+				}
+				break;
+
+			case 0x06:
+				if(memcmp(addr_start, ossleepthreadhooks, sizeof(ossleepthreadhooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					patched = true;
+				}
+				break;
+
+			case 0x07:
+				if(memcmp(addr_start, axnextframehooks, sizeof(axnextframehooks))==0)
+				{
+					patchhook((u32)addr_start, len);
+					patched = true;
+				}
+				break;
+
+			case 0x08:
+				//if(memcmp(addr_start, customhook, customhooksize)==0){
+				//	patchhook((u32)addr_start, len);
+				//patched = true;
+				//}
+				break;
+		}
+		if (hooktype != 0)
+		{
+			if(memcmp(addr_start, multidolchanhooks, sizeof(multidolchanhooks))==0)
+			{
+				*(((u32*)addr_start)+1) = 0x7FE802A6;
+				DCFlushRange(((u32*)addr_start)+1, 4);
+				multidolhook((u32)addr_start+sizeof(multidolchanhooks)-4);
+				multidolpatched = true;
+			}
+		}
+		
+		addr_start += 4;
+	}
+	
+	return bootcontentloaded ? multidolpatched : patched;
+}
+
+//giantpune's magic super patch to return to channels
+bool PatchReturnTo(void *Address, int Size, u32 id)
+{
+    if(!id)return 0;
+
+    //new __OSLoadMenu() (SM2.0 and higher)
+    u8 SearchPattern[12] = {0x38, 0x80, 0x00, 0x02, 0x38, 0x60, 0x00, 0x01, 0x38, 0xa0, 0x00, 0x00};
+
+    //old _OSLoadMenu() (used in launch games)
+    u8 SearchPatternB[12] = { 0x38, 0xC0, 0x00, 0x02, 0x38, 0xA0, 0x00, 0x01, 0x38, 0xE0, 0x00, 0x00};
+
+    //identifier for the safe place
+    u8 SearchPattern2[12] = {0x4D, 0x65, 0x74, 0x72, 0x6F, 0x77, 0x65, 0x72, 0x6B, 0x73, 0x20, 0x54};
+
+    int found = 0;
+    int patched = 0;
+    u8 oldSDK = 0;
+    u32 ad[4] = {0, 0, 0, 0};
+
+    void *Addr = Address;
+    void *Addr_end = Address+Size;
+
+    while (Addr <= Addr_end - 12)
+	{
+		//find a safe place or the patch to hang out
+		if (! ad[3] && memcmp(Addr, SearchPattern2, 12)==0)
+		{
+			ad[3] = (u32)Addr + 0x30;
+//			gprintf("found a safe place @ %08x\n", ad[3]);
+			//hexdump(Addr, 0x50);
+		}
+		//find __OSLaunchMenu() and remember some addresses in it
+		else if (memcmp(Addr, SearchPattern, 12)==0)
+			ad[found++] = (u32)Addr;
+
+		else if (ad[0] && memcmp(Addr, SearchPattern, 8)==0) //after the first match is found, only search the first 8 bytes for the other 2
+		{
+			if(!ad[1]) ad[found++] = (u32)Addr;
+			else if(!ad[2]) ad[found++] = (u32)Addr;
+			if(found >= 3)break;
+		}
+		Addr += 4;
+    }
+    //check for the older-ass version of the SDK
+    if(found < 3 && ad[3])
+    {
+		Addr = Address;
+		ad[0] = 0; ad[1] = 0;
+		ad[2] = 0;
+		found = 0;
+		oldSDK = 1;
+
+		while (Addr <= Addr_end - 12)
+		{
+			//find __OSLaunchMenu() and remember some addresses in it
+			if (memcmp(Addr, SearchPatternB, 12)==0)
+				ad[found++] = (u32)Addr;
+
+			else if (ad[0] && memcmp(Addr, SearchPatternB, 8) == 0) //after the first match is found, only search the first 8 bytes for the other 2
+			{
+				if(!ad[1]) ad[found++] = (u32)Addr;
+				else if(!ad[2]) ad[found++] = (u32)Addr;
+				if(found >= 3)break;
+			}
+			Addr += 4;
+		}
+    }
+
+    //if the function is found and if it is not too far into the main.dol
+    if(found == 3 && (ad[2] - ad[3] < 0x1000001) && ad[3])
+    {
+//		gprintf("patch __OSLaunchMenu(0x00010001, 0x%08x)\n", id);
+		u32 nop = 0x60000000;
+
+		//the magic that writes the TID to the registers
+		u8 jump[20] = { 0x3C, 0x60, 0x00, 0x01, 0x60, 0x63, 0x00, 0x01,
+				  0x3C, 0x80, 0x4A, 0x4F, 0x60, 0x84, 0x44, 0x49,
+				  0x4E, 0x80, 0x00, 0x20 };
+		if(oldSDK)
+		{
+			jump[1] = 0xA0; //3CA00001 60A50001
+			jump[5] = 0xA5; //3CC04A4F 60C64449
+			jump[9] = 0xC0;
+			jump[13] = 0xC6;
+		}
+		//patch the thing to use the new TID
+		jump[10] = (u8)(id >> 24);
+		jump[11] = (u8)(id >> 16);
+		jump[14] = (u8)(id >> 8);
+		jump[15] = (u8)id;
+
+		void* addr = (u32*)ad[3];
+
+		//write new stuff to memory main.dol in a unused part of the main.dol
+		memcpy(addr, jump, sizeof(jump));
+
+		//ES_GetTicketViews()
+		u32 newval = (ad[3] - ad[0]);
+		newval &= 0x03FFFFFC;
+		newval |= 0x48000001;
+		addr = (u32*)ad[0];
+		memcpy(addr, &newval, sizeof(u32));
+		memcpy(addr + 4, &nop, sizeof(u32));
+//		gprintf("\t%p -> %08x\n", addr, newval);
+
+		//ES_GetTicketViews() again
+		newval = (ad[3] - ad[1]);
+		newval &= 0x03FFFFFC;
+		newval |= 0x48000001;
+		addr = (u32*)ad[1];
+		memcpy(addr, &newval, sizeof(u32));
+		memcpy(addr + 4, &nop, sizeof(u32));
+//		gprintf("\t%p -> %08x\n", addr, newval);
+
+		//ES_LaunchTitle()
+		newval = (ad[3] - ad[2]);
+		newval &= 0x03FFFFFC;
+		newval |= 0x48000001;
+		addr = (u32*)ad[2];
+		memcpy(addr, &newval, sizeof(u32));
+		memcpy(addr + 4, &nop, sizeof(u32));
+//		gprintf("\t%p -> %08x\n", addr, newval);
+
+		DCFlushRange(Address, Size);
+
+		patched = 1;
+    }
+    else
+    {
+//		gprintf("not patched\n");
+//		gprintf("found %d addresses\n", found);
+//		int i;
+//		for(i = 0; i< 4; i++)
+//		{
+//			gprintf("ad[%d]: %08x\n", i, ad[i]);
+//		}
+//		gprintf("offset : %08x\n", ad[2] - ad[3]);
+    }
+
+    return patched;
 }
 
 s32 IOSReloadBlock(u8 reqios)

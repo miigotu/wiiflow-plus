@@ -65,9 +65,7 @@ int LoadHomebrew(const char * filepath)
 
 	DCFlushRange((u8 *)buffer.get(), filesize);
 
-	s8 ret = CopyHomebrewMemory((u8*)buffer.get(), 0, filesize);
-
-	return ret;
+	return CopyHomebrewMemory((u8*)buffer.get(), 0, filesize);
 }
 
 static int SetupARGV(struct __argv * args)

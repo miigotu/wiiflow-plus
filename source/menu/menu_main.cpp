@@ -76,8 +76,8 @@ void CMenu::_showMain(void)
 	m_vid.set2DViewport(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480),
 		m_cfg.getInt("GENERAL", "tv_x", 0), m_cfg.getInt("GENERAL", "tv_y", 0));
 	_setBg(m_gameBg, m_gameBgLQ);
-	m_btnMgr.show(m_mainBtnConfig);
 	m_btnMgr.show(m_mainBtnInfo);
+	m_btnMgr.show(m_mainBtnConfig);
 	m_btnMgr.show(m_mainBtnQuit);
 
 	switch(m_current_view)
@@ -307,22 +307,25 @@ int CMenu::main(void)
 			//Events to Show Categories
 			if (m_btnMgr.selected(m_mainBtnFavoritesOn) || m_btnMgr.selected(m_mainBtnFavoritesOff))
 			{
-				if (m_current_view == COVERFLOW_USB) // Only supported in game mode (not for channels, since you don't have options for channels yet)
-				{
-					// Event handler to show categories for selection
-					_hideMain();
-					_CategorySettings();
-					_showMain();
-					m_curGameId = m_cf.getId();
-					_initCF();
-				}
+				// Event handler to show categories for selection
+				_hideMain();
+				_CategorySettings();
+				_showMain();
+				_initCF();
 			}
-			/*//Events to Switch off/on nand emu
+			//Events to Switch off/on nand emu
 			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb))
 			{
-				//switch to nand emu here.
+				m_cfg.setBool("NAND", "Disable_EMU", !m_cfg.getBool("NAND", "Disable_EMU", true));
+				gprintf("EmuNand is %s\n", m_cfg.getBool("NAND", "Disable_EMU", true) ? "Disabled" : "Enabled");
+				_hideMain();
+				//m_reload = true;
+				//break;
+				m_curGameId = m_cf.getId();
+				_loadList();
+				_showMain();
+				_initCF();
 			}
-			*/
 			else if (m_btnMgr.selected(m_mainBtnPrev))
 			{
 				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA) // && m_titles_loaded)
@@ -401,7 +404,7 @@ int CMenu::main(void)
 				if (m_current_view == COVERFLOW_USB) 
 				{
 					m_current_view = COVERFLOW_CHANNEL;
-					m_category = 0;
+					m_category = m_cat.getInt("GENERAL", "channel_category", 0);
 
 					if(!m_locked && show_homebrew)
 						m_btnMgr.show(m_mainBtnHomebrew, true);
@@ -414,20 +417,20 @@ int CMenu::main(void)
 					if(!m_locked && show_homebrew)
 					{
 						m_current_view = COVERFLOW_HOMEBREW;
-						m_category = 0;
+						m_category = m_cat.getInt("GENERAL", "homebrew_category", 0);
 						m_btnMgr.show(m_mainBtnUsb, true);
 					}
 					else
 					{
 						m_current_view = COVERFLOW_USB;
-						m_category = m_cat.getInt("GENERAL", "category", 0);
+						m_category = m_cat.getInt("GENERAL", "games_category", 0);
 						m_btnMgr.show(m_mainBtnChannel, true);
 					}
 				}
 				else if (m_current_view == COVERFLOW_HOMEBREW)
 				{
 					m_current_view = COVERFLOW_USB;
-					m_category = m_cat.getInt("GENERAL", "category", 0);
+					m_category = m_cat.getInt("GENERAL", "homebrew_category", 0);
 					m_btnMgr.show(m_mainBtnChannel, true);
 				}
 				_loadList();
@@ -536,8 +539,8 @@ int CMenu::main(void)
 		{
 			m_btnMgr.show(m_mainLblUser[0]);
 			m_btnMgr.show(m_mainLblUser[1]);
-			m_btnMgr.show(m_mainBtnConfig);
 			m_btnMgr.show(m_mainBtnInfo);
+			m_btnMgr.show(m_mainBtnConfig);
 			m_btnMgr.show(m_mainBtnQuit);
 			static bool change = m_favorites;
 			m_btnMgr.show(m_favorites ? m_mainBtnFavoritesOn : m_mainBtnFavoritesOff, change != m_favorites);

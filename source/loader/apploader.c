@@ -116,7 +116,7 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 	return 0;
 }
 
-static void PatchCountryStrings(void *Address, int Size)
+void PatchCountryStrings(void *Address, int Size)
 {
 	u8 SearchPattern[4] = {0x00, 0x00, 0x00, 0x00};
 	u8 PatchData[4] = {0x00, 0x00, 0x00, 0x00};

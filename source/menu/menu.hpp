@@ -353,8 +353,6 @@ private:
 	u32 m_gameSettingsLblHooktypeVal;
 	u32 m_gameSettingsBtnHooktypeM;
 	u32 m_gameSettingsBtnHooktypeP;
-	u32 m_gameSettingsBtnDvdPatch;
-	u32 m_gameSettingsLblDvdPatch;
 	u32 m_gameSettingsBtnReturnTo;
 	u32 m_gameSettingsLblReturnTo;
 	u32 m_gameSettingsLblDebugger;

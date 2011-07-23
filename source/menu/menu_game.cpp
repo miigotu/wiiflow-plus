@@ -21,6 +21,7 @@
 #include "gui/WiiMovie.hpp"
 #include "gui/WiiTDB.hpp"
 #include "channels.h"
+#include "nand.hpp"
 #include "alt_ios.h"
 #include "gecko.h"
 #include "homebrew.h"
@@ -450,17 +451,11 @@ void CMenu::_game(bool launch)
 				b = m_gcfg1.getBool("ADULTONLY", id, false);
 				m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
 				m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
+				m_btnMgr.show(m_gameBtnSettings);
 			}
 
-			if (m_current_view == COVERFLOW_USB)
-			{
-	
-				if (!m_locked)
-				{
-					m_btnMgr.show(m_gameBtnDelete);
-					m_btnMgr.show(m_gameBtnSettings);
-				}
-			}
+			if (m_current_view == COVERFLOW_USB && !m_locked)
+				m_btnMgr.show(m_gameBtnDelete);
 		}
 		else
 		{
@@ -556,26 +551,77 @@ void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> argum
 
 void CMenu::_launchChannel(dir_discHdr *hdr)
 {
-	string id = string((const char *) hdr->hdr.id);
+	Channels channel;
+	u32 *data = channel.Load(hdr->hdr.chantitle, (char *)hdr->hdr.id);
+	if(data != NULL)
+	{
+	/*	videooption=gameList[orden[selectedGame]].videoMode;
+		videopatchoption=gameList[orden[selectedGame]].videoPatch;
+		languageoption=gameList[orden[selectedGame]].language-1;
+		hooktypeoption=gameList[orden[selectedGame]].hooktype;
+		ocarinaoption=gameList[orden[selectedGame]].ocarina;
+		debuggeroption=gameList[orden[selectedGame]].debugger;			
+		bootmethodoption=gameList[orden[selectedGame]].bootMethod; */
 
-	m_cfg.setString("GENERAL", "current_channel", id);
-	m_gcfg2.setInt("PLAYCOUNT", id, m_gcfg2.getInt("PLAYCOUNT", id, 0) + 1);
-	m_gcfg2.setUInt("LASTPLAYED", id, time(NULL));
-	
-	if (has_enabled_providers() && _initNetwork() == 0)
-		add_game_to_card(id.c_str());
-	
-	m_gcfg1.save();
-	m_gcfg2.save();
-	m_cat.save();
-	m_cfg.save();
+		string id = string((const char *) hdr->hdr.id);
 
-	//COVER_clear();
-	
-	cleanup();
-	Close_Inputs();
-	USBStorage_Deinit();
-	WII_LaunchTitle(hdr->hdr.chantitle);
+		bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
+		bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("GENERAL", "cheat", false));
+		bool countryPatch = m_gcfg2.testOptBool(id, "country_patch", m_cfg.getBool("GENERAL", "country_patch", false));
+		u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
+		int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
+		const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
+
+		u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
+		hooktype = 0; //(u32) m_gcfg2.getInt(id, "hooktype", 1);
+		debuggerselect = m_gcfg2.getBool(id, "debugger", false) ? 1 : 0;
+
+		if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
+		if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
+
+		m_cfg.setString("GENERAL", "current_channel", id);
+		m_gcfg2.setInt("PLAYCOUNT", id, m_gcfg2.getInt("PLAYCOUNT", id, 0) + 1);
+		m_gcfg2.setUInt("LASTPLAYED", id, time(NULL));
+
+		if (rtrn != NULL && strlen(rtrn) == 4)
+		{			
+			int rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
+			
+			static ioctlv vector[1] __attribute__((aligned(0x20)));			
+			sm_title_id = (((u64)(0x00010001) << 32) | (rtrnID&0xFFFFFFFF));
+			
+			vector[0].data = &sm_title_id;
+			vector[0].len = 8;
+			
+			s32 ESHandle = IOS_Open("/dev/es", 0);
+			gprintf("Return to channel %s. Using new d2x way\n", IOS_Ioctlv(ESHandle, 0xA1, 1, 0, vector) != -101 ? "Succeeded" : "Failed!" );
+			IOS_Close(ESHandle);
+		}
+			
+		if (has_enabled_providers() && _initNetwork() == 0)
+			add_game_to_card(id.c_str());
+		
+		m_gcfg1.save();
+		m_gcfg2.save();
+		m_cat.save();
+		m_cfg.save();
+
+		setLanguage(language);
+
+		SmartBuf cheatFile;
+		u32 cheatSize = 0;
+		if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
+		ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
+
+		CheckGameSoundThread(true);
+
+		cleanup();
+		Close_Inputs();
+		USBStorage_Deinit();
+
+		if(!channel.Launch(data, hdr->hdr.chantitle, videoMode, cheat, cheatSize, vipatch, countryPatch, patchVidMode))
+			Sys_LoadMenu();
+	}
 }
 
 void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
@@ -645,51 +691,8 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 1); // hooktype is defined in patchcode.h
 	debuggerselect = m_gcfg2.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
 
-	/* enable_ffs:
-	bit 0   -> 0 SD 1-> USB
-	bit 1-2 -> 0-> /nand, 1-> /nand2, 2-> /nand3, 3-> /nand4
-	bit 3   -> led on in save operations
-	bit 4-5 -> verbose level: 0-> disabled, 1-> logs from FAT operations, 2 -> logs FFS operations
-	bit 6   -> 0: diary to NAND 1: diary to device (used to block the diary for now)
-	bit 7   -> FFS emulation enabled/disabled
-
-	bit 8-9 -> Emulation mode: 0->default 1-> DLC redirected to device:/nand, 2-> Full Mode  3-> Full Mode with DLC redirected to device:/nand
-	*/
-/*
-	// NAND emulation settings
-	int nand_device = 1;
-	int nand_dir = 0;
-	int led_on_save = 1;
-	int verbose = 3;
-	int playlog = m_cfg.getBool("GENERAL", "write_playlog", true) ? 0 : 1;
-	int ffs_emulation = 0;
-	int emulation_mode = 3;
-	
-	m_gcfg2.getInt(id, "nand_emulation", &ffs_emulation);
-	m_gcfg2.getInt(id, "nand_emulation_device", &nand_device);
-	m_gcfg2.getInt(id, "nand_dir", &nand_dir);
-
-	ffs_emulation = 1;
-	nand_device = 1;
-	nand_dir = 0;
-
-	global_mount |= 2; // USB Device (2 for SD)
-	global_mount |= 128; // Enable emulation
-
-	int nand_mode = (nand_device & 1) | 
-					(nand_dir << 1) | 
-					(led_on_save << 3) | 
-					(verbose << 4) | 
-					(playlog << 6) | 
-					(ffs_emulation << 7) |
-					(emulation_mode << 8);
-*/
 	if (id == "RPWE41" || id == "RPWZ41" || id == "SPXP41") // Prince of Persia, Rival Swords
-	{
-		//cheat = false;
-		//hooktype = 0;
 		debuggerselect = false;
-	}
 
 	SmartBuf cheatFile, gameconfig;
 	u32 cheatSize = 0, gameconfigSize = 0;
@@ -807,7 +810,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	else 
 	{
 		gprintf("Booting game\n");
-		if (Disc_WiiBoot(dvd, videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, patchVidMode, 0) < 0)
+		if (Disc_WiiBoot(videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, patchVidMode, 0) < 0)
 			Sys_LoadMenu();
 	}
 }

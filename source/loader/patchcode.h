@@ -33,6 +33,7 @@ u32 regionfree;
 
 // Function prototypes
 bool dogamehooks(void *addr, u32 len);
+bool dochannelhooks(void *addr, u32 len, bool bootcontentloaded);
 void langpatcher(void *addr, u32 len);
 void vidolpatcher(void *addr, u32 len);
 void patchdebug(void *addr, u32 len);

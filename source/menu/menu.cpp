@@ -17,6 +17,7 @@
 #include "music/SoundHandler.hpp"
 #include "fs.h"
 #include "U8Archive.h"
+#include "nand.hpp"
 
 // Sounds
 extern const u8 click_wav[];
@@ -1463,9 +1464,64 @@ const wstringEx CMenu::_fmt(const char *key, const wchar_t *def)
 
 bool CMenu::_loadChannelList(void)
 {
+	currentPartition = m_cfg.getInt("NAND", "nand_partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
+	static u8 lastPartition = currentPartition;
+
+	bool disable_emu = m_cfg.getBool("NAND", "Disable_EMU");
+	static bool last_emu_state = disable_emu;
 	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
-	
-	m_channels.Init(0, langCode);
+
+	static bool first = true;
+	bool changed = lastPartition != currentPartition || last_emu_state != disable_emu || first;
+
+	gprintf("Getting channels from %s, which is %s\n", disable_emu ? "NAND" : DeviceName[currentPartition], changed ? "refreshing" : "cached");
+
+	u8 * sysconf;
+	u8 * facelib;
+	if(first)
+	{
+		u32 size;
+		char filepath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
+
+		sprintf(filepath, "/shared2/sys/SYSCONF");
+		sysconf = ISFS_GetFile((u8 *) &filepath, &size, -1);
+
+		FILE *fd = fopen("usb1:/SYSCONF", "wb");
+		fwrite(sysconf, 1, size, fd);
+		fclose(fd);
+		
+		sprintf(filepath, "/shared2/menu/FaceLib/RFL_DB.dat");
+		facelib = ISFS_GetFile((u8 *) &filepath, &size, -1);
+		
+		fd = fopen("usb1:/RFL_DB.dat", "wb");
+		fwrite(facelib, 1, size, fd);
+		fclose(fd);
+	}
+
+	if(changed)
+	{
+		Nand::Instance()->Disable_Emu();
+		if(!DeviceHandler::Instance()->IsInserted(lastPartition))
+			DeviceHandler::Instance()->Mount(lastPartition);
+
+		if(DeviceHandler::Instance()->IsInserted(currentPartition))
+			DeviceHandler::Instance()->UnMount(currentPartition);
+
+		Nand::Instance()->Set_Partition(disable_emu ? REAL_NAND : currentPartition == 0 ? currentPartition : currentPartition - 1);
+		Nand::Instance()->Set_NandPath(m_cfg.getString("NAND", "nand_path", "").c_str());
+		if(Nand::Instance()->Enable_Emu(disable_emu ? REAL_NAND : currentPartition == 0 ? EMU_SD : EMU_USB) < 0)
+		{
+			Nand::Instance()->Disable_Emu();
+			DeviceHandler::Instance()->Mount(currentPartition);
+		}
+		
+		first = false;
+	}
+
+	m_channels.Init(0, langCode, changed);
+	lastPartition = currentPartition;
+	last_emu_state = disable_emu;
+
 	u32 count = m_channels.Count();
 	u32 len = count * sizeof m_gameList[0];
 
