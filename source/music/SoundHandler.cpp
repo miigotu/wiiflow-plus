@@ -48,7 +48,7 @@ SoundHandler::SoundHandler()
         return;
 
 	LWP_CreateThread(&SoundThread, UpdateThread, this, ThreadStack, 32768, 80);
-	gprintf("SHND: Running sound thread\n");
+	//gprintf("SHND: Running sound thread\n");
 }
 
 SoundHandler::~SoundHandler()
@@ -186,8 +186,8 @@ SoundDecoder * SoundHandler::GetSoundDecoder(const char * filepath)
     f.read((u8 *) &magic, 4);
     f.close();
 
-	gprintf("SHND: Searching decoder for magic\n");
-	ghexdump((u8 *) &magic, 4);
+/* 	gprintf("SHND: Searching decoder for magic\n");
+	ghexdump((u8 *) &magic, 4); */
 
     if(magic == 'OggS')
     {

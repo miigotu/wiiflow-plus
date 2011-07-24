@@ -37,7 +37,6 @@ u32 CMenu::_downloadCheatFileAsync(void *obj)
 	m->_setThrdMsg(m->_t("cfgg23", L"Downloading cheat file..."), 0);
 	LWP_MutexUnlock(m->m_mutex);
 
-	
 	if (m->_initNetwork() < 0)
 	{
 		m->m_thrdWorking = false;
@@ -51,12 +50,12 @@ u32 CMenu::_downloadCheatFileAsync(void *obj)
 		m->m_thrdWorking = false;
 		return -2;
 	}
-	
+
 	block cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m->m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, m);
 
-	if (cheatfile.data != NULL && cheatfile.size > 65 && cheatfile.data[0] != '<') {
-		// cheat file was downloaded (404's will now return emptybuffer)
-			FILE *file = fopen(fmt("%s/%s.txt", m->m_txtCheatDir.c_str(), m->m_cf.getId().c_str()), "wb");
+	if (cheatfile.data != NULL && cheatfile.size > 65 && cheatfile.data[0] != '<')
+	{
+		FILE *file = fopen(fmt("%s/%s.txt", m->m_txtCheatDir.c_str(), m->m_cf.getId().c_str()), "wb");
 				
 		if (file != NULL)
 		{

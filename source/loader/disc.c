@@ -355,7 +355,7 @@ s32 Disc_IsGC(void)
 	return Disc_Type(1);
 }
 
-s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidMode, u8 ios)
+s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode, u8 ios)
 {
 	entry_point p_entry;
 
@@ -372,12 +372,12 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	__Disc_SelectVMode(vidMode, 0);
 
 	/* Run apploader */
-	ret = Apploader_Run(&p_entry, cheat != 0, vidMode, vmode, vipatch, countryString, patchVidMode, ios);
+	ret = Apploader_Run(&p_entry, vidMode, vmode, vipatch, countryString, patchVidMode, ios);
 	free_wip();
 	
 	if (ret < 0) return ret;
 
-	if (cheat != 0 && hooktype != 0)
+	if (hooktype != 0)
 		ocarina_do_code();
 
 //	DCFlushRange((void*)0x80000000, 0xA00000);
@@ -413,7 +413,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	
 	gprintf("Jumping to entrypoint\n");
 	
-	if (cheat != 0)
+	if (hooktype != 0)
 	{
 		__asm__(
 			"lis %r3, appentrypoint@h\n"
@@ -443,7 +443,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, const u8 *cheat, u32 cheatSize, b
 	return 0;
 }
 
-s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidModes, u8 ios)
+s32 Disc_WiiBoot(u8 vidMode, bool vipatch, bool countryString, u8 patchVidModes, u8 ios)
 {
 	u64 offset;
 
@@ -452,5 +452,5 @@ s32 Disc_WiiBoot(u8 vidMode, const u8 *cheat, u32 cheatSize, bool vipatch, bool 
 	if (ret < 0) return ret;
 
 	/* Boot partition */
-	return Disc_BootPartition(offset, vidMode, cheat, cheatSize, vipatch, countryString, patchVidModes, ios);
+	return Disc_BootPartition(offset, vidMode, vipatch, countryString, patchVidModes, ios);
 }

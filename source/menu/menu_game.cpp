@@ -573,7 +573,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
 
 		u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
-		hooktype = 0; //(u32) m_gcfg2.getInt(id, "hooktype", 1);
+		hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 1);
 		debuggerselect = m_gcfg2.getBool(id, "debugger", false) ? 1 : 0;
 
 		if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
@@ -619,7 +619,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		Close_Inputs();
 		USBStorage_Deinit();
 
-		if(!channel.Launch(data, hdr->hdr.chantitle, videoMode, cheat, cheatSize, vipatch, countryPatch, patchVidMode))
+		if(!channel.Launch(data, hdr->hdr.chantitle, videoMode, vipatch, countryPatch, patchVidMode))
 			Sys_LoadMenu();
 	}
 }
@@ -718,11 +718,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if (!dvd && get_frag_list((u8 *) hdr->hdr.id, (char *) hdr->path, sector_size) < 0)
 		return;
 
-	#ifdef DBG_FRAG
-	extern FragList *frag_list;
-	frag_dump(frag_list);
-	#endif /* DBG_FRAG */
-
 	if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
 
 	_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt");
@@ -753,12 +748,11 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		Sys_LoadMenu();
 	}
 
-	int rtrnID = 0;
-	
-	if (!m_directLaunch) {
+	if (!m_directLaunch)
+	{
 		if (rtrn != NULL && strlen(rtrn) == 4)
 		{			
-			rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
+			int rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
 			
 			static ioctlv vector[1] __attribute__((aligned(0x20)));			
 
@@ -768,13 +762,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 			vector[0].len = 8;
 			
 			s32 ESHandle = IOS_Open("/dev/es", 0);
-
-			int ret = IOS_Ioctlv(ESHandle, 0xA1, 1, 0, vector);
-			if (ret!=-101)
-				gprintf("Return to channel enabled. Using new d2x way\n");
-			else
-				gprintf("Return to channel failed\n");
-				
+			gprintf("Return to channel %s. Using new d2x way\n", IOS_Ioctlv(ESHandle, 0xA1, 1, 0, vector) != -101 ? "succeeded" : "failed!");
 			IOS_Close(ESHandle);
 		}
 	}
@@ -810,7 +798,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	else 
 	{
 		gprintf("Booting game\n");
-		if (Disc_WiiBoot(videoMode, cheatFile.get(), cheatSize, vipatch, countryPatch, patchVidMode, 0) < 0)
+		if (Disc_WiiBoot(videoMode, vipatch, countryPatch, patchVidMode, gameIOS) < 0)
 			Sys_LoadMenu();
 	}
 }

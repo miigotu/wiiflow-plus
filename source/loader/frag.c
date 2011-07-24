@@ -264,9 +264,9 @@ int set_frag_list(u8 *id)
 	int size = sizeof(Fragment) * (frag_list->num + 1);
 	DCFlushRange(frag_list, size);
 
-	gprintf("Calling WDVD_SetFragList, frag list size %d\n", size);
+/* 	gprintf("Calling WDVD_SetFragList, frag list size %d\n", size);
 	if (size > 400) ghexdump(frag_list, 400);
-	else ghexdump(frag_list, size);
+	else ghexdump(frag_list, size); */
 
 	int ret = WDVD_SetFragList(wbfsDev, frag_list, size);
 	if (ret) return ret;

@@ -13,17 +13,6 @@
 #include "sys.h"
 #include "gecko.h"
 
-typedef struct _SPatchCfg
-{
-	bool cheat;
-	u8 vidMode;
-	GXRModeObj *vmode;
-	bool vipatch;
-	bool countryString;
-	u8 patchVidModes;
-	u8 patchDiscCheck;
-} SPatchCfg;
-
 /* Apploader function pointers */
 typedef int   (*app_main)(void **dst, int *size, int *offset);
 typedef void  (*app_init)(void (*report)(const char *fmt, ...));
@@ -33,14 +22,13 @@ typedef void  (*app_entry)(void (**init)(void (*report)(const char *fmt, ...)), 
 /* Apploader pointers */
 static u8 *appldr = (u8 *)0x81200000;
 
-
 /* Constants */
 #define APPLDR_OFFSET	0x2440
 
 /* Variables */
 static u32 buffer[0x20] ATTRIBUTE_ALIGN(32);
 
-static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes);
+static bool maindolpatches(void *dst, int len, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes);
 static bool Remove_001_Protection(void *Address, int Size);
 static bool PrinceOfPersiaPatch();
 
@@ -48,7 +36,7 @@ static void __noprint(const char *fmt, ...)
 {
 }
 
-s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes, u8 gameIOS)
+s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes, u8 gameIOS)
 {
 	void *dst = NULL;
 	int len = 0;
@@ -88,25 +76,31 @@ s32 Apploader_Run(entry_point *entry, bool cheat, u8 vidMode, GXRModeObj *vmode,
 	u32 dolStart = 0x90000000;
 	u32 dolEnd = 0;
 	
+	bool hookpatched = false;
+
 	while (appldr_main(&dst, &len, &offset))
 	{
 		/* Read data from DVD */
 		WDVD_Read(dst, len, (u64)(offset << 2));
-		maindolpatches(dst, len, cheat, vidMode, vmode, vipatch, countryString, patchVidModes);
+		if(maindolpatches(dst, len, vidMode, vmode, vipatch, countryString, patchVidModes))
+			hookpatched = true;
 		
 		if ((u32) dst < dolStart) dolStart = (u32) dst;
 		if ((u32) dst + len > dolEnd) dolEnd = (u32) dst + len;
 	}
+
+	if (hooktype != 0 && !hookpatched)
+	{
+		gprintf("Error: Could not patch the hook\n");
+		gprintf("Ocarina and debugger won't work\n");
+	}
+	
 	PrinceOfPersiaPatch();
 
 	/* Set entry point from apploader */
 	*entry = appldr_final();
 	
-	if(gameIOS != 0)
-	{
-		gprintf("Block IOS reload for D2X, rev %d", IOS_GetRevision() % 100);
-		IOSReloadBlock(gameIOS);
-	}
+	IOSReloadBlock(gameIOS);
 
 	/* ERROR 002 fix (WiiPower) */
 	*(u32 *)0x80003140 = *(u32 *)0x80003188;
@@ -257,13 +251,15 @@ bool NewSuperMarioBrosPatch(void *Address, int Size)
 	return false;
 }
 
-static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes)
+static bool maindolpatches(void *dst, int len, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes)
 {
+	bool ret = false;
+
 	DCFlushRange(dst, len);
 
 	patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
 
-	if (cheat) dogamehooks(dst, len);
+	if (hooktype != 0) ret = dogamehooks(dst, len, false, false);
 	if (vipatch) vidolpatcher(dst, len);
 	if (configbytes[0] != 0xCD) langpatcher(dst, len);
 	if (countryString) PatchCountryStrings(dst, len); // Country Patch by WiiPower
@@ -276,6 +272,8 @@ static void maindolpatches(void *dst, int len, bool cheat, u8 vidMode, GXRModeOb
 	do_wip_code((u8 *) dst, len);
 	
 	DCFlushRange(dst, len);
+
+	return ret;
 }
 
 static bool Remove_001_Protection(void *Address, int Size)

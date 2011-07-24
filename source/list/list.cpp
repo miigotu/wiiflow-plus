@@ -81,7 +81,7 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 template <>
 void CList<string>::GetHeaders(safe_vector<string> pathlist, safe_vector<string> &headerlist, string, string)
 {
-	gprintf("Getting headers for CList<string>\n");
+	//gprintf("Getting headers for CList<string>\n");
 
 	if(pathlist.size() < 1) return;
 	headerlist.reserve(pathlist.size() + headerlist.size());

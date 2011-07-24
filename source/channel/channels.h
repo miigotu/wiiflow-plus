@@ -55,7 +55,7 @@ class Channels
 		void Init(u32 channelType, string lang, bool reload = false);
 		
 		u32 * Load(u64 title, char* id);
-		bool Launch(u32 *data, u64 chantitle, u8 vidMode, bool cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidMode);
+		bool Launch(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode);
 		
 		int Count();
 		wchar_t *GetName(int index);

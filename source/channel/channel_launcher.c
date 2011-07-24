@@ -15,15 +15,15 @@
 #include "utils.h"
 #include "fs.h"
 #include "gecko.h"
-#include "certs.h"
 
-bool bootcontent_used = false;
-void _unstub_start();
 GXRModeObj * __Disc_SelectVMode(u8 videoselected, u64 chantitle);
 void PatchCountryStrings(void *Address, int Size);
 void __Disc_SetVMode(void);
 void __Disc_SetTime(void);
+void _unstub_start();
 	
+bool bootcontent_used = false;
+
 typedef void (*entrypoint) (void);
 
 typedef struct _dolheader{
@@ -40,7 +40,7 @@ typedef struct _dolheader{
 
 u32 entryPoint;
 
-s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidMode)
+s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode)
 {
 	entryPoint = LoadChannel(data);
 	SAFE_FREE(data);
@@ -77,7 +77,7 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool cheat, u32 cheatSize,
 	if (hooktype != 0)
 		ocarina_do_code();
 
-	PatchChannel(cheat, vidMode, vmode, vipatch, countryString, patchVidMode);
+	PatchChannel(vidMode, vmode, vipatch, countryString, patchVidMode);
 
 	//gprintf("Loading complete, booting...\n");
 
@@ -112,39 +112,39 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool cheat, u32 cheatSize,
 				"ori %r3, %r3, 0x18A8\n"
 				"mtctr %r3\n"
 				"bctr\n"
-				);
-						
-		} else  appJump();	
+			);
+		}
+		else  appJump();	
 	}
  	else if (hooktype != 0)
 	{
 		__asm__(
-					"lis %r3, returnpoint@h\n"
-					"ori %r3, %r3, returnpoint@l\n"
-					"mtlr %r3\n"
-					"lis %r3, 0x8000\n"
-					"ori %r3, %r3, 0x18A8\n"
-					"mtctr %r3\n"
-					"bctr\n"
-					"returnpoint:\n"
-					"bl DCDisable\n"
-					"bl ICDisable\n"
-					"li %r3, 0\n"
-					"mtsrr1 %r3\n"
-					"lis %r4, entryPoint@h\n"
-					"ori %r4,%r4,entryPoint@l\n"
-					"lwz %r4, 0(%r4)\n"
-					"mtsrr0 %r4\n"
-					"rfi\n"
-					);
+			"lis %r3, returnpoint@h\n"
+			"ori %r3, %r3, returnpoint@l\n"
+			"mtlr %r3\n"
+			"lis %r3, 0x8000\n"
+			"ori %r3, %r3, 0x18A8\n"
+			"mtctr %r3\n"
+			"bctr\n"
+			"returnpoint:\n"
+			"bl DCDisable\n"
+			"bl ICDisable\n"
+			"li %r3, 0\n"
+			"mtsrr1 %r3\n"
+			"lis %r4, entryPoint@h\n"
+			"ori %r4,%r4,entryPoint@l\n"
+			"lwz %r4, 0(%r4)\n"
+			"mtsrr0 %r4\n"
+			"rfi\n"
+		);
 	}
 	else _unstub_start();
 
 	return 0;
 }
 
-void*	dolchunkoffset[64];		//TODO: variable size
-u32		dolchunksize[64];		//TODO: variable size
+void*	dolchunkoffset[18];
+u32		dolchunksize[18];
 u32		dolchunkcount;
 
 u32 LoadChannel(u32 *buffer)
@@ -161,79 +161,46 @@ u32 LoadChannel(u32 *buffer)
 	
     //gprintf("BSS cleared\n");
 	
-	u32 doloffset;
-	u32 memoffset;
-	u32 restsize;
-	u32 size;
-
 	int i;
-	for (i = 0; i < 7; i++)
-	{	
+ 	for (i = 0; i < 7; i++)
+	{
+		if ((!dolfile->text_size[i]) || (dolfile->text_start[i] < 0x100)) continue;
 		if(dolfile->text_pos[i] < sizeof(dolheader))
 			continue;
-	    
+
 		dolchunkoffset[dolchunkcount] = (void *)dolfile->text_start[i];
 		dolchunksize[dolchunkcount] = dolfile->text_size[i];
-		dolchunkcount++;
+
+		gprintf("Moving text section %u from offset %08x to %08x-%08x...\n", i, dolfile->text_pos[i], dolchunkoffset[dolchunkcount], dolchunkoffset[dolchunkcount]+dolchunksize[dolchunkcount]);
+
+		memmove (dolchunkoffset[dolchunkcount], (void *)buffer + dolfile->text_pos[i], dolchunksize[dolchunkcount]);
+		DCFlushRange (dolchunkoffset[dolchunkcount], dolchunksize[dolchunkcount]);
+		ICInvalidateRange (dolchunkoffset[dolchunkcount],dolchunksize[dolchunkcount]);
 		
-		doloffset = (u32)buffer + dolfile->text_pos[i];
-		memoffset = dolfile->text_start[i];
-		restsize = dolfile->text_size[i];
-
-		//gprintf("Moving text section %u from %08x to %08x-%08x...\n", i, dolfile->text_pos[i], dolfile->text_start[i], dolfile->text_start[i]+dolfile->text_size[i]);
-			
-		while (restsize > 0)
-		{
-			if (restsize > 2048)
-				size = 2048;
-			else
-				size = restsize;
-
-			restsize -= size;
-			ICInvalidateRange ((void *)memoffset, size);
-			memcpy((void *)memoffset, (void *)doloffset, size);
-			DCFlushRange((void *)memoffset, size);
-			
-			doloffset += size;
-			memoffset += size;
-		}
+		dolchunkcount++;
 	}
 
 	for(i = 0; i < 11; i++)
 	{
+		if ((!dolfile->data_size[i]) || (dolfile->data_start[i] < 0x100)) continue;
 		if(dolfile->data_pos[i] < sizeof(dolheader))
 			continue;
-		
+
 		dolchunkoffset[dolchunkcount] = (void *)dolfile->data_start[i];
-		dolchunksize[dolchunkcount] = dolfile->data_size[i];
+		dolchunksize[dolchunkcount] = dolfile->data_size[i];			
+
+		gprintf("Moving data section %u from offset %08x to %08x-%08x...\n", i, dolfile->data_pos[i], dolchunkoffset[dolchunkcount], dolchunkoffset[dolchunkcount]+dolchunksize[dolchunkcount]);
+
+		memmove (dolchunkoffset[dolchunkcount], (void *)buffer + dolfile->data_pos[i], dolchunksize[dolchunkcount]);
+		DCFlushRange (dolchunkoffset[dolchunkcount], dolchunksize[dolchunkcount]);
+		ICInvalidateRange (dolchunkoffset[dolchunkcount],dolchunksize[dolchunkcount]);
+
 		dolchunkcount++;
-
-		doloffset = (u32)buffer + dolfile->data_pos[i];
-		memoffset = dolfile->data_start[i];
-		restsize = dolfile->data_size[i];
-
-		//gprintf("Moving data section %u from %08x to %08x-%08x...", i, dolfile->data_pos[i], dolfile->data_start[i], dolfile->data_start[i]+dolfile->data_size[i]);
-			
-		while (restsize > 0)
-		{
-			if (restsize > 2048)
-				size = 2048;
-			else
-				size = restsize;
-
-			restsize -= size;
-			ICInvalidateRange ((void *)memoffset, size);
-			memcpy((void *)memoffset, (void *)doloffset, size);
-			DCFlushRange((void *)memoffset, size);
-
-			doloffset += size;
-			memoffset += size;
-		}
 	}
 	return dolfile->entry_point;
 }
 
-void PatchChannel(bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes)
+void PatchChannel(u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes)
 {
 	int i;
 	bool hookpatched = false;
@@ -250,7 +217,7 @@ void PatchChannel(bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool 
 
 		// Before this can be done, the codehandler needs to be in memory, and the code to patch needs to be in the right pace
 		if (hooktype != 0)
-			if (dochannelhooks(dolchunkoffset[i], dolchunksize[i], bootcontent_used))
+			if (dogamehooks(dolchunkoffset[i], dolchunksize[i], true, bootcontent_used))
 				hookpatched = true;
 	}
 	if (hooktype != 0 && !hookpatched)
@@ -316,13 +283,9 @@ bool Identify(u64 titleid, u32 *ios)
 	if (certBuffer == NULL || certSize == 0)
 	{
 		gprintf("Reading certs...Failed!\n");
-		//SAFE_FREE(tmdBuffer);
-		//SAFE_FREE(tikBuffer);
-		//return false;
-
-		gprintf("Using compiled version!\n");
-		certBuffer = (u8 *)Certificates;
-		certSize = sizeof(Certificates);
+		SAFE_FREE(tmdBuffer);
+		SAFE_FREE(tikBuffer);
+		return false;
 	}
 	
 	s32 ret = ES_Identify((signed_blob*)certBuffer, certSize, (signed_blob*)tmdBuffer, tmdSize, tikBuffer, tikSize, NULL);
@@ -377,8 +340,6 @@ u32 * GetDol(u64 title, char *id, u32 *contentSize, u16 bootcontent, bool skip_b
 	bootcontent_used = !skip_bootcontent;
 
 	char filepath[ISFS_MAXPATH + 1];
-
-	// Write bootcontent to filepath and overwrite it in case another .dol is found
 	sprintf(filepath, "/title/%08x/%08x/content/%08x.app", TITLE_UPPER(title), TITLE_LOWER(title), bootcontent);
 	
 	if (skip_bootcontent) // skip_bootcontent to load without apploader
@@ -458,7 +419,6 @@ bool FindDol(u64 title, char *DolPath, u16 bootcontent)
 			u32 *data = (u32 *) ISFS_GetFile((u8 *) &path, &size, 6);
 			if (data != NULL && size == 6)
 			{
-	
 				if (isLZ77compressed((u8*)data))
 				{
 					gprintf("Found LZ77 %s compressed content --> %s\n", data[0] == 0x10 ? "0x10" : "0x11", namesBuffer);
@@ -492,7 +452,7 @@ bool FindDol(u64 title, char *DolPath, u16 bootcontent)
 				SAFE_FREE(data);
 			}
 		}
-		namesBuffer = namesBuffer + strlen(namesBuffer) + 1;
+		namesBuffer += strlen(namesBuffer) + 1;
 	}
 		
 	SAFE_FREE(holder);	

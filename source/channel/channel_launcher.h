@@ -11,10 +11,10 @@ extern "C" {
 #include <gctypes.h>
 #include <gccore.h>
 
-s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidMode);
+s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode);
 
 u32 LoadChannel(u32 *buffer);
-void PatchChannel(bool cheat, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes);
+void PatchChannel(u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes);
 
 u32 * GetDol(u64 title, char *id, u32 *contentSize, u16 bootcontent, bool skip_bootcontent);
 bool FindDol(u64 title, char *DolPath, u16 bootcontent);

@@ -27,16 +27,12 @@ extern "C" {
 #endif
 // Globals
 u32 hooktype;
-int patched;
 u8 configbytes[2];
-u32 regionfree;
 
 // Function prototypes
-bool dogamehooks(void *addr, u32 len);
-bool dochannelhooks(void *addr, u32 len, bool bootcontentloaded);
+bool dogamehooks(void *addr, u32 len, bool channel, bool bootcontentloaded);
 void langpatcher(void *addr, u32 len);
 void vidolpatcher(void *addr, u32 len);
-void patchdebug(void *addr, u32 len);
 s32 IOSReloadBlock(u8 reqios);
 
 #ifdef __cplusplus

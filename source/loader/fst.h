@@ -25,8 +25,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-//u32 do_fst(u32 fstlocation);
-//u32 do_sd_code(char *filename);
 
 extern u8 debuggerselect;
 

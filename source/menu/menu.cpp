@@ -408,7 +408,7 @@ void CMenu::_loadCFCfg(SThemeData &theme)
 {
 	const char *domain = "_COVERFLOW";
 
-	gprintf("Preparing to load sounds from %s\n", sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_flip").c_str()).c_str());
+	//gprintf("Preparing to load sounds from %s\n", m_themeDataDir.c_str());
 	m_cf.setCachePath(m_cacheDir.c_str(), !m_cfg.getBool("GENERAL", "keep_png", true), m_cfg.getBool("GENERAL", "compress_cache", false));
 	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
 	// Coverflow Sounds
@@ -1472,30 +1472,23 @@ bool CMenu::_loadChannelList(void)
 	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
 
 	static bool first = true;
+	bool failed = false;
+
 	bool changed = lastPartition != currentPartition || last_emu_state != disable_emu || first;
 
-	gprintf("Getting channels from %s, which is %s\n", disable_emu ? "NAND" : DeviceName[currentPartition], changed ? "refreshing" : "cached");
+	gprintf("%s, which is %s\n", disable_emu ? "NAND" : DeviceName[currentPartition], changed ? "refreshing." : "cached.");
 
-	u8 * sysconf;
-	u8 * facelib;
-	if(first)
+	u8 *sysconf = NULL, *meez = NULL;
+	u32 sysconf_size, meez_size;
+
+	char filepath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
+	if(first && !disable_emu)
 	{
-		u32 size;
-		char filepath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
-
 		sprintf(filepath, "/shared2/sys/SYSCONF");
-		sysconf = ISFS_GetFile((u8 *) &filepath, &size, -1);
-
-		FILE *fd = fopen("usb1:/SYSCONF", "wb");
-		fwrite(sysconf, 1, size, fd);
-		fclose(fd);
+		sysconf = ISFS_GetFile((u8 *) &filepath, &sysconf_size, -1);
 		
 		sprintf(filepath, "/shared2/menu/FaceLib/RFL_DB.dat");
-		facelib = ISFS_GetFile((u8 *) &filepath, &size, -1);
-		
-		fd = fopen("usb1:/RFL_DB.dat", "wb");
-		fwrite(facelib, 1, size, fd);
-		fclose(fd);
+		meez = ISFS_GetFile((u8 *) &filepath, &meez_size, -1);
 	}
 
 	if(changed)
@@ -1513,10 +1506,25 @@ bool CMenu::_loadChannelList(void)
 		{
 			Nand::Instance()->Disable_Emu();
 			DeviceHandler::Instance()->Mount(currentPartition);
+			failed = true;
 		}
+	}
+
+	if(first && !disable_emu && !failed)
+	{
+		s32 fd = ISFS_Open(filepath, ISFS_OPEN_WRITE);
+		ISFS_Write(fd, meez, meez_size);		
+		ISFS_Close(fd);
+
+		sprintf(filepath, "/shared2/sys/SYSCONF");
+		fd = ISFS_Open(filepath, ISFS_OPEN_WRITE);
+		ISFS_Write(fd, sysconf, sysconf_size);
+		ISFS_Close(fd);
 		
 		first = false;
 	}
+	SAFE_FREE(meez);
+	SAFE_FREE(sysconf);
 
 	m_channels.Init(0, langCode, changed);
 	lastPartition = currentPartition;
@@ -1553,22 +1561,22 @@ bool CMenu::_loadList(void)
 	m_cf.clear();
 	m_gameList.clear();
 
-	gprintf("Loading items of view %d\n", m_current_view);
+	gprintf("Loading items of ");
 
 	bool retval;
 	switch(m_current_view)
 	{
 		case COVERFLOW_CHANNEL:
-			gprintf("View = channel\n");
+			gprintf("channel view from ");
 			retval = _loadChannelList();
 			break;
 		case COVERFLOW_HOMEBREW:
-			gprintf("View = homebrew\n");
+			gprintf("homebrew view from ");
 			retval = _loadHomebrewList();
 			break;
 		case COVERFLOW_USB:
 		default:
-			gprintf("View = usb\n");
+			gprintf("usb view from ");
 			retval = _loadGameList();
 			break;
 	}
@@ -1579,7 +1587,7 @@ bool CMenu::_loadList(void)
 bool CMenu::_loadGameList(void)
 {
 	currentPartition = m_cfg.getInt("GENERAL", "partition", 1);
-	gprintf("Opening partition %d\n", currentPartition);
+	gprintf("%s\n", DeviceName[currentPartition]);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
 	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso");
 	return m_gameList.size() > 0 ? true : false;
@@ -1588,6 +1596,7 @@ bool CMenu::_loadGameList(void)
 bool CMenu::_loadHomebrewList()
 {
 	currentPartition = m_cfg.getInt("GENERAL", "homebrew_partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
+	gprintf("%s\n", DeviceName[currentPartition]);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
 	m_gameList.Load(sfmt(HOMEBREW_DIR, DeviceName[currentPartition]), ".dol");
 	return m_gameList.size() > 0 ? true : false;
@@ -1728,7 +1737,7 @@ void CMenu::_loadDefaultFont(bool korean)
 	u8 *content = ISFS_GetFile((u8 *) "/shared1/content.map", &size, 0);
 	int items = size / sizeof(map_entry_t);
 		
-	gprintf("Open content.map, size %d, items %d\n", size, items);
+	//gprintf("Open content.map, size %d, items %d\n", size, items);
 
 retry:	
 	bool kor_font = (korean && !retry) || (!korean && retry);
@@ -1744,13 +1753,13 @@ retry:
 			
 			u8 *u8_font_archive = ISFS_GetFile((u8 *) u8_font_filename, &size, 0);
 			
-			gprintf("Opened fontfile: %s: %d bytes\n", u8_font_filename, size);
+			//gprintf("Opened fontfile: %s: %d bytes\n", u8_font_filename, size);
 			
 			if (u8_font_archive != NULL)
 			{
 				const u8 *font_file = u8_get_file_by_index(u8_font_archive, 1, &size); // There is only one file in that app
 				
-				gprintf("Extracted font: %d\n", size);
+				//gprintf("Extracted font: %d\n", size);
 				
 				base_font = smartAnyAlloc(size);
 				memcpy(base_font.get(), font_file, size);

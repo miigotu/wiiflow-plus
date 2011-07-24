@@ -34,7 +34,6 @@
 #include <ogc/wiilaunch.h>
 #include <ogc/es.h>
 
-#include "certs.h"
 #include "channels.h"
 #include "banner.h"
 #include "wstringEx.hpp"
@@ -89,9 +88,9 @@ u32 * Channels::Load(u64 title, char *id)
 	return GetDol(title, id, &Size, bootcontent, false);	
 }
 
-bool Channels::Launch(u32 *data, u64 chantitle, u8 vidMode, bool cheat, u32 cheatSize, bool vipatch, bool countryString, u8 patchVidMode)
+bool Channels::Launch(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode)
 {
-	return BootChannel(data, chantitle, vidMode, cheat, cheatSize, vipatch, countryString, patchVidMode);
+	return BootChannel(data, chantitle, vidMode, vipatch, countryString, patchVidMode);
 }
 
 u64* Channels::GetChannelList(u32* count)
@@ -120,14 +119,13 @@ u64* Channels::GetChannelList(u32* count)
 
 		if (type == DOWNLOADED_CHANNELS || type == SYSTEM_CHANNELS)
 		{
-			if (TITLE_LOWER(titles[i]) == RF_NEWS_CHANNEL ||	// skip region free news and forecast channel
+ 			if (TITLE_LOWER(titles[i]) == RF_NEWS_CHANNEL ||	// skip region free news and forecast channel
 				TITLE_LOWER(titles[i]) == RF_FORECAST_CHANNEL)
 				continue;
 
 			channels[(*count)++] = titles[i];
 		}
 	}
-
 	SAFE_FREE(titles);
 
 	return (u64*)realloc(channels, *count * sizeof(u64));
@@ -155,7 +153,7 @@ bool Channels::GetAppNameFromTmd(u64 title, char* app, bool dol, u16* bootconten
 				struct _tmd * tmd_file = (struct _tmd *) SIGNATURE_PAYLOAD(data);
 				*bootcontent = tmd_file->contents[tmd_file->boot_index].cid;
 				sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, (u32)*bootcontent);
-				gprintf("Dol-App Path: %s\n", app);
+				//gprintf("Dol-App Path: %s\n", app);
 				ret = true;
 			}
 			else
@@ -167,7 +165,7 @@ bool Channels::GetAppNameFromTmd(u64 title, char* app, bool dol, u16* bootconten
 						break;
 
 				sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, tmd_file->contents[i].cid);
-				gprintf("Banner-App Path: %s\n", app);
+				//gprintf("Banner-App Path: %s\n", app);
 				ret = true;
 			}
 		}
@@ -228,8 +226,6 @@ void Channels::Search(u32 channelType, string lang)
 	u32 count;
 	u64* list = GetChannelList(&count);
 	if (!list) return;
-
-	ES_Identify((u32*)Certificates, sizeof(Certificates), (u32*)Tmd, sizeof(Tmd), (u32*)Ticket, sizeof(Ticket), 0);
 
 	int language = lang.size() == 0 ? CONF_GetLanguage() : GetLanguage(lang.c_str());
 

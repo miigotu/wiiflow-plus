@@ -1787,7 +1787,7 @@ void CCoverFlow::_playSound(void)
 		sndCopyNum++;
 		if(sndCopyNum == 4) sndCopyNum = 0;
 		_playSound( m_sound[sndCopyNum] );
-		gprintf("\n\nPlaying flipsound copy # %u\n\n", sndCopyNum);
+		//gprintf("\n\nPlaying flipsound copy # %u\n\n", sndCopyNum);
 	}
 }
 

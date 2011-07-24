@@ -472,9 +472,7 @@ int ocarina_load_code(u8 *id, const u8 *cheat, u32 cheatSize)
 	return code_size;
 }
 
-//---------------------------------------------------------------------------------
 void app_pokevalues()
-//---------------------------------------------------------------------------------
 {
 	u32 i, *codeaddr, *codeaddr2, *addrfound = NULL;
 
@@ -523,66 +521,33 @@ void app_pokevalues()
 	}
 }
 
-
-//---------------------------------------------------------------------------------
 void load_handler()
-//---------------------------------------------------------------------------------
 {
 	if (hooktype != 0x00)
 	{
 		if (debuggerselect == 0x01)
 		{
-			gprintf("Debbugger selected is gecko");
-			/*switch(gecko_channel)
-			{
-				case 0: // Slot A
-
-					memset((void*)0x80001800,0,codehandlerslota_size);
-					memcpy((void*)0x80001800,codehandlerslota,codehandlerslota_size);
-					if (pausedstartoption == 0x01)
-						*(u32*)0x80002798 = 1;
-					memcpy((void*)0x80001CDE, &codelist, 2);
-					memcpy((void*)0x80001CE2, ((u8*) &codelist) + 2, 2);
-					memcpy((void*)0x80001F7E, &codelist, 2);
-					memcpy((void*)0x80001F82, ((u8*) &codelist) + 2, 2);
-					DCFlushRange((void*)0x80001800,codehandlerslota_size);
-					break;
-
-				case 1:	// slot B
-				*/	memset((void*)0x80001800,0,codehandler_size);
-					memcpy((void*)0x80001800,codehandler,codehandler_size);
-					//TODO for oggzee: Consider adding an option for paused start, debugging related
-					//if (pausedstartoption == 0x01)
-					//	*(u32*)0x80002798 = 1;
-					memcpy((void*)0x80001CDE, &codelist, 2);
-					memcpy((void*)0x80001CE2, ((u8*) &codelist) + 2, 2);
-					memcpy((void*)0x80001F5A, &codelist, 2);
-					memcpy((void*)0x80001F5E, ((u8*) &codelist) + 2, 2);
-					DCFlushRange((void*)0x80001800,codehandler_size);
-				/*	break;
-
-				case 2:
-					memset((void*)0x80001800,0,codehandler_size);
-					memcpy((void*)0x80001800,codehandler,codehandler_size);
-					if (pausedstartoption == 0x01)
-						*(u32*)0x80002798 = 1;
-					memcpy((void*)0x80001CDE, &codelist, 2);
-					memcpy((void*)0x80001CE2, ((u8*) &codelist) + 2, 2);
-					memcpy((void*)0x80001F5A, &codelist, 2);
-					memcpy((void*)0x80001F5E, ((u8*) &codelist) + 2, 2);
-					DCFlushRange((void*)0x80001800,codehandler_size);
-					break;
-			}*/
+			gprintf("Debbugger selected is gecko\n");
+			memset((void*)0x80001800,0,codehandler_size);
+			memcpy((void*)0x80001800,codehandler,codehandler_size);
+			//if (pausedstartoption == 0x01)
+			//	*(u32*)0x80002798 = 1;
+			memcpy((void*)0x80001CDE, &codelist, 2);
+			memcpy((void*)0x80001CE2, ((u8*) &codelist) + 2, 2);
+			memcpy((void*)0x80001F5A, &codelist, 2);
+			memcpy((void*)0x80001F5E, ((u8*) &codelist) + 2, 2);
+			DCFlushRange((void*)0x80001800,codehandler_size);
 		}
 		else
 		{
-			gprintf("Debbugger selected is not gecko");
+			gprintf("Debbugger selected is not gecko\n");
 			memset((void*)0x80001800,0,codehandleronly_size);
 			memcpy((void*)0x80001800,codehandleronly,codehandleronly_size);
 			memcpy((void*)0x80001906, &codelist, 2);
 			memcpy((void*)0x8000190A, ((u8*) &codelist) + 2, 2);
 			DCFlushRange((void*)0x80001800,codehandleronly_size);
 		}
+
 		// Load multidol handler
 		memset((void*)0x80001000,0,multidol_size);
 		memcpy((void*)0x80001000,multidol,multidol_size);
@@ -640,7 +605,7 @@ void load_handler()
 
 int ocarina_do_code(u64 chantitle)
 {
-	if (!code_buf) return 0;
+	//if (!code_buf) return 0;  // Need the handler loaded for hooking other than cheats!
 
 	memset((void *)0x80001800, 0, 0x1800);
 
@@ -658,10 +623,11 @@ int ocarina_do_code(u64 chantitle)
 	if(chantitle != 0)
 		memcpy((void *)0x80001800, gameidbuffer, 6);
 	
-	memset(codelist, 0, (u32)codelistend - (u32)codelist);
+	if(codelist)
+		memset(codelist, 0, (u32)codelistend - (u32)codelist);
 
 	//Copy the codes
-	if (code_size > 0)
+	if (code_size > 0 && code_buf)
 	{
 		memcpy(codelist, code_buf, code_size);
 		DCFlushRange(codelist, (u32)codelistend - (u32)codelist);
@@ -675,6 +641,5 @@ int ocarina_do_code(u64 chantitle)
 	//This needs to be done after loading the .dol into memory
 	app_pokevalues();
 
-	// hooks are patched in dogamehooks()
 	return 1;
 }

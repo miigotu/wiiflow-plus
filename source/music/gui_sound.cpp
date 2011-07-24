@@ -154,18 +154,16 @@ bool GuiSound::Load(const char * filepath)
 {
     FreeMemory();
 
-	if(!filepath)
-	{
-        return false;
-	}
+	if(!filepath || filepath[strlen(filepath)-1] == '/' || strlen(filepath) < 4)
+		return false;
 
-    u32 magic;
     FILE * f = fopen(filepath, "rb");
     if(!f)
 	{	gprintf("Failed to load file %s!!\n", filepath);
         return false;
 	}
 
+    u32 magic;
     fread(&magic, 1, 4, f);
     fclose(f);
 
