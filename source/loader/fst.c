@@ -621,7 +621,10 @@ int ocarina_do_code(u64 chantitle)
 	load_handler();
 
 	if(chantitle != 0)
-		memcpy((void *)0x80001800, gameidbuffer, 6);
+	{
+		memcpy((void *)0x80001800, gameidbuffer, 8);
+		DCFlushRange((void *)0x80001800, 8);
+	}
 	
 	if(codelist)
 		memset(codelist, 0, (u32)codelistend - (u32)codelist);

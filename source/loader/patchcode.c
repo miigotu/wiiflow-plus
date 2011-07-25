@@ -187,24 +187,26 @@ bool dogamehooks(void *addr, u32 len, bool channel, bool bootcontentloaded)
 				break;
 
 			case 0x08:
-				//if(memcmp(addr_start, customhook, customhooksize)==0)
-				//{
-				//	patchhook((u32)addr_start, len);
-				//	hookpatched = true;
-				//}
+				/* if(memcmp(addr_start, customhook, customhooksize)==0)
+				{
+					patchhook((u32)addr_start, len);
+					hookpatched = true;
+				} */
 				break;
 		}
 		if (hooktype != 0)
 		{
-			if(memcmp(addr_start, multidolhooks, sizeof(multidolhooks))==0)
+			if(channel && memcmp(addr_start, multidolchanhooks, sizeof(multidolchanhooks))==0)
 			{
-				if(channel)
-				{
-					*(((u32*)addr_start)+1) = 0x7FE802A6;
-					DCFlushRange(((u32*)addr_start)+1, 4);
-				}
-				multidolhook((u32)addr_start+sizeof(multidolhooks)-4);
+				*(((u32*)addr_start)+1) = 0x7FE802A6;
+				DCFlushRange(((u32*)addr_start)+1, 4);
+
+				multidolhook((u32)addr_start+sizeof(multidolchanhooks)-4);
 				multidolpatched = true;
+			}
+			else if(!channel && memcmp(addr_start, multidolhooks, sizeof(multidolhooks))==0)
+			{
+				multidolhook((u32)addr_start+sizeof(multidolhooks)-4);
 				hookpatched = true;
 			}			
 		}

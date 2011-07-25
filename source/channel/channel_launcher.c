@@ -204,7 +204,7 @@ void PatchChannel(u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryStrin
 {
 	int i;
 	bool hookpatched = false;
-	
+
 	for (i=0;i < dolchunkcount;i++)
 	{		
 		if (!bootcontent_used)
