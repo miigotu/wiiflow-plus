@@ -393,24 +393,16 @@ void CMenu::_gameSettings(void)
 					m_gcfg2.setBool(id, "country_patch", true);
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnLanguageP))
+			else if (m_btnMgr.selected(m_gameSettingsBtnLanguageP) || m_btnMgr.selected(m_gameSettingsBtnLanguageM))
 			{
-				m_gcfg2.setInt(id, "language", (int)loopNum((u32)m_gcfg2.getInt(id, "language", 0) + 1, ARRAY_SIZE(CMenu::_languages)));
+				s8 offset = m_btnMgr.selected(m_gameSettingsBtnLanguageP) ? 1 : -1;
+				m_gcfg2.setInt(id, "language", (int)loopNum((u32)m_gcfg2.getInt(id, "language", 0) + offset, ARRAY_SIZE(CMenu::_languages)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnLanguageM))
+			else if (m_btnMgr.selected(m_gameSettingsBtnVideoP) || m_btnMgr.selected(m_gameSettingsBtnVideoM))
 			{
-				m_gcfg2.setInt(id, "language", (int)loopNum((u32)m_gcfg2.getInt(id, "language", 0) - 1, ARRAY_SIZE(CMenu::_languages)));
-				_showGameSettings();
-			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnVideoP))
-			{
-				m_gcfg2.setInt(id, "video_mode", (int)loopNum((u32)m_gcfg2.getInt(id, "video_mode", 0) + 1, ARRAY_SIZE(CMenu::_videoModes)));
-				_showGameSettings();
-			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnVideoM))
-			{
-				m_gcfg2.setInt(id, "video_mode", (int)loopNum((u32)m_gcfg2.getInt(id, "video_mode", 0) - 1, ARRAY_SIZE(CMenu::_videoModes)));
+				s8 offset = m_btnMgr.selected(m_gameSettingsBtnVideoP) ? 1 : -1;
+				m_gcfg2.setInt(id, "video_mode", (int)loopNum((u32)m_gcfg2.getInt(id, "video_mode", 0) + offset, ARRAY_SIZE(CMenu::_videoModes)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnIOSM))
@@ -439,14 +431,10 @@ void CMenu::_gameSettings(void)
 				m_gcfg2.setInt(id, "ios", (*itr));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP))
+			else if (m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP) || m_btnMgr.selected(m_gameSettingsBtnPatchVidModesM))
 			{
-				m_gcfg2.setInt(id, "patch_video_modes", (int)loopNum((u32)m_gcfg2.getInt(id, "patch_video_modes", 0) + 1, ARRAY_SIZE(CMenu::_vidModePatch)));
-				_showGameSettings();
-			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnPatchVidModesM))
-			{
-				m_gcfg2.setInt(id, "patch_video_modes", (int)loopNum((u32)m_gcfg2.getInt(id, "patch_video_modes", 0) - 1, ARRAY_SIZE(CMenu::_vidModePatch)));
+				s8 offset = m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP) ? 1 : -1;
+				m_gcfg2.setInt(id, "patch_video_modes", (int)loopNum((u32)m_gcfg2.getInt(id, "patch_video_modes", 0) + offset, ARRAY_SIZE(CMenu::_vidModePatch)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnCover))
@@ -463,14 +451,10 @@ void CMenu::_gameSettings(void)
 				_CheatSettings();
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnHooktypeP))
+			else if (m_btnMgr.selected(m_gameSettingsBtnHooktypeP) || m_btnMgr.selected(m_gameSettingsBtnHooktypeM))
 			{
-				m_gcfg2.setInt(id, "hooktype", (int)loopNum((u32)m_gcfg2.getInt(id, "hooktype", 1) + 1, ARRAY_SIZE(CMenu::_hooktype)));
-				_showGameSettings();
-			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnHooktypeM))
-			{
-				m_gcfg2.setInt(id, "hooktype", (int)loopNum((u32)m_gcfg2.getInt(id, "hooktype", 1) - 1, ARRAY_SIZE(CMenu::_hooktype)));
+				s8 offset = m_btnMgr.selected(m_gameSettingsBtnHooktypeP) ? 1 : -1;
+				m_gcfg2.setInt(id, "hooktype", (int)loopNum((u32)m_gcfg2.getInt(id, "hooktype", 1) + offset, ARRAY_SIZE(CMenu::_hooktype)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnReturnTo))
@@ -479,16 +463,7 @@ void CMenu::_gameSettings(void)
 				m_gcfg2.setBool(id, "returnto", !m_gcfg2.getBool(id, "returnto", false));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnDebuggerP))
-			{
-				bool booloption = m_gcfg2.getBool(id, "debugger");
-				if (booloption != false)
-					m_gcfg2.remove(id, "debugger");
-				else
-				m_gcfg2.setBool(id, "debugger", true);
-				_showGameSettings();
-			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnDebuggerM))
+			else if (m_btnMgr.selected(m_gameSettingsBtnDebuggerP) || m_btnMgr.selected(m_gameSettingsBtnDebuggerM))
 			{
 				bool booloption = m_gcfg2.getBool(id, "debugger");
 				if (booloption != false)

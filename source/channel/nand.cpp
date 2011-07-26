@@ -37,9 +37,9 @@
 #include "gecko.h"
 
 static NandDevice NandDeviceList[] = {
-	{ /* "Disable", */						0,	0x00,	0x00 },
-	{ /* "SD/SDHC Card", */					1,	0xF0,	0xF1 },
-	{ /* "USB 2.0 Mass Storage Device", */	2,	0xF2,	0xF3 },
+	{ "Disable",						0,	0x00,	0x00 },
+	{ "SD/SDHC Card",					1,	0xF0,	0xF1 },
+	{ "USB 2.0 Mass Storage Device",	2,	0xF2,	0xF3 },
 };
 
 Nand * Nand::instance = NULL;

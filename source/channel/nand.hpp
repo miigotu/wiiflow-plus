@@ -25,7 +25,7 @@
 /* 'NAND Device' structure */
 typedef struct nandDevice
 {
-	//string Name;
+	const char *Name;
 	u32 Mode;
 	u32 Mount;
 	u32 Unmount;

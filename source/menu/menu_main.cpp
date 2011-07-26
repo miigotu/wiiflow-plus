@@ -117,6 +117,34 @@ int CMenu::GetCoverStatusAsync(CMenu *m)
 	return 0;
 }
 
+void CMenu::LoadView(void)
+{
+	_showWaitMessage();
+	_hideMain();
+	
+	m_curGameId = m_cf.getId();
+
+	_loadList();
+	_showMain();
+	_initCF();
+
+	_loadCFLayout(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1));
+	m_cf.applySettings();
+
+	char *mode;
+	if(m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "Disable_EMU", true))
+		mode = (char *)"NAND";
+	else
+		mode = (char *)DeviceName[currentPartition];
+
+	for(u8 i = 0; strncmp((const char *)&mode[i], "\0", 1) != 0; i++)
+			mode[i] = toupper(mode[i]);
+
+	m_showtimer=60;
+	m_btnMgr.setText(m_mainLblNotice, (string)mode);
+	m_btnMgr.show(m_mainLblNotice);
+}
+
 int CMenu::main(void)
 {
 	wstringEx curLetter;
@@ -128,7 +156,6 @@ int CMenu::main(void)
 	static u32 disc_check = 0;
 	int done = 0;
 
-	// Start network asynchronious, if configured and required
 	if (m_cfg.getBool("GENERAL", "async_network", false) || has_enabled_providers())
 		_initAsyncNetwork();
 
@@ -227,7 +254,7 @@ int CMenu::main(void)
 			//Search by Alphabet
 			if (BTN_DOWN_PRESSED)
 			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA) // && m_titles_loaded)
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
@@ -240,7 +267,7 @@ int CMenu::main(void)
 			}
 			else if (BTN_UP_PRESSED)
 			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA) // && m_titles_loaded)
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
@@ -257,7 +284,7 @@ int CMenu::main(void)
 			else if (BTN_RIGHT_PRESSED)
 				MusicPlayer::Instance()->Next();
 			//Sorting Selection
-			else if (BTN_PLUS_PRESSED && !m_locked) // && m_titles_loaded)
+			else if (BTN_PLUS_PRESSED && !m_locked)
 			{
 				u32 sort = 0;
 				sort = m_cfg.getInt("GENERAL", "sort", 0);
@@ -281,21 +308,41 @@ int CMenu::main(void)
 			//Partition Selection
 			else if (BTN_MINUS_PRESSED && !m_locked)
 			{
-				if(m_current_view == COVERFLOW_USB || m_current_view == COVERFLOW_HOMEBREW)
+				bool block = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "Disable_EMU", true);
+				char *partition;
+				if(!block)
 				{
 					_hideMain();
 					currentPartition = loopNum(currentPartition + 1, (int)USB8);
-					while(!DeviceHandler::Instance()->IsInserted(currentPartition))
-						currentPartition = loopNum(currentPartition + 1, (int)USB8);
-					const char *partition = DeviceName[currentPartition];
-					gprintf("Next item: %s\n", partition);
+					while(!DeviceHandler::Instance()->IsInserted(currentPartition) ||
+						(m_current_view == COVERFLOW_CHANNEL && (DeviceHandler::Instance()->GetFSType(currentPartition) != PART_FS_FAT ||
+							DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()) == currentPartition ||
+							DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str()) == currentPartition)) ||
+						(m_current_view == COVERFLOW_HOMEBREW && DeviceHandler::Instance()->GetFSType(currentPartition) == PART_FS_WBFS))
+							currentPartition = loopNum(currentPartition + 1, (int)USB8);
+
+					partition = (char *)DeviceName[currentPartition];
+
 					if(m_current_view == COVERFLOW_USB)
 						m_cfg.setInt("GENERAL", "partition", currentPartition);
 					else if(m_current_view == COVERFLOW_HOMEBREW)
 						m_cfg.setInt("GENERAL", "homebrew_partition", currentPartition);
-					m_showtimer=60; 
-					m_btnMgr.setText(m_mainLblNotice, (string)partition);
-					m_btnMgr.show(m_mainLblNotice);
+					else if(m_current_view == COVERFLOW_CHANNEL)
+						m_cfg.setInt("NAND", "nand_partition", currentPartition);
+				}
+				else partition = (char *)"NAND";
+
+				for(u8 i = 0; strncmp((const char *)&partition[i], "\0", 1) != 0; i++)
+					partition[i] = toupper(partition[i]);
+
+				gprintf("Next item: %s\n", partition);
+
+				m_showtimer=60; 
+				m_btnMgr.setText(m_mainLblNotice, (string)partition);
+				m_btnMgr.show(m_mainLblNotice);
+
+				if(!block)
+				{
 					_loadList();
 					_showMain();
 					_initCF();
@@ -314,21 +361,19 @@ int CMenu::main(void)
 				_initCF();
 			}
 			//Events to Switch off/on nand emu
-			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb))
+			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb) || m_btnMgr.selected(m_mainBtnHomebrew))
 			{
 				m_cfg.setBool("NAND", "Disable_EMU", !m_cfg.getBool("NAND", "Disable_EMU", true));
 				gprintf("EmuNand is %s\n", m_cfg.getBool("NAND", "Disable_EMU", true) ? "Disabled" : "Enabled");
-				_hideMain();
-				//m_reload = true;
-				//break;
-				m_curGameId = m_cf.getId();
-				_loadList();
-				_showMain();
-				_initCF();
+
+				m_category = m_cat.getInt("GENERAL", "channel_category", 0);
+				m_current_view = COVERFLOW_CHANNEL;
+
+				LoadView();
 			}
 			else if (m_btnMgr.selected(m_mainBtnPrev))
 			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA) // && m_titles_loaded)
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
@@ -341,7 +386,7 @@ int CMenu::main(void)
 			}
 		 	else if (m_btnMgr.selected(m_mainBtnNext))
 			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA) // && m_titles_loaded)
+				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
@@ -353,7 +398,7 @@ int CMenu::main(void)
 				m_btnMgr.show(m_mainLblLetter);
 			}
 		}
-		else if (done==0 && m_current_view == COVERFLOW_USB && m_cat.getBool("GENERAL", "category_on_start", false)) // Only supported in game mode (not for channels, since you don't have options for channels yet)
+		else if (done==0 && m_cat.getBool("GENERAL", "category_on_start", false))
 		{
 			done = 1; //set done so it doesnt keep doing it
 			// show categories menu
@@ -392,25 +437,11 @@ int CMenu::main(void)
 			}
 			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb) || m_btnMgr.selected(m_mainBtnHomebrew))
 			{
-				_showWaitMessage();
-
-				m_btnMgr.hide(m_mainBtnHomebrew, true);
-				m_btnMgr.hide(m_mainBtnChannel, true);
-				m_btnMgr.hide(m_mainBtnUsb, true);
-				m_btnMgr.hide(m_mainBtnInit, true);
-				m_btnMgr.hide(m_mainBtnInit2, true);
-				m_btnMgr.hide(m_mainLblInit, true);
 
 				if (m_current_view == COVERFLOW_USB) 
 				{
 					m_current_view = COVERFLOW_CHANNEL;
 					m_category = m_cat.getInt("GENERAL", "channel_category", 0);
-
-					if(!m_locked && show_homebrew)
-						m_btnMgr.show(m_mainBtnHomebrew, true);
-					else
-						m_btnMgr.show(m_mainBtnUsb, true);
-					
 				}
 				else if (m_current_view == COVERFLOW_CHANNEL)
 				{
@@ -424,27 +455,14 @@ int CMenu::main(void)
 					{
 						m_current_view = COVERFLOW_USB;
 						m_category = m_cat.getInt("GENERAL", "games_category", 0);
-						m_btnMgr.show(m_mainBtnChannel, true);
 					}
 				}
 				else if (m_current_view == COVERFLOW_HOMEBREW)
 				{
 					m_current_view = COVERFLOW_USB;
 					m_category = m_cat.getInt("GENERAL", "homebrew_category", 0);
-					m_btnMgr.show(m_mainBtnChannel, true);
 				}
-				_loadList();
-				if (m_gameList.empty())
-				{
-					m_btnMgr.show(m_mainBtnInit);
-					m_btnMgr.show(m_mainBtnInit2);
-					m_btnMgr.show(m_mainLblInit);
-				}
-				_hideWaitMessage();
-				_initCF();
-
-				_loadCFLayout(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1));
-				m_cf.applySettings();
+				LoadView();
 			}
 			else if (m_btnMgr.selected(m_mainBtnInit))
 			{

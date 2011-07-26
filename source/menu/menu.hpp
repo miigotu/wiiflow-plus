@@ -21,6 +21,12 @@
 #include "DeviceHandler.hpp"
 #include "musicplayer.h"
 
+//Also in wbfs.h
+#define PART_FS_WBFS 0
+#define PART_FS_FAT  1
+#define PART_FS_NTFS 2
+#define PART_FS_EXT  3
+
 extern "C" {extern u8 currentPartition;}
 extern bool bootHB;
 
@@ -752,20 +758,19 @@ private:
 	static int _coverDownloaderAll(CMenu *m);
 	static int _coverDownloaderMissing(CMenu *m);
 	static bool _downloadProgress(void *obj, int size, int position);
-	//static bool _findTitlesById(void *obj, u8 *id, char *title, int size);
 	static int _wiitdbDownloader(CMenu *m);
 	int _wiitdbDownloaderAsync();
 
 	int _titleDownloader(bool missingOnly);
 	static int _titleDownloaderAll(CMenu *m);
 	static int _titleDownloaderMissing(CMenu *m);
-//	static int _initStaticNetwork(CMenu *m);
 	static s32 _networkComplete(s32 result, void *usrData);
 	void _initAsyncNetwork();
 	bool _isNetworkAvailable();
 	int _initNetwork();
 	void _deinitNetwork();
 	static int GetCoverStatusAsync(CMenu *m);
+	void LoadView(void);
 	void _getGrabStatus(void);
 	static void _addDiscProgress(int status, int total, void *user_data);
 	static int _gameInstaller(void *obj);

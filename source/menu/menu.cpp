@@ -331,7 +331,7 @@ void CMenu::init()
 	
 	if (m_cfg.getBool("GENERAL", "favorites_on_startup", false))
 		m_favorites = m_cfg.getBool("GENERAL", "favorites", false);
-	m_category = m_cat.getInt("GENERAL", "category", 0);
+	m_category = m_cat.getInt("GENERAL", "games_category", 0);
 	m_max_categories = m_cat.getInt("GENERAL", "numcategories", 12);
 
 	m_current_view = COVERFLOW_USB;

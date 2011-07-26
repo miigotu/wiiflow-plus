@@ -555,14 +555,6 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 	u32 *data = channel.Load(hdr->hdr.chantitle, (char *)hdr->hdr.id);
 	if(data != NULL)
 	{
-	/*	videooption=gameList[orden[selectedGame]].videoMode;
-		videopatchoption=gameList[orden[selectedGame]].videoPatch;
-		languageoption=gameList[orden[selectedGame]].language-1;
-		hooktypeoption=gameList[orden[selectedGame]].hooktype;
-		ocarinaoption=gameList[orden[selectedGame]].ocarina;
-		debuggeroption=gameList[orden[selectedGame]].debugger;			
-		bootmethodoption=gameList[orden[selectedGame]].bootMethod; */
-
 		string id = string((const char *) hdr->hdr.id);
 
 		bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
@@ -573,15 +565,18 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
 
 		u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
-		hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 1);
+		hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 0);
 		debuggerselect = m_gcfg2.getBool(id, "debugger", false) ? 1 : 0;
+
+		if ((debuggerselect || cheat) && hooktype == 0) hooktype = 1;
+		if (!debuggerselect && !cheat) hooktype = 0;
 
 		if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
 		if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
 
 		m_cfg.setString("GENERAL", "current_channel", id);
-		m_gcfg2.setInt("PLAYCOUNT", id, m_gcfg2.getInt("PLAYCOUNT", id, 0) + 1);
-		m_gcfg2.setUInt("LASTPLAYED", id, time(NULL));
+		m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg1.getInt("PLAYCOUNT", id, 0) + 1); 
+		m_gcfg1.setUInt("LASTPLAYED", id, time(NULL)); 
 
 		if (rtrn != NULL && strlen(rtrn) == 4)
 		{			
@@ -688,8 +683,11 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		gameIOS = mainIOS;
 
 	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
-	hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 1); // hooktype is defined in patchcode.h
+	hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 0); // hooktype is defined in patchcode.h
 	debuggerselect = m_gcfg2.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
+
+	if ((debuggerselect || cheat) && hooktype == 0) hooktype = 1;
+	if (!debuggerselect && !cheat) hooktype = 0;
 
 	if (id == "RPWE41" || id == "RPWZ41" || id == "SPXP41") // Prince of Persia, Rival Swords
 		debuggerselect = false;
@@ -702,7 +700,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
 	if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
 	m_cfg.setString("GENERAL", "current_game", id);
-	m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg2.getInt("PLAYCOUNT", id, 0) + 1);
+	m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg1.getInt("PLAYCOUNT", id, 0) + 1);
 	m_gcfg1.setUInt("LASTPLAYED", id, time(NULL));
 	
 	if (has_enabled_providers() && _initNetwork() == 0)

@@ -51,16 +51,22 @@ void CMenu::_showConfig7(void)
 			m_btnMgr.show(m_config7LblUser[i]);
 	// 
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
+
+	char *name = (char *)"NULL";
 	if(m_current_view == COVERFLOW_USB)
-		m_btnMgr.setText(m_config7LblPartition, wfmt(L"%s", DeviceName[m_cfg.getInt("GENERAL", "partition", 1)]));
+		name = (char *)DeviceName[m_cfg.getInt("GENERAL", "partition", 1)];
 	else if(m_current_view == COVERFLOW_HOMEBREW)
-		m_btnMgr.setText(m_config7LblPartition, wfmt(L"%s", DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", 1)]));
+		name = (char *)DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", 1)];
 	else if(m_current_view == COVERFLOW_CHANNEL)
 	{
 		bool disable = m_cfg.getBool("NAND", "Disable_EMU", true);
-		m_btnMgr.setText(m_config7LblPartition, wfmt(L"%s", disable ? "NAND" : DeviceName[m_cfg.getInt("NAND", "nand_partition", 1)]));
+		name = disable ? (char *)"NAND" : (char *)DeviceName[m_cfg.getInt("GENERAL", "nand_partition", 1)];
 	}
-	
+
+	for(u8 i = 0; strncmp((const char *)&name[i], "\0", 1) != 0; i++)
+					name[i] = toupper(name[i]);
+
+	m_btnMgr.setText(m_config7LblPartition, (string)name);
 	m_btnMgr.setText(m_config7BtnAsyncNet, m_cfg.getBool("GENERAL", "async_network", false) ? _t("on", L"On") : _t("off", L"Off"));
 }
 
@@ -101,12 +107,16 @@ int CMenu::_config7(void)
 				break;
 			else if (m_btnMgr.selected(m_config7BtnPartitionP) || m_btnMgr.selected(m_config7BtnPartitionM))
 			{
-				if(m_current_view == COVERFLOW_USB || m_current_view == COVERFLOW_HOMEBREW)
+				bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "Disable_EMU", true);
+				if(!disable)
 				{
 					s8 offset = m_btnMgr.selected(m_config7BtnPartitionP) ? 1 : -1;
 					currentPartition = loopNum(currentPartition + offset, (int)USB8);
-					if(!DeviceHandler::Instance()->IsInserted(currentPartition))
-						while(!DeviceHandler::Instance()->IsInserted(currentPartition))
+					while(!DeviceHandler::Instance()->IsInserted(currentPartition) ||
+						(m_current_view == COVERFLOW_CHANNEL && (DeviceHandler::Instance()->GetFSType(currentPartition) != PART_FS_FAT ||
+							DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()) == currentPartition ||
+							DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str()) == currentPartition)) ||
+						(m_current_view == COVERFLOW_HOMEBREW && DeviceHandler::Instance()->GetFSType(currentPartition) == PART_FS_WBFS))
 							currentPartition = loopNum(currentPartition + offset, (int)USB8);
 
 					gprintf("Next item: %s\n", DeviceName[currentPartition]);
@@ -114,20 +124,10 @@ int CMenu::_config7(void)
 						m_cfg.setInt("GENERAL", "partition", currentPartition);
 					else if(m_current_view == COVERFLOW_HOMEBREW)
 						m_cfg.setInt("GENERAL", "homebrew_partition", currentPartition);
-					_showConfig7();
+					else if (m_current_view == COVERFLOW_CHANNEL)
+						m_cfg.setInt("NAND", "nand_partition", currentPartition);
 				}
-				else if (m_current_view == COVERFLOW_CHANNEL)
-				{
-					s8 offset = m_btnMgr.selected(m_config7BtnPartitionP) ? 1 : -1;
-					currentPartition = loopNum(currentPartition + offset, (int)USB8);
-					if(!DeviceHandler::Instance()->IsInserted(currentPartition))
-						while(!DeviceHandler::Instance()->IsInserted(currentPartition))
-							currentPartition = loopNum(currentPartition + offset, (int)USB8);
-
-					gprintf("Next item: %s\n", DeviceName[currentPartition]);
-					m_cfg.setInt("NAND", "nand_partition", currentPartition);
 					_showConfig7();
-				}
 			}
 			else if (m_btnMgr.selected(m_config7BtnAsyncNet))
 			{
@@ -138,15 +138,23 @@ int CMenu::_config7(void)
 	}
 	if (currentPartition != bCurrentPartition)
 	{
-		const char *newpartition = "NULL";
-		if(m_current_view == COVERFLOW_USB)
-			newpartition = DeviceName[m_cfg.getInt("GENERAL", "partition", currentPartition)];
-		else if(m_current_view == COVERFLOW_HOMEBREW)
-			newpartition = DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", currentPartition)];
-		else if(m_current_view == COVERFLOW_CHANNEL)
-			newpartition = DeviceName[m_cfg.getInt("NAND", "nand_partition", currentPartition)];
-		gprintf("Switching partition to %s\n", newpartition);
-		_loadList();
+		bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "Disable_EMU", true);
+		if(!disable)
+		{
+			char *newpartition = (char *)"NULL";
+			if(m_current_view == COVERFLOW_USB)
+				newpartition = (char *)DeviceName[m_cfg.getInt("GENERAL", "partition", currentPartition)];
+			else if(m_current_view == COVERFLOW_HOMEBREW)
+				newpartition = (char *)DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", currentPartition)];
+			else if(m_current_view == COVERFLOW_CHANNEL)
+				newpartition = disable ? (char *)"NAND" : (char *)DeviceName[m_cfg.getInt("NAND", "nand_partition", currentPartition)];
+				
+			for(u8 i = 0; strncmp((const char *)&newpartition[i], "\0", 1) != 0; i++)
+				newpartition[i] = toupper(newpartition[i]);
+
+			gprintf("Switching partition to %s\n", newpartition);
+			_loadList();
+		}
 	}
 	
 	_hideConfig7();
