@@ -110,12 +110,14 @@ int CMenu::_config7(void)
 				bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "Disable_EMU", true);
 				if(!disable)
 				{
+					bool isD2Xv7 = IOS_GetRevision() % 100 == 7;
+
 					s8 offset = m_btnMgr.selected(m_config7BtnPartitionP) ? 1 : -1;
 					currentPartition = loopNum(currentPartition + offset, (int)USB8);
 					while(!DeviceHandler::Instance()->IsInserted(currentPartition) ||
 						(m_current_view == COVERFLOW_CHANNEL && (DeviceHandler::Instance()->GetFSType(currentPartition) != PART_FS_FAT ||
-							DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()) == currentPartition ||
-							DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str()) == currentPartition)) ||
+							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()) == currentPartition) ||
+							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str()) == currentPartition))) ||
 						(m_current_view == COVERFLOW_HOMEBREW && DeviceHandler::Instance()->GetFSType(currentPartition) == PART_FS_WBFS))
 							currentPartition = loopNum(currentPartition + offset, (int)USB8);
 

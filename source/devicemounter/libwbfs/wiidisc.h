@@ -2,72 +2,64 @@
 #define WIIDISC_H
 #include <stdio.h>
 #include "libwbfs_os.h" // this file is provided by the project wanting to compile libwbfs and wiidisc
-#include "mem2.hpp"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif /* __cplusplus */
-#if 0 //removes extra automatic indentation by editors
-}
-#endif
-// callback definition. Return 1 on fatal error (callback is supposed to make retries until no hopes..)
-// offset points 32bit words, count counts bytes
-typedef int (*read_wiidisc_callback_t)(void *fp, u32 offset, u32 count, void *iobuf);
 
-typedef enum{
-	UPDATE_PARTITION_TYPE = 0,
-	GAME_PARTITION_TYPE,
-	OTHER_PARTITION_TYPE,
-	// value in between selects partition types of that value
-	ALL_PARTITIONS = 0xffffffff - 3,
-	REMOVE_UPDATE_PARTITION, // keeps game + channel installers
-	ONLY_GAME_PARTITION,
-}partition_selector_t;
+	// callback definition. Return 1 on fatal error (callback is supposed to make retries until no hopes..)
+	// offset points 32bit words, count counts bytes
+	typedef int (*read_wiidisc_callback_t)(void *fp, u32 offset, u32 count, void *iobuf);
 
-typedef struct wiidisc_s
-{
-	read_wiidisc_callback_t read;
-	void *fp;
-	u8 *sector_usage_table;
+	typedef enum
+	{
+		UPDATE_PARTITION_TYPE = 0,
+		GAME_PARTITION_TYPE,
+		OTHER_PARTITION_TYPE,
+		// value in between selects partition types of that value
+		ALL_PARTITIONS = 0xffffffff - 3,
+		REMOVE_UPDATE_PARTITION, // keeps game + channel installers
+		ONLY_GAME_PARTITION,
+	} partition_selector_t;
 
-	// everything points 32bit words.
-	u32 disc_raw_offset;
-	u32 partition_raw_offset;
-	u32 partition_data_offset;
-	u32 partition_data_size;
-	u32 partition_block;
-	
-	u8 *tmp_buffer;
-	u8 *tmp_buffer2;
-	u8 disc_key[16];
-	int dont_decrypt;
+	typedef struct wiidisc_s
+	{
+		read_wiidisc_callback_t read;
+		void *fp;
+		u8 *sector_usage_table;
 
-	partition_selector_t part_sel;
+		// everything points 32bit words.
+		u32 disc_raw_offset;
+		u32 partition_raw_offset;
+		u32 partition_data_offset;
+		u32 partition_data_size;
+		u32 partition_block;
+		
+		u8 *tmp_buffer;
+		u8 *tmp_buffer2;
+		u8 disc_key[16];
+		int dont_decrypt;
 
-	const char *extract_pathname;
-	u8 *extracted_buffer;
-	u32 extracted_buffer_size;
-	void (*user_add_dol)(void *, const char *);
-	void *user_data;
-	enum Alloc alloc;
-}wiidisc_t;
+		partition_selector_t part_sel;
 
-int wd_get_last_error(void);
+		const char *extract_pathname;
+		u8 *extracted_buffer;
+		u32 extracted_size;
+		void *user_data;
+	} wiidisc_t;
 
-wiidisc_t *wd_open_disc(read_wiidisc_callback_t read, void *fp);
-void wd_close_disc(wiidisc_t *);
-// returns a buffer allocated with wbfs_ioalloc() or NULL if not found of alloc error
-u8 * wd_extract_file(wiidisc_t *d, u32 *size, partition_selector_t partition_type, const char *pathname, enum Alloc alloc);
-void wd_list_dols(wiidisc_t *d, partition_selector_t partition_type, void (*user_add_dol)(void *, const char *), void *user_data);
+	int wd_get_last_error(void);
 
-void wd_build_disc_usage(wiidisc_t *d, partition_selector_t selector, u8 *usage_table);
+	wiidisc_t *wd_open_disc(read_wiidisc_callback_t read, void *fp);
+	void wd_close_disc(wiidisc_t *);
+	// returns a buffer allocated with wbfs_ioalloc() or NULL if not found of alloc error
+	u8 * wd_extract_file(wiidisc_t *d, u32 *size, partition_selector_t partition_type, const char *pathname);
+	void wd_build_disc_usage(wiidisc_t *d, partition_selector_t selector, u8 *usage_table);
 
-// effectively remove not copied partition from the partition table.
-void wd_fix_partition_table(wiidisc_t *d, partition_selector_t selector, u8 *partition_table);
+	// effectively remove not copied partition from the partition table.
+	void wd_fix_partition_table(wiidisc_t *d, partition_selector_t selector, u8 *partition_table);
 
-#if 0
-{
-#endif
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

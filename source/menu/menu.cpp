@@ -1497,7 +1497,7 @@ bool CMenu::_loadChannelList(void)
 		if(!DeviceHandler::Instance()->IsInserted(lastPartition))
 			DeviceHandler::Instance()->Mount(lastPartition);
 
-		if(DeviceHandler::Instance()->IsInserted(currentPartition))
+		if((IOS_GetRevision() % 100 != 7 || currentPartition == 0) && DeviceHandler::Instance()->IsInserted(currentPartition))
 			DeviceHandler::Instance()->UnMount(currentPartition);
 
 		Nand::Instance()->Set_Partition(disable_emu ? REAL_NAND : currentPartition == 0 ? currentPartition : currentPartition - 1);
@@ -1505,7 +1505,6 @@ bool CMenu::_loadChannelList(void)
 		if(Nand::Instance()->Enable_Emu(disable_emu ? REAL_NAND : currentPartition == 0 ? EMU_SD : EMU_USB) < 0)
 		{
 			Nand::Instance()->Disable_Emu();
-			DeviceHandler::Instance()->Mount(currentPartition);
 			failed = true;
 		}
 	}
@@ -1525,6 +1524,9 @@ bool CMenu::_loadChannelList(void)
 	}
 	SAFE_FREE(meez);
 	SAFE_FREE(sysconf);
+
+	if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+		DeviceHandler::Instance()->Mount(currentPartition);
 
 	m_channels.Init(0, langCode, changed);
 	lastPartition = currentPartition;

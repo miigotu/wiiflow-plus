@@ -3,7 +3,7 @@
 // Licensed under the terms of the GNU GPL, version 2
 // http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 
-#include "libwbfs/wiidisc.h"
+#include "wiidisc.h"
 
 void aes_set_key(u8 *key);
 void aes_decrypt(u8 *iv, u8 *inbuf, u8 *outbuf, unsigned long long len);
@@ -18,9 +18,10 @@ int wd_get_last_error(void)
 static void _decrypt_title_key(u8 *tik, u8 *title_key)
 {
 	u8 common_key[16] = {
-		0xeb, 0xe4, 0x2a, 0x22, 0x5e, 0x85, 0x93, 0xe4, 0x48, 0xd9, 0xc5, 0x45,
-		0x73, 0x81, 0xaa, 0xf7
+		0xeb, 0xe4, 0x2a, 0x22, 0x5e, 0x85, 0x93, 0xe4,
+		0x48, 0xd9, 0xc5, 0x45, 0x73, 0x81, 0xaa, 0xf7
 	};
+
 	u8 iv[16];
 
 	wbfs_memset(iv, 0, sizeof iv);
@@ -39,11 +40,9 @@ static void disc_read(wiidisc_t *d, u32 offset, u8 *data, u32 len)
 	if (data)
 	{
 		int ret = 0;
-		if (len == 0)
-			return;
+		if (len == 0) return;
 		ret = d->read(d->fp, offset, len, data);
-		if (ret)
-			wbfs_fatal("error reading disc");
+		if (ret) wbfs_fatal("error reading disc");
 	}
 	if (d->sector_usage_table)
 	{
@@ -52,8 +51,7 @@ static void disc_read(wiidisc_t *d, u32 offset, u8 *data, u32 len)
 		{
 			d->sector_usage_table[blockno] = 1;
 			blockno += 1;
-			if (len > 0x8000)
-				len -= 0x8000;
+			if (len > 0x8000) len -= 0x8000;
 		} while(len > 0x8000);
 	}
 }
@@ -68,11 +66,10 @@ static void partition_read_block(wiidisc_t *d, u32 blockno, u8 *block)
 	u8*raw = d->tmp_buffer;
 	u8 iv[16];
 	u32 offset;
-
-	if (d->sector_usage_table)
-		d->sector_usage_table[d->partition_block+blockno] = 1;
+	if (d->sector_usage_table) d->sector_usage_table[d->partition_block+blockno] = 1;
 	offset = d->partition_data_offset + ((0x8000 >> 2) * blockno);
 	partition_raw_read(d,offset, raw, 0x8000);
+
 	// decrypt data
 	memcpy(iv, raw + 0x3d0, 16);
 	aes_set_key(d->disc_key);
@@ -84,28 +81,24 @@ static void partition_read(wiidisc_t *d, u32 offset, u8 *data, u32 len, int fake
 	u8 *block = d->tmp_buffer2;
 	u32 offset_in_block;
 	u32 len_in_block;
+	if (fake &&  d->sector_usage_table == 0) return;
 
-	if (fake &&  d->sector_usage_table == 0)
-		return;
 	while (len)
 	{
 		offset_in_block = offset % (0x7c00 >> 2);
 		len_in_block = 0x7c00 - (offset_in_block << 2);
-		if (len_in_block > len)
-			len_in_block = len;
+		if (len_in_block > len) len_in_block = len;
 		if (!fake)
 		{
 			partition_read_block(d,offset / (0x7c00 >> 2), block);
 			wbfs_memcpy(data, block + (offset_in_block << 2), len_in_block);
 		}
-		else
-			d->sector_usage_table[d->partition_block + (offset / (0x7c00 >> 2))] = 1;
+		else d->sector_usage_table[d->partition_block + (offset / (0x7c00 >> 2))] = 1;
 		data += len_in_block;
 		offset += len_in_block >> 2;
 		len -= len_in_block;
 	}
 }
-
 
 static u32 do_fst(wiidisc_t *d, u8 *fst, const char *names, u32 i)
 {
@@ -116,6 +109,7 @@ static u32 do_fst(wiidisc_t *d, u8 *fst, const char *names, u32 i)
 
 	name = names + (_be32(fst + 12 * i) & 0x00ffffff);
 	size = _be32(fst + 12 * i + 8);
+
 	if (i == 0)
 	{
 		for (j = 1; j < size && !d->extracted_buffer; )
@@ -128,36 +122,22 @@ static u32 do_fst(wiidisc_t *d, u8 *fst, const char *names, u32 i)
 	{
 		for (j = i + 1; j < size && !d->extracted_buffer; )
 			j = do_fst(d, fst, names, j);
+
 		return size;
 	}
 	else
 	{
 		offset = _be32(fst + 12 * i + 4);
-		if (d->extract_pathname != 0 && strcasecmp(name, d->extract_pathname) == 0)
+		if (d->extract_pathname && strcasecmp(name, d->extract_pathname) == 0)
 		{
-			switch (d->alloc)
-			{
-				case ALLOC_MALLOC:
-					d->extracted_buffer = wbfs_ioalloc(size);
-					break;
-				case ALLOC_MEM2:
-					d->extracted_buffer = wbfs_mem2alloc(size);
-					break;
-			}
+			d->extracted_buffer = wbfs_ioalloc(size);
 			if (d->extracted_buffer != 0)
 			{
-				d->extracted_buffer_size = size;
+				d->extracted_size = size;
 				partition_read(d, offset, d->extracted_buffer, size, 0);
 			}
 		}
-		else if (d->user_add_dol != 0)
-		{
-			u32 len = strlen(name);
-			if (len > 4 && strcasecmp(name + len - 4, ".dol") == 0)
-				d->user_add_dol(d->user_data, name);
-		}
-		else
-			partition_read(d, offset, 0, size, 1);
+		else partition_read(d, offset, 0, size, 1);
 		return i + 1;
 	}
 }
@@ -183,20 +163,34 @@ static void do_files(wiidisc_t*d)
 	partition_read(d, apl_offset, apl_header, 0x20, 0);
 	apl_size = 0x20 + _be32(apl_header + 0x14) + _be32(apl_header + 0x18);
 	// fake read dol and partition
-	partition_read(d, apl_offset, 0, apl_size, 1);
+	if (apl_size) partition_read(d, apl_offset, 0, apl_size, 1);
 	partition_read(d, dol_offset, 0,  (fst_offset - dol_offset) << 2, 1);
 
-	fst = wbfs_ioalloc(fst_size);
-	if (fst == 0)
-		wbfs_fatal("malloc fst");
-	partition_read(d, fst_offset, fst, fst_size,0);
-	n_files = _be32(fst + 8);
+	if (fst_size)
+	{
+		fst = wbfs_ioalloc(fst_size);
+		if (fst == 0) wbfs_fatal("malloc fst");
+		partition_read(d, fst_offset, fst, fst_size,0);
+		n_files = _be32(fst + 8);
 
-	if (n_files > 1)
-		do_fst(d, fst, (char *)fst + 12 * n_files, 0);
+
+		if (d->extract_pathname && strcmp(d->extract_pathname, "FST") == 0)
+		{
+			// if empty pathname requested return fst
+			d->extracted_buffer = fst;
+			d->extracted_size = fst_size;
+			d->extract_pathname = NULL;
+			// skip do_fst if only fst requested
+			n_files = 0;
+		}
+
+		if (12 * n_files <= fst_size)
+			if (n_files > 1) do_fst(d, fst, (char *)fst + 12 * n_files, 0);
+		
+		if (fst != d->extracted_buffer) wbfs_iofree( fst );
+	}
 	wbfs_iofree(b);
 	wbfs_iofree(apl_header);
-	wbfs_iofree(fst);
 }
 
 static void do_partition(wiidisc_t*d)
@@ -223,22 +217,28 @@ static void do_partition(wiidisc_t*d)
 	d->partition_data_offset = _be32(b + 0x14);
 	d->partition_block = (d->partition_raw_offset + d->partition_data_offset) >> 13;
 	tmd = wbfs_ioalloc(tmd_size);
-	if (tmd == 0)
-		wbfs_fatal("malloc tmd");
+	if (tmd == 0) wbfs_fatal("malloc tmd");
 	partition_raw_read(d, tmd_offset, tmd, tmd_size);
 
+	if(d->extract_pathname && strcmp(d->extract_pathname, "TMD") == 0 && !d->extracted_buffer)
+	{
+		d->extracted_buffer = tmd;
+		d->extracted_size = tmd_size;
+	}
+
 	cert = wbfs_ioalloc(cert_size);
-	if (cert == 0)
-		wbfs_fatal("malloc cert");
+	if (cert == 0) wbfs_fatal("malloc cert");
 	partition_raw_read(d, cert_offset, cert, cert_size);
 
 	_decrypt_title_key(tik, d->disc_key);
 
 	partition_raw_read(d, h3_offset, 0, 0x18000);
+
 	wbfs_iofree(b);
 	wbfs_iofree(tik);
 	wbfs_iofree(cert);
-	wbfs_iofree(tmd);
+	if(tmd != d->extracted_buffer)
+		wbfs_iofree( tmd );
 
 	do_files(d);
 
@@ -247,14 +247,14 @@ static int test_parition_skip(u32 partition_type, partition_selector_t part_sel)
 {
 	switch(part_sel)
 	{
-	case ALL_PARTITIONS:
-		return 0;
-	case REMOVE_UPDATE_PARTITION:
-		return (partition_type == 1);
-	case ONLY_GAME_PARTITION:
-		return (partition_type != 0);
-	default:
-		return (partition_type != part_sel);
+		case ALL_PARTITIONS:
+			return 0;
+		case REMOVE_UPDATE_PARTITION:
+			return (partition_type == 1);
+		case ONLY_GAME_PARTITION:
+			return (partition_type != 0);
+		default:
+			return (partition_type != part_sel);
 	}
 } 
 static void do_disc(wiidisc_t *d)
@@ -284,8 +284,7 @@ static void do_disc(wiidisc_t *d)
 	for (i = 0; i < n_partitions; i++)
 	{
 		d->partition_raw_offset = partition_offset[i];
-		if (!test_parition_skip(partition_type[i], d->part_sel))
-			do_partition(d);
+		if (!test_parition_skip(partition_type[i], d->part_sel)) do_partition(d);
 	}
 	wbfs_iofree(b);
 }
@@ -293,8 +292,7 @@ static void do_disc(wiidisc_t *d)
 wiidisc_t *wd_open_disc(read_wiidisc_callback_t read, void *fp)
 {
 	wiidisc_t *d = wbfs_malloc(sizeof (wiidisc_t));
-	if (!d)
-		return 0;
+	if (!d) return 0;
 	wbfs_memset(d, 0, sizeof (wiidisc_t));
 	d->read = read;
 	d->fp = fp;
@@ -314,33 +312,21 @@ void wd_close_disc(wiidisc_t *d)
 // returns a buffer allocated with wbfs_ioalloc() or NULL if not found of alloc error
 // XXX pathname not implemented. files are extracted by their name. 
 // first file found with that name is returned.
-u8 *wd_extract_file(wiidisc_t *d, u32 *size, partition_selector_t partition_type, const char *pathname, enum Alloc alloc)
+u8 *wd_extract_file(wiidisc_t *d, u32 *size, partition_selector_t partition_type, const char *pathname)
 {
 	u8 *retval = 0;
 	d->extract_pathname = pathname;
 	d->extracted_buffer = 0;
 	d->part_sel = partition_type;
-	d->alloc = alloc;
 	do_disc(d);
 	d->extract_pathname = 0;
 	d->part_sel = ALL_PARTITIONS;
 	retval = d->extracted_buffer;
 	if (size != 0)
-		*size = d->extracted_buffer_size;
+		*size = d->extracted_size;
 	d->extracted_buffer = 0;
-	d->extracted_buffer_size = 0;
+	d->extracted_size = 0;
 	return retval;
-}
-
-void wd_list_dols(wiidisc_t *d, partition_selector_t partition_type, void (*user_add_dol)(void *, const char *), void *user_data)
-{
-	d->user_add_dol = user_add_dol;
-	d->user_data = user_data;
-	d->part_sel = partition_type;
-	do_disc(d);
-	d->part_sel = ALL_PARTITIONS;
-	d->user_add_dol = 0;
-	d->user_data = 0;
 }
 
 void wd_build_disc_usage(wiidisc_t *d, partition_selector_t selector, u8 *usage_table)
@@ -360,8 +346,7 @@ void wd_fix_partition_table(wiidisc_t *d, partition_selector_t selector, u8 *par
 	u32 partition_type; 
 	u32 n_partitions, i, j;
 	u32 *b32;
-	if (selector == ALL_PARTITIONS)
-		return;
+	if (selector == ALL_PARTITIONS) return;
 	n_partitions = _be32(b);
 	if (_be32(b + 4) - (0x40000 >> 2) > 0x50)
 		wbfs_fatal("cannot modify this partition table. Please report the bug.");

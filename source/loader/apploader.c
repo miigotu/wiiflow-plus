@@ -91,7 +91,7 @@ s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatc
 
 	/* ERROR 002 fix (WiiPower) */
 	*(u32 *)0x80003140 = *(u32 *)0x80003188;
-			
+
 	DCFlushRange((void*)0x80000000, 0x3f00);
 
 	return 0;

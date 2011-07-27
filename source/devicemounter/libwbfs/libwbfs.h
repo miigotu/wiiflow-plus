@@ -2,7 +2,7 @@
 #define LIBWBFS_H
 
 #include "libwbfs_os.h" // this file is provided by the project wanting to compile libwbfs
-#include "libwbfs/wiidisc.h"
+#include "wiidisc.h"
 
 #ifdef __cplusplus
    extern "C" {
@@ -10,7 +10,7 @@
 
 enum {
 	WBFS_DEVICE_USB = 1,	/* USB device */
-	WBFS_DEVICE_SDHC	/* SDHC device */
+	WBFS_DEVICE_SDHC		/* SDHC device */
 };
 
 typedef u32 be32_t;
@@ -195,6 +195,9 @@ u32 wbfs_add_disc(wbfs_t*p,read_wiidisc_callback_t read_src_wii_disc, void *call
 
 /*! remove a wiidvd inside a partition */
 u32 wbfs_rm_disc(wbfs_t*p, u8* discid);
+
+
+
 
 
 /*! trim the file-system to its minimum size

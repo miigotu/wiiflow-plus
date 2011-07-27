@@ -393,7 +393,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString,
 	VIDEO_WaitVSync();
 	VIDEO_WaitVSync();
 
-	usleep(100 * 1000);
+//	usleep(100 * 1000);
 
 	u8 temp_data[4];
 
@@ -402,10 +402,13 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString,
 
 	/* Shutdown IOS subsystems */
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
-	/*IRQ_Disable(); //Seems to break start of other games !?
+	u32 level = IRQ_Disable(); //Seems to break start of other games !?
 	__IOS_ShutdownSubsystems();
-	__exception_closeall();*/ 
+	__exception_closeall();
 
+	 /* Originally from tueidj - taken from NeoGamme (thx) */
+	*(vu32*)0xCC003024 = 1;
+	
 	// fix for PeppaPig
 	memcpy((void*)0x800000F4,(char *) &temp_data, 4);
 
@@ -439,6 +442,8 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString,
 			"blr\n"
 		);
 	}
+
+	IRQ_Restore(level);
 
 	return 0;
 }
