@@ -5,6 +5,9 @@
 #define ALT_DOL_DISC 2
 #define ALT_DOL_PLUS 3
 
+#define APPLOADER_START (void *)0x81200000
+#define APPLOADER_END (void *)0x816FFFF0
+
 /* Disc header structure */
 struct discHdr
 {

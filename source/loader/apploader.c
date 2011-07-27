@@ -19,9 +19,6 @@ typedef void  (*app_init)(void (*report)(const char *fmt, ...));
 typedef void *(*app_final)();
 typedef void  (*app_entry)(void (**init)(void (*report)(const char *fmt, ...)), int (**main)(), void *(**final)());
 
-/* Apploader pointers */
-static u8 *appldr = (u8 *)0x81200000;
-
 /* Constants */
 #define APPLDR_OFFSET	0x2440
 
@@ -41,40 +38,33 @@ s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatc
 	void *dst = NULL;
 	int len = 0;
 	int offset = 0;
-	app_entry appldr_entry;
 	app_init  appldr_init;
 	app_main  appldr_main;
 	app_final appldr_final;
 
-	u32 appldr_len;
-	s32 ret;
-
-	SYS_SetArena1Hi((void *)0x816FFFF0);
+	SYS_SetArena1Hi(APPLOADER_END);
 	/* Read apploader header */
-	ret = WDVD_Read(buffer, 0x20, APPLDR_OFFSET);
+	s32 ret = WDVD_Read(buffer, 0x20, APPLDR_OFFSET);
 	if (ret < 0) return ret;
 
 	/* Calculate apploader length */
-	appldr_len = buffer[5] + buffer[6];
+	u32 appldr_len = buffer[5] + buffer[6];
 
 	/* Read apploader code */
 	// Either you limit memory usage or you don't touch the heap after that, because this is writing at 0x1200000
-	ret = WDVD_Read(appldr, appldr_len, APPLDR_OFFSET + 0x20);
+	ret = WDVD_Read(APPLOADER_START, appldr_len, APPLDR_OFFSET + 0x20);
 	if (ret < 0) return ret;
 
-	DCFlushRange(appldr, appldr_len);
+	DCFlushRange(APPLOADER_START, appldr_len);
 
 	/* Set apploader entry function */
-	appldr_entry = (app_entry)buffer[4];
+	app_entry appldr_entry = (app_entry)buffer[4];
 
 	/* Call apploader entry */
 	appldr_entry(&appldr_init, &appldr_main, &appldr_final);
 
 	/* Initialize apploader */
 	appldr_init(__noprint);
-
-	u32 dolStart = 0x90000000;
-	u32 dolEnd = 0;
 	
 	bool hookpatched = false;
 
@@ -84,9 +74,6 @@ s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatc
 		WDVD_Read(dst, len, (u64)(offset << 2));
 		if(maindolpatches(dst, len, vidMode, vmode, vipatch, countryString, patchVidModes))
 			hookpatched = true;
-		
-		if ((u32) dst < dolStart) dolStart = (u32) dst;
-		if ((u32) dst + len > dolEnd) dolEnd = (u32) dst + len;
 	}
 
 	if (hooktype != 0 && !hookpatched)
