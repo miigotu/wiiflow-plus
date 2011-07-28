@@ -6,20 +6,13 @@
 #include <string.h>
 #include <ogc/system.h>
 
-#define MAX_MEM1_ARENA_LO	(void *)0x81700000
-#define MEM2_PRIORITY_SIZE	0x20
+#define MAX_MEM1_ARENA_LO	((void *) (0x81700000-size))	  // Preserve 1MB for other stuff if MEM1 almost out
+#define MEM2_PRIORITY_SIZE	0x50000
 
 // Forbid the use of MEM2 through malloc
 u32 MALLOC_MEM2 = 0;
 
 static CMEM2Alloc g_mem2gp;
-
-static unsigned char g_bigGoesToMem2 = 0;
-
-void MEM2_takeBigOnes(u8 b)
-{
-	g_bigGoesToMem2 = b;
-}
 
 extern "C"
 {
@@ -69,7 +62,7 @@ extern __typeof(malloc_usable_size) __real_malloc_usable_size;
 void *__wrap_malloc(size_t size)
 {
 	void *p;
-	if ((SYS_GetArena1Lo() >= MAX_MEM1_ARENA_LO) || (g_bigGoesToMem2 && size >= MEM2_PRIORITY_SIZE))
+	if ((SYS_GetArena1Lo() >= MAX_MEM1_ARENA_LO) || size >= MEM2_PRIORITY_SIZE)
 	{
 		p = MEM2_alloc(size);
 		return p != 0 ? p : __real_malloc(size);
@@ -81,7 +74,7 @@ void *__wrap_malloc(size_t size)
 void *__wrap_calloc(size_t n, size_t size)
 {
 	void *p;
-	if ((SYS_GetArena1Lo() >= MAX_MEM1_ARENA_LO) || (g_bigGoesToMem2 && (n * size) >= MEM2_PRIORITY_SIZE))
+	if ((SYS_GetArena1Lo() >= MAX_MEM1_ARENA_LO) || (n * size) >= MEM2_PRIORITY_SIZE)
 	{
 		p = MEM2_alloc(n * size);
 		if (p != 0)
@@ -103,7 +96,7 @@ void *__wrap_calloc(size_t n, size_t size)
 void *__wrap_memalign(size_t a, size_t size)
 {
 	void *p;
-	if ((SYS_GetArena1Lo() >= MAX_MEM1_ARENA_LO) || (g_bigGoesToMem2 && size >= MEM2_PRIORITY_SIZE))
+	if ((SYS_GetArena1Lo() >= MAX_MEM1_ARENA_LO) || size >= MEM2_PRIORITY_SIZE)
 	{
 		if (a <= 32 && 32 % a == 0)
 		{
@@ -126,7 +119,7 @@ void *__wrap_realloc(void *p, size_t size)
 {
 	void *n;
 	// ptr from mem2
-	if (((u32)p & 0x10000000) != 0 || (p == 0 && g_bigGoesToMem2 && size > MEM2_PRIORITY_SIZE))
+	if (((u32)p & 0x10000000) != 0 || (p == 0 && size > MEM2_PRIORITY_SIZE))
 	{
 		n = MEM2_realloc(p, size);
 		if (n != 0) {

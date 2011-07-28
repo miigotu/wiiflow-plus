@@ -22,18 +22,18 @@ public:
 	{
 		if (m_refcount != NULL)
 		{
-			if (--*m_refcount == 0)
+			if (--*m_refcount <= 0)
 			{
 				switch (m_srcAlloc)
 				{
 					case SRCALL_NEW:
 						SAFE_DELETE(m_p);
 						break;
-					default: // wrapped free knows if it is a pointer in mem1 or mem2
+					default:
 						SAFE_FREE(m_p);
 						break;
 				}
-				delete m_refcount;
+				SAFE_DELETE(m_refcount);
 			}
 		}
 		m_p = NULL;

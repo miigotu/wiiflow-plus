@@ -11,8 +11,8 @@ void CMEM2Alloc::init(unsigned int size)
 {
 	m_baseAddress = (SBlock *)(((u32)SYS_GetArena2Lo() + 31) & ~31);
 	m_endAddress = (SBlock *)((char *)m_baseAddress + std::min(size * 0x100000, (SYS_GetArena2Size() - 63) & ~31)); // Round down - an extra 32 for wdvd_unencrypted read
-	if (m_endAddress > (SBlock *)0x93200000) //rest is reserved for usb/usb2/network and other stuff... (0xE0000 bytes)
-		m_endAddress = (SBlock *)0x93200000; // was 0x93300000 in code from GX  // Loader/disc.c:36 and 215 etc
+	if (m_endAddress > (SBlock *)0x93000000) //rest is reserved for usb/usb2/network and other stuff... (0xE0000 bytes)
+		m_endAddress = (SBlock *)0x93000000; // was 0x93300000 in code from GX  // Loader/disc.c:36 and 215 etc
 	SYS_SetArena2Lo(m_endAddress + 32); // Protect an extra 32 for wdvd unencrpted read
 	LWP_MutexInit(&m_mutex, 0);
 }
@@ -148,6 +148,7 @@ void *CMEM2Alloc::reallocate(void *p, unsigned int s)
 
 	if (s == 0)
 		s = 1;
+
 	if (p == 0)
 		return allocate(s);
 

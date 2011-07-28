@@ -208,6 +208,24 @@ int get_frag_list(u8 *id, char *path, const u32 hdd_sector_size)
 				goto out;
 			}
 		}
+		else if (wbfs_part_fs == PART_FS_WBFS)
+		{
+			// if wbfs file format, remap.
+			wbfs_disc_t *d = WBFS_OpenDisc(id, path);
+			if (!d)
+			{
+				ret_val = -4;
+				WBFS_CloseDisc(d);
+				goto out;
+			}
+			ret = wbfs_get_fragments(d, &_frag_append, fs, hdd_sector_size);
+			WBFS_CloseDisc(d);
+			if (ret)
+			{
+				ret_val = -5;
+				goto out;
+			}
+		}
 		if (wbfs_part_fs == PART_FS_NTFS || wbfs_part_fs == PART_FS_EXT)
 		{
 			gprintf("Shifting all frags by sector: %d\n", wbfs_part_lba);
@@ -218,7 +236,7 @@ int get_frag_list(u8 *id, char *path, const u32 hdd_sector_size)
 		frag_concat(fa, fs);
 	}
 
-	frag_list = malloc(sizeof(FragList));
+	frag_list = memalign(32, (sizeof(FragList)+31)&(~31));
 	frag_init(frag_list, MAX_FRAG);
 	if (isWBFS) // If this is a .wbfs file format, remap.
 	{
@@ -264,17 +282,21 @@ int set_frag_list(u8 *id)
 	int size = sizeof(Fragment) * (frag_list->num + 1);
 	DCFlushRange(frag_list, size);
 
-/* 	gprintf("Calling WDVD_SetFragList, frag list size %d\n", size);
-	if (size > 400) ghexdump(frag_list, 400);
+ 	gprintf("Calling WDVD_SetFragList, frag list size %d\n", size);
+/*	if (size > 400) ghexdump(frag_list, 400);
 	else ghexdump(frag_list, size); */
 
 	int ret = WDVD_SetFragList(wbfsDev, frag_list, size);
+	
+	free(frag_list);
+	frag_list = NULL;
+
 	if (ret) return ret;
 
 	// verify id matches
-	char discid[8];
+	char discid[32] ATTRIBUTE_ALIGN(32);
 	memset(discid, 0, sizeof(discid));
-	ret = WDVD_UnencryptedRead(discid, 8, 0);
+	ret = WDVD_UnencryptedRead(discid, 32, 0);
 	gprintf("Reading ID after setting fraglist: %s (expected: %s)\n", discid, id);
 	return (strncasecmp((char *) id, discid, 6) != 0) ? -3 : 0;
 }

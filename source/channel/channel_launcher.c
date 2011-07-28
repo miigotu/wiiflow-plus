@@ -18,10 +18,13 @@
 
 GXRModeObj * __Disc_SelectVMode(u8 videoselected, u64 chantitle);
 void PatchCountryStrings(void *Address, int Size);
+void __Disc_SetLowMem(void);
 void __Disc_SetVMode(void);
 void __Disc_SetTime(void);
 void _unstub_start();
-	
+
+extern void __exception_closeall();
+
 bool bootcontent_used = false;
 
 typedef void (*entrypoint) (void);
@@ -45,7 +48,6 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool country
 	entryPoint = LoadChannel(data);
 	SAFE_FREE(data);
 
-
 	/* Select an appropriate video mode */
 	GXRModeObj * vmode = __Disc_SelectVMode(vidMode, chantitle);
 
@@ -53,6 +55,9 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool country
 	Identify(chantitle, &ios);
 
 	ISFS_Deinitialize();
+
+	/*if (entryPoint != 0x3400)
+		__Disc_SetLowMem();*/
 
 	if (entryPoint != 0x3400)
 	{
@@ -65,7 +70,6 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool country
 	}
 	
 	// Remove 002 error
-	//gprintf("Fake IOS Version(%u)\n", ios);
 	*(u16 *)0x80003140 = ios;
 	*(u16 *)0x80003142 = 0xffff;
 	*(u16 *)0x80003188 = ios;
@@ -73,13 +77,11 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool country
 	
 	DCFlushRange((void*)0x80003140, 4);
 	DCFlushRange((void*)0x80003188, 4);
-	
+
 	if (hooktype != 0)
 		ocarina_do_code();
 
 	PatchChannel(vidMode, vmode, vipatch, countryString, patchVidMode);
-
-	//gprintf("Loading complete, booting...\n");
 
 	entrypoint appJump = (entrypoint)entryPoint;
 
@@ -89,13 +91,11 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool country
 	/* Set an appropriate video mode */
 	__Disc_SetVMode();
 
-	VIDEO_SetBlack(TRUE);
-	VIDEO_Flush();
-	VIDEO_WaitVSync();
-	VIDEO_WaitVSync();
-
 	/* Shutdown IOS subsystems */
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
+	u32 level = IRQ_Disable();
+	__IOS_ShutdownSubsystems();
+	__exception_closeall();
 
 	gprintf("Jumping to entrypoint\n");
 	
@@ -139,6 +139,8 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool country
 		);
 	}
 	else _unstub_start();
+
+	IRQ_Restore(level);
 
 	return 0;
 }

@@ -88,7 +88,6 @@ int old_main(int argc, char **argv)
 	do 
 	{
 		Open_Inputs();
-		MEM2_takeBigOnes(true);
 
 		bool HddMounted = false;
 		DeviceHandler::Instance()->MountAll();

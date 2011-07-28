@@ -33,7 +33,7 @@
 u32 appentrypoint;
 	
 /* Disc pointers */
-static u32 *buffer = (u32 *)0x93200000;
+static u32 *buffer = (u32 *)0x93000000;
 static u8  *diskid = (u8  *)0x80000000;
 
 GXRModeObj *disc_vmode = NULL;
@@ -54,14 +54,10 @@ static u8	Tmd_Buffer[0x49e4 + 0x1C] ALIGNED(32);
 void __Disc_SetLowMem()
 {
 	/* Setup low memory */
-	*(vu32 *)0x80000030 = 0x00000000; // Arena Low
 	*(vu32 *)0x80000060 = 0x38A00040;
 	*(vu32 *)0x800000E4 = 0x80431A80;
 	*(vu32 *)0x800000EC = 0x81800000; // Dev Debugger Monitor Address
 	*(vu32 *)0x800000F0 = 0x01800000; // Simulated Memory Size
-	*(vu32 *)0x800000F4 = 0x817E5480;
-	*(vu32 *)0x800000F8 = 0x0E7BE2C0; // bus speed
-	*(vu32 *)0x800000FC = 0x2B73A840; // cpu speed
 	*(vu32 *)0xCD00643C = 0x00000000; // 32Mhz on Bus
 
 	/* Copy disc ID (online check) */
@@ -71,6 +67,7 @@ void __Disc_SetLowMem()
 	*Sys_Magic	= 0x0d15ea5e;
 	*Version	= 1;
 	*Arena_L	= 0x00000000;
+	*BI2		= 0x817E5480;
 	*Bus_Speed	= 0x0E7BE2C0;
 	*CPU_Speed	= 0x2B73A840;
 
@@ -81,6 +78,7 @@ void __Disc_SetLowMem()
 	
 	// Fix for Sam & Max (WiiPower)
 	*(vu32 *)0x80003184 = 0x80000000;
+
 	/* Flush cache */
 	DCFlushRange((void *)0x80000000, 0x3F00);
 }
@@ -188,13 +186,10 @@ void __Disc_SetVMode(void)
 	*(vu32 *)0x800000CC = vmode_reg;
 
 	/* Set video mode */
-	if (vmode != 0)
-	{
-		VIDEO_Configure(vmode);
-	}
+	if (vmode != 0) VIDEO_Configure(vmode);
 	
 	/* Setup video  */
-	VIDEO_SetBlack(FALSE);
+	VIDEO_SetBlack(TRUE);
 	VIDEO_Flush();
 	VIDEO_WaitVSync();
 	if (vmode->viTVMode & VI_NON_INTERLACE)
@@ -209,39 +204,34 @@ void __Disc_SetTime(void)
 
 s32 __Disc_FindPartition(u64 *outbuf)
 {
-	u64 offset = 0, table_offset = 0;
-	u32 cnt, nb_partitions;
-	s32 ret;
+	u64 offset = 0;
+	u32 cnt;
 
 	/* Read partition info */
-	ret = WDVD_UnencryptedRead(buffer, 0x20, PTABLE_OFFSET);
-	if (ret < 0)
-		return ret;
+	s32 ret = WDVD_UnencryptedRead(buffer, 0x20, PTABLE_OFFSET);
+	if (ret < 0) return ret;
 
 	/* Get data */
-	nb_partitions = buffer[0];
-	table_offset  = buffer[1] << 2;
+	u32 nb_partitions = buffer[0];
+	u64 table_offset  = buffer[1] << 2;
 	
-	if (nb_partitions > 8)
-		return -1;
+	if (nb_partitions > 8) return -1;
 
 	/* Read partition table */
 	ret = WDVD_UnencryptedRead(buffer, 0x20, table_offset);
-	if (ret < 0)
-		return ret;
+	if (ret < 0) return ret;
 
 	/* Find game partition */
-	for (cnt = 0; cnt < nb_partitions; cnt++) {
+	for (cnt = 0; cnt < nb_partitions; cnt++)
+	{
 		u32 type = buffer[cnt * 2 + 1];
 
 		/* Game partition */
-		if(!type)
-			offset = buffer[cnt * 2] << 2;
+		if(!type) offset = buffer[cnt * 2] << 2;
 	}
 
 	/* No game partition found */
-	if (!offset)
-		return -1;
+	if (!offset) return -1;
 
 	/* Set output buffer */
 	*outbuf = offset;
@@ -260,12 +250,9 @@ s32 Disc_Init(void)
 
 s32 Disc_Open(void)
 {
-	s32 ret;
-
 	/* Reset drive */
-	ret = WDVD_Reset();
-	if (ret < 0)
-		return ret;
+	s32 ret = WDVD_Reset();
+	if (ret < 0) return ret;
 
 	memset(diskid, 0, 32);
 
@@ -374,26 +361,20 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString,
 	/* Run apploader */
 	ret = Apploader_Run(&p_entry, vidMode, vmode, vipatch, countryString, patchVidMode, ios);
 	free_wip();
-	
 	if (ret < 0) return ret;
 
 	if (hooktype != 0)
 		ocarina_do_code();
 
-//	DCFlushRange((void*)0x80000000, 0xA00000);
+	gprintf("\n\nEntry Point is: %0x8\n", p_entry);
+//	gprintf("Lowmem:\n\n");
+//	ghexdump((void*)0x80000000, 0x3f00);
 
 	/* Set time */
 	__Disc_SetTime();
 
 	/* Set an appropriate video mode */
 	__Disc_SetVMode();
-
-	VIDEO_SetBlack(TRUE);
-	VIDEO_Flush();
-	VIDEO_WaitVSync();
-	VIDEO_WaitVSync();
-
-//	usleep(100 * 1000);
 
 	u8 temp_data[4];
 
