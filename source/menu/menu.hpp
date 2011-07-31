@@ -1,6 +1,6 @@
 #ifndef __MENU_HPP
 #define __MENU_HPP
-#define SHOWMEM 1
+//#define SHOWMEM 1
 #include <wiiuse/wpad.h>
 #include <ogc/pad.h>
 
