@@ -10,13 +10,19 @@ extern "C"
 #endif
 
 void MEM2_init(unsigned int mem2Size);
-void MEM2_takeBigOnes(unsigned char b);
 void MEM2_cleanup(void);
+void MEM2_clear(void);
+void MEM1_cleanup(void);
+void MEM1_clear(void);
 void *MEM2_alloc(unsigned int s);
+void *MEM1_alloc(unsigned int s);
 void *MEM2_realloc(void *p, unsigned int s);
+void *MEM1_realloc(void *p, unsigned int s);
 void MEM2_free(void *p);
+void MEM1_free(void *p);
 unsigned int MEM2_usableSize(void *p);
 unsigned int MEM2_freesize();
+unsigned int MEM1_freesize();
 
 #ifdef __cplusplus
 }

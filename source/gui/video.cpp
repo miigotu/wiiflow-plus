@@ -69,7 +69,7 @@ const int CVideo::_stencilWidth = 128;
 const int CVideo::_stencilHeight = 128;
 
 static lwp_t waitThread = LWP_THREAD_NULL;
-SmartBuf waitThreadStack;
+static u8 *waitThreadStack;
 
 CVideo::CVideo(void) :
 	m_rmode(NULL), m_frameBuf(), m_curFB(0), m_fifo(NULL),
@@ -520,6 +520,12 @@ void CVideo::hideWaitMessage()
 	m_showWaitMessage = false;
 }
 
+extern "C"
+{
+	extern __typeof(malloc) __real_malloc;
+	extern __typeof(free) __real_free;
+}
+
 void CVideo::CheckWaitThread(bool force)
 {
 	if (force || (!m_showingWaitMessages && waitThread != LWP_THREAD_NULL))
@@ -531,7 +537,8 @@ void CVideo::CheckWaitThread(bool force)
 
 		LWP_JoinThread(waitThread, NULL);
 
-		SMART_FREE(waitThreadStack);
+		if(waitThreadStack)
+			__real_free(waitThreadStack);
 		waitThread = LWP_THREAD_NULL;
 
 		m_waitMessages.clear();
@@ -582,9 +589,10 @@ void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool use
 	{
 		m_showWaitMessage = true;
 		unsigned int stack_size = (unsigned int)32768;  //Try 32768?
-		SMART_FREE(waitThreadStack);		
-		waitThreadStack = smartMalloc(stack_size);
-		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, waitThreadStack.get(), stack_size, 40);
+		if(waitThreadStack)
+			__real_free(waitThreadStack);		
+		waitThreadStack = (u8 *)__real_malloc(stack_size);
+		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, waitThreadStack, stack_size, 40);
 	}
 }
 

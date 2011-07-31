@@ -1,8 +1,12 @@
 #ifndef _DISC_H_
 #define _DISC_H_
 
+#ifndef APPLOADER_START		/* Also defined in mem2.hpp */
 #define APPLOADER_START (void *)0x81200000
+#endif
+#ifndef APPLOADER_END		/* Also defined in mem2.hpp */
 #define APPLOADER_END (void *)0x816FFFF0
+#endif
 
 /* Disc header structure */
 struct discHdr

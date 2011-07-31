@@ -35,7 +35,7 @@ int old_main(int argc, char **argv)
 	geckoinit = InitGecko();
 	__exception_setreload(5);
 
-	SYS_SetArena1Hi(APPLOADER_START);	//  Make sure libogc doesnt use appldr area
+	SYS_SetArena1Hi(APPLOADER_START);
 	CVideo vid;
 
 	char *gameid = NULL;
@@ -70,7 +70,6 @@ int old_main(int argc, char **argv)
 	mainIOSRev = IOS_GetRevision();
 	iosOK = iosOK && mainIOSRev >= mainIOSminRev;
 
-	SYS_SetArena1Hi(APPLOADER_START);	// Make sure libogc doesnt use appldr area after ios reload.
 	MEM2_init(52);
 
 	// Init video

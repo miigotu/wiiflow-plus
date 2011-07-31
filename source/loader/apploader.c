@@ -42,13 +42,14 @@ s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatc
 	app_main  appldr_main;
 	app_final appldr_final;
 
-	SYS_SetArena1Hi(APPLOADER_END);
 	/* Read apploader header */
 	s32 ret = WDVD_Read(buffer, 0x20, APPLDR_OFFSET);
 	if (ret < 0) return ret;
 
 	/* Calculate apploader length */
 	u32 appldr_len = buffer[5] + buffer[6];
+
+	SYS_SetArena1Hi(APPLOADER_END);
 
 	/* Read apploader code */
 	// Either you limit memory usage or you don't touch the heap after that, because this is writing at 0x1200000

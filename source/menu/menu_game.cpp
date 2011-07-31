@@ -527,7 +527,7 @@ extern "C" {extern void USBStorage_Deinit(void);}
 
 void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> arguments)
 {
-	//COVER_clear();
+	//MEM1_cleanup();	MEM1_clear();
 	if(LoadHomebrew(filepath))
 	{
 		m_gcfg1.save();
@@ -609,7 +609,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 
 		CheckGameSoundThread(true);
-
+		//MEM1_cleanup();		MEM1_clear();
 		cleanup();
 		Close_Inputs();
 		USBStorage_Deinit();
@@ -739,7 +739,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		iosLoaded = true;
 	}
 	
-	//COVER_clear();
+	//MEM1_cleanup();	MEM1_clear();
 	if (IOS_GetRevision() < D2X_MIN_REV)
 	{
 		error(sfmt("d2x rev %i or higher is required.\nPlease install the latest version.", gameIOS, D2X_MIN_REV));
