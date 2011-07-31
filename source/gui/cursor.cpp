@@ -158,10 +158,10 @@ void CCursor::_blur(void)
 	int yp;
 	int yi;
 	int pass = 2;
-	SmartBuf xMinBuf = smartAnyAlloc(w * sizeof (int));
-	SmartBuf xMaxBuf = smartAnyAlloc(w * sizeof (int));
-	SmartBuf yMinBuf = smartAnyAlloc(h * sizeof (int));
-	SmartBuf yMaxBuf = smartAnyAlloc(h * sizeof (int));
+	SmartBuf xMinBuf = smartMem2Alloc(w * sizeof (int));
+	SmartBuf xMaxBuf = smartMem2Alloc(w * sizeof (int));
+	SmartBuf yMinBuf = smartMem2Alloc(h * sizeof (int));
+	SmartBuf yMaxBuf = smartMem2Alloc(h * sizeof (int));
 	SmartBuf buf = smartMem2Alloc(m_shadow.width * m_shadow.height);
 	if (!xMinBuf || !xMaxBuf || !yMinBuf || !yMaxBuf || !buf)
 		return;

@@ -167,14 +167,21 @@ int CMenu::main(void)
 	_initCF();
 
 	lwp_t coverStatus = LWP_THREAD_NULL;
-	LWP_CreateThread(&coverStatus, (void *(*)(void *))CMenu::GetCoverStatusAsync, (void *)this, 0, 8192, 40);
+	unsigned int stack_size = (unsigned int)32768;
+	SmartBuf coverstatus_stack = smartMem2Alloc(stack_size);	
+	LWP_CreateThread(&coverStatus, (void *(*)(void *))CMenu::GetCoverStatusAsync, (void *)this, coverstatus_stack.get(), stack_size, 40);
 
 	while (true)
 	{
 		_mainLoopCommon(true);
 
 		if (m_initialCoverStatusComplete)
+		{
+			LWP_JoinThread(coverStatus, NULL);
+			coverStatus = LWP_THREAD_NULL;
+			SMART_FREE(coverstatus_stack);
 			WDVD_GetCoverStatus(&disc_check);
+		}
 
 		//Check for exit or reload request
 		if (BTN_HOME_PRESSED)
@@ -629,6 +636,7 @@ int CMenu::main(void)
 			else
 				m_cf.mouse(m_vid, chan, -1, -1);		
 	}
+	_showWaitMessage();
 	//
 	gprintf("Invalidate GX\n");
 
@@ -641,14 +649,11 @@ int CMenu::main(void)
 	m_cat.save();
 //	m_loc.save();
 	gprintf("Wait for dvd\n");
-	while(!m_initialCoverStatusComplete){}
+	LWP_JoinThread(coverStatus, NULL);
+	coverStatus = LWP_THREAD_NULL;
+	SMART_FREE(coverstatus_stack);
 	gprintf("Done with main\n");
-	if (m_reload)
-	{
-		_showWaitMessage();
-		return 1;
-	}
-	return 0;
+	return m_reload ? 1 : 0;
 }
 
 void CMenu::_initMainMenu(CMenu::SThemeData &theme)

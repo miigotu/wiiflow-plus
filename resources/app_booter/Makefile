@@ -6,8 +6,19 @@
 ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
 endif
+export PORTLIBS	:=	../../portlibs/ppc
+export PATH	:=	$(DEVKITPPC)/bin:$(PORTLIBS)/bin:$(PATH)
+export LIBOGC_INC	:=	$(DEVKITPRO)/libogc/include
+export LIBOGC_LIB	:=	$(DEVKITPRO)/libogc/lib/wii
 
-include $(DEVKITPPC)/wii_rules
+PREFIX	:=	powerpc-gekko-
+
+export AS	:=	$(PREFIX)as
+export CC	:=	$(PREFIX)gcc
+export CXX	:=	$(PREFIX)g++
+export AR	:=	$(PREFIX)ar
+export LD	:=	$(PREFIX)ld
+export OBJCOPY	:=	$(PREFIX)objcopy
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -24,25 +35,29 @@ INCLUDES	:=
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
+MACHDEP := -mno-eabi -mno-sdata -mcpu=750
+CFLAGS	:= -Wall -W -Os -ffreestanding -std=gnu99 -Wstrict-aliasing=2 $(MACHDEP) $(INCLUDE)
+CXXFLAGS :=	$(CFLAGS)
 
-CFLAGS		= -g -O2 -Wall $(MACHDEP) $(INCLUDE)
-CXXFLAGS	=	$(CFLAGS)
+
 
 #---------------------------------------------------------------------------------
 # move loader to another location - THANKS CREDIAR - 0x81330000 for HBC
 #---------------------------------------------------------------------------------
-LDFLAGS		= -g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x93200000
-
+#LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
+#LDFLAGS = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003f00
+Q := @
+MAKEFLAGS += --no-print-directory
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -logc
+#LIBS	:= 
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(CURDIR)
+#LIBDIRS	:= $(CURDIR)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -71,16 +86,9 @@ PNGFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.png)))
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
 #---------------------------------------------------------------------------------
-ifeq ($(strip $(CPPFILES)),)
-	export LD	:=	$(CC)
-else
-	export LD	:=	$(CXX)
-endif
-
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
-					$(sFILES:.s=.o) $(SFILES:.S=.o) \
-					$(PNGFILES:.png=.png.o)
+					$(sFILES:.s=.o) $(SFILES:.S=.o)
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
@@ -102,7 +110,7 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
 clean:
@@ -129,10 +137,22 @@ $(OUTPUT).elf: $(OFILES)
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .jpg extension
 #---------------------------------------------------------------------------------
-%.png.o : %.png
-	@echo $(notdir $<)
-	$(bin2o)
+%.dol: %.elf
+	@echo "  OBJCOPY   $@"
+	$(Q)$(OBJCOPY) -O binary $< $@
 
+%.elf: link.ld $(OFILES)
+	@echo "  LINK      $@"
+	$(Q)$(LD) -n -T $^ $(LDFLAGS) -o $@
+
+%.o: %.c 
+	@echo "  COMPILE   $@"
+	$(Q)$(CC) $(CFLAGS) -c $< -o $@
+
+%.o: %.s
+	@echo "  ASSEMBLE  $@"
+	$(Q)$(CC) $(CFLAGS) -c $< -o $@
+	
 -include $(DEPENDS)
 
 #---------------------------------------------------------------------------------

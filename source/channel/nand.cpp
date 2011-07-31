@@ -35,6 +35,7 @@
 #include "nand.hpp"
 #include "utils.h"
 #include "gecko.h"
+#include "mem2.hpp"
 
 static NandDevice NandDeviceList[] = {
 	{ "Disable",						0,	0x00,	0x00 },
@@ -83,7 +84,7 @@ s32 Nand::Nand_Mount(NandDevice *Device)
 		inlen = 1;
 
 		/* Allocate memory */
-		buffer = (u32 *)memalign(32, sizeof(u32)*3);
+		buffer = (u32 *)MEM2_alloc(sizeof(u32)*3);
 
 		/* Set vector pointer */
 		vector = (ioctlv *)buffer;
@@ -157,7 +158,7 @@ s32 Nand::Nand_Enable(NandDevice *Device)
 		int NandPathlen = strlen(NandPath)+1;
 
 		/* Allocate memory */
-		u32 *buffer = (u32 *)memalign(32, (sizeof(u32) * 5) + NandPathlen);
+		u32 *buffer = (u32 *)MEM2_alloc((sizeof(u32) * 5) + NandPathlen);
 	
 		buffer[0] = (u32)(buffer + 4);
 		buffer[1] = sizeof(u32);		// actually not used by cios

@@ -1,5 +1,6 @@
 #include "fs_utils.h"
 #include "gecko.h"
+#include "mem2.hpp"
 
 s32 FS_DeleteDir(const char *dirpath)
 {
@@ -60,7 +61,7 @@ int FS_Read_File(const char *filepath, void **buffer, int *length)
 
 	fseek(fp, 0, SEEK_SET);
 
-	*buffer = memalign(32, *length+32);
+	*buffer = MEM2_alloc(*length+32);
 
 	if(!*buffer)
 	{

@@ -27,6 +27,8 @@
  ***************************************************************************/
 
 #include <malloc.h>
+#include "mem2.hpp"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -100,10 +102,10 @@ u64* Channels::GetChannelList(u32* count)
 
 	if (ret || !countall) return NULL;
 
-	u64* titles = (u64*)memalign(32, ALIGN32(countall * sizeof(u64)));
+	u64* titles = (u64*)MEM2_alloc(ALIGN32(countall * sizeof(u64)));
 	if (!titles) return NULL;
 
-	u64* channels = (u64*)malloc(countall * sizeof(u64));
+	u64* channels = (u64*)MEM2_alloc(countall * sizeof(u64));
 	if (!channels)
 	{
 		SAFE_FREE(titles);
@@ -128,7 +130,7 @@ u64* Channels::GetChannelList(u32* count)
 	}
 	SAFE_FREE(titles);
 
-	return (u64*)realloc(channels, *count * sizeof(u64));
+	return (u64*)MEM2_realloc(channels, *count * sizeof(u64));
 }
 
 bool Channels::GetAppNameFromTmd(u64 title, char* app, bool dol, u16* bootcontent)

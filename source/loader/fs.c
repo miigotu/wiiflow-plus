@@ -3,6 +3,7 @@
 #include <ogc/isfs.h>
 #include <malloc.h>
 #include "utils.h"
+#include "mem2.hpp"
 #include "fs.h"
 
 u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length)
@@ -19,7 +20,7 @@ u8 *ISFS_GetFile(u8 *path, u32 *size, s32 length)
 		{
 			if (length <= 0) length = stats.file_length;
 			if (length > 0)
-				buf = (u8 *) memalign(32, ALIGN32(length));
+				buf = (u8 *) MEM2_alloc(ALIGN32(length));
 
 			if (buf)
 			{

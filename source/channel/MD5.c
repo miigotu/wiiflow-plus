@@ -86,7 +86,7 @@
 
 #include "MD5.h"
 #include "utils.h"
-
+#include "mem2.hpp"
 
 /* -------------------------------------------------------------------------- **
  * Static Constants:
@@ -568,7 +568,7 @@ unsigned char * MD5fromFile(unsigned char *dst, const char *src)
     else
         blksize = 1048576;
 
-    unsigned char * buffer = malloc(blksize);
+    unsigned char * buffer = MEM2_alloc(blksize);
 
     if(!!buffer)
 	{

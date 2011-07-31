@@ -581,9 +581,9 @@ void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool use
 	else if (m_waitMessages.size() > 1)
 	{
 		m_showWaitMessage = true;
-		unsigned int stack_size = (unsigned int)8192;  //Try 32768?
+		unsigned int stack_size = (unsigned int)32768;  //Try 32768?
 		SMART_FREE(waitThreadStack);		
-		waitThreadStack = smartAnyAlloc(stack_size);
+		waitThreadStack = smartMalloc(stack_size);
 		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, waitThreadStack.get(), stack_size, 40);
 	}
 }

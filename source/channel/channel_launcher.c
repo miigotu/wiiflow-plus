@@ -15,6 +15,7 @@
 #include "utils.h"
 #include "fs.h"
 #include "gecko.h"
+#include "mem2.hpp"
 
 GXRModeObj * __Disc_SelectVMode(u8 videoselected, u64 chantitle);
 void PatchCountryStrings(void *Address, int Size);
@@ -54,7 +55,7 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool country
 	u32 ios;
 	Identify(chantitle, &ios);
 
-	ISFS_Deinitialize();
+	//ISFS_Deinitialize();
 
 	/*if (entryPoint != 0x3400)
 		__Disc_SetLowMem();*/
@@ -93,11 +94,8 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool country
 
 	/* Shutdown IOS subsystems */
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
-	u32 level = IRQ_Disable();
-	__IOS_ShutdownSubsystems();
-	__exception_closeall();
 
-	gprintf("Jumping to entrypoint\n");
+	gprintf("Jumping to entrypoint %08x\n", entryPoint);
 	
 	if (entryPoint != 0x3400)
 	{
@@ -139,8 +137,6 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool country
 		);
 	}
 	else _unstub_start();
-
-	IRQ_Restore(level);
 
 	return 0;
 }
@@ -232,7 +228,7 @@ void PatchChannel(u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryStrin
 bool Identify_GenerateTik(signed_blob **outbuf, u32 *outlen)
 {
 	/* Allocate memory */
-	signed_blob *buffer = (signed_blob *)memalign(32, STD_SIGNED_TIK_SIZE);
+	signed_blob *buffer = (signed_blob *)MEM2_alloc(STD_SIGNED_TIK_SIZE);
 	if (!buffer) return false;
 
 	/* Clear buffer */
@@ -393,7 +389,7 @@ bool FindDol(u64 title, char *DolPath, u16 bootcontent)
 	}
 
 	size_t bufferSize = ((12 + 1) * Countall) + 1;
-	char *namesBuffer = (char *)memalign(32, ALIGN32(bufferSize));
+	char *namesBuffer = (char *)MEM2_alloc(ALIGN32(bufferSize));
 	char *holder = namesBuffer;
 	if(namesBuffer == NULL)
 	{

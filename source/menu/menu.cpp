@@ -46,10 +46,6 @@ extern const u8 pbarlefts_png[];
 extern const u8 pbarcenters_png[];
 extern const u8 pbarrights_png[];
 
-// Fonts
-SmartBuf base_font;
-u32 base_font_size = 0;
-
 using namespace std;
 
 CMenu::CMenu(CVideo &vid) :
@@ -80,6 +76,7 @@ CMenu::CMenu(CVideo &vid) :
 	m_reload = false;
 	bootHB = false;
 	m_gamesound_changed = false;
+	m_base_font_size = 0;
 }
 
 extern "C" { int makedir(char *newdir); }
@@ -222,7 +219,7 @@ void CMenu::init()
 		}
 	}
 
-	m_cf.init();
+	m_cf.init(m_base_font.get(), m_base_font_size);
 
 	//Make important folders first.
 	makedir((char *)m_cacheDir.c_str());
@@ -705,7 +702,7 @@ void CMenu::_buildMenus(void)
 {
 	SThemeData theme;
 
-	if(!base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
+	if(!m_base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 	
 	// Default fonts
 	theme.btnFont = _font(theme.fontSet, "GENERAL", "button_font", BUTTONFONT);
@@ -792,7 +789,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 {
 	SFont retFont;
 
-	if(!base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
+	if(!m_base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 
 	bool useDefault = false;
 	string filename = m_theme.getString(domain, key);
@@ -855,7 +852,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
 		return retFont;
 	}
-	if(retFont.fromBuffer(base_font.get(), base_font_size, fontSize, lineSpacing, weight, index))
+	if(retFont.fromBuffer(m_base_font.get(), m_base_font_size, fontSize, lineSpacing, weight, index))
 	{
 		// Default font
 		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
@@ -1535,7 +1532,7 @@ bool CMenu::_loadChannelList(void)
 	u32 count = m_channels.Count();
 	u32 len = count * sizeof m_gameList[0];
 
-	SmartBuf buffer = smartAnyAlloc(len);
+	SmartBuf buffer = smartMem2Alloc(len);
 	if (!buffer) return false;
 
 	memset(buffer.get(), 0, len);
@@ -1763,10 +1760,10 @@ retry:
 				
 				//gprintf("Extracted font: %d\n", size);
 				
-				base_font = smartAnyAlloc(size);
-				memcpy(base_font.get(), font_file, size);
-				if(!!base_font.get())
-					base_font_size = size;
+				m_base_font = smartMalloc(size);
+				memcpy(m_base_font.get(), font_file, size);
+				if(!!m_base_font.get())
+					m_base_font_size = size;
 			}
 			SAFE_FREE(u8_font_archive);
 			break;
@@ -1786,6 +1783,6 @@ retry:
 
 void CMenu::_cleanupDefaultFont()
 {
-	SMART_FREE(base_font);
-	base_font_size = 0;
+	SMART_FREE(m_base_font);
+	m_base_font_size = 0;
 }

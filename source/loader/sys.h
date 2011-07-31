@@ -34,9 +34,8 @@ extern "C" {
 	
 	void Open_Inputs(void);
 	void Close_Inputs(void);
-    char* str_seek_end(char **str, int *size);
 
-	void get_all_ios_info_str(int i, char *str, int size);
+
 	char* get_ios_info_from_tmd();
 	u32 get_ios_info(signed_blob *TMD, u32 size);
 	char* get_iosx_info_from_tmd(int ios_slot, u32 *version);

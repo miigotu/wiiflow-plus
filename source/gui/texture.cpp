@@ -208,7 +208,7 @@ STexture::TexErr STexture::fromPNGFile(const char *filename, u8 f, Alloc alloc, 
 	fseek(file, 0, SEEK_SET);
 	if (fileSize > 0)
 	{
-		ptrPng = smartAnyAlloc(fileSize);
+		ptrPng = smartMem2Alloc(fileSize);
 		if (!!ptrPng)
 			if (fread(ptrPng.get(), 1, fileSize, file) != fileSize)
 				SMART_FREE(ptrPng);
@@ -307,7 +307,7 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 			newWidth >>= 1;
 			newHeight >>= 1;
 		}
-		SmartBuf tmpData2 = smartAnyAlloc(imgProp.imgWidth * imgProp.imgHeight * 4);
+		SmartBuf tmpData2 = smartMem2Alloc(imgProp.imgWidth * imgProp.imgHeight * 4);
 		switch (alloc)
 		{
 			case ALLOC_MEM2:
@@ -518,7 +518,7 @@ void STexture::_calcMipMaps(u8 &maxLOD, u8 &minLOD, u32 &lod0Width, u32 &lod0Hei
 SmartBuf STexture::_genMipMaps(const u8 *src, u32 width, u32 height, u8 maxLOD, u32 lod0Width, u32 lod0Height)
 {
 	u32 bufSize = fixGX_GetTexBufferSize(lod0Width, lod0Height, GX_TF_RGBA8, GX_TRUE, maxLOD);
-	SmartBuf dst = smartAnyAlloc(bufSize);
+	SmartBuf dst = smartMem2Alloc(bufSize);
 	if (!dst) return dst;
 	STexture::_resize(dst.get(), lod0Width, lod0Height, src, width, height);
 	DCFlushRange(dst.get(), lod0Width * lod0Height * 4);

@@ -26,9 +26,6 @@ extern const u8 loading_png[];
 extern const u8 flatnopic_png[];
 extern const u8 flatloading_png[];
 
-extern SmartBuf base_font;
-extern u32 base_font_size;
-
 static lwp_t coverLoaderThread = LWP_THREAD_NULL;
 SmartBuf coverLoaderThreadStack;
 
@@ -224,10 +221,10 @@ CCoverFlow::CCoverFlow(void)
 	LWP_MutexInit(&m_mutex, 0);
 }
 
-bool CCoverFlow::init(void)
+bool CCoverFlow::init(u8 *font, u32 font_size)
 {
 	// Load font
-	m_font.fromBuffer(base_font.get(), base_font_size, TITLEFONT);
+	m_font.fromBuffer(font, font_size, TITLEFONT);
 	m_fontColor = CColor(0xFFFFFFFF);
 	m_fanartFontColor = CColor(0xFFFFFFFF);
 	// 
@@ -625,9 +622,9 @@ void CCoverFlow::startCoverLoader(void)
 
 	m_loadingCovers = true;
 
-	unsigned int stack_size = (unsigned int)8192;
+	unsigned int stack_size = (unsigned int)32768;
 	SMART_FREE(coverLoaderThreadStack);
-	coverLoaderThreadStack = smartAnyAlloc(stack_size);
+	coverLoaderThreadStack = smartMem2Alloc(stack_size);
 	LWP_CreateThread(&coverLoaderThread, (void *(*)(void *))CCoverFlow::_coverLoader, (void *)this, coverLoaderThreadStack.get(), stack_size, 40);
 
 }
@@ -2299,7 +2296,7 @@ bool CCoverFlow::_loadCoverTexPNG(u32 i, bool box, bool hq)
 	{
 		u32 bufSize = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
 		uLongf zBufferSize = m_compressCache ? bufSize + bufSize / 100 + 12 : bufSize;
-		SmartBuf zBuffer = m_compressCache ? smartAnyAlloc(zBufferSize) : tex.data;
+		SmartBuf zBuffer = m_compressCache ? smartMem2Alloc(zBufferSize) : tex.data;
 		if (!!zBuffer && (!m_compressCache || compress(zBuffer.get(), &zBufferSize, tex.data.get(), bufSize) == Z_OK))
 		{
 			FILE *file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), m_items[i].hdr->hdr.id).c_str(), "wb");
@@ -2351,7 +2348,7 @@ void CCoverFlow::_dropHQLOD(int i)
 
 	u32 prevTexLen = fixGX_GetTexBufferSize(prevTex.width, prevTex.height, prevTex.format, prevTex.maxLOD > 0 ? GX_TRUE : GX_FALSE, prevTex.maxLOD);
 	u32 newTexLen = fixGX_GetTexBufferSize(newTex.width, newTex.height, newTex.format, newTex.maxLOD > 0 ? GX_TRUE : GX_FALSE, newTex.maxLOD);
-	newTex.data = smartAnyAlloc(newTexLen);
+	newTex.data = smartMem2Alloc(newTexLen);
 	if (!newTex.data) return;
 	if (!prevTex.data) return;
 	memcpy(newTex.data.get(), prevTex.data.get() + (prevTexLen - newTexLen), newTexLen);
@@ -2392,7 +2389,7 @@ CCoverFlow::CLRet CCoverFlow::_loadCoverTex(u32 i, bool box, bool hq)
 					if (!hq) CCoverFlow::_calcTexLQLOD(tex);
 					u32 texLen = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
 					
-					tex.data = smartAnyAlloc(texLen);
+					tex.data = smartMem2Alloc(texLen);
 					SmartBuf ptrTex = (header.zipped != 0) ? smartMem2Alloc(bufSize) : tex.data;
 
 					if (!ptrTex || !tex.data)

@@ -1,6 +1,6 @@
 #ifndef __MENU_HPP
 #define __MENU_HPP
-//#define SHOWMEM 1
+#define SHOWMEM 1
 #include <wiiuse/wpad.h>
 #include <ogc/pad.h>
 
@@ -74,6 +74,8 @@ private:
 	Config m_version;
 	Channels m_channels;
 	safe_vector<std::string> m_homebrewArgs;
+	SmartBuf m_base_font;
+	u32 m_base_font_size;
 	u8 m_aa;
 	bool m_directLaunch;
 	bool m_gamelistdump;

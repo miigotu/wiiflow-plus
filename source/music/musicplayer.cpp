@@ -28,7 +28,7 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 	m_fade_rate = cfg.getInt("GENERAL", "music_fade_rate", 8);
 	m_music_volume = cfg.getInt("GENERAL", "sound_volume_music", 255);
 
-	SetVolume(m_music_volume);
+	SetVolume(0); // Fades in with tick()
 	
 	MusicDirectory dir = (MusicDirectory) cfg.getInt("GENERAL", "music_directories", NORMAL_MUSIC | THEME_MUSIC);
 	m_music_files.Init(cfg.getString("GENERAL", "dir_list_cache"), std::string(), std::string());

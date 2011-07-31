@@ -19,11 +19,6 @@
 #define IOCTL_DI_DISC_BCA	0xDA
 #define IOCTL_DI_STOPMOTOR	0xE3
 #define IOCTL_DI_SETWBFSMODE	0xF4
-#define IOCTL_DI_GETWBFSMODE	0xF5 // odip
-#define IOCTL_DI_DISABLERESET   0xF6 // odip
-
-/** Hermes IOS222 **/
-#define DI_SETWBFSMODE	0xfe
 
 #define IOCTL_DI_SETFRAG	0xF9
 #define IOCTL_DI_GETMODE	0xFA
@@ -278,8 +273,6 @@ s32 WDVD_GetCoverStatus(u32 *status)
 
 s32 WDVD_SetUSBMode(u32 mode, const u8 *id, s32 partition) 
 {
-    s32 ret;
-
     memset(inbuf, 0, sizeof(inbuf));
 
     /* Set USB mode */
@@ -293,14 +286,7 @@ s32 WDVD_SetUSBMode(u32 mode, const u8 *id, s32 partition)
 		if(partition >= 0) inbuf[5] = partition;
     }
 
-    ret = IOS_Ioctl(di_fd, IOCTL_DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
-    if (ret != 1)
-	{
-        // Try old cIOS 222
-        /* Set USB mode */
-        inbuf[0] = DI_SETWBFSMODE << 24;
-        ret = IOS_Ioctl(di_fd, DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
-    }
+    s32 ret = IOS_Ioctl(di_fd, IOCTL_DI_SETWBFSMODE, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
 
     if (ret < 0) return ret;
     return (ret == 1) ? 0 : -ret;

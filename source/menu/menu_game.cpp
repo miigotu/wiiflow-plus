@@ -628,8 +628,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	{
 		u32 cover = 0;
 
-		struct discHdr *header;
-		header = (struct discHdr *)memalign(32, sizeof(struct discHdr));
 
 		Disc_SetUSB(NULL);
 		if (WDVD_GetCoverStatus(&cover) < 0)
@@ -663,9 +661,11 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 				gc = true;
 		}
 		/* Read header */
+		struct discHdr *header = (struct discHdr *)MEM2_alloc(sizeof(struct discHdr));
 		Disc_ReadHeader(header);
 		for (int i = 0;i < 6; i++)
 			id[i] = header->id[i];
+		SAFE_FREE(header);
 	}
 	bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
 	bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("GENERAL", "cheat", false));
@@ -928,9 +928,9 @@ void CMenu::_playGameSound(void)
 
 	m_cf.stopCoverLoader();
 
-	unsigned int stack_size = (unsigned int)8192;
+	unsigned int stack_size = (unsigned int)32768;
 	SMART_FREE(gameSoundThreadStack);
-	gameSoundThreadStack = smartAnyAlloc(stack_size);
+	gameSoundThreadStack = smartMem2Alloc(stack_size);
 	LWP_CreateThread(&m_gameSoundThread, (void *(*)(void *))CMenu::_gameSoundThread, (void *)this, gameSoundThreadStack.get(), stack_size, 40);
 }
 

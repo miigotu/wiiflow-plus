@@ -73,12 +73,12 @@ Banner::Banner(u8 *bnr, u64 title)
 		}
 		else
 		{
-			gprintf("Invalid md5, banner not valid\n");
+			gprintf("Invalid md5, banner not valid for title %08x\n", title);
 		}
 	}
 	else
 	{
-		gprintf("Invalid signature found, banner not valid\n");
+		gprintf("Invalid signature found, banner not valid for title %08x\n", title);
 	}
 }
 

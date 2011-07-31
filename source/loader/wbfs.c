@@ -23,6 +23,7 @@
 #include "sys.h"
 #include "disc.h"
 #include "gecko.h"
+#include "mem2.hpp"
 
 /* Constants */
 #define MAX_NB_SECTORS	32
@@ -70,7 +71,7 @@ s32 __WBFS_ReadDVD(void *fp, u32 lba, u32 len, void *iobuf)
 	if (mod)
 	{
 		/* Allocate memory */
-		buffer = memalign(32, 0x20);
+		buffer = MEM2_alloc(0x20);
 		if (!buffer) return -1;
 
 		/* Read data */

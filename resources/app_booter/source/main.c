@@ -1,63 +1,39 @@
+/* Copyright 2011 Dimok
+   This code is licensed to you under the terms of the GNU GPL, version 2;
+   see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt  */
 #include <gccore.h>
-#include <malloc.h>
-#include <string.h>
-#include <ogc/machine/processor.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include "string.h"
 
 #include "dolloader.h"
+#include "elfloader.h"
+#include "sync.h"
 
-int main(int argc, char *argv[])
+#define EXECUTABLE_MEM_ADDR 0x92000000
+#define SYSTEM_ARGV	((struct __argv *) 0x93200000)
+
+void main(void)
 {
-	u32 cookie;
+	void *exeBuffer = (void *) EXECUTABLE_MEM_ADDR;
+	u32 exeEntryPointAddress = 0;
+	entrypoint exeEntryPoint;
 
-	struct __argv args;
-	bzero(&args, sizeof(args));
-    args.argvMagic = ARGV_MAGIC;
-    args.length = 0;
-    args.commandLine = NULL;
-    args.argc = argc;
-    args.argv = &args.commandLine;
-    args.endARGV = args.argv + 1;
+	if (valid_elf_image(exeBuffer) == 1)
+		exeEntryPointAddress = load_elf_image(exeBuffer);
+	else
+		exeEntryPointAddress = load_dol_image(exeBuffer);
 
-	if(argc > 0)
+	exeEntryPoint = (entrypoint) exeEntryPointAddress;
+	if (!exeEntryPoint)
+		return;
+
+	if (SYSTEM_ARGV->argvMagic == ARGV_MAGIC)
 	{
-        u32 i = 0;
-
-        for(i = 0; i < argc; i++)
-        {
-            if(argv[i])
-                args.length += strlen(argv[i])+1;
-        }
-        args.length += 1;
-        args.commandLine = (char*) malloc(args.length);
-        if (!args.commandLine)
-            SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
-
-        u32 pos = 0;
-
-        for(i = 0; i < argc; i++)
-        {
-            if(argv[i])
-            {
-                strcpy(&args.commandLine[pos], argv[i]);
-                pos += strlen(argv[i])+1;
-            }
-        }
-
-        args.commandLine[args.length - 1] = '\0';
-        args.argc = argc;
-        args.argv = &args.commandLine;
-        args.endARGV = args.argv + 1;
+		void *new_argv = (void *) (exeEntryPointAddress + 8);
+		memcpy(new_argv, SYSTEM_ARGV, sizeof(struct __argv));
+		sync_before_exec(new_argv, sizeof(struct __argv));
 	}
 
-	u32 exeEntryPointAddress = load_dol_image((void *) EXECUTABLE_MEM_ADDR, &args);
-	if (exeEntryPointAddress == 0) SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
-	entrypoint exeEntryPoint = (entrypoint) exeEntryPointAddress;
-
-	/* cleaning up and load dol */
-	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
-	_CPU_ISR_Disable (cookie);
-	__exception_closeall ();
 	exeEntryPoint ();
-	_CPU_ISR_Restore (cookie);
-	return 0;
 }

@@ -20,6 +20,7 @@
 #include <string.h>
  
 #include "lz77.h"
+#include "mem2.hpp"
 
 #define ALIGN32(x) (((x) + 31) & ~31)
 
@@ -48,7 +49,7 @@ s32 __decompressLZ77_11(u8 *in, u32 inputLen, u8 **output, u32 *outputLen)
  
     printf("Decompressed size : %i\n", decompressedSize);
  
-    out = memalign(32, ALIGN32(decompressedSize));
+    out = MEM2_alloc(ALIGN32(decompressedSize));
 	if (out == NULL)
 	{
 		printf("Out of memory\n");
@@ -135,7 +136,7 @@ s32 __decompressLZ77_10(u8 *in, u32 inputLen, u8 **output, u32 *outputLen)
 	 
 	printf("Decompressed size : %i\n", decompressedSize);
 	 
-	out = memalign(32, ALIGN32(decompressedSize));
+	out = MEM2_alloc(ALIGN32(decompressedSize));
 	if (out == NULL)
 	{
 		printf("Out of memory\n");

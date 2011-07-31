@@ -34,7 +34,7 @@ public:
 	CCoverFlow(void);
 	~CCoverFlow(void);
 	// 
-	bool init(void);
+	bool init(u8 *font, u32 font_size);
 	// Cover list management
 	void clear(void);
 	void reserve(u32 capacity);
