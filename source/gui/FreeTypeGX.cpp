@@ -128,7 +128,7 @@ uint16_t FreeTypeGX::loadFont(const uint8_t* fontBuffer, FT_Long bufferSize, FT_
  */
 void FreeTypeGX::unloadFont() {
 	for( std::map<wchar_t, ftgxCharData>::iterator i = this->fontData.begin(); i != this->fontData.end(); i++) {
-		MEM2_SAFE_FREE(i->second.glyphDataTexture);
+		SAFE_FREE(i->second.glyphDataTexture);
 	}
 	
 	this->fontData.clear();
@@ -314,7 +314,7 @@ void FreeTypeGX::loadGlyphData(FT_Bitmap *bmp, ftgxCharData *charData) {
 			break;
 	}
 	
-	MEM2_SAFE_FREE(glyphData);
+	SAFE_FREE(glyphData);
 }
 
 /**

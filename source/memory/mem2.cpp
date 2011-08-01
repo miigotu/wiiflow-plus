@@ -38,13 +38,13 @@ extern "C"
 
 		/* If these are used, they must be cleared before running the apploader */
 
-		// /* Below executable */
-		// g_mem1Lgp.init((void *)0x80004000, &__init_start - 0x100);
-		// g_mem1Lgp.clear();
+		/* Below executable */
+		g_mem1Lgp.init((void *)0x80004000, &__init_start - 0x100);
+		g_mem1Lgp.clear();
 
-		// /* Above Executable */
-		// g_mem1Ugp.init(APPLOADER_START, APPLOADER_END);
-		// g_mem1Ugp.clear();
+		/* Above Executable */
+		g_mem1Ugp.init(APPLOADER_START, APPLOADER_END);
+		g_mem1Ugp.clear();
 		
 		/* Protect space reserved for apploader */
 		SYS_SetArena1Hi(APPLOADER_START);
@@ -60,60 +60,60 @@ extern "C"
 		g_mem2gp.clear();
 	}
 
-	// void MEM1_cleanup(void)
-	// {
-		// g_mem1Lgp.cleanup();
-		// g_mem1Ugp.cleanup();
-	// }
+	void MEM1_cleanup(void)
+	{
+		g_mem1Lgp.cleanup();
+		g_mem1Ugp.cleanup();
+	}
 
-	// void MEM1_clear(void)
-	// {
-		// g_mem1Lgp.clear();
-		// g_mem1Ugp.clear();
-	// }
+	void MEM1_clear(void)
+	{
+		g_mem1Lgp.clear();
+		g_mem1Ugp.clear();
+	}
 
 	void *MEM2_alloc(unsigned int s)
 	{
 		return g_mem2gp.allocate(s);
 	}
 
-	// void *MEM1_alloc(unsigned int s)
-	// {
-		// if(g_mem1Lgp.FreeSize() >= s)
-			// return g_mem1Lgp.allocate(s);
-		// if(g_mem1Ugp.FreeSize() >= s)
-			// return g_mem1Ugp.allocate(s);
+	void *MEM1_alloc(unsigned int s)
+	{
+		if(g_mem1Lgp.FreeSize() >= s)
+			return g_mem1Lgp.allocate(s);
+		if(g_mem1Ugp.FreeSize() >= s)
+			return g_mem1Ugp.allocate(s);
 
-		// return NULL;
-	// }
+		return NULL;
+	}
 
 	void MEM2_free(void *p)
 	{
 		g_mem2gp.release(p);
 	}
 
-	// void MEM1_free(void *p)
-	// {
-		// if((u32)p < (u32)__init_start - 0x100 && (u32)p >= 0x80004000)
-			// g_mem1Lgp.release(p);
-		// else if((u32)p > (u32)APPLOADER_START && (u32)p < (u32)APPLOADER_END)
-			// g_mem1Ugp.release(p);
-	// }
+	void MEM1_free(void *p)
+	{
+		if((u32)p < (u32)&__init_start - 0x100 && (u32)p >= 0x80004000)
+			g_mem1Lgp.release(p);
+		else if((u32)p > (u32)APPLOADER_START && (u32)p < (u32)APPLOADER_END)
+			g_mem1Ugp.release(p);
+	}
 
 	void *MEM2_realloc(void *p, unsigned int s)
 	{
 		return g_mem2gp.reallocate(p, s);
 	}
 
-	// void *MEM1_realloc(void *p, unsigned int s)
-	// {
-		// if((u32)p < (u32)__init_start - 0x100 && (u32)p >= 0x80004000)
-			// return g_mem1Lgp.reallocate(p, s);
-		// else if((u32)p > (u32)APPLOADER_START && (u32)p < (u32)APPLOADER_END)
-			// return g_mem1Ugp.reallocate(p, s);
+	void *MEM1_realloc(void *p, unsigned int s)
+	{
+		if((u32)p < (u32)&__init_start - 0x100 && (u32)p >= 0x80004000)
+			return g_mem1Lgp.reallocate(p, s);
+		else if((u32)p > (u32)APPLOADER_START && (u32)p < (u32)APPLOADER_END)
+			return g_mem1Ugp.reallocate(p, s);
 		
-		// return NULL;
-	// }
+		return NULL;
+	}
 
 	unsigned int MEM2_usableSize(void *p)
 	{
@@ -125,10 +125,10 @@ extern "C"
 		return g_mem2gp.FreeSize();
 	}
 
-	// unsigned int MEM1_freesize()
-	// {
-		// return g_mem1Lgp.FreeSize() + g_mem1Ugp.FreeSize();
-	// }
+	unsigned int MEM1_freesize()
+	{
+		return g_mem1Lgp.FreeSize() + g_mem1Ugp.FreeSize();
+	}
 
 	extern __typeof(malloc) __real_malloc;
 	extern __typeof(calloc) __real_calloc;
@@ -191,10 +191,10 @@ extern "C"
 	{
 		if(!p)
 			return;
-		if((u32)p & 0x10000000)
+		if(((u32)p < (u32)&__init_start - 0x100 && (u32)p >= (u32)0x80004000) || ((u32)p > (u32)APPLOADER_START && (u32)p < (u32)APPLOADER_END))
+			MEM1_free(p);
+		else if((u32)p & 0x10000000)
 			MEM2_free(p);
-		// else if(((u32)p < (u32)__init_start - 0x100 && (u32)p >= (u32)0x80004000) || ((u32)p > (u32)APPLOADER_START && (u32)p < (u32)APPLOADER_END))
-			// MEM1_free(p);
 		else		
 			__real_free(p);
 	}

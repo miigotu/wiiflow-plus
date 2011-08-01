@@ -219,7 +219,7 @@ void CMenu::init()
 		}
 	}
 
-	m_cf.init(m_base_font.get(), m_base_font_size);
+	m_cf.init(m_base_font, m_base_font_size);
 
 	//Make important folders first.
 	makedir((char *)m_cacheDir.c_str());
@@ -410,10 +410,10 @@ void CMenu::_loadCFCfg(SThemeData &theme)
 	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
 	// Coverflow Sounds
 	m_cf.setSounds(
-		SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_flip").c_str()))),
+		SmartGuiSound(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_flip").c_str()))),
 		_sound(theme.soundSet, domain, "sound_hover", hover_wav, hover_wav_size, string("default_btn_hover"), false),
 		_sound(theme.soundSet, domain, "sound_select", click_wav, click_wav_size, string("default_btn_click"), false),
-		SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_cancel").c_str())))
+		SmartGuiSound(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "sound_cancel").c_str())))
 	);
 	// Textures
 	string texLoading = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "loading_cover_box").c_str());
@@ -789,8 +789,6 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 {
 	SFont retFont;
 
-	if(!m_base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
-
 	bool useDefault = false;
 	string filename = m_theme.getString(domain, key);
 	if(filename.empty())
@@ -846,13 +844,14 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 		return retFont;
 	}
 	// TTF not found in memory, load it to create a new font
-	if (!useDefault && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fontSize, lineSpacing, weight, index))
+ 	if (!useDefault && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fontSize, lineSpacing, weight, index))
 	{
 		// Theme Font
 		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
 		return retFont;
 	}
-	if(retFont.fromBuffer(m_base_font.get(), m_base_font_size, fontSize, lineSpacing, weight, index))
+	if(!m_base_font) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
+	if(retFont.fromBuffer(m_base_font, m_base_font_size, fontSize, lineSpacing, weight, index))
 	{
 		// Default font
 		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
@@ -917,7 +916,7 @@ STexture CMenu::_texture(CMenu::TexSet &texSet, const char *domain, const char *
 }
 
 // Only for loading defaults and GENERAL domains!!
-SmartPtr<GuiSound> CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, const u8 * snd, u32 len, string name, bool isAllocated)
+SmartGuiSound CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, const u8 * snd, u32 len, string name, bool isAllocated)
 {
 	string filename = m_theme.getString(domain, key);
 	if (filename.empty()) filename = name;
@@ -929,15 +928,15 @@ SmartPtr<GuiSound> CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, 
 	CMenu::SoundSet::iterator i = soundSet.find(filename);
 	if (i == soundSet.end())
 	{
-		if(filename != name) soundSet[filename] = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
-		else soundSet[filename] = SmartPtr<GuiSound>(new GuiSound(snd, len, filename, isAllocated));
+		if(filename != name) soundSet[filename] = SmartGuiSound(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
+		else soundSet[filename] = SmartGuiSound(new GuiSound(snd, len, filename, isAllocated));
 		return soundSet[filename];
 	}
 	return i->second;
 }
 
 //For buttons and labels only!!
-SmartPtr<GuiSound> CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, string name)
+SmartGuiSound CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, string name)
 {
 	string filename = m_theme.getString(domain, key);
 	if (filename.empty())
@@ -954,7 +953,7 @@ SmartPtr<GuiSound> CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, 
 	CMenu::SoundSet::iterator i = soundSet.find(filename);
 	if (i == soundSet.end())
 	{
-		soundSet[filename] = SmartPtr<GuiSound>(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
+		soundSet[filename] = SmartGuiSound(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
 		return soundSet[filename];
 	}
 	return i->second;
@@ -1000,8 +999,8 @@ u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, 
 
 	font = _font(theme.fontSet, domain, "font", BUTTONFONT);
 
-	SmartPtr<GuiSound> clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound->GetName());
-	SmartPtr<GuiSound> hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound->GetName());
+	SmartGuiSound clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound->GetName());
+	SmartGuiSound hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound->GetName());
 	
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	if (btnPos & FTGX_JUSTIFY_RIGHT)
@@ -1020,8 +1019,8 @@ u32 CMenu::_addPicButton(CMenu::SThemeData &theme, const char *domain, STexture 
 	height = m_theme.getInt(domain, "height", height);
 	STexture tex1 = _texture(theme.texSet, domain, "texture_normal", texNormal);
 	STexture tex2 = _texture(theme.texSet, domain, "texture_selected", texSelected);
-	SmartPtr<GuiSound> clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound->GetName());
-	SmartPtr<GuiSound> hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound->GetName());
+	SmartGuiSound clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound->GetName());
+	SmartGuiSound hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound->GetName());
 
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	if (btnPos & FTGX_JUSTIFY_RIGHT)
@@ -1760,9 +1759,9 @@ retry:
 				
 				//gprintf("Extracted font: %d\n", size);
 				
-				m_base_font = smartMalloc(size);
+				m_base_font = smartMem2Alloc(size);
 				memcpy(m_base_font.get(), font_file, size);
-				if(!!m_base_font.get())
+				if(!!m_base_font)
 					m_base_font_size = size;
 			}
 			SAFE_FREE(u8_font_archive);

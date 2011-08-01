@@ -9,6 +9,7 @@
 
 #include "utils.h"
 #include "mem2.hpp"
+#include "gui_sound.h"
 
 template <class T> class SmartPtr
 {
@@ -20,22 +21,22 @@ public:
 	T *get(void) const { return m_p; }
 	virtual void release(void)
 	{
-		if (m_refcount != NULL)
+		if (m_refcount != NULL && --*m_refcount == 0)
+
+
 		{
-			if (--*m_refcount <= 0)
+			switch (m_srcAlloc)
 			{
-				switch (m_srcAlloc)
-				{
-					case SRCALL_NEW:
-						SAFE_DELETE(m_p);
-						break;
-					default:
-						SAFE_FREE(m_p);
-						break;
-				}
-				SAFE_DELETE(m_refcount);
+				case SRCALL_NEW:
+					SAFE_DELETE(m_p);
+					break;
+				default:
+					SAFE_FREE(m_p);
+					break;
 			}
+			SAFE_DELETE(m_refcount);
 		}
+
 		m_p = NULL;
 		m_refcount = NULL;
 	}
@@ -66,6 +67,7 @@ protected:
 };
 
 typedef SmartPtr<unsigned char> SmartBuf;
+typedef SmartPtr<GuiSound> SmartGuiSound;
 
 SmartBuf smartMalloc(unsigned int size);
 SmartBuf smartMemAlign32(unsigned int size);

@@ -221,7 +221,7 @@ CCoverFlow::CCoverFlow(void)
 	LWP_MutexInit(&m_mutex, 0);
 }
 
-bool CCoverFlow::init(u8 *font, u32 font_size)
+bool CCoverFlow::init(const SmartBuf &font, u32 font_size)
 {
 	// Load font
 	m_font.fromBuffer(font, font_size, TITLEFONT);
@@ -246,8 +246,8 @@ void CCoverFlow::simulateOtherScreenFormat(bool s)
 CCoverFlow::~CCoverFlow(void)
 {
 	clear();
-	for(u8 i = 0; i < 4; i++)
-		SMART_FREE(m_sound[i]);
+/* 	for(u8 i = 0; i < 4; i++) */
+		SMART_FREE(m_sound[0]);
 	SMART_FREE(m_hoverSound);
 	SMART_FREE(m_selectSound);
 	SMART_FREE(m_cancelSound);
@@ -552,11 +552,10 @@ bool CCoverFlow::setSorting(Sorting sorting)
 	return start();
 }
 
-void CCoverFlow::setSounds(const SmartPtr<GuiSound> &sound, const SmartPtr<GuiSound> &hoverSound, const SmartPtr<GuiSound> &selectSound, const SmartPtr<GuiSound> &cancelSound)
+void CCoverFlow::setSounds(const SmartGuiSound &sound, const SmartGuiSound &hoverSound, const SmartGuiSound &selectSound, const SmartGuiSound &cancelSound)
 {
-	m_sound[0] = sound;
-	for(u8 i = 1; i < 4; i++)
-		m_sound[i] = SmartPtr<GuiSound>(new GuiSound(sound.get()));
+	for(u8 i = 0; i < 4; i++)
+		m_sound[i] = sound;
 	m_hoverSound = hoverSound;
 	m_selectSound = selectSound;
 	m_cancelSound = cancelSound;
@@ -567,12 +566,12 @@ void CCoverFlow::setSoundVolume(u8 vol)
 	m_soundVolume = vol;
 }
 
-void CCoverFlow::_stopSound(SmartPtr<GuiSound> snd)
+void CCoverFlow::_stopSound(SmartGuiSound snd)
 {
 	snd->Stop();
 }
 
-void CCoverFlow::_playSound(SmartPtr<GuiSound> snd)
+void CCoverFlow::_playSound(SmartGuiSound snd)
 {
 	snd->Play(m_soundVolume);
 }

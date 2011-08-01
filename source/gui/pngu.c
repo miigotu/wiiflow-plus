@@ -17,7 +17,6 @@ More info : http://frontier-dev.net
 #include "utils.h"
 
 #define malloc MEM2_alloc
-#define free MEM2_SAFE_FREE
 
 // Constants
 #define PNGU_SOURCE_BUFFER			1
@@ -107,14 +106,14 @@ void PNGU_ReleaseImageContext (IMGCTX ctx)
 {
 	if (!ctx) return;
 
-	if (ctx->filename) free (ctx->filename);
+	if (ctx->filename) SAFE_FREE (ctx->filename);
 
 	if ((ctx->propRead) && (ctx->prop.trans))
-		free (ctx->prop.trans);
+		SAFE_FREE (ctx->prop.trans);
 
 	pngu_free_info (ctx);
 
-	free (ctx);
+	SAFE_FREE (ctx);
 }
 
 
@@ -154,8 +153,8 @@ int PNGU_DecodeToYCbYCr (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buff
 															*(ctx->row_pointers[y]+x*6+3), *(ctx->row_pointers[y]+x*6+4), *(ctx->row_pointers[y]+x*6+5));
 	
 	// Free resources
-	free (ctx->img_data);
-	free (ctx->row_pointers);
+	SAFE_FREE (ctx->img_data);
+	SAFE_FREE (ctx->row_pointers);
 
 	// Success
 	return PNGU_OK;
@@ -178,8 +177,8 @@ int PNGU_DecodeToRGB565 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buff
 				(((PNGU_u16) (ctx->row_pointers[y][x*3+2] & 0xF8)) >> 3);
 	
 	// Free resources
-	free (ctx->img_data);
-	free (ctx->row_pointers);
+	SAFE_FREE (ctx->img_data);
+	SAFE_FREE (ctx->row_pointers);
 
 	// Success
 	return PNGU_OK;
@@ -214,8 +213,8 @@ int PNGU_DecodeToRGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffe
 	}
 	
 	// Free resources
-	free (ctx->img_data);
-	free (ctx->row_pointers);
+	SAFE_FREE (ctx->img_data);
+	SAFE_FREE (ctx->row_pointers);
 
 	// Success
 	return PNGU_OK;
@@ -277,8 +276,8 @@ int PNGU_DecodeTo4x4RGB565 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 	}
 
 	// Free resources
-	free (ctx->img_data);
-	free (ctx->row_pointers);
+	SAFE_FREE (ctx->img_data);
+	SAFE_FREE (ctx->row_pointers);
 
 	// Success
 	return PNGU_OK;
@@ -524,8 +523,8 @@ int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 	}
 	
 	// Free resources
-	free (ctx->img_data);
-	free (ctx->row_pointers);
+	SAFE_FREE (ctx->img_data);
+	SAFE_FREE (ctx->row_pointers);
 
 	// Success
 	return PNGU_OK;
@@ -648,8 +647,8 @@ int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 	}
 	
 	// Free resources
-	free (ctx->img_data);
-	free (ctx->row_pointers);
+	SAFE_FREE (ctx->img_data);
+	SAFE_FREE (ctx->row_pointers);
 
 	// Success
 	return PNGU_OK;
@@ -766,8 +765,8 @@ int PNGU_DecodeToCMPR(IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffer)
 				outBuf += 4;
 			}
 	// Free resources
-	free (ctx->img_data);
-	free (ctx->row_pointers);
+	SAFE_FREE (ctx->img_data);
+	SAFE_FREE (ctx->row_pointers);
 
 	// Success
 	return PNGU_OK;
@@ -878,8 +877,8 @@ int PNGU_EncodeFromYCbYCr (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 	png_write_end (ctx->png_ptr, (png_infop) NULL);
 
 	// Free resources
-	free (ctx->img_data);
-	free (ctx->row_pointers);
+	SAFE_FREE (ctx->img_data);
+	SAFE_FREE (ctx->row_pointers);
 	png_destroy_write_struct (&(ctx->png_ptr), &(ctx->info_ptr));
 	if (ctx->source == PNGU_SOURCE_DEVICE)
 		fclose (ctx->fd);

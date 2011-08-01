@@ -534,7 +534,7 @@ private:
 	volatile bool m_thrdMessageAdded;
 	volatile bool m_gameSelected;
 	GuiSound m_gameSound;
-	SmartPtr<GuiSound> m_cameraSound;
+	SmartGuiSound m_cameraSound;
 	dir_discHdr *m_gameSoundHdr;
 	lwp_t m_gameSoundThread;
 	bool m_gamesound_changed;
@@ -548,7 +548,7 @@ private:
 	typedef std::pair<std::string, u32> FontDesc;
 	typedef std::map<FontDesc, SFont> FontSet;
 	typedef std::map<std::string, STexture> TexSet;
-	typedef std::map<std::string, SmartPtr<GuiSound> > SoundSet;
+	typedef std::map<std::string, SmartGuiSound > SoundSet;
 	struct SThemeData
 	{
 		TexSet texSet;
@@ -579,9 +579,9 @@ private:
 		STexture btnTexPlusS;
 		STexture btnTexMinus;
 		STexture btnTexMinusS;
-		SmartPtr<GuiSound> clickSound;
-		SmartPtr<GuiSound> hoverSound;
-		SmartPtr<GuiSound> cameraSound;
+		SmartGuiSound clickSound;
+		SmartGuiSound hoverSound;
+		SmartGuiSound cameraSound;
 	};
 	struct SCFParamDesc
 	{
@@ -740,8 +740,8 @@ private:
 public:
 	void _hideWaitMessage();
 private:
-	SmartPtr<GuiSound> _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, const u8 * snd, u32 len, string name, bool isAllocated);
-	SmartPtr<GuiSound> _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, string name);
+	SmartGuiSound _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, const u8 * snd, u32 len, string name, bool isAllocated);
+	SmartGuiSound _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, string name);
 	u16 _textStyle(const char *domain, const char *key, u16 def);
 	u32 _addButton(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color);
 	u32 _addPicButton(SThemeData &theme, const char *domain, STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height);

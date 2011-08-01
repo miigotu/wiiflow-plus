@@ -185,56 +185,52 @@ safe_vector<wstringEx> stringToVector(const wstringEx &text, char sep)
 	return v;
 }
 
-bool SFont::fromBuffer(const u8 *buffer, u32 bufferSize, u32 size, u32 lspacing, u32 w, u32 idx)
+bool SFont::fromBuffer(const SmartBuf &buffer, u32 bufferSize, u32 size, u32 lspacing, u32 w, u32 idx)
 {
+	if (!buffer || !font) return false;
+
 	size = min(max(6u, size), 1000u);
 	lineSpacing = min(max(6u, lspacing), 1000u);
 	weight = min(w, 32u);
 	index = idx;
 
-	SMART_FREE(font);
 	SMART_FREE(data);
-	dataSize = 0;
+	data = smartMem2Alloc(bufferSize);
+	if(!data) return false;
 
-	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);
-	if (!font) return false;
-	font->loadFont(buffer, bufferSize, size, weight, index, false);
+	memcpy(data.get(), buffer.get(), bufferSize);
+	dataSize = bufferSize;
+
+	font->loadFont(data.get(), dataSize, size, weight, index, false);
+
 	return true;
 }
 
 bool SFont::newSize(u32 size, u32 lspacing, u32 w)
 {
-	if (!data) return false;
+	if (!data || !font) return false;
 	size = min(max(6u, size), 1000u);
 	weight = min(w, 32u);
 	lineSpacing = min(max(6u, lspacing), 1000u);
-	SMART_FREE(font);
-	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);
-	if (!font) return false;
 	font->loadFont(data.get(), dataSize, size, weight, index, false);
 	return true;
 }
 
 bool SFont::setWeight(u32 w)
 {
-	if (!data) return false;
+	if (!data || !font) return false;
 	weight = min(w, 32u);
-	SMART_FREE(font);
-	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);
-	if (!font) return false;
 	font->loadFont(data.get(), dataSize, 0, weight, index, false); // Keep the size of the previous font
 	return true;
 }
 
 bool SFont::fromFile(const char *filename, u32 size, u32 lspacing, u32 w, u32 idx)
 {
+	if (!font) return false;
 	size = min(max(6u, size), 1000u);
 	weight = min(w, 32u);
 	index = idx = 0;
 
-	SMART_FREE(font);
-	SMART_FREE(data);
-	dataSize = 0;
 	lineSpacing = min(max(6u, lspacing), 1000u);
 
 	FILE *file = fopen(filename, "rb");
@@ -243,17 +239,19 @@ bool SFont::fromFile(const char *filename, u32 size, u32 lspacing, u32 w, u32 id
 	u32 fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
 	if (fileSize == 0) return false;
-	data = smartMem2Alloc(fileSize);	// Use MEM2 because of big chinese fonts
-	if (!!data) fread(data.get(), 1, fileSize, file);
-	SAFE_CLOSE(file);
-	if (!data) return false;
-	dataSize = fileSize;
-	font = SmartPtr<FreeTypeGX>(new FreeTypeGX);
-	if (!font)
+	
+	SMART_FREE(data);
+	data = smartMem2Alloc(fileSize);
+	if (!data)
 	{
-		SMART_FREE(data);
+		SAFE_CLOSE(file);
 		return false;
 	}
+		
+	fread(data.get(), 1, fileSize, file);
+
+	dataSize = fileSize;
+
 	font->loadFont(data.get(), dataSize, size, weight, index, false);
 	return true;
 }
