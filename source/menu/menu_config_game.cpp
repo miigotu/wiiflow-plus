@@ -281,26 +281,21 @@ void CMenu::_showGameSettings(void)
 	i = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblLanguage, _t(CMenu::_languages[i].id, CMenu::_languages[i].text));
 
-	int iosIdx = 0;
-	if (m_gcfg2.getInt(id, "ios", &iosIdx) && (u32) iosIdx < ARRAY_SIZE(CMenu::_ios))
+	if (m_gcfg2.getInt(id, "ios", &i))
 	{
-		// Upgrade to the correct value
-		m_gcfg2.setInt(id, "ios", CMenu::_ios[iosIdx]);
+		CIOSItr itr = _installed_cios.find(i);
+		i = (itr == _installed_cios.end()) ? 0 : itr->first;
 	}
+	else i = 0;
 
-	safe_vector<u32>::iterator itr = _installed_cios.end();
-	i = mainIOS;
-	if (m_gcfg2.getInt(id, "ios", &i) && (itr = find(_installed_cios.begin(), _installed_cios.end(), i)) == _installed_cios.end())
-		i = mainIOS;
-
-	u32 ver;
-	char* InfoIos=get_iosx_info_from_tmd(i, &ver);
-	if (i == mainIOS)
-		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("Default (%i %s)", i, InfoIos)));
-	else if (InfoIos != NULL)
+	if (i != 0)
+	{
+		u32 ver;
+		char* InfoIos=get_iosx_info_from_tmd(i, &ver);
 		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i %s", i, InfoIos)));
+	}
 	else
-		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i", i)));
+		m_btnMgr.setText(m_gameSettingsLblIOS, L"AUTO");
 		
 	i = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblPatchVidModesVal, _t(CMenu::_vidModePatch[i].id, CMenu::_vidModePatch[i].text));
@@ -405,30 +400,27 @@ void CMenu::_gameSettings(void)
 				m_gcfg2.setInt(id, "video_mode", (int)loopNum((u32)m_gcfg2.getInt(id, "video_mode", 0) + offset, ARRAY_SIZE(CMenu::_videoModes)));
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnIOSM))
+			else if (m_btnMgr.selected(m_gameSettingsBtnIOSM) || m_btnMgr.selected(m_gameSettingsBtnIOSP))
 			{
-				int currentIOS = m_gcfg2.getInt(id, "ios", mainIOS);
-				safe_vector<u32>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
-				if (itr == _installed_cios.end()) // Not found, strange...
-					itr = find(_installed_cios.begin(), _installed_cios.end(), mainIOS);
-				itr++;
-				if (itr == _installed_cios.end())
+				bool up = m_btnMgr.selected(m_gameSettingsBtnIOSP);
+
+				CIOSItr itr = _installed_cios.find((u32)m_gcfg2.getInt(id, "ios", 0));
+				
+				if (up && itr == _installed_cios.end())
 					itr = _installed_cios.begin();
-				
-				m_gcfg2.setInt(id, "ios", (*itr));
-				_showGameSettings();
-			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnIOSP))
-			{
-				int currentIOS = m_gcfg2.getInt(id, "ios", mainIOS);
-				safe_vector<u32>::iterator itr = find(_installed_cios.begin(), _installed_cios.end(), currentIOS);
-				if (itr == _installed_cios.end()) // Not found, strange...
-					itr = find(_installed_cios.begin(), _installed_cios.end(), mainIOS);
-				if (itr == _installed_cios.begin())
+				else if(!up && itr == _installed_cios.begin())
 					itr = _installed_cios.end();
-				itr--;
-				
-				m_gcfg2.setInt(id, "ios", (*itr));
+				else if (up)
+					itr++;
+
+				if(!up)
+					itr--;
+
+				if(itr->first != 0)
+					m_gcfg2.setInt(id, "ios", itr->first);
+				else
+					m_gcfg2.remove(id, "ios");
+
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP) || m_btnMgr.selected(m_gameSettingsBtnPatchVidModesM))

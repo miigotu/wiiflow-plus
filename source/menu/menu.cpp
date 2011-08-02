@@ -1673,6 +1673,8 @@ void CMenu::_load_installed_cioses()
 		return;
 	}
 	
+	_installed_cios[0] = 1;
+
 	for (u32 i = 0; i < count; i++)
 	{
 		u32 tmd_size;
@@ -1688,19 +1690,32 @@ void CMenu::_load_installed_cioses()
 		if (kind == 1)
 		{
 			u32 title_l = t->title_id & 0xFFFFFFFF;
-			if (title_l == 0 || title_l == 2 || title_l == 0x100 || title_l == 0x101) continue;
+			if (title_l == 0
+				|| title_l == 1
+				|| title_l == 2
+				|| title_l == 0x24	// 36
+				|| title_l == 0xCA	// 202
+				|| title_l == 0xDE	// 222
+				|| title_l == 0xDF	// 223
+				|| title_l == 0xE0	// 224
+				|| title_l == 0xEC	// 236
+				|| title_l == 0xFE	// 254/BootMii
+				|| title_l == 0x100 // MIOS
+				|| title_l == 0x101 // Hmm?
+				) continue;
 			
-			// We have an ios
+			// We have a possible cIos
 			u32 version = t->title_version;
 			if (tmd_buf[4] == 0 && (version < 100 || version == 0xFFFF || (version > D2X_MIN_VERSION && version < D2X_MAX_VERSION))) // Signature is empty
 			{
 				// Probably an cios
-				_installed_cios.push_back(title_l);
+ 				char *info = get_iosx_info_from_tmd(title_l, NULL);
+				u8 base = atoi(info);
+				if ((base > 35 && base < 39) || (base > 52 && base < 62 && base != 54 && base != 59) || base == 70 || base == 80) // Is a cIOS!
+					_installed_cios[title_l] = base;
 			}
 		}
 	}
-	
-	sort(_installed_cios.begin(), _installed_cios.end());
 }
 
 void CMenu::_hideWaitMessage()

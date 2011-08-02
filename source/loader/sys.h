@@ -29,12 +29,10 @@ extern "C" {
 	void Sys_Exit(int);
 	void Sys_ExitTo(int);
 
-	s32  Sys_GetCerts(signed_blob **, u32 *);
     s32 GetTMD(u64 TicketID, signed_blob **Output,  u32 *Length);
 	
 	void Open_Inputs(void);
 	void Close_Inputs(void);
-
 
 	char* get_ios_info_from_tmd();
 	u32 get_ios_info(signed_blob *TMD, u32 size);

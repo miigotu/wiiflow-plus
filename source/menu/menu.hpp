@@ -106,12 +106,9 @@ private:
 	std::string m_languagesDir;
 	std::string m_listCacheDir;
 	/* Updates */
-	const char* m_old_update_url;
 	const char* m_app_update_url;
 	const char* m_data_update_url;
 	std::string m_dol;
-	bool m_update_dolOnly;
-	u32 m_dol_update_size;
 	std::string m_app_update_zip;
 	u32 m_app_update_size;
 	std::string m_data_update_zip;
@@ -381,17 +378,9 @@ private:
 	u32 m_systemLblVersionTxt;
 	u32 m_systemLblVersion;
 	u32 m_systemLblVersionRev;
-	u32 m_systemLblFreeTxt;
-	u32 m_systemLblFree;
-	u32 m_systemLblIOSTxt;
-	u32 m_systemLblIOS;
-	u32 m_systemLblIOSbase;
 	u32 m_systemLblUser[4];
 	u32 m_systemBtnDownload;
 	u32 m_systemLblInfo;
-	u32 m_systemLblIosSelectVal;	
-	u32 m_systemBtnIosSelectM;	
-	u32 m_systemBtnIosSelectP;	
 	u32 m_systemLblVerSelectVal;	
 	u32 m_systemBtnVerSelectM;	
 	u32 m_systemBtnVerSelectP;	
@@ -795,8 +784,8 @@ private:
 	static const SOption _vidModePatch[4];
 	static const SOption _hooktype[8];
 	static const SOption _exitTo[5];
-	static const int _ios[6];
-	static safe_vector<u32> _installed_cios;
+	static std::map<u8, u8> _installed_cios;
+	typedef std::map<u8, u8>::iterator CIOSItr;
 	static int _version[9];
 	static const SCFParamDesc _cfParams[];
 	static const int _nbCfgPages;

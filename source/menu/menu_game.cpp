@@ -125,10 +125,7 @@ const CMenu::SOption CMenu::_hooktype[8] = {
 7 AXNextFrame Hook
 */
 
-const int CMenu::_ios[6] = {0, 249, 250, 222, 223, 224};
-
-safe_vector<u32> CMenu::_installed_cios;
-
+std::map<u8, u8> CMenu::_installed_cios;
 u8 banner_title[84];
 
 static inline int loopNum(int i, int s)
@@ -182,6 +179,29 @@ static int GetLanguage(const char *lang)
 	return CONF_LANG_ENGLISH; // Default to EN
 }
 
+static u8 GetRequestedGameIOS(dir_discHdr *hdr)
+{
+	u8 IOS = 0;
+
+	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *) &hdr->hdr.id, (char *) hdr->path);
+	if (!disc) return IOS;
+	wiidisc_t *wdisc = wd_open_disc((int(*)(void *, u32, u32, void *)) wbfs_disc_read, disc);
+	if (!wdisc)
+	{
+		WBFS_CloseDisc(disc);
+		return IOS;
+	}
+
+	u32 size;
+	u8 *titleTMD = wd_extract_file(wdisc, &size, ONLY_GAME_PARTITION, (char *) "TMD");
+
+	wd_close_disc(wdisc);
+	WBFS_CloseDisc(disc);
+
+	if(size > 0x18B)
+		IOS = titleTMD[0x18B];
+	return IOS;
+}
 
 void CMenu::_hideGame(bool instant)
 {
@@ -674,13 +694,13 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
 	
-	int iosIdx = 0;
-	if (m_gcfg2.getInt(id, "ios", &iosIdx) && (u32) iosIdx < ARRAY_SIZE(CMenu::_ios))
-		m_gcfg2.setInt(id, "ios", CMenu::_ios[iosIdx]);
-	
-	int gameIOS = mainIOS;
-	if (m_gcfg2.getInt(id, "ios", &gameIOS) && find(_installed_cios.begin(), _installed_cios.end(), gameIOS) == _installed_cios.end())
-		gameIOS = mainIOS;
+	int gameIOS;
+	if (!m_gcfg2.getInt(id, "ios", &gameIOS))
+	{
+		CIOSItr itr = _installed_cios.find(gameIOS);
+		gameIOS = (itr == _installed_cios.end()) ? 0 : itr->first;
+	}
+	else gameIOS = 0;
 
 	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 0); // hooktype is defined in patchcode.h
@@ -727,8 +747,33 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	net_wc24cleanup();
 		
 	// Reload IOS, if requested
-	if ((gameIOS != mainIOS))
+	if (gameIOS != mainIOS)
 	{
+		if(gameIOS <= 2)
+		{
+ 			u8 IOS[3];
+			IOS[0] = GetRequestedGameIOS(hdr);
+			IOS[1] = 56;
+			IOS[2] = 57;
+			bool found = false;
+			for(u8 num = 0; !found && num < 4; num++)
+			{
+				if(IOS[num] == 0) num++;
+				for(CIOSItr itr = _installed_cios.begin(); !found && itr != _installed_cios.end(); itr++)
+				{
+					if(itr->second == IOS[num])
+					{
+						gameIOS = itr->first;
+						found = true;
+					}
+				}
+			}
+			if(!found)
+			{
+				error(sfmt("Couldn't find a cIOS using base %i, or 56/57", IOS[0]));
+				return;
+			}
+		}
 		gprintf("Reloading IOS into %d\n", gameIOS);
 		cleanup(true);
 		if (!loadIOS(gameIOS, true))

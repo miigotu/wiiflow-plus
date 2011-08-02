@@ -31,44 +31,6 @@ typedef struct nandDevice
 	u32 Unmount;
 } NandDevice; 
 
-typedef struct _dirent
-{
-	char name[ISFS_MAXPATH + 1];
-	u64 idInt;
-	char id[5];
-	char* title;
-	int type;
-} dirent_t;
-
-/* 'WAD Header' structure */
-typedef struct
-{
-	/* Header length */
-	u32 header_len;
-	/* WAD type */
-	u16 type;
-
-	u16 padding;
-
-	/* Data length */
-	u32 certs_len;
-	u32 crl_len;
-	u32 tik_len;
-	u32 tmd_len;
-	u32 data_len;
-	u32 footer_len;
-} ATTRIBUTE_PACKED wadHeader;
-
-typedef struct
-{
-	u32 title_id;
-	u32 cindex;
-	u8 ios;
-	u8 minor_ios;
-	u16 n_shared;
-	u8 hash[20];
-} shared_entry;
-
 class Nand
 {
 	public:
@@ -86,8 +48,6 @@ class Nand
 
 		s32 Identify(u64 titleid, u32 *ios);
 		
-		//void Install(bool is_usb);
-
 	private:
 		Nand() : MountedDevice(0), Partition(0), FullMode(0x100), NandPath(){}
 		~Nand(void){ Disable_Emu(); }
@@ -99,10 +59,6 @@ class Nand
 		s32 Nand_Disable(void);
 
 		s32 Identify_GenerateTik(signed_blob **outbuf, u32 *outlen);
-		
-		//s32 ReadFile(char *filepath, u8 **buffer, u32 *filesize);
-		
-		//int InstallWad(char *filename, bool is_usb);
 
 		int MountedDevice;
 		int Partition;

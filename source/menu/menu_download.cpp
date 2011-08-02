@@ -795,15 +795,8 @@ s8 CMenu::_versionDownloader() // code to download new version
 	strcpy(dol_backup, m_dol.c_str());
 	strcat(dol_backup, ".backup");
 
-/* 	u32 updateZipSize = m_data_update_size > m_app_update_size ? m_data_update_size : m_app_update_size;
-	u32 sizeToBuffer = updateZipSize > m_dol_update_size ? updateZipSize : m_dol_update_size;
-	//sizeToBuffer is in bits, if it is not set in the ini, alloc 4MB
-	sizeToBuffer +=2000; //Add header room. */
-	if (m_dol_update_size == 0) m_dol_update_size = 1*0x400000;
-	if (m_app_update_size == 0) m_app_update_size = 1*0x400000;
-	if (m_data_update_size == 0) m_data_update_size = 1*0x400000;
-/* 	 if(sizeToBuffer == 2000)  sizeToBuffer = 1*0x400000; */	// Buffer for size of the biggest file.
-
+	if (m_app_update_size == 0)	 m_app_update_size	= 0x400000;
+	if (m_data_update_size == 0) m_data_update_size	= 0x400000;
 	
 	// check for existing dol
     ifstream filestr;
@@ -827,7 +820,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 	}
     filestr.close();
 
-	u32 bufferSize = 0x400000;	// Buffer for size of the biggest file.
+	u32 bufferSize = max(m_app_update_size, m_data_update_size);	// Buffer for size of the biggest file.
 	SmartBuf buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
@@ -852,144 +845,106 @@ s8 CMenu::_versionDownloader() // code to download new version
 		m_thrdWorking = false;
 		return 0;
 	}
-	else
+
+	// Load actual file
+	LWP_MutexLock(m_mutex);
+	_setThrdMsg(_t("dlmsg22", L"Updating application directory..."), 0.2f);
+	LWP_MutexUnlock(m_mutex);
+
+	m_thrdStep = 0.2f;
+	m_thrdStepLen = 0.9f - 0.2f;
+	gprintf("App Update URL: %s\n", m_app_update_url);
+	gprintf("Data Update URL: %s\n", m_app_update_url);
+	
+	download = downloadfile(buffer.get(), bufferSize, m_app_update_url, CMenu::_downloadProgress, this);
+	if (download.data == 0 || download.size < m_app_update_size)
 	{
-		// Load actual file
 		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg22", L"Updating application directory..."), 0.2f);
+		_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
+		LWP_MutexUnlock(m_mutex);
+		sleep(3);
+		m_thrdWorking = false;
+		return 0;
+	}
+	
+	// download finished, backup boot.dol and write new files.
+	LWP_MutexLock(m_mutex);
+	_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.8f);
+	LWP_MutexUnlock(m_mutex);			
+	
+	remove(dol_backup);
+	rename(m_dol.c_str(), dol_backup);
+
+	remove(m_app_update_zip.c_str());
+
+	FILE *file = fopen(m_app_update_zip.c_str(), "wb");
+	if (file != NULL)
+	{
+		fwrite(download.data, 1, download.size, file);
+		SAFE_CLOSE(file);
+		
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
 		LWP_MutexUnlock(m_mutex);
 
-		m_thrdStep = 0.2f;
-		m_thrdStepLen = 0.9f - 0.2f;
-		gprintf("App Update URL: %s\n", m_app_update_url);
-		gprintf("Data Update URL: %s\n", m_app_update_url);
-		
-		bool zipfile = true;
-		if(!m_update_dolOnly)
-			download = downloadfile(buffer.get(), bufferSize, m_app_update_url, CMenu::_downloadProgress, this);
-		if (m_update_dolOnly || download.data == 0 || download.size < m_app_update_size)
+		ZipFile zFile(m_app_update_zip.c_str());
+		bool result = zFile.ExtractAll(m_appDir.c_str());
+		remove(m_app_update_zip.c_str());
+
+		if (!result) goto fail;
+
+		//Update apps dir succeeded, try to update the data dir.
+		download.data = NULL;
+		download.size = 0;
+
+		//memset(&buffer, 0, bufferSize);  should we be clearing the buffer of any possible data before downloading?
+
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg23", L"Updating data directory..."), 0.2f);
+		LWP_MutexUnlock(m_mutex);
+
+		download = downloadfile(buffer.get(), bufferSize, m_data_update_url, CMenu::_downloadProgress, this);
+		if (download.data == 0 || download.size < m_data_update_size)
 		{
- 			// Replace zip with dol
-			strcpy(strrchr(m_app_update_url, '.'), ".dol"); 
-			zipfile = false;
-	
-			download = downloadfile(buffer.get(), bufferSize, m_app_update_url, CMenu::_downloadProgress, this);
-			if (download.data == 0 || download.size < m_dol_update_size)
-			{
-				download = downloadfile(buffer.get(), bufferSize, m_old_update_url, CMenu::_downloadProgress, this);
-				if (download.data == 0 || download.size < m_dol_update_size)
-				{
-					LWP_MutexLock(m_mutex);
-					_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
-					LWP_MutexUnlock(m_mutex);
-					sleep(3);
-					m_thrdWorking = false;
-					return 0;
-				}
-			}
-		}
-		
-		if (download.data > 0)
-		{
-			// download finished, backup boot.dol and write new files.
 			LWP_MutexLock(m_mutex);
-			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.8f);
-			LWP_MutexUnlock(m_mutex);			
+			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
+			LWP_MutexUnlock(m_mutex);
+			goto success;
+		}
+		
+		// download finished, write new files.
+		LWP_MutexLock(m_mutex);
+		_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
+		LWP_MutexUnlock(m_mutex);
+		
+		remove(m_data_update_zip.c_str());
+
+		file = fopen(m_data_update_zip.c_str(), "wb");
+		if (file != NULL)
+		{
+			fwrite(download.data, 1, download.size, file);
+			SAFE_CLOSE(file);
 			
-			remove(dol_backup);
-			rename(m_dol.c_str(), dol_backup);
+			LWP_MutexLock(m_mutex);
+			_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
+			LWP_MutexUnlock(m_mutex);
+			
+			ZipFile zDataFile(m_data_update_zip.c_str());
+			result = zDataFile.ExtractAll(m_dataDir.c_str());
+			remove(m_data_update_zip.c_str());
 
-			FILE *file =  NULL;
-			if (zipfile)
+			if (!result)
 			{
-				remove(m_app_update_zip.c_str());
-
-				file = fopen(m_app_update_zip.c_str(), "wb");
-				if (file != NULL)
-				{
-					fwrite(download.data, 1, download.size, file);
-					SAFE_CLOSE(file);
-					
-					LWP_MutexLock(m_mutex);
-					_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
-					LWP_MutexUnlock(m_mutex);
-
-					ZipFile zFile(m_app_update_zip.c_str());
-					bool result = zFile.ExtractAll(m_appDir.c_str());
-					remove(m_app_update_zip.c_str());
-
-					if (result)
-					{
-						//Update apps dir succeeded, try to update the data dir.
-						download.data = NULL;
-						download.size = 0;
-
-						//memset(&buffer, 0, bufferSize);  should we be clearing the buffer of any possible data before downloading?
-
-						LWP_MutexLock(m_mutex);
-						_setThrdMsg(_t("dlmsg23", L"Updating data directory..."), 0.2f);
-						LWP_MutexUnlock(m_mutex);
-
-						download = downloadfile(buffer.get(), bufferSize, m_data_update_url, CMenu::_downloadProgress, this);
-						if (download.data == 0 || download.size < m_data_update_size)
-						{
-							LWP_MutexLock(m_mutex);
-							_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
-							LWP_MutexUnlock(m_mutex);
-							goto success;
-						}
-						
-						if (download.data > 0)
-						{
-							// download finished, write new files.
-							LWP_MutexLock(m_mutex);
-							_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
-							LWP_MutexUnlock(m_mutex);
-							
-							remove(m_data_update_zip.c_str());
-
-							file = fopen(m_data_update_zip.c_str(), "wb");
-							if (file != NULL)
-							{
-								fwrite(download.data, 1, download.size, file);
-								SAFE_CLOSE(file);
-								
-								LWP_MutexLock(m_mutex);
-								_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
-								LWP_MutexUnlock(m_mutex);
-								
-								ZipFile zDataFile(m_data_update_zip.c_str());
-								result = zDataFile.ExtractAll(m_dataDir.c_str());
-								remove(m_data_update_zip.c_str());
-
-								if (!result)
-								{
-									LWP_MutexLock(m_mutex);
-									_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
-									LWP_MutexUnlock(m_mutex);
-								}
-							}
-						}
-						goto success;
-					}
-					else
-						goto fail;
-				}
-				else
-					goto fail;
-			}
-			else
-			{
-				file = fopen(m_dol.c_str(), "wb");
-				if (file == NULL)
-					goto fail;
-
-				fwrite(download.data, 1, download.size, file);
-				SAFE_CLOSE(file);
-				goto success;
+				LWP_MutexLock(m_mutex);
+				_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
+				LWP_MutexUnlock(m_mutex);
 			}
 		}
+
 	}
+	else
+		goto fail;
+
 success:
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg21", L"WiiFlow will now exit to allow the update to take effect."), 1.f);

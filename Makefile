@@ -159,22 +159,9 @@ $(BUILD):
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
-all:
-	@$(MAKE) --no-print-directory ios=224 port=$(port)
-	@cp $(OUTPUT).dol 224.dol
-	@$(MAKE) --no-print-directory ios=223 port=$(port)
-	@cp $(OUTPUT).dol 223.dol
-	@$(MAKE) --no-print-directory ios=222 port=$(port)
-	@cp $(OUTPUT).dol 222.dol
-	@$(MAKE) --no-print-directory ios=250 port=$(port)
-	@cp $(OUTPUT).dol 250.dol
-	@$(MAKE) --no-print-directory ios=249 port=$(port)
-	@cp $(OUTPUT).dol 249.dol
-
-#---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol 222.dol 223.dol 224.dol 249.dol 250.dol
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
 
 #---------------------------------------------------------------------------------
 run:
