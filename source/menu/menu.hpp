@@ -1,6 +1,6 @@
 #ifndef __MENU_HPP
 #define __MENU_HPP
-//#define SHOWMEM 1
+#define SHOWMEM 1
 #include <wiiuse/wpad.h>
 #include <ogc/pad.h>
 
@@ -41,7 +41,7 @@ class CMenu
 {
 public:
 	CMenu(CVideo &vid);
-	~CMenu(void) { cleanup(); }
+	~CMenu(void) {}
 	void init();
 	void error(const wstringEx &msg);
 	int main(void);
@@ -722,6 +722,7 @@ private:
 	void _buildMenus(void);
 	void _loadDefaultFont(bool korean);
 	void _cleanupDefaultFont();
+	const char *_domainFromView(void);
 	SFont _font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index);
 	STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);
 	safe_vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key);

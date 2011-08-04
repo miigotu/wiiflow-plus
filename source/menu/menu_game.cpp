@@ -330,19 +330,14 @@ void CMenu::_game(bool launch)
 				//m_gameSound.play(m_bnrSndVol);
 			}
 		}
-		else if (BTN_1_PRESSED)
+		else if ((BTN_1_PRESSED) || (BTN_2_PRESSED))
 		{
-			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1), m_numCFVersions);
+			s8 direction = BTN_1_PRESSED ? 1 : -1;
+			const char *domain = _domainFromView();
+			int cfVersion = loopNum(m_cfg.getInt(domain, "last_cf_mode" , 1) + direction, m_numCFVersions);
 			_loadCFLayout(cfVersion);
 			m_cf.applySettings();
-			m_cfg.setInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , cfVersion);
-		}
-		else if (BTN_2_PRESSED)
-		{
-			int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1) - 2, m_numCFVersions);
-			_loadCFLayout(cfVersion);
-			m_cf.applySettings();
-			m_cfg.setInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , cfVersion);
+			m_cfg.setInt(domain, "last_cf_mode" , cfVersion);
 		}
 		else if (launch || BTN_A_PRESSED)
 		{
@@ -578,7 +573,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		string id = string((const char *) hdr->hdr.id);
 
 		bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
-		bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("GENERAL", "cheat", false));
+		bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("NAND", "cheat", false));
 		bool countryPatch = m_gcfg2.testOptBool(id, "country_patch", m_cfg.getBool("GENERAL", "country_patch", false));
 		u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
 		int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
@@ -594,7 +589,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
 		if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
 
-		m_cfg.setString("GENERAL", "current_channel", id);
+		m_cfg.setString("NAND", "current_item", id);
 		m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg1.getInt("PLAYCOUNT", id, 0) + 1); 
 		m_gcfg1.setUInt("LASTPLAYED", id, time(NULL)); 
 
@@ -688,14 +683,14 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		SAFE_FREE(header);
 	}
 	bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
-	bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("GENERAL", "cheat", false));
+	bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("GAMES", "cheat", false));
 	bool countryPatch = m_gcfg2.testOptBool(id, "country_patch", m_cfg.getBool("GENERAL", "country_patch", false));
 	u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
 	int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
 	
 	int gameIOS;
-	if (!m_gcfg2.getInt(id, "ios", &gameIOS))
+	if (!m_gcfg2.getInt(id, "ios", &gameIOS) && _installed_cios.size() > 0)
 	{
 		CIOSItr itr = _installed_cios.find(gameIOS);
 		gameIOS = (itr == _installed_cios.end()) ? 0 : itr->first;
@@ -719,7 +714,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	CheckGameSoundThread(true);
 	if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
 	if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
-	m_cfg.setString("GENERAL", "current_game", id);
+	m_cfg.setString("GAMES", "current_item", id);
 	m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg1.getInt("PLAYCOUNT", id, 0) + 1);
 	m_gcfg1.setUInt("LASTPLAYED", id, time(NULL));
 	
@@ -749,8 +744,13 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	// Reload IOS, if requested
 	if (gameIOS != mainIOS)
 	{
-		if(gameIOS <= 2)
+		if(gameIOS < 0x64)
 		{
+			if ( _installed_cios.size() <= 0)
+			{
+				error(sfmt("No cios found!"));
+				Sys_LoadMenu();
+			}
  			u8 IOS[3];
 			IOS[0] = GetRequestedGameIOS(hdr);
 			IOS[1] = 56;
@@ -923,11 +923,6 @@ struct IMD5Header
 	u8 zeroes[8];
 	u8 crypto[16];
 } __attribute__((packed));
-
-inline u32 le32(u32 i)
-{
-	return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i & 0xFF0000) >> 8) | ((i & 0xFF000000) >> 24);
-}
 
 SmartBuf gameSoundThreadStack;
 

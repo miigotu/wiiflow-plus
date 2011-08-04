@@ -52,21 +52,13 @@ void CMenu::_showConfig7(void)
 	// 
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
 
-	char *name = (char *)"NULL";
-	if(m_current_view == COVERFLOW_USB)
-		name = (char *)DeviceName[m_cfg.getInt("GENERAL", "partition", 1)];
-	else if(m_current_view == COVERFLOW_HOMEBREW)
-		name = (char *)DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", 1)];
-	else if(m_current_view == COVERFLOW_CHANNEL)
-	{
-		bool disable = m_cfg.getBool("NAND", "Disable_EMU", true);
-		name = disable ? (char *)"NAND" : (char *)DeviceName[m_cfg.getInt("GENERAL", "nand_partition", 1)];
-	}
+	bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true);
+	char *partitionname = disable ? (char *)"NAND" : (char *)DeviceName[m_cfg.getInt(_domainFromView(), "partition", 1)];
 
-	for(u8 i = 0; strncmp((const char *)&name[i], "\0", 1) != 0; i++)
-					name[i] = toupper(name[i]);
+	for(u8 i = 0; strncmp((const char *)&partitionname[i], "\0", 1) != 0; i++)
+		partitionname[i] = toupper(partitionname[i]);
 
-	m_btnMgr.setText(m_config7LblPartition, (string)name);
+	m_btnMgr.setText(m_config7LblPartition, (string)partitionname);
 	m_btnMgr.setText(m_config7BtnAsyncNet, m_cfg.getBool("GENERAL", "async_network", false) ? _t("on", L"On") : _t("off", L"Off"));
 }
 
@@ -107,27 +99,26 @@ int CMenu::_config7(void)
 				break;
 			else if (m_btnMgr.selected(m_config7BtnPartitionP) || m_btnMgr.selected(m_config7BtnPartitionM))
 			{
-				bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "Disable_EMU", true);
+				bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true);
 				if(!disable)
 				{
 					bool isD2Xv7 = IOS_GetRevision() % 100 == 7;
-
-					s8 offset = m_btnMgr.selected(m_config7BtnPartitionP) ? 1 : -1;
-					currentPartition = loopNum(currentPartition + offset, (int)USB8);
+					u8 limiter = 0;
+					s8 direction = m_btnMgr.selected(m_config7BtnPartitionP) ? 1 : -1;
+					currentPartition = loopNum(currentPartition + direction, (int)USB8);
 					while(!DeviceHandler::Instance()->IsInserted(currentPartition) ||
 						(m_current_view == COVERFLOW_CHANNEL && (DeviceHandler::Instance()->GetFSType(currentPartition) != PART_FS_FAT ||
 							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()) == currentPartition) ||
 							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str()) == currentPartition))) ||
 						(m_current_view == COVERFLOW_HOMEBREW && DeviceHandler::Instance()->GetFSType(currentPartition) == PART_FS_WBFS))
-							currentPartition = loopNum(currentPartition + offset, (int)USB8);
+					{
+						currentPartition = loopNum(currentPartition + direction, (int)USB8);
+						if (limiter > 10) break;
+						limiter++;
+					}
 
 					gprintf("Next item: %s\n", DeviceName[currentPartition]);
-					if(m_current_view == COVERFLOW_USB)
-						m_cfg.setInt("GENERAL", "partition", currentPartition);
-					else if(m_current_view == COVERFLOW_HOMEBREW)
-						m_cfg.setInt("GENERAL", "homebrew_partition", currentPartition);
-					else if (m_current_view == COVERFLOW_CHANNEL)
-						m_cfg.setInt("NAND", "nand_partition", currentPartition);
+					m_cfg.setInt(_domainFromView(), "partition", currentPartition);
 				}
 					_showConfig7();
 			}
@@ -140,16 +131,10 @@ int CMenu::_config7(void)
 	}
 	if (currentPartition != bCurrentPartition)
 	{
-		bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "Disable_EMU", true);
+		bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true);
 		if(!disable)
 		{
-			char *newpartition = (char *)"NULL";
-			if(m_current_view == COVERFLOW_USB)
-				newpartition = (char *)DeviceName[m_cfg.getInt("GENERAL", "partition", currentPartition)];
-			else if(m_current_view == COVERFLOW_HOMEBREW)
-				newpartition = (char *)DeviceName[m_cfg.getInt("GENERAL", "homebrew_partition", currentPartition)];
-			else if(m_current_view == COVERFLOW_CHANNEL)
-				newpartition = disable ? (char *)"NAND" : (char *)DeviceName[m_cfg.getInt("NAND", "nand_partition", currentPartition)];
+			char *newpartition = disable ? (char *)"NAND" : (char *)DeviceName[m_cfg.getInt(_domainFromView(), "partition", currentPartition)];
 				
 			for(u8 i = 0; strncmp((const char *)&newpartition[i], "\0", 1) != 0; i++)
 				newpartition[i] = toupper(newpartition[i]);

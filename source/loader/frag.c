@@ -236,7 +236,7 @@ int get_frag_list(u8 *id, char *path, const u32 hdd_sector_size)
 		frag_concat(fa, fs);
 	}
 
-	frag_list = memalign(32, (sizeof(FragList)+31)&(~31));
+	frag_list = MEM2_alloc((sizeof(FragList)+31)&(~31));
 	frag_init(frag_list, MAX_FRAG);
 	if (isWBFS) // If this is a .wbfs file format, remap.
 	{

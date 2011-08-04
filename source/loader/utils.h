@@ -19,11 +19,14 @@
 #define SAFE_DELETE(P)		{if(P != NULL){delete P;P = NULL;}}
 #define SAFE_CLOSE(P)		{if(P != NULL){fclose(P);P = NULL; }}
 
+#define TITLE_ID(x,y)		(((u64)(x) << 32) | (y))
+#define TITLE_UPPER(x)		((u32)((x) >> 32))
+#define TITLE_LOWER(x)		((u32)(x) & 0xFFFFFFFF)
+
 /* Macros */
 #define Write8(addr, val) *(u8 *)addr = val; DCFlushRange((void *)addr, sizeof(u8));
 #define Write16(addr, val) *(u16 *)addr = val; DCFlushRange((void *)addr, sizeof(u16));
 #define Write32(addr, val) *(u32 *)addr = val; DCFlushRange((void *)addr, sizeof(u32));
- 
 
 #ifdef __cplusplus
 extern "C" {

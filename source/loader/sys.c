@@ -2,7 +2,7 @@
 #include <ogcsys.h>
 #include <stdlib.h>
 #include <wiiuse/wpad.h>
-#include <malloc.h>
+#include "mem2.hpp"
 #include <string.h>
 #include "sys.h"
 #include "gecko.h"
@@ -11,10 +11,6 @@
 #include "sha1.h"
 #include "fs.h"
 #include "mem2.hpp"
-
-#define TITLE_ID(x,y)		(((u64)(x) << 32) | (y))
-#define TITLE_HIGH(x)		((u32)((x) >> 32))
-#define TITLE_LOW(x)		((u32)(x))
 
 /* Variables */
 static bool reset = false;
@@ -70,9 +66,13 @@ void Sys_ExitTo(int option)
 
 	//magic word to force wii menu in priiloader.
 	if(return_to_menu)
-		write32(0x8132fffb, 0x50756e65);
+	{
+		Write32(0x8132fffb, 0x50756e65);
+	}
 	else if(return_to_priiloader)
-		write32(0x8132fffb,0x4461636f);
+	{
+		Write32(0x8132fffb,0x4461636f);
+	}
 }
 
 void Sys_Exit(int ret)
@@ -119,18 +119,14 @@ void Sys_LoadMenu(void)
 
 s32 GetTMD(u64 TicketID, signed_blob **Output, u32 *Length)
 {
-	signed_blob* TMD = NULL;
-
 	u32 TMD_Length;
-	s32 ret;
 
 	/* Retrieve TMD length */
-	ret = ES_GetStoredTMDSize(TicketID, &TMD_Length);
-	if (ret < 0)
-		return ret;
+	s32 ret = ES_GetStoredTMDSize(TicketID, &TMD_Length);
+	if (ret < 0) return ret;
 
 	/* Allocate memory */
-	TMD = (signed_blob*)MEM2_alloc((TMD_Length+31)&(~31));
+	signed_blob* TMD = (signed_blob*)MEM2_alloc((TMD_Length+31)&(~31));
 	if (!TMD) return IPC_ENOMEM;
 
 	/* Retrieve TMD */
@@ -159,7 +155,7 @@ s32 checkIOS(u32 IOS)
 	s32 ret = 0;
 
 	// Get tmd to determine the version of the IOS
-	title_id = (((u64)(1) << 32) | (IOS));
+	title_id = TITLE_ID(1, IOS);
 	ret = GetTMD(title_id, &TMD, &TMD_size);
 
 	if (ret == 0) {
@@ -324,7 +320,7 @@ retry:
 	{
 		for (i = 0; i < ios_info_number; i++)
 		{
-			if (ios_info[i].slot != TITLE_LOW(t->title_id)) continue;
+			if (ios_info[i].slot != TITLE_LOWER(t->title_id)) continue;
 			if (memcmp((void *)hash, &ios_info[i].hash, sizeof(sha1)) == 0)
 			{
 				info = ios_info[i].info;

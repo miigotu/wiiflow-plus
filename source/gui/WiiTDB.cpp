@@ -939,7 +939,7 @@ int WiiTDB::GetPlayers(const char * id)
     return players;
 }
 
-int WiiTDB::GetAccessoires(const char * id, safe_vector<Accessoire> & acc_list)
+int WiiTDB::GetAccessories(const char * id, safe_vector<Accessory> & acc_list)
 {
     if(!id)
         return -1;
@@ -1049,7 +1049,7 @@ bool WiiTDB::GetGameXMLInfo(const char * id, GameXMLInfo * gameInfo)
     gameInfo->WifiPlayers = GetWifiPlayers(id);
     GetWifiFeatures(id, gameInfo->WifiFeatures);
     gameInfo->Players = GetPlayers(id);
-    GetAccessoires(id, gameInfo->Accessoires);
+    GetAccessories(id, gameInfo->Accessories);
     gameInfo->CaseColor = GetCaseColor(id);
 
     return true;

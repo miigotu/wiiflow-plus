@@ -7,12 +7,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#ifndef _CHANNELS_H_
-#define TITLE_UPPER(x)		((u32)((x) >> 32))
-#define TITLE_LOWER(x)		((u32)(x) & 0xFFFFFFFF)
-#endif /* _CHANNELS_H_ */
-#define TITLE_ID(x,y)		(((u64)(x) << 32) | (y))
-
 #define REAL_NAND	0
 #define EMU_SD		1
 #define EMU_USB		2

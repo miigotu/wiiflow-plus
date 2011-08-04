@@ -16,6 +16,7 @@ More info : http://frontier-dev.net
 #include "mem2.hpp"
 #include "utils.h"
 
+#undef malloc
 #define malloc MEM2_alloc
 
 // Constants

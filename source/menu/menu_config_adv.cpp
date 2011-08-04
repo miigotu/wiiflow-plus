@@ -152,22 +152,17 @@ int CMenu::_configAdv(void)
 					_showConfigAdv();
 				}
 			}
-			else if (m_btnMgr.selected(m_configAdvBtnCurThemeP))
+			else if (m_btnMgr.selected(m_configAdvBtnCurThemeP) || m_btnMgr.selected(m_configAdvBtnCurThemeM))
 			{
-				curTheme = loopNum(curTheme + 1, (int)themes.size());
-				m_cfg.setString("GENERAL", "theme", themes[curTheme]);
-				_showConfigAdv();
-			}
-			else if (m_btnMgr.selected(m_configAdvBtnCurThemeM))
-			{
-				curTheme = loopNum(curTheme - 1, (int)themes.size());
+				s8 direction = m_btnMgr.selected(m_configAdvBtnCurThemeP) ? 1 : -1;
+				curTheme = loopNum(curTheme + direction, (int)themes.size());
 				m_cfg.setString("GENERAL", "theme", themes[curTheme]);
 				_showConfigAdv();
 			}
 			else if (m_btnMgr.selected(m_configAdvBtnCurLanguageP) || m_btnMgr.selected(m_configAdvBtnCurLanguageM))
 			{
-				s8 offset = m_btnMgr.selected(m_configAdvBtnCurLanguageP) ? 1 : -1;
-				int lang = (int)loopNum((u32)m_cfg.getInt("GENERAL", "language", 0) + offset, ARRAY_SIZE(CMenu::_translations));
+				s8 direction = m_btnMgr.selected(m_configAdvBtnCurLanguageP) ? 1 : -1;
+				int lang = (int)loopNum((u32)m_cfg.getInt("GENERAL", "language", 0) + direction, ARRAY_SIZE(CMenu::_translations));
 				m_curLanguage = CMenu::_translations[lang];
 				if (m_loc.load(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str()))
 				{
@@ -178,7 +173,7 @@ int CMenu::_configAdv(void)
 				{
 					while (lang !=0)
 					{
-						lang = (int)loopNum((u32)lang + offset, ARRAY_SIZE(CMenu::_translations));
+						lang = (int)loopNum((u32)lang + direction, ARRAY_SIZE(CMenu::_translations));
 						m_curLanguage = CMenu::_translations[lang];
 						struct stat langs;
 						if (stat(sfmt("%s/%s.ini", m_languagesDir.c_str(), m_curLanguage.c_str()).c_str(), &langs) == 0)

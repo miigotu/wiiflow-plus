@@ -14,7 +14,7 @@
 template <class T> class SmartPtr
 {
 public:
-	enum SrcAlloc { SRCALL_MALLOC, SRCALL_MEM2, SRCALL_NEW };
+	enum SrcAlloc { SRCALL_MALLOC, SRCALL_MEM2, SRCALL_MEM1, SRCALL_NEW };
 	T &operator*(void) const { return *m_p; }
 	T *operator->(void) const { return m_p; }
 	bool operator!(void) const { return m_p == NULL; }
@@ -22,8 +22,6 @@ public:
 	virtual void release(void)
 	{
 		if (m_refcount != NULL && --*m_refcount == 0)
-
-
 		{
 			switch (m_srcAlloc)
 			{
@@ -74,4 +72,5 @@ SmartBuf smartMemAlign32(unsigned int size);
 SmartBuf smartMem2Alloc(unsigned int size);
 SmartBuf smartAnyAlloc(unsigned int size);
 
+SmartBuf smartMem1Alloc(unsigned int size);
 #endif // !defined(__SMARTPTR_HPP)

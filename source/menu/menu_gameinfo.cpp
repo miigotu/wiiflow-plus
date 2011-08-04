@@ -415,23 +415,23 @@ void CMenu::_textGameInfo(void)
 			wheel=0;
 		
 		//check required controlls
-		for (safe_vector<Accessoire>::iterator acc_itr = gameinfo.Accessoires.begin(); acc_itr != gameinfo.Accessoires.end(); acc_itr++)
+		for (safe_vector<Accessory>::iterator acc_itr = gameinfo.Accessories.begin(); acc_itr != gameinfo.Accessories.end(); acc_itr++)
 		{
-			if (!(*acc_itr).Required) continue;
+			if (!acc_itr->Required) continue;
 			
-			if ((*acc_itr).Name == "wiimote")
+			if (strcmp((acc_itr->Name).c_str(), "wiimote") == 0)
                 wiimote=1;
-            if ((*acc_itr).Name == "nunchuk")
+            else if (strcmp((acc_itr->Name).c_str(), "nunchuk") == 0)
                 nunchuk=1;
-            if ((*acc_itr).Name == "guitar")
+            else if (strcmp((acc_itr->Name).c_str(), "guitar") == 0)
                 guitar=1;
-            if ((*acc_itr).Name == "drums")
+            else if (strcmp((acc_itr->Name).c_str(), "drums") == 0)
                 drums=1;
-            if ((*acc_itr).Name == "dancepad")
+            else if (strcmp((acc_itr->Name).c_str(), "dancepad") == 0)
                 dancepad=1;
-            if ((*acc_itr).Name == "motionplus")
+            else if (strcmp((acc_itr->Name).c_str(), "motionplus") == 0)
                 motionplus=1;
-            if ((*acc_itr).Name == "balanceboard")
+            else if (strcmp((acc_itr->Name).c_str(), "balanceboard") == 0)
                 balanceboard=1;
         }
 
@@ -497,8 +497,8 @@ void CMenu::_textGameInfo(void)
 
 		cnt_controlsreq = x;
 
-		/*for(unsigned int i = 0;i<ARRAY_SIZE(m_gameinfoLblControlsReq);i++)
-			m_btnMgr.setTexture(m_gameinfoLblControlsReq[i] ,m_controlsreq[i]);*/
+		//for(unsigned int i = 0;i<ARRAY_SIZE(m_gameinfoLblControlsReq);i++)
+			//m_btnMgr.setTexture(m_gameinfoLblControlsReq[i] ,m_controlsreq[i]);
 
 		//check optional controlls
 		wiimote=0,
@@ -513,29 +513,29 @@ void CMenu::_textGameInfo(void)
 		microphone=0,
 		wheel=0;
 
-		for (safe_vector<Accessoire>::iterator acc_itr = gameinfo.Accessoires.begin(); acc_itr != gameinfo.Accessoires.end(); acc_itr++)
+		for (safe_vector<Accessory>::iterator acc_itr = gameinfo.Accessories.begin(); acc_itr != gameinfo.Accessories.end(); acc_itr++)
 		{
-			if ((*acc_itr).Required) continue;
+			if (acc_itr->Required) continue;
 		
-            if ((*acc_itr).Name == "classiccontroller")
+            if (strcmp((acc_itr->Name).c_str(), "classiccontroller") == 0)
                 classiccontroller=1;
-            if ((*acc_itr).Name == "nunchuk")
+            else if (strcmp((acc_itr->Name).c_str(), "nunchuk") == 0)
                 nunchuk=1;
-            if ((*acc_itr).Name == "guitar")
+            else if (strcmp((acc_itr->Name).c_str(), "guitar") == 0)
                 guitar=1;
-            if ((*acc_itr).Name == "drums")
+            else if (strcmp((acc_itr->Name).c_str(), "drums") == 0)
                 drums=1;
-            if ((*acc_itr).Name == "dancepad")
+            else if (strcmp((acc_itr->Name).c_str(), "dancepad") == 0)
                 dancepad=1;
-            if ((*acc_itr).Name == "motionplus")
+            else if (strcmp((acc_itr->Name).c_str(), "motionplus") == 0)
                 motionplus=1;
-            if ((*acc_itr).Name == "balanceboard")
+            else if (strcmp((acc_itr->Name).c_str(), "balanceboard") == 0)
                 balanceboard=1;
-            if ((*acc_itr).Name == "microphone")
+            else if (strcmp((acc_itr->Name).c_str(), "microphone") == 0)
                 microphone=1;
-            if ((*acc_itr).Name == "gamecube")
+            else if (strcmp((acc_itr->Name).c_str(), "gamecube") == 0)
                 gamecube=1;
-			if ((*acc_itr).Name == "wheel")
+			else if (strcmp((acc_itr->Name).c_str(), "wheel") == 0)
                 wheel=1;
         }
 		
@@ -599,8 +599,8 @@ void CMenu::_textGameInfo(void)
 		}
 
 		cnt_controls = x;
-		for(unsigned int i = 0;i<ARRAY_SIZE(m_gameinfoLblControls);i++)
-			m_btnMgr.setTexture(m_gameinfoLblControls[i] ,m_controls[i]);
+		//for(unsigned int i = 0;i<ARRAY_SIZE(m_gameinfoLblControls);i++)
+			//m_btnMgr.setTexture(m_gameinfoLblControls[i] ,m_controls[i]);
 	}
 	else
 		m_btnMgr.setText(m_gameinfoLblTitle, wfmt(L"%s", "No Gameinfo"), true);

@@ -119,7 +119,7 @@ void CMenu::init()
 				break;
 			}
 
-	_loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
+	_loadDefaultFont(CONF_GetLanguage() != CONF_LANG_KOREAN);
 
 	if(drive == check) // Should not happen
 	{
@@ -181,6 +181,8 @@ void CMenu::init()
 		}
 	}
 
+	_load_installed_cioses();
+
 	m_dataDir = sfmt("%s:/%s", drive, APPDATA_DIR);
 	gprintf("Data Directory: %s\n", m_dataDir.c_str());
 	
@@ -207,16 +209,20 @@ void CMenu::init()
 
 	DeviceHandler::SetWatchdog(m_cfg.getUInt("GENERAL", "watchdog_timeout", 10));
 
-	u8 partition = m_cfg.getInt("GENERAL", "partition");  //Auto find a valid partition and fix old ini partition settings.
+	m_current_view = COVERFLOW_USB;
+
+	const char *domain = _domainFromView();
+
+	u8 partition = m_cfg.getInt(domain, "partition");  //Auto find a valid partition and fix old ini partition settings.
 	if(partition < USB1 || partition > USB8 || partition > DeviceHandler::Instance()->GetMountedCount(partition))
 	{
-		m_cfg.remove("GENERAL", "partition");
+		m_cfg.remove(domain, "partition");
 		for(int i = USB1; i <= USB8; i++) // Find a usb partition with the wbfs folder or wbfs file system, else leave it blank (defaults to 1 later)
-		if (DeviceHandler::Instance()->IsInserted(i) && (DeviceHandler::Instance()->GetFSType(i) == PART_FS_WBFS || stat(sfmt(GAMES_DIR, DeviceName[i]).c_str(), &dummy) == 0))
-		{
-			m_cfg.setInt("GENERAL", "partition", i);
-			break;
-		}
+			if (DeviceHandler::Instance()->IsInserted(i) && (DeviceHandler::Instance()->GetFSType(i) == PART_FS_WBFS || stat(sfmt(GAMES_DIR, DeviceName[i]).c_str(), &dummy) == 0))
+			{
+				m_cfg.setInt(domain, "partition", i);
+				break;
+			}
 	}
 
 	m_cf.init(m_base_font, m_base_font_size);
@@ -304,8 +310,6 @@ void CMenu::init()
 	m_btnMgr.init(m_vid);
 	MusicPlayer::Instance()->Init(m_cfg, m_musicDir, sfmt("%s/music", m_themeDataDir.c_str()));
 
-	_load_installed_cioses();	
-
 	_buildMenus();
 
 	m_locked = m_cfg.getString("GENERAL", "parent_code", "").size() >= 4;
@@ -326,12 +330,11 @@ void CMenu::init()
 	m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
 	m_bnrSndVol = m_cfg.getInt("GENERAL", "sound_volume_bnr", 255);
 	
-	if (m_cfg.getBool("GENERAL", "favorites_on_startup", false))
-		m_favorites = m_cfg.getBool("GENERAL", "favorites", false);
-	m_category = m_cat.getInt("GENERAL", "games_category", 0);
-	m_max_categories = m_cat.getInt("GENERAL", "numcategories", 12);
+	if (m_cfg.getBool(domain, "favorites_on_startup", false))
+		m_favorites = m_cfg.getBool(domain, "favorites", false);
+	m_category = m_cat.getInt(domain, "category", 0);
+	m_max_categories = m_cat.getInt(domain, "numcategories", 12);
 
-	m_current_view = COVERFLOW_USB;
 
 	safe_vector<string> gamercards = stringToVector(m_cfg.getString("GAMERCARD", "gamercards"), '|');
 	if (gamercards.size() == 0 && m_cfg.getBool("GAMERCARD", "wiinnertag_enable", false))
@@ -428,21 +431,7 @@ void CMenu::_loadCFCfg(SThemeData &theme)
 	for (u32 i = 1; i <= m_numCFVersions; ++i)
 		_loadCFLayout(i);
 
-	int mode;
-	switch(m_current_view)
-	{
-		case COVERFLOW_HOMEBREW:
-			mode = m_cfg.getInt("GENERAL", "last_hb_cf_mode" , 1);
-			break;
-		case COVERFLOW_CHANNEL:
-			mode = m_cfg.getInt("GENERAL", "last_chan_cf_mode" , 1);
-			break;
-		case COVERFLOW_USB:
-		default:
-			mode = m_cfg.getInt("GENERAL", "last_cf_mode", 1);
-			break;
-	}
-	_loadCFLayout(min(max(1, mode), (int)m_numCFVersions));
+	_loadCFLayout((m_cfg.getInt(_domainFromView(), "last_cf_mode" , 1) + (int)m_numCFVersions) % (int)m_numCFVersions);
 }
 
 Vector3D CMenu::_getCFV3D(const string &domain, const string &key, const Vector3D &def, bool otherScrnFmt)
@@ -702,7 +691,7 @@ void CMenu::_buildMenus(void)
 {
 	SThemeData theme;
 
-	if(!m_base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
+	if(!m_base_font.get()) _loadDefaultFont(CONF_GetLanguage() != CONF_LANG_KOREAN);
 	
 	// Default fonts
 	theme.btnFont = _font(theme.fontSet, "GENERAL", "button_font", BUTTONFONT);
@@ -759,7 +748,7 @@ void CMenu::_buildMenus(void)
 	theme.bg.fromPNG(background_png, GX_TF_RGBA8, ALLOC_MEM2);
 	m_mainBgLQ.fromPNG(background_png, GX_TF_CMPR, ALLOC_MEM2, 64, 64);
 	m_gameBgLQ = m_mainBgLQ;
-	
+
 	// Build menus
 	_initMainMenu(theme);
 	_initErrorMenu(theme);
@@ -850,7 +839,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
 		return retFont;
 	}
-	if(!m_base_font) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
+	if(!m_base_font) _loadDefaultFont(CONF_GetLanguage() != CONF_LANG_KOREAN);
 	if(retFont.fromBuffer(m_base_font, m_base_font_size, fontSize, lineSpacing, weight, index))
 	{
 		// Default font
@@ -1149,11 +1138,12 @@ void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 start, u32 si
 void CMenu::_initCF(void)
 {
 	Config m_dump;
+	const char *domain = _domainFromView();
 
 	m_cf.clear();
 	m_cf.reserve(m_gameList.size());
 
- 	m_gamelistdump = m_cfg.getBool("GENERAL", m_current_view == COVERFLOW_USB ? "dump_gamelist" : "dump_chanlist", true);
+ 	m_gamelistdump = m_cfg.getBool(domain, "dump_list", true);
 	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
 
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
@@ -1182,7 +1172,7 @@ void CMenu::_initCF(void)
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
 
 			if(m_gamelistdump)
-				m_dump.setWString(m_current_view == COVERFLOW_CHANNEL ? "CHANNELS" : "GAMES", m_current_view == COVERFLOW_CHANNEL ? id.substr(0, 4) : id, w);
+				m_dump.setWString(domain, m_current_view != COVERFLOW_USB ? id.substr(0, 4) : id, w);
 
 			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), m_gameList[i].hdr.casecolor, playcount, lastPlayed);
 		}
@@ -1192,14 +1182,14 @@ void CMenu::_initCF(void)
 	{
 		m_dump.save();
 		m_dump.unload();
-		m_cfg.setBool("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "dump_chanlist" : "dump_gamelist", false);
+		m_cfg.setBool(domain, "dump_list", false);
 	}
  	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode", true));
 	m_cf.setCompression(m_cfg.getBool("GENERAL", "allow_texture_compression", true));
 	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
-	m_cf.setSorting((Sorting)m_cfg.getInt("GENERAL", "sort", 0));
+	m_cf.setSorting((Sorting)m_cfg.getInt(domain, "sort", 0));
 	if (m_curGameId.empty() || !m_cf.findId(m_curGameId.c_str(), true))
-		m_cf.findId(m_cfg.getString("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "current_channel" : "current_game").c_str(), true);
+		m_cf.findId(m_cfg.getString(domain, "current_item").c_str(), true);
 	m_cf.startCoverLoader();
 }
 
@@ -1460,10 +1450,10 @@ const wstringEx CMenu::_fmt(const char *key, const wchar_t *def)
 
 bool CMenu::_loadChannelList(void)
 {
-	currentPartition = m_cfg.getInt("NAND", "nand_partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
+	currentPartition = m_cfg.getInt("NAND", "partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
 	static u8 lastPartition = currentPartition;
 
-	bool disable_emu = m_cfg.getBool("NAND", "Disable_EMU");
+	bool disable_emu = m_cfg.getBool("NAND", "disable", true);
 	static bool last_emu_state = disable_emu;
 	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
 
@@ -1497,7 +1487,7 @@ bool CMenu::_loadChannelList(void)
 			DeviceHandler::Instance()->UnMount(currentPartition);
 
 		Nand::Instance()->Set_Partition(disable_emu ? REAL_NAND : currentPartition == 0 ? currentPartition : currentPartition - 1);
-		Nand::Instance()->Set_NandPath(m_cfg.getString("NAND", "nand_path", "").c_str());
+		Nand::Instance()->Set_NandPath(m_cfg.getString("NAND", "path", "").c_str());
 		if(Nand::Instance()->Enable_Emu(disable_emu ? REAL_NAND : currentPartition == 0 ? EMU_SD : EMU_USB) < 0)
 		{
 			Nand::Instance()->Disable_Emu();
@@ -1529,12 +1519,10 @@ bool CMenu::_loadChannelList(void)
 	last_emu_state = disable_emu;
 
 	u32 count = m_channels.Count();
-	u32 len = count * sizeof m_gameList[0];
+	u32 len = sizeof (dir_discHdr);
 
 	SmartBuf buffer = smartMem2Alloc(len);
 	if (!buffer) return false;
-
-	memset(buffer.get(), 0, len);
 
 	m_gameList.reserve(count);
 
@@ -1545,11 +1533,12 @@ bool CMenu::_loadChannelList(void)
 		
 		if (chan->id == NULL) continue; // Skip invalid channels
 
-		memcpy(&b[i].hdr.id, chan->id, 4);
-		wcstombs(b[i].hdr.title, chan->name, sizeof(b->hdr.title));
-		b[i].hdr.chantitle = chan->title;
+		memset(b, 0, len);
+		memcpy(b->hdr.id, chan->id, 4);
+		wcstombs(b->hdr.title, chan->name, sizeof(b->hdr.title));
+		b->hdr.chantitle = chan->title;
 	
-		m_gameList.push_back(b[i]);
+		m_gameList.push_back(*b);
 	}
 	return true;
 }
@@ -1572,7 +1561,6 @@ bool CMenu::_loadList(void)
 			gprintf("homebrew view from ");
 			retval = _loadHomebrewList();
 			break;
-		case COVERFLOW_USB:
 		default:
 			gprintf("usb view from ");
 			retval = _loadGameList();
@@ -1584,7 +1572,7 @@ bool CMenu::_loadList(void)
 
 bool CMenu::_loadGameList(void)
 {
-	currentPartition = m_cfg.getInt("GENERAL", "partition", 1);
+	currentPartition = m_cfg.getInt("GAMES", "partition", 1);
 	gprintf("%s\n", DeviceName[currentPartition]);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
 	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso");
@@ -1593,7 +1581,7 @@ bool CMenu::_loadGameList(void)
 
 bool CMenu::_loadHomebrewList()
 {
-	currentPartition = m_cfg.getInt("GENERAL", "homebrew_partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
+	currentPartition = m_cfg.getInt("HOMEBREW", "partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
 	gprintf("%s\n", DeviceName[currentPartition]);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
 	m_gameList.Load(sfmt(HOMEBREW_DIR, DeviceName[currentPartition]), ".dol");
@@ -1657,64 +1645,37 @@ void CMenu::_load_installed_cioses()
 {
 	if (_installed_cios.size() > 0) return;
 	
-	// Do sjizzle
-	u32 count;
-	u32 ret = ES_GetNumTitles(&count);
-	if (ret || !count)
-	{
-		gprintf("Cannot count...aaaah\n");
-		return;
-	}
-
-	static u64 title_list[256] ATTRIBUTE_ALIGN(32);
-	if (ES_GetTitles(title_list, count) > 0)
-	{
-		gprintf("Cannot get titles...\n");
-		return;
-	}
-	
 	_installed_cios[0] = 1;
 
-	for (u32 i = 0; i < count; i++)
+	for (u8 slot = 100; slot < 254; slot++)
 	{
+		if (checkIOS(slot) < 0
+			|| slot == 0xCA	// 202
+			|| slot == 0xDE	// 222
+			|| slot == 0xDF	// 223
+			|| slot == 0xE0	// 224
+			|| slot == 0xE1	// 225
+			|| slot == 0xEC	// 236
+			) continue;
+
 		u32 tmd_size;
-		if (ES_GetStoredTMDSize(title_list[i], &tmd_size) > 0) continue;
-		static u8 tmd_buf[MAX_SIGNED_TMD_SIZE] ATTRIBUTE_ALIGN(32);
-		signed_blob *s_tmd = (signed_blob *) tmd_buf;
-		if (ES_GetStoredTMD(title_list[i], s_tmd, tmd_size) > 0) continue;
-
-		const tmd *t = (const tmd *) SIGNATURE_PAYLOAD(s_tmd);
+		signed_blob *s_tmd;
+		if (GetTMD(TITLE_ID(1, slot), &s_tmd, &tmd_size) != 0 || tmd_size == 0) continue;
+		tmd *TMD = (tmd *) SIGNATURE_PAYLOAD(s_tmd);
 		
-		u32 kind = t->title_id >> 32;
-
-		if (kind == 1)
+		// We have a possible cIos
+		u32 version = TMD->title_version;
+		if (s_tmd[4] == 0 && (version < 100 || version == 0xFFFF || (version > D2X_MIN_VERSION && version < D2X_MAX_VERSION) )) // Signature is empty
 		{
-			u32 title_l = t->title_id & 0xFFFFFFFF;
-			if (title_l == 0
-				|| title_l == 1
-				|| title_l == 2
-				|| title_l == 0x24	// 36
-				|| title_l == 0xCA	// 202
-				|| title_l == 0xDE	// 222
-				|| title_l == 0xDF	// 223
-				|| title_l == 0xE0	// 224
-				|| title_l == 0xEC	// 236
-				|| title_l == 0xFE	// 254/BootMii
-				|| title_l == 0x100 // MIOS
-				|| title_l == 0x101 // Hmm?
-				) continue;
-			
-			// We have a possible cIos
-			u32 version = t->title_version;
-			if (tmd_buf[4] == 0 && (version < 100 || version == 0xFFFF || (version > D2X_MIN_VERSION && version < D2X_MAX_VERSION))) // Signature is empty
+			char *info = get_iosx_info_from_tmd(slot, NULL);
+			if(info)
 			{
-				// Probably an cios
- 				char *info = get_iosx_info_from_tmd(title_l, NULL);
 				u8 base = atoi(info);
 				if ((base > 35 && base < 39) || (base > 52 && base < 62 && base != 54 && base != 59) || base == 70 || base == 80) // Is a cIOS!
-					_installed_cios[title_l] = base;
+					_installed_cios[slot] = base;
 			}
 		}
+		SAFE_FREE(s_tmd);
 	}
 }
 
@@ -1799,4 +1760,18 @@ void CMenu::_cleanupDefaultFont()
 {
 	SMART_FREE(m_base_font);
 	m_base_font_size = 0;
+}
+
+const char *CMenu::_domainFromView()
+{
+	switch(m_current_view)
+	{
+		case COVERFLOW_CHANNEL:
+			return "NAND";
+		case COVERFLOW_HOMEBREW:
+			return "HOMEBREW";
+		default:
+			return "GAMES";
+	}
+	return "NULL";
 }

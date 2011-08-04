@@ -70,32 +70,28 @@ u32 IOSPATCH_AHBPROT()
 
 bool loadIOS(int ios, bool launch_game)
 {
-	bool iosOK;
-	int partition = currentPartition;
-	
-	gprintf("Reloading into IOS %i from %i (AHBPROT: %i)...", ios, IOS_GetVersion(), HAVE_AHBPROT);
+	gprintf("Reloading into IOS %i from %i (AHBPROT: %u)...", ios, IOS_GetVersion(), HAVE_AHBPROT);
 
 	Close_Inputs();
-
 	DeviceHandler::Instance()->UnMountAll();
 
 	WDVD_Close();
 	USBStorage_Deinit();
 
-	gprintf("AHBPROT state before reloading: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
-	IOSPATCH_AHBPROT();
+	//gprintf("AHBPROT state before reloading: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
+	//IOSPATCH_AHBPROT();
 
-	iosOK = IOS_ReloadIOS(ios) == 0;
+	bool iosOK = IOS_ReloadIOS(ios) == 0;
 
 	gprintf("%s, Current IOS: %i\n", iosOK ? "OK" : "FAILED!", IOS_GetVersion());
 
-	IOSPATCH_AHBPROT();
-	gprintf("Current AHBPROT state: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
+	//IOSPATCH_AHBPROT();
+	//gprintf("Current AHBPROT state: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
 
  	if (launch_game)
 	{
 		DeviceHandler::Instance()->MountAll();
-		DeviceHandler::Instance()->Open_WBFS(partition);
+		DeviceHandler::Instance()->Open_WBFS(currentPartition);
 		Disc_Init();
 	}
 	else Open_Inputs();

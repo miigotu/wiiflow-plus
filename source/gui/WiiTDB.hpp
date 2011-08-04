@@ -29,11 +29,11 @@
 
 using namespace std;
 
-typedef struct _Accessoire
+typedef struct _Accessory
 {
     string Name;
     bool Required;
-} Accessoire;
+} Accessory;
 
 typedef struct _GameXMLInfo
 {
@@ -51,7 +51,7 @@ typedef struct _GameXMLInfo
 	int WifiPlayers;
 	safe_vector<string> WifiFeatures;
 	int Players;
-	safe_vector<Accessoire> Accessoires;
+	safe_vector<Accessory> Accessories;
 	int CaseColor;
 
 } GameXMLInfo;
@@ -119,7 +119,7 @@ class WiiTDB
         int GetPlayers(const char * id);
         //! Returns the amount of accessoires found or -1 if failed
         //! Get the accessoire (inputs) list inside a vector for a specific game id
-        int GetAccessoires(const char * id, safe_vector<Accessoire> & acc_list);
+        int GetAccessories(const char * id, safe_vector<Accessory> & acc_list);
         //! Get the box (case) color for a specific game id
         //! Returns the color in RGB (first 3 bytes)
         int GetCaseColor(const char * id);

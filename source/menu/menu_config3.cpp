@@ -65,7 +65,7 @@ void CMenu::_showConfig3(void)
 	m_btnMgr.setText(m_config3LblVideo, _t(CMenu::_videoModes[i].id, CMenu::_videoModes[i].text));
 	i = min(max(0, m_cfg.getInt("GENERAL", "game_language", 0)), (int)ARRAY_SIZE(CMenu::_languages) - 1);
 	m_btnMgr.setText(m_config3LblLanguage, _t(CMenu::_languages[i].id, CMenu::_languages[i].text));
-	m_btnMgr.setText(m_config3BtnOcarina, m_cfg.getBool("GENERAL", "cheat") ? _t("on", L"On") : _t("off", L"Off"));
+	m_btnMgr.setText(m_config3BtnOcarina, m_cfg.getBool(_domainFromView(), "cheat") ? _t("on", L"On") : _t("off", L"Off"));
 }
 
 int CMenu::_config3(void)
@@ -98,24 +98,16 @@ int CMenu::_config3(void)
 		{
 			if (m_btnMgr.selected(m_configBtnBack))
 				break;
-			else if (m_btnMgr.selected(m_config3BtnLanguageP))
+			else if (m_btnMgr.selected(m_config3BtnLanguageP) || m_btnMgr.selected(m_config3BtnLanguageM))
 			{
-				m_cfg.setInt("GENERAL", "game_language", (int)loopNum((u32)m_cfg.getInt("GENERAL", "game_language", 0) + 1, ARRAY_SIZE(CMenu::_languages)));
+				s8 direction = m_btnMgr.selected(m_config3BtnLanguageP) ? 1 : -1;
+				m_cfg.setInt("GENERAL", "game_language", (int)loopNum((u32)m_cfg.getInt("GENERAL", "game_language", 0) + direction, ARRAY_SIZE(CMenu::_languages)));
 				_showConfig3();
 			}
-			else if (m_btnMgr.selected(m_config3BtnLanguageM))
+			else if (m_btnMgr.selected(m_config3BtnVideoP) || m_btnMgr.selected(m_config3BtnVideoM))
 			{
-				m_cfg.setInt("GENERAL", "game_language", (int)loopNum((u32)m_cfg.getInt("GENERAL", "game_language", 0) - 1, ARRAY_SIZE(CMenu::_languages)));
-				_showConfig3();
-			}
-			else if (m_btnMgr.selected(m_config3BtnVideoP))
-			{
-				m_cfg.setInt("GENERAL", "video_mode", (int)loopNum((u32)m_cfg.getInt("GENERAL", "video_mode", 0) + 1, ARRAY_SIZE(CMenu::_videoModes)));
-				_showConfig3();
-			}
-			else if (m_btnMgr.selected(m_config3BtnVideoM))
-			{
-				m_cfg.setInt("GENERAL", "video_mode", (int)loopNum((u32)m_cfg.getInt("GENERAL", "video_mode", 0) - 1, ARRAY_SIZE(CMenu::_videoModes)));
+				s8 direction = m_btnMgr.selected(m_config3BtnVideoP) ? 1 : -1;
+				m_cfg.setInt("GENERAL", "video_mode", (int)loopNum((u32)m_cfg.getInt("GENERAL", "video_mode", 0) + direction, ARRAY_SIZE(CMenu::_videoModes)));
 				_showConfig3();
 			}
 			else if (m_btnMgr.selected(m_config3BtnOcarina))

@@ -98,12 +98,16 @@ bool Channels::Launch(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool c
 u64* Channels::GetChannelList(u32* count)
 {
 	u32 countall;
-	u32 ret = ES_GetNumTitles(&countall);
+	if (ES_GetNumTitles(&countall) < 0 || !countall) return NULL;
 
-	if (ret || !countall) return NULL;
-
-	u64* titles = (u64*)MEM2_alloc(ALIGN32(countall * sizeof(u64)));
+	u64* titles = (u64*)MEM2_alloc(countall * sizeof(u64));
 	if (!titles) return NULL;
+
+	if(ES_GetTitles(titles, countall) < 0)
+	{
+		SAFE_FREE(titles);
+		return NULL;
+	}
 
 	u64* channels = (u64*)MEM2_alloc(countall * sizeof(u64));
 	if (!channels)
@@ -111,8 +115,6 @@ u64* Channels::GetChannelList(u32* count)
 		SAFE_FREE(titles);
 		return NULL;
 	}
-
-	ret = ES_GetTitles(titles, countall);
 
 	*count = 0;
 	for (u32 i = 0; i < countall; i++)

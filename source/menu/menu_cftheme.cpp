@@ -376,16 +376,10 @@ void CMenu::_cfTheme(void)
 		bool sel = m_cf.selected();
 		if (BTN_B_HELD)
 		{
-			if (BTN_PLUS_PRESSED)
+			if (BTN_PLUS_PRESSED || BTN_MINUS_PRESSED)
 			{
-				curParam = loopNum(curParam + 1, ARRAY_SIZE(CMenu::_cfParams));
-				if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
-					m_cf.select();
-				_showCFTheme(curParam, cfVersion, wide);
-			}
-			else if (BTN_MINUS_PRESSED)
-			{
-				curParam = loopNum(curParam - 1, ARRAY_SIZE(CMenu::_cfParams));
+				s8 direction = BTN_PLUS_PRESSED ? 1 : -1;
+				curParam = loopNum(curParam + direction, ARRAY_SIZE(CMenu::_cfParams));
 				if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
 					m_cf.select();
 				_showCFTheme(curParam, cfVersion, wide);
@@ -443,16 +437,10 @@ void CMenu::_cfTheme(void)
 				_loadCFLayout(cfVersion, true, wide != m_vid.wide());
 				m_cf.applySettings();
 			}
-			else if (m_btnMgr.selected(m_cfThemeBtnParamM))
+			else if (m_btnMgr.selected(m_cfThemeBtnParamP) || m_btnMgr.selected(m_cfThemeBtnParamM))
 			{
-				curParam = loopNum(curParam - 1, ARRAY_SIZE(CMenu::_cfParams));
-				if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
-					m_cf.select();
-				_showCFTheme(curParam, cfVersion, wide);
-			}
-			else if (m_btnMgr.selected(m_cfThemeBtnParamP))
-			{
-				curParam = loopNum(curParam + 1, ARRAY_SIZE(CMenu::_cfParams));
+				s8 direction = m_btnMgr.selected(m_cfThemeBtnParamP) ? 1 : -1;
+				curParam = loopNum(curParam + direction, ARRAY_SIZE(CMenu::_cfParams));
 				if (CMenu::_cfParams[curParam].domain == CMenu::SCFParamDesc::PDD_SELECTED)
 					m_cf.select();
 				_showCFTheme(curParam, cfVersion, wide);

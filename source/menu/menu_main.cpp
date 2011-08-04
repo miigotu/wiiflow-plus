@@ -91,7 +91,6 @@ void CMenu::_showMain(void)
 			else
 				m_btnMgr.show(m_mainBtnUsb);
 			break;
-		case COVERFLOW_USB:
 		default:
 			m_btnMgr.show(m_mainBtnChannel);
 			break;
@@ -128,14 +127,10 @@ void CMenu::LoadView(void)
 	_showMain();
 	_initCF();
 
-	_loadCFLayout(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1));
+	_loadCFLayout(m_cfg.getInt(_domainFromView(), "last_cf_mode", 1));
 	m_cf.applySettings();
 
-	char *mode;
-	if(m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "Disable_EMU", true))
-		mode = (char *)"NAND";
-	else
-		mode = (char *)DeviceName[currentPartition];
+	char *mode = (m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true)) ? (char *)"NAND" : (char *)DeviceName[currentPartition];
 
 	for(u8 i = 0; strncmp((const char *)&mode[i], "\0", 1) != 0; i++)
 			mode[i] = toupper(mode[i]);
@@ -150,7 +145,7 @@ int CMenu::main(void)
 	wstringEx curLetter;
 	string prevTheme = m_cfg.getString("GENERAL", "theme", "default");
 	bool use_grab = m_cfg.getBool("GENERAL", "use_grab", false);
-	show_homebrew = m_cfg.getBool("GENERAL", "show_homebrew", false);
+	show_homebrew = !m_cfg.getBool("HOMEBREW", "disable", false);
 
 	m_reload = false;
 	static u32 disc_check = 0;
@@ -170,7 +165,6 @@ int CMenu::main(void)
 	unsigned int stack_size = (unsigned int)32768;
 	SmartBuf coverstatus_stack = smartMem2Alloc(stack_size);	
 	LWP_CreateThread(&coverStatus, (void *(*)(void *))CMenu::GetCoverStatusAsync, (void *)this, coverstatus_stack.get(), stack_size, 40);
-
 	while (true)
 	{
 		_mainLoopCommon(true);
@@ -227,27 +221,17 @@ int CMenu::main(void)
 			m_cf.left();
 		m_btnMgr.noClick(false);
 		//CF Layout select
-		if (!BTN_B_HELD && BTN_1_PRESSED)
+		if (!BTN_B_HELD && (BTN_1_PRESSED || BTN_2_PRESSED))
 		{
 			m_btnMgr.noClick(true);
 			if (!m_btnMgr.selected(m_mainBtnQuit))
 			{
-				int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1), m_numCFVersions);
+				const char *domain = _domainFromView();
+				s8 direction = BTN_1_PRESSED ? 1 : -1;
+				int cfVersion = loopNum(m_cfg.getInt(domain, "last_cf_mode", 1) + direction, m_numCFVersions);
 				_loadCFLayout(cfVersion);
 				m_cf.applySettings();
-				m_cfg.setInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , cfVersion);
-			}
-			m_btnMgr.noClick(false);
-		}
-		else if (!BTN_B_HELD && BTN_2_PRESSED)
-		{
-			m_btnMgr.noClick(true);
-			if (!m_btnMgr.selected(m_mainBtnQuit))
-			{
-				int cfVersion = 1 + loopNum(m_cfg.getInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , 1) - 2, m_numCFVersions);
-				_loadCFLayout(cfVersion);
-				m_cf.applySettings();
-				m_cfg.setInt("GENERAL", m_current_view == COVERFLOW_USB ? "last_cf_mode" : "last_chan_cf_mode" , cfVersion);
+				m_cfg.setInt(domain, "last_cf_mode", cfVersion);
 			}
 			m_btnMgr.noClick(false);
 		}
@@ -258,13 +242,15 @@ int CMenu::main(void)
 			m_cf.pageDown();
 		else if (BTN_B_HELD)
 		{
+			const char *domain = _domainFromView();
+
 			//Search by Alphabet
 			if (BTN_DOWN_PRESSED)
 			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA)
+				if (m_cfg.getInt(domain, "sort", SORT_ALPHA) != SORT_ALPHA)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
-					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
+					m_cfg.setInt(domain, "sort", SORT_ALPHA);
 				}
 				curLetter.resize(1);
 				curLetter[0] = m_cf.nextLetter();
@@ -274,10 +260,10 @@ int CMenu::main(void)
 			}
 			else if (BTN_UP_PRESSED)
 			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA)
+				if (m_cfg.getInt(domain, "sort", SORT_ALPHA) != SORT_ALPHA)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
-					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
+					m_cfg.setInt(domain, "sort", SORT_ALPHA);
 				}
 				curLetter.resize(1);
 				curLetter[0] = m_cf.prevLetter();
@@ -294,11 +280,11 @@ int CMenu::main(void)
 			else if (BTN_PLUS_PRESSED && !m_locked)
 			{
 				u32 sort = 0;
-				sort = m_cfg.getInt("GENERAL", "sort", 0);
+				sort = m_cfg.getInt(domain, "sort", 0);
 				++sort;
 				if (sort >= 4) sort = 0;
 				m_cf.setSorting((Sorting)sort);
-				m_cfg.setInt("GENERAL", "sort", sort);
+				m_cfg.setInt(domain, "sort", sort);
 				wstringEx curSort ;
 				if (sort == SORT_ALPHA)
 					curSort = m_loc.getWString(m_curLanguage, "alphabetically", L"Alphabetically");
@@ -315,30 +301,29 @@ int CMenu::main(void)
 			//Partition Selection
 			else if (BTN_MINUS_PRESSED && !m_locked)
 			{
-				bool block = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "Disable_EMU", true);
+				bool block = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true);
 				char *partition;
 				if(!block)
 				{
 					_hideMain();
 
 					bool isD2Xv7 = IOS_GetRevision() % 100 == 7;
-
+					u8 limiter = 0;
 					currentPartition = loopNum(currentPartition + 1, (int)USB8);
 					while(!DeviceHandler::Instance()->IsInserted(currentPartition) ||
 						(m_current_view == COVERFLOW_CHANNEL && (DeviceHandler::Instance()->GetFSType(currentPartition) != PART_FS_FAT ||
 							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()) == currentPartition) ||
 							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str()) == currentPartition))) ||
 						(m_current_view == COVERFLOW_HOMEBREW && DeviceHandler::Instance()->GetFSType(currentPartition) == PART_FS_WBFS))
-							currentPartition = loopNum(currentPartition + 1, (int)USB8);
+					{
+						currentPartition = loopNum(currentPartition + 1, (int)USB8);
+						if(limiter > 10) break;
+						limiter++;
+					}
 
 					partition = (char *)DeviceName[currentPartition];
+					m_cfg.setInt(_domainFromView(), "partition", currentPartition);
 
-					if(m_current_view == COVERFLOW_USB)
-						m_cfg.setInt("GENERAL", "partition", currentPartition);
-					else if(m_current_view == COVERFLOW_HOMEBREW)
-						m_cfg.setInt("GENERAL", "homebrew_partition", currentPartition);
-					else if(m_current_view == COVERFLOW_CHANNEL)
-						m_cfg.setInt("NAND", "nand_partition", currentPartition);
 				}
 				else partition = (char *)"NAND";
 
@@ -373,36 +358,24 @@ int CMenu::main(void)
 			//Events to Switch off/on nand emu
 			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb) || m_btnMgr.selected(m_mainBtnHomebrew))
 			{
-				m_cfg.setBool("NAND", "Disable_EMU", !m_cfg.getBool("NAND", "Disable_EMU", true));
-				gprintf("EmuNand is %s\n", m_cfg.getBool("NAND", "Disable_EMU", true) ? "Disabled" : "Enabled");
+				m_cfg.setBool("NAND", "disable", !m_cfg.getBool("NAND", "disable", true));
+				gprintf("EmuNand is %s\n", m_cfg.getBool("NAND", "disable", true) ? "Disabled" : "Enabled");
 
-				m_category = m_cat.getInt("GENERAL", "channel_category", 0);
+				m_category = m_cat.getInt("NAND", "category", 0);
 				m_current_view = COVERFLOW_CHANNEL;
 
 				LoadView();
 			}
-			else if (m_btnMgr.selected(m_mainBtnPrev))
+			else if (m_btnMgr.selected(m_mainBtnNext) || m_btnMgr.selected(m_mainBtnPrev))
 			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA)
+				const char *domain = _domainFromView();
+				if (m_cfg.getInt(domain, "sort", SORT_ALPHA) != SORT_ALPHA)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
-					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
+					m_cfg.setInt(domain, "sort", SORT_ALPHA);
 				}
 				curLetter.resize(1);
 				curLetter[0] = m_cf.prevLetter();
-				m_showtimer = 60;
-				m_btnMgr.setText(m_mainLblLetter, curLetter);
-				m_btnMgr.show(m_mainLblLetter);
-			}
-		 	else if (m_btnMgr.selected(m_mainBtnNext))
-			{
-				if (m_cfg.getInt("GENERAL", "sort", SORT_ALPHA) != SORT_ALPHA)
-				{
-					m_cf.setSorting((Sorting)SORT_ALPHA);
-					m_cfg.setInt("GENERAL", "sort", SORT_ALPHA);
-				}
-				curLetter.resize(1);
-				curLetter[0] = m_cf.nextLetter();
 				m_showtimer = 60;
 				m_btnMgr.setText(m_mainLblLetter, curLetter);
 				m_btnMgr.show(m_mainLblLetter);
@@ -447,31 +420,14 @@ int CMenu::main(void)
 			}
 			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb) || m_btnMgr.selected(m_mainBtnHomebrew))
 			{
-
 				if (m_current_view == COVERFLOW_USB) 
-				{
 					m_current_view = COVERFLOW_CHANNEL;
-					m_category = m_cat.getInt("GENERAL", "channel_category", 0);
-				}
 				else if (m_current_view == COVERFLOW_CHANNEL)
-				{
-					if(!m_locked && show_homebrew)
-					{
-						m_current_view = COVERFLOW_HOMEBREW;
-						m_category = m_cat.getInt("GENERAL", "homebrew_category", 0);
-						m_btnMgr.show(m_mainBtnUsb, true);
-					}
-					else
-					{
-						m_current_view = COVERFLOW_USB;
-						m_category = m_cat.getInt("GENERAL", "games_category", 0);
-					}
-				}
+					m_current_view = (!m_locked && show_homebrew) ? COVERFLOW_HOMEBREW : COVERFLOW_USB;
 				else if (m_current_view == COVERFLOW_HOMEBREW)
-				{
 					m_current_view = COVERFLOW_USB;
-					m_category = m_cat.getInt("GENERAL", "homebrew_category", 0);
-				}
+
+				m_category = m_cat.getInt(_domainFromView(), "category", 0);
 				LoadView();
 			}
 			else if (m_btnMgr.selected(m_mainBtnInit))
@@ -585,9 +541,7 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainBtnFavoritesOn);
 			m_btnMgr.hide(m_mainBtnFavoritesOff);
 		}
-		bool hideChannels, showDVD;
-		hideChannels = m_cfg.getBool("GENERAL", "hidechannelsbutton", false);
-		if (!hideChannels && (m_gameList.empty() || m_show_zone_main2))
+		if (!m_cfg.getBool("GENERAL", "hideviews", false) && (m_gameList.empty() || m_show_zone_main2))
 		{
 			switch(m_current_view)
 			{
@@ -600,7 +554,6 @@ int CMenu::main(void)
 					else
 						m_btnMgr.show(m_mainBtnUsb);
 					break;
-				case COVERFLOW_USB:
 				default:
 					m_btnMgr.show(m_mainBtnChannel);
 					break;
@@ -616,8 +569,7 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainLblUser[2]);
 			m_btnMgr.hide(m_mainLblUser[3]);
 		}
-		showDVD = (disc_check & 0x2);
-		if (showDVD && (m_gameList.empty() || m_show_zone_main3))
+		if ((disc_check & 0x2) && (m_gameList.empty() || m_show_zone_main3))
 		{
 			m_btnMgr.show(m_mainBtnDVD);
 			m_btnMgr.show(m_mainLblUser[4]);

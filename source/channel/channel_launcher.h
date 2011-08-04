@@ -1,9 +1,6 @@
 #ifndef _CHAN_LAUNCHER
 #define _CHAN_LAUNCHER
 
-#define TITLE_UPPER(x)		((u32)((x) >> 32))
-#define TITLE_LOWER(x)		((u32)(x) & 0xFFFFFFFF)
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

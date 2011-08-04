@@ -302,9 +302,10 @@ s32 CMenu::_networkComplete(s32 ok, void *usrData)
 	m->m_networkInit = ok == 0;
 	m->m_thrdNetwork = false;
 
-	gprintf("NET: Network init complete, enabled wifi_gecko: %s\n", m->m_cfg.getBool("GENERAL", "wifi_gecko", false) ? "yes" : "no");
+	bool wifigecko = m->m_cfg.getBool("GENERAL", "wifi_gecko", false);
+	gprintf("NET: Network init complete, enabled wifi_gecko: %s\n", wifigecko ? "yes" : "no");
 
-	if (m->m_cfg.getBool("GENERAL", "wifi_gecko", false))
+	if (wifigecko)
 	{
 		// Get ip
 		std::string ip = m->m_cfg.getString("GENERAL", "wifi_gecko_ip");
@@ -368,11 +369,11 @@ int CMenu::_coverDownloader(bool missingOnly)
 	bool savePNG = m_cfg.getBool("GENERAL", "keep_png", true);
 
 	safe_vector<string> fmtURLBox = stringToVector(
-									m_cfg.getString("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "url_full_covers_id4" : "url_full_covers_id6",
-									m_current_view == COVERFLOW_CHANNEL ? FMT_BPIC4_URL : FMT_BPIC6_URL), '|');
+									m_cfg.getString("GENERAL", m_current_view != COVERFLOW_USB ? "url_full_covers_id4" : "url_full_covers_id6",
+									m_current_view != COVERFLOW_USB ? FMT_BPIC4_URL : FMT_BPIC6_URL), '|');
 	safe_vector<string> fmtURLFlat = stringToVector(
-									m_cfg.getString("GENERAL", m_current_view == COVERFLOW_CHANNEL ? "url_flat_covers_id4" : "url_flat_covers_id6",
-									m_current_view == COVERFLOW_CHANNEL ? FMT_PIC4_URL : FMT_PIC6_URL), '|');
+									m_cfg.getString("GENERAL", m_current_view != COVERFLOW_USB ? "url_flat_covers_id4" : "url_flat_covers_id6",
+									m_current_view != COVERFLOW_USB ? FMT_PIC4_URL : FMT_PIC6_URL), '|');
 
 	u32 nbSteps = m_gameList.size();
 	u32 step = 0;
@@ -420,27 +421,15 @@ int CMenu::_coverDownloader(bool missingOnly)
 		{
 			// Try to get the full cover
 			string url;
-			string domain;
+			const char *domain = _domainFromView();
 			bool success = false;
 			FILE *file = NULL;
 
 			safe_vector<string> newID(1);
-			switch(m_current_view)
-			{
-				case COVERFLOW_CHANNEL:
-					domain = "CHANNELS";
-					break;
-				case COVERFLOW_HOMEBREW:
-					domain = "HOMEBREWS";
-					break;
-				case COVERFLOW_USB:
-				default:
-					domain = "GAMES";
-					break;
-			}
+
 			newID[0] = m_newID.getString(domain, coverList[i], coverList[i]);
 
- 			if(!newID[0].empty() && strncasecmp(newID[0].c_str(), coverList[i].c_str(), m_current_view == COVERFLOW_CHANNEL ? 4 : 6) == 0)
+ 			if(!newID[0].empty() && strncasecmp(newID[0].c_str(), coverList[i].c_str(), m_current_view != COVERFLOW_USB ? 4 : 6) == 0)
 				m_newID.remove(domain, coverList[i]);
 			else if(!newID[0].empty())
 			{

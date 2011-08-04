@@ -88,7 +88,6 @@ wstringEx CMenu::_optBoolToString(int i)
 
 void CMenu::_showGameSettings(void)
 {
-	int i;
 	wstringEx title(_t("cfgg1", L"Settings"));
 	title += L" [";
 	title += wstringEx(m_cf.getId());
@@ -128,7 +127,7 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.show(m_gameSettingsBtnVipatch);
 		m_btnMgr.show(m_gameSettingsLblCountryPatch);
 		m_btnMgr.show(m_gameSettingsBtnCountryPatch);
-		if(m_current_view == COVERFLOW_USB)
+		if(m_current_view != COVERFLOW_HOMEBREW)
 		{
 			m_btnMgr.show(m_gameSettingsLblGameIOS);
 			m_btnMgr.show(m_gameSettingsLblIOS);
@@ -182,7 +181,7 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.show(m_gameSettingsBtnHooktypeM);
 		m_btnMgr.show(m_gameSettingsBtnHooktypeP);
 
-		if(m_cfg.getBool("NAND", "Disable_EMU"))
+		if(m_cfg.getBool("NAND", "disable", true))
 		{
 			m_btnMgr.show(m_gameSettingsBtnReturnTo);
 			m_btnMgr.show(m_gameSettingsLblReturnTo);
@@ -215,52 +214,59 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.hide(m_gameSettingsBtnDebuggerM);
 	}
 
-
+	u32 i = 0;
+	
 	//Categories Pages
 	if (m_gameSettingsPage == 51)
 	{
-		for (u32 i = 1;i < (u32)min(m_max_categories+1, 5);++i) {
+		for (i = 1; i < (u32)min(m_max_categories+1, 5); ++i)
+		{
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
 		}		
 	}
 	else
 	{
-		for (int i = 1;i < 5;++i) {
+		for (i = 1; i < 5; ++i)
+		{
 			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
 		}		
 	}
 	if (m_gameSettingsPage == 52)
 	{
-		for (u32 i = 5;i < (u32)min(m_max_categories+1, 9);++i) {
+		for (i = 5; i < (u32)min(m_max_categories+1, 9); ++i)
+		{
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
 		}		
 	}
 	else
 	{
-		for (int i = 5;i < 9;++i) {
+		for (i = 5; i < 9; ++i)
+		{
 			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
 		}		
 	}
 	if (m_gameSettingsPage == 53)
 	{
-		for (u32 i = 9;i < (u32)min(m_max_categories+1, 12);++i) {
+		for (i = 9; i < (u32)min(m_max_categories+1, 12);++i)
+		{
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
 		}		
 	}
 	else
 	{
-		for (int i = 9;i < 12;++i) {
+		for (i = 9; i < 12; ++i)
+		{
 			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
 		}	
 	}
 	
-	for (u32 i = 0; i < ARRAY_SIZE(m_gameSettingsLblUser); ++i)
+	for (i = 0; i < ARRAY_SIZE(m_gameSettingsLblUser); ++i)
 		if (m_gameSettingsLblUser[i] != -1u)
 			m_btnMgr.show(m_gameSettingsLblUser[i]);
 
@@ -281,18 +287,19 @@ void CMenu::_showGameSettings(void)
 	i = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblLanguage, _t(CMenu::_languages[i].id, CMenu::_languages[i].text));
 
-	if (m_gcfg2.getInt(id, "ios", &i))
+	int j = 0;
+	if (m_gcfg2.getInt(id, "ios", &j) && _installed_cios.size() > 0)
 	{
-		CIOSItr itr = _installed_cios.find(i);
-		i = (itr == _installed_cios.end()) ? 0 : itr->first;
+		CIOSItr itr = _installed_cios.find(j);
+		j = (itr == _installed_cios.end()) ? 0 : itr->first;
 	}
-	else i = 0;
+	else j = 0;
 
-	if (i != 0)
+	if (j != 0)
 	{
 		u32 ver;
-		char* InfoIos=get_iosx_info_from_tmd(i, &ver);
-		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i %s", i, InfoIos)));
+		char* InfoIos=get_iosx_info_from_tmd(j, &ver);
+		m_btnMgr.setText(m_gameSettingsLblIOS, wstringEx(sfmt("%i %s", j, InfoIos)));
 	}
 	else
 		m_btnMgr.setText(m_gameSettingsLblIOS, L"AUTO");
@@ -390,43 +397,46 @@ void CMenu::_gameSettings(void)
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnLanguageP) || m_btnMgr.selected(m_gameSettingsBtnLanguageM))
 			{
-				s8 offset = m_btnMgr.selected(m_gameSettingsBtnLanguageP) ? 1 : -1;
-				m_gcfg2.setInt(id, "language", (int)loopNum((u32)m_gcfg2.getInt(id, "language", 0) + offset, ARRAY_SIZE(CMenu::_languages)));
+				s8 direction = m_btnMgr.selected(m_gameSettingsBtnLanguageP) ? 1 : -1;
+				m_gcfg2.setInt(id, "language", (int)loopNum((u32)m_gcfg2.getInt(id, "language", 0) + direction, ARRAY_SIZE(CMenu::_languages)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnVideoP) || m_btnMgr.selected(m_gameSettingsBtnVideoM))
 			{
-				s8 offset = m_btnMgr.selected(m_gameSettingsBtnVideoP) ? 1 : -1;
-				m_gcfg2.setInt(id, "video_mode", (int)loopNum((u32)m_gcfg2.getInt(id, "video_mode", 0) + offset, ARRAY_SIZE(CMenu::_videoModes)));
+				s8 direction = m_btnMgr.selected(m_gameSettingsBtnVideoP) ? 1 : -1;
+				m_gcfg2.setInt(id, "video_mode", (int)loopNum((u32)m_gcfg2.getInt(id, "video_mode", 0) + direction, ARRAY_SIZE(CMenu::_videoModes)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnIOSM) || m_btnMgr.selected(m_gameSettingsBtnIOSP))
 			{
-				bool up = m_btnMgr.selected(m_gameSettingsBtnIOSP);
+				if( _installed_cios.size() > 0)
+				{
+					bool direction = m_btnMgr.selected(m_gameSettingsBtnIOSP);
 
-				CIOSItr itr = _installed_cios.find((u32)m_gcfg2.getInt(id, "ios", 0));
-				
-				if (up && itr == _installed_cios.end())
-					itr = _installed_cios.begin();
-				else if(!up && itr == _installed_cios.begin())
-					itr = _installed_cios.end();
-				else if (up)
-					itr++;
+					CIOSItr itr = _installed_cios.find((u32)m_gcfg2.getInt(id, "ios", 0));
+					
+					if (direction && itr == _installed_cios.end())
+						itr = _installed_cios.begin();
+					else if(!direction && itr == _installed_cios.begin())
+						itr = _installed_cios.end();
+					else if (direction)
+						itr++;
 
-				if(!up)
-					itr--;
+					if(!direction)
+						itr--;
 
-				if(itr->first != 0)
-					m_gcfg2.setInt(id, "ios", itr->first);
-				else
-					m_gcfg2.remove(id, "ios");
+					if(itr->first != 0)
+						m_gcfg2.setInt(id, "ios", itr->first);
+					else
+						m_gcfg2.remove(id, "ios");
 
-				_showGameSettings();
+					_showGameSettings();
+				}
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP) || m_btnMgr.selected(m_gameSettingsBtnPatchVidModesM))
 			{
-				s8 offset = m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP) ? 1 : -1;
-				m_gcfg2.setInt(id, "patch_video_modes", (int)loopNum((u32)m_gcfg2.getInt(id, "patch_video_modes", 0) + offset, ARRAY_SIZE(CMenu::_vidModePatch)));
+				s8 direction = m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP) ? 1 : -1;
+				m_gcfg2.setInt(id, "patch_video_modes", (int)loopNum((u32)m_gcfg2.getInt(id, "patch_video_modes", 0) + direction, ARRAY_SIZE(CMenu::_vidModePatch)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnCover))
@@ -445,8 +455,8 @@ void CMenu::_gameSettings(void)
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnHooktypeP) || m_btnMgr.selected(m_gameSettingsBtnHooktypeM))
 			{
-				s8 offset = m_btnMgr.selected(m_gameSettingsBtnHooktypeP) ? 1 : -1;
-				m_gcfg2.setInt(id, "hooktype", (int)loopNum((u32)m_gcfg2.getInt(id, "hooktype", 1) + offset, ARRAY_SIZE(CMenu::_hooktype)));
+				s8 direction = m_btnMgr.selected(m_gameSettingsBtnHooktypeP) ? 1 : -1;
+				m_gcfg2.setInt(id, "hooktype", (int)loopNum((u32)m_gcfg2.getInt(id, "hooktype", 1) + direction, ARRAY_SIZE(CMenu::_hooktype)));
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnReturnTo))
