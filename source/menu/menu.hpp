@@ -42,7 +42,7 @@ class CMenu
 public:
 	CMenu(CVideo &vid);
 	~CMenu(void) {}
-	void init();
+	void init(u8 usableDevices);
 	void error(const wstringEx &msg);
 	int main(void);
 	void cleanup(bool ios_reload = false);

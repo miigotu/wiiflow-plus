@@ -16,8 +16,6 @@
 
 extern "C" { extern void __exception_setreload(int t);}
 
-extern const u8 wait_hdd_png[];
-
 CMenu *mainMenu;
 extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
 extern "C" void HideWaitMessage() {mainMenu->_hideWaitMessage(); }
@@ -30,7 +28,7 @@ void parse_ios_arg(int arg, int *ios, int *min_rev)
 	gprintf("Passed IOS Minimum Rev: %i\n", *min_rev);
 }
 
-int old_main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	geckoinit = InitGecko();
 	__exception_setreload(5);
@@ -88,74 +86,45 @@ int old_main(int argc, char **argv)
 	{
 		Open_Inputs();
 
-		bool HddMounted = false;
+		bool deviceAvailable = false;
 		DeviceHandler::Instance()->MountAll();
-		for(int i = USB1; i <= USB8; i++)
-			if(DeviceHandler::Instance()->IsInserted(i))
-				HddMounted = true;
-  		if(!HddMounted)
+		for(u8 device = USB1; device <= USB8; device++)
+			if(DeviceHandler::Instance()->IsInserted(device))
+				deviceAvailable = true;
+
+		u8 timeout = 0;
+  		if(!deviceAvailable)
 		{
-			STexture texWaitHDD;
-			texWaitHDD.fromPNG(wait_hdd_png, GX_TF_RGB565, ALLOC_MALLOC);
-			vid.hideWaitMessage();
-			vid.waitMessage(texWaitHDD);
-
-			while(!HddMounted) //Wait indefinitely until HDD is there or exit requested.
+			while(!deviceAvailable && timeout++ != 10)
 			{
-				WPAD_ScanPads(); PAD_ScanPads();
+				DeviceHandler::Instance()->MountAll();
+				sleep(1);
 
-				u32 wbtnsPressed = 0, gbtnsPressed = 0,
-					wbtnsHeld = 0, gbtnsHeld = 0;
-
-				for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
-				{
-					wbtnsPressed |= WPAD_ButtonsDown(chan);
-					gbtnsPressed |= PAD_ButtonsDown(chan);
-
-					wbtnsHeld |= WPAD_ButtonsHeld(chan);
-					gbtnsHeld |= PAD_ButtonsHeld(chan);
-				 }
-
-				if (Sys_Exiting() || (wbtnsPressed & WBTN_HOME) || (gbtnsPressed & GBTN_HOME))
-				{
-					DeviceHandler::Instance()->UnMountAll();
-					Sys_ExitTo(1);
-					Sys_Exit(0);
-				}
-
-				VIDEO_WaitVSync();
-				VIDEO_WaitVSync();
-
-				for(int i = USB1; i <= USB8; i++)
-					if(DeviceHandler::Instance()->IsInserted(i))
-					{
-						gprintf("%s is Available\n", DeviceName[i]);
-					}
-
-				for(int i = USB1; i <= USB8; i++)
-					if(DeviceHandler::Instance()->IsInserted(i))
-						HddMounted = true;
-
-				if(!HddMounted) DeviceHandler::Instance()->MountAll();
-
-			}
-			vid.hideWaitMessage();
-			vid.waitMessage(0.2f);
-			SMART_FREE(texWaitHDD.data);
-		}
-		for(int i = 1; i < MAXDEVICES; i++)
-		{
-			if(DeviceHandler::Instance()->IsInserted(i))
-			{
-				gprintf("%s is Available.\n", DeviceName[i]);
+				for(u8 device = SD; device <= USB8; device++)
+					if(DeviceHandler::Instance()->IsInserted(device))
+						deviceAvailable = true;
 			}
 		}
+		
+		u8 usableDevices = 0;
+		for(u8 device = USB1; device <= USB8; device++)
+		{
+			if(DeviceHandler::Instance()->IsInserted(device))
+			{
+				gprintf("%s is Available.\n", DeviceName[device]);
+				usableDevices = 2;
+			}
+		}
+		if(DeviceHandler::Instance()->IsInserted(SD))
+			usableDevices += 1;
+
+		if(usableDevices == 0) Sys_Exit(0);
 
 		ISFS_Initialize();
 		bool dipOK = Disc_Init() >= 0;
 
 		CMenu menu(vid);
-		menu.init();
+		menu.init(usableDevices);
 		mainMenu = &menu;
 		if (!iosOK)
 		{
@@ -185,12 +154,6 @@ int old_main(int argc, char **argv)
 	
 	WifiGecko_Close();
 
-	return ret;
-};
-
-int main(int argc, char **argv)
-{
-	Sys_Exit(old_main(argc, argv));
+	Sys_Exit(ret);
 	return 0;
-}
-
+};

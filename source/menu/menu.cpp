@@ -81,7 +81,7 @@ CMenu::CMenu(CVideo &vid) :
 
 extern "C" { int makedir(char *newdir); }
 
-void CMenu::init()
+void CMenu::init(u8 usableDevices)
 {
 	const char *drive = "empty";
 	const char *check = "empty";
@@ -209,7 +209,7 @@ void CMenu::init()
 
 	DeviceHandler::SetWatchdog(m_cfg.getUInt("GENERAL", "watchdog_timeout", 10));
 
-	m_current_view = COVERFLOW_USB;
+	m_current_view = usableDevices > 1 ? COVERFLOW_USB : COVERFLOW_CHANNEL;
 
 	const char *domain = _domainFromView();
 
