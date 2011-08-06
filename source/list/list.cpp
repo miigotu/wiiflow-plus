@@ -22,13 +22,14 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 		while((ent = readdir(dir_itr)) != NULL)
 		{
 			if (ent->d_name[0] == '.') continue;
-			if (strlen(ent->d_name) < 6) continue;			
+			//if (strlen(ent->d_name) < 6) continue;
 
 			if(ent->d_type == DT_REG)
 			{
 				for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
 					if (strcasestr(ent->d_name, (*compare).c_str()) != NULL)
 					{
+						//gprintf("Pushing %s to the list.\n", sfmt("%s/%s", directory.c_str(), ent->d_name).c_str());
 						pathlist.push_back(sfmt("%s/%s", directory.c_str(), ent->d_name));
 						break;
 					}
@@ -56,6 +57,7 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 					for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
 						if (strcasestr(ent->d_name, (*compare).c_str()) != NULL)
 						{
+							//gprintf("Pushing %s to the list.\n", sfmt("%s/%s", (*templist).c_str(), ent->d_name).c_str());
 							pathlist.push_back(sfmt("%s/%s", (*templist).c_str(), ent->d_name));
 							break;
 						}
@@ -195,25 +197,35 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				continue;
 			}
 		}
-		else if((*itr).rfind(".dol")  != string::npos)
+		else if((*itr).rfind(".dol") != string::npos || (*itr).rfind(".elf") != string::npos)
 		{
 			(*itr)[(*itr).find_last_of('/')] = 0;
 			(*itr).assign(&(*itr)[(*itr).find_last_of('/') + 1]);
 			
 			(*itr)[0] = toupper((*itr)[0]);
 			for (u32 i = 1; i < (*itr).size(); ++i)
+			{
+				if((*itr)[i] == '_')
+					(*itr)[i] = ' ';
+
 				if((*itr)[i] == ' ')
 				{
 					(*itr)[i + 1] = toupper((*itr)[i + 1]);
 					i++;
 				}
 				else (*itr)[i] = tolower((*itr)[i]);
-
+			}
 			strcpy(tmp.hdr.title, (*itr).c_str());
 
 			for (u32 i = 0; i < 6; ++i)
 				(*itr)[i] = toupper((*itr)[i]);
+
 			memcpy(tmp.hdr.id, (*itr).c_str(), 6);
+
+			for (u32 i = 0; i < 6; ++i)
+				if(!isalnum(tmp.hdr.id[i]) || tmp.hdr.id[i] == ' ' || tmp.hdr.id[i] == '\0')
+					tmp.hdr.id[i] = 'X';
+
 			tmp.hdr.casecolor = 0xff;
 
 			headerlist.push_back(tmp);

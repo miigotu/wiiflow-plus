@@ -13,7 +13,7 @@
 #include "gecko.h"
 
 extern "C" {extern u8 currentPartition;}
-
+extern int __Arena2Lo;
 int mainIOSRev = 0;
 
 #define HAVE_AHBPROT ((*(vu32*)0xcd800064 == 0xFFFFFFFF) ? 1 : 0)
@@ -78,15 +78,29 @@ bool loadIOS(int ios, bool launch_game)
 	WDVD_Close();
 	USBStorage_Deinit();
 
-	//gprintf("AHBPROT state before reloading: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
-	//IOSPATCH_AHBPROT();
+	gprintf("AHBPROT state before reloading: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
+	IOSPATCH_AHBPROT();
+
+	void *backup = MEM1_alloc(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
+	if (backup != 0)
+	{
+		memcpy(backup, &__Arena2Lo, 0x200000);
+		DCFlushRange(backup, 0x200000);
+	}
 
 	bool iosOK = IOS_ReloadIOS(ios) == 0;
 
+	if (backup != 0)
+	{
+		memcpy(&__Arena2Lo, backup, 0x200000);
+		DCFlushRange(&__Arena2Lo, 0x200000);
+		free(backup);
+	}
+
 	gprintf("%s, Current IOS: %i\n", iosOK ? "OK" : "FAILED!", IOS_GetVersion());
 
-	//IOSPATCH_AHBPROT();
-	//gprintf("Current AHBPROT state: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
+	IOSPATCH_AHBPROT();
+	gprintf("Current AHBPROT state: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
 
  	if (launch_game)
 	{

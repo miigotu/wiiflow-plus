@@ -25,14 +25,14 @@ u32 load_dol_image(const void *dolstart)
 	u32 i;
 	dolheader *dolfile = (dolheader *) dolstart;
 
-	if (dolfile->bss_start > 0 && dolfile->bss_start < ARENA1_HI_LIMIT) {
+/* 	if (dolfile->bss_start > 0 && dolfile->bss_start < ARENA1_HI_LIMIT) {
 		u32 bss_size = dolfile->bss_size;
 		if (dolfile->bss_start + bss_size > ARENA1_HI_LIMIT) {
 			bss_size = ARENA1_HI_LIMIT - dolfile->bss_start;
 		}
 		memset((void *) dolfile->bss_start, 0, bss_size);
 		sync_before_exec((void *) dolfile->bss_start, bss_size);
-	}
+	} */
 
 	for (i = 0; i < 7; i++)
 	{

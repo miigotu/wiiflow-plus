@@ -39,8 +39,6 @@ MACHDEP := -mno-eabi -mno-sdata -mcpu=750
 CFLAGS	:= -Wall -W -Os -ffreestanding -std=gnu99 -Wstrict-aliasing=2 $(MACHDEP) $(INCLUDE)
 CXXFLAGS :=	$(CFLAGS)
 
-
-
 #---------------------------------------------------------------------------------
 # move loader to another location - THANKS CREDIAR - 0x81330000 for HBC
 #---------------------------------------------------------------------------------
@@ -115,12 +113,12 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).bin
 
 #---------------------------------------------------------------------------------
 install:
 	@echo Installing to WiiFlow Source...
-	@cp $(OUTPUT).dol ../../data/
+	@cp $(OUTPUT).bin ../../data/
 	@echo DONE!
 
 #---------------------------------------------------------------------------------
@@ -131,13 +129,13 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-$(OUTPUT).dol: $(OUTPUT).elf
+$(OUTPUT).bin: $(OUTPUT).elf
 $(OUTPUT).elf: $(OFILES)
 
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .jpg extension
 #---------------------------------------------------------------------------------
-%.dol: %.elf
+%.bin: %.elf
 	@echo "  OBJCOPY   $@"
 	$(Q)$(OBJCOPY) -O binary $< $@
 

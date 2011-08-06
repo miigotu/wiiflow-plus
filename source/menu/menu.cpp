@@ -375,7 +375,7 @@ void CMenu::cleanup(bool ios_reload)
 		m_mutex = 0;
 	}
 
-	DeviceHandler::DestroyInstance(); // Destruction must be done manually, also unmounts all devices.
+	DeviceHandler::DestroyInstance();
 
 	if (!ios_reload)
 	{
@@ -1290,7 +1290,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 			m_cameraSound->Play(255);
 	}
 	#ifdef SHOWMEM
-	m_btnMgr.setText(m_mem2FreeSize, wfmt(L"Mem2 Free: %u, Mem1 Free: %u", MEM2_freesize(), SYS_GetArena1Size()), true);
+	m_btnMgr.setText(m_mem2FreeSize, wfmt(L"Mem2 Free:%u, Mem1 Free:%u", MEM2_freesize(), SYS_GetArena1Size()), true);
 	#endif
 }
 
@@ -1584,7 +1584,7 @@ bool CMenu::_loadHomebrewList()
 	currentPartition = m_cfg.getInt("HOMEBREW", "partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
 	gprintf("%s\n", DeviceName[currentPartition]);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
-	m_gameList.Load(sfmt(HOMEBREW_DIR, DeviceName[currentPartition]), ".dol");
+	m_gameList.Load(sfmt(HOMEBREW_DIR, DeviceName[currentPartition]), ".dol|.elf");
 	return m_gameList.size() > 0 ? true : false;
 }
 
@@ -1679,9 +1679,9 @@ void CMenu::_load_installed_cioses()
 	}
 }
 
-void CMenu::_hideWaitMessage()
+void CMenu::_hideWaitMessage(bool force)
 {
-	m_vid.hideWaitMessage();
+	m_vid.hideWaitMessage(force);
 }
 
 void CMenu::_showWaitMessage()

@@ -65,7 +65,7 @@ void CMenu::_hideMain(bool instant)
 			m_btnMgr.hide(m_mainLblUser[i], instant);
 }
 
-static bool show_homebrew = false;
+static bool show_homebrew = true;
 
 void CMenu::_showMain(void)
 {

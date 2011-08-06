@@ -75,7 +75,6 @@ extern "C"
 {
 	extern __typeof(malloc) __real_malloc;
 	extern __typeof(memalign) __real_memalign;
-	extern __typeof(free) __real_free;
 }
 
 CVideo::CVideo(void) :
@@ -522,9 +521,10 @@ void CVideo::_showWaitMessages(CVideo *m)
 	m->m_showingWaitMessages = false;
 }
 
-void CVideo::hideWaitMessage()
+void CVideo::hideWaitMessage(bool force)
 {
 	m_showWaitMessage = false;
+	CheckWaitThread(force);
 }
 
 void CVideo::CheckWaitThread(bool force)
@@ -536,13 +536,14 @@ void CVideo::CheckWaitThread(bool force)
 		if(LWP_ThreadIsSuspended(waitThread))
 			LWP_ResumeThread(waitThread);
 
+		VIDEO_WaitVSync();
+
 		LWP_JoinThread(waitThread, NULL);
 
 		SMART_FREE(waitThreadStack);
 		waitThread = LWP_THREAD_NULL;
 
 		m_waitMessages.clear();
-		VIDEO_WaitVSync();
 	}
 }
 
@@ -553,8 +554,7 @@ void CVideo::waitMessage(float delay)
 
 void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool useWiiLight)
 {
-	hideWaitMessage();
-	CheckWaitThread(true);
+	hideWaitMessage(true);
 
 	m_useWiiLight = useWiiLight;
 
@@ -591,6 +591,7 @@ void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool use
 		unsigned int stack_size = (unsigned int)32768;  //Try 32768?
 		SMART_FREE(waitThreadStack);		
 		waitThreadStack = SmartBuf((unsigned char *)__real_malloc(stack_size), SmartBuf::SRCALL_MALLOC);
+		waitThreadStack = smartMem2Alloc(stack_size);
 		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, waitThreadStack.get(), stack_size, 40);
 	}
 }

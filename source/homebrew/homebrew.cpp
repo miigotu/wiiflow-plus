@@ -6,17 +6,22 @@
 #include <ogc/machine/processor.h>
 #include "safe_vector.hpp"
 #include <string>
-
 #include "smartptr.hpp"
-#include "dolloader.h"
 #include "gecko.h"
 
-static u8 *homebrewbuffer = (u8 *)0x92000000;
+#define EXECUTE_ADDR	((u8 *) 0x92000000)
+#define BOOTER_ADDR		((u8 *) 0x93000000)
+#define ARGS_ADDR		((u8 *) 0x93200000)
+
+extern const u8 app_booter_bin[];
+extern const u32 app_booter_bin_size;
+
+typedef void (*entrypoint) (void);
+extern "C" { void __exception_closeall(); }
+
+static u8 *homebrewbuffer = EXECUTE_ADDR;
 static u32 homebrewsize = 0;
 static safe_vector<std::string> Arguments;
-
-extern const u8 app_booter_dol[];
-extern const u32 app_booter_dol_size;
 
 bool bootHB;
 
@@ -37,8 +42,10 @@ int CopyHomebrewMemory(u8 *temp, u32 pos, u32 len)
 
 void FreeHomebrewBuffer()
 {
-	homebrewbuffer = (u8 *)0x92000000;
+	homebrewbuffer = EXECUTE_ADDR;
 	homebrewsize = 0;
+
+	Arguments.clear();
 }
 
 int LoadHomebrew(const char * filepath)
@@ -75,6 +82,8 @@ static int SetupARGV(struct __argv * args)
 	bzero(args, sizeof(struct __argv));
 	args->argvMagic = ARGV_MAGIC;
 
+	u32 argc = 0;
+	u32 position = 0;
 	u32 stringlength = 1;
 
 	/** Append Arguments **/
@@ -82,14 +91,8 @@ static int SetupARGV(struct __argv * args)
 		stringlength += Arguments[i].size()+1;
 
 	args->length = stringlength;
- 	SmartBuf buffer = smartAnyAlloc(args->length);
-	if (!buffer) return -2;
-
-	args->commandLine = (char *)buffer.get();
-	memset(args->commandLine, '\0', args->length);
-
-	u32 argc = 0;
-	u32 position = 0;
+	//! Put the argument into mem2 too, to avoid overwriting it
+	args->commandLine = (char *) ARGS_ADDR + sizeof(struct __argv);
 
 	/** Append Arguments **/
 	for(u32 i = 0; i < Arguments.size(); i++)
@@ -100,6 +103,8 @@ static int SetupARGV(struct __argv * args)
 	}
 
 	args->argc = argc;
+
+	args->commandLine[args->length - 1] = '\0';
 	args->argv = &args->commandLine;
 	args->endARGV = args->argv + 1;
 
@@ -115,17 +120,18 @@ int BootHomebrew()
 	struct __argv args;
 	SetupARGV(&args);
 
-	u32 cpu_isr;
+	memcpy(BOOTER_ADDR, app_booter_bin, app_booter_bin_size);
+	DCFlushRange(BOOTER_ADDR, app_booter_bin_size);
 
-	//entrypoint entry = (entrypoint) load_dol_image(homebrewbuffer, &args);
-	entrypoint entry = (entrypoint) load_dol_image(app_booter_dol, &args);
-	if (!entry) return -1;
+	entrypoint entry = (entrypoint) BOOTER_ADDR;
 
+	if (args.argvMagic == ARGV_MAGIC)
+	{
+		memmove(ARGS_ADDR, &args, sizeof(args));
+		DCFlushRange(ARGS_ADDR, sizeof(args) + args.length);
+	}
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
-	_CPU_ISR_Disable (cpu_isr);
-	__exception_closeall();
 	entry();
-	_CPU_ISR_Restore (cpu_isr);
 
 	return 0;
 }
