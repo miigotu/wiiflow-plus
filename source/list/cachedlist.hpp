@@ -12,11 +12,16 @@ template <typename T = dir_discHdr>
 class CachedList : public safe_vector<T>
 {
   public:
-	void Init(string cachedir, string settingsDir, string curLanguage)						/* Initialize Private Variables */
+	void Init(string cachedir, string settingsDir, string curLanguage)
+	{
+		return Init(cachedir, settingsDir, curLanguage, string());
+	}
+	void Init(string cachedir, string settingsDir, string curLanguage, string channelLang)						/* Initialize Private Variables */
 	{
 		m_cacheDir = cachedir;
 		m_settingsDir = settingsDir;
 		m_curLanguage = m_lastLanguage = curLanguage;
+		m_channelLang = m_lastchannelLang = channelLang;
 		m_loaded = false;
 		m_database = "";
 		force_update = false;
@@ -25,6 +30,8 @@ class CachedList : public safe_vector<T>
 
 	void Update() { force_update = true; }													/* Force db update on next load */
     void Load(string path, string containing);
+	void LoadChannels(string path, u32 channelType);
+
     void Unload(){if(m_loaded) {this->clear(); m_loaded = false; m_database = "";}};
     void Save() {if(m_loaded) CCache<T>(*this, m_database, SAVE);}							/* Save All */
 
@@ -48,6 +55,8 @@ class CachedList : public safe_vector<T>
 	string m_settingsDir;
 	string m_curLanguage;
 	string m_lastLanguage;
+	string m_channelLang;
+	string m_lastchannelLang;
 };
 
 #endif

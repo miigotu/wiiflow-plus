@@ -243,7 +243,7 @@ void CMenu::init(u8 usableDevices)
 	makedir((char *)m_wipDir.c_str());
 
 	makedir((char *)m_listCacheDir.c_str());
-	m_gameList.Init(m_listCacheDir, m_settingsDir, m_curLanguage);
+	m_gameList.Init(m_listCacheDir, m_settingsDir, m_curLanguage, m_loc.getString(m_curLanguage, "wiitdb_code", "EN"));
 
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
@@ -1455,7 +1455,6 @@ bool CMenu::_loadChannelList(void)
 
 	bool disable_emu = m_cfg.getBool("NAND", "disable", true);
 	static bool last_emu_state = disable_emu;
-	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
 
 	static bool first = true;
 	bool failed = false;
@@ -1476,6 +1475,7 @@ bool CMenu::_loadChannelList(void)
 		sprintf(filepath, "/shared2/menu/FaceLib/RFL_DB.dat");
 		meez = ISFS_GetFile((u8 *) &filepath, &meez_size, -1);
 	}
+	string path = m_cfg.getString("NAND", "path", "");
 
 	if(changed)
 	{
@@ -1487,7 +1487,7 @@ bool CMenu::_loadChannelList(void)
 			DeviceHandler::Instance()->UnMount(currentPartition);
 
 		Nand::Instance()->Set_Partition(disable_emu ? REAL_NAND : currentPartition == 0 ? currentPartition : currentPartition - 1);
-		Nand::Instance()->Set_NandPath(m_cfg.getString("NAND", "path", "").c_str());
+		Nand::Instance()->Set_NandPath(path.c_str());
 		if(Nand::Instance()->Enable_Emu(disable_emu ? REAL_NAND : currentPartition == 0 ? EMU_SD : EMU_USB) < 0)
 		{
 			Nand::Instance()->Disable_Emu();
@@ -1514,33 +1514,15 @@ bool CMenu::_loadChannelList(void)
 	if(!DeviceHandler::Instance()->IsInserted(currentPartition))
 		DeviceHandler::Instance()->Mount(currentPartition);
 
-	m_channels.Init(0, langCode, changed);
+	string nandpath = sfmt("%s:%s", DeviceName[currentPartition], path.empty() ? "/" : path.c_str());
+	gprintf("nandpath = %s\n", nandpath.c_str());
+
+	m_gameList.LoadChannels(disable_emu ? "" : nandpath, 0);
+	
 	lastPartition = currentPartition;
 	last_emu_state = disable_emu;
 
-	u32 count = m_channels.Count();
-	u32 len = sizeof (dir_discHdr);
-
-	SmartBuf buffer = smartMem2Alloc(len);
-	if (!buffer) return false;
-
-	m_gameList.reserve(count);
-
-	dir_discHdr *b = (dir_discHdr *)buffer.get();
-	for (u32 i = 0; i < count; ++i)
-	{
-		Channel *chan = m_channels.GetChannel(i);
-		
-		if (chan->id == NULL) continue; // Skip invalid channels
-
-		memset(b, 0, len);
-		memcpy(b->hdr.id, chan->id, 4);
-		wcstombs(b->hdr.title, chan->name, sizeof(b->hdr.title));
-		b->hdr.chantitle = chan->title;
-	
-		m_gameList.push_back(*b);
-	}
-	return true;
+	return m_gameList.size() > 0 ? true : false;
 }
 
 bool CMenu::_loadList(void)

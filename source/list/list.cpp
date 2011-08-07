@@ -128,8 +128,8 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 		strncpy(tmp.path, (*itr).c_str(), sizeof(tmp.path));
 		tmp.hdr.index = headerlist.size();
 
-		bool wbfs = (*itr).rfind(".wbfs") != string::npos;
-		if ((wbfs || (*itr).rfind(".iso")  != string::npos))
+		bool wbfs = (*itr).rfind(".wbfs") != string::npos || (*itr).rfind(".WBFS") != string::npos;
+		if (wbfs || (*itr).rfind(".iso")  != string::npos || (*itr).rfind(".ISO")  != string::npos)
 		{
 			Check_For_ID(tmp.hdr.id, (*itr).c_str(), "[", "]"); 	 			/* [GAMEID] Title, [GAMEID]_Title, Title [GAMEID], Title_[GAMEID] */
 			if(tmp.hdr.id[0] == 0)
@@ -197,15 +197,20 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				continue;
 			}
 		}
-		else if((*itr).rfind(".dol") != string::npos || (*itr).rfind(".elf") != string::npos)
+		else if((*itr).rfind(".dol") != string::npos || (*itr).rfind(".DOL") != string::npos
+			|| (*itr).rfind(".elf") != string::npos || (*itr).rfind(".ELF")  != string::npos)
 		{
+			char *filename = &(*itr)[(*itr).find_last_of('/')+1];
+			//gprintf("Filename: %s\n", filename);
+			if(strcasecmp(filename, "boot.dol") != 0 && strcasecmp(filename, "boot.elf") != 0) continue;
+
 			(*itr)[(*itr).find_last_of('/')] = 0;
 			(*itr).assign(&(*itr)[(*itr).find_last_of('/') + 1]);
 			
 			(*itr)[0] = toupper((*itr)[0]);
 			for (u32 i = 1; i < (*itr).size(); ++i)
 			{
-				if((*itr)[i] == '_')
+				if((*itr)[i] == '_' || (*itr)[i] == '-')
 					(*itr)[i] = ' ';
 
 				if((*itr)[i] == ' ')
@@ -222,11 +227,19 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 
 			memcpy(tmp.hdr.id, (*itr).c_str(), 6);
 
+
 			for (u32 i = 0; i < 6; ++i)
 				if(!isalnum(tmp.hdr.id[i]) || tmp.hdr.id[i] == ' ' || tmp.hdr.id[i] == '\0')
-					tmp.hdr.id[i] = 'X';
+					tmp.hdr.id[i] = '_';
 
 			tmp.hdr.casecolor = 0xff;
+
+			/* gprintf("Adding ID:");
+			for(u32 i = 0; i < 6; ++i)
+				gprintf("%c", tmp.hdr.id[i]);
+			gprintf("\n");
+			gprintf("Name: %s\n", tmp.hdr.title);
+			gprintf("Path: %s\n", tmp.path); */
 
 			headerlist.push_back(tmp);
 			continue;
