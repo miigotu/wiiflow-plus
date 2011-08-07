@@ -31,7 +31,7 @@ static void disable_memory_protection()
 
 static u32 apply_patch(const u8 *pattern, u32 pattern_size, const u8 *patch, u32 patch_size, u32 patch_offset)
 {
-	gprintf("Applying AHBPROT patch...");
+	//gprintf("Applying AHBPROT patch...");
     u8 *ptr_start = (u8*)*((u32*)0x80003134), *ptr_end = (u8*)0x94000000;
     u32 found = 0;
     u8 *location = NULL;
@@ -51,7 +51,7 @@ static u32 apply_patch(const u8 *pattern, u32 pattern_size, const u8 *patch, u32
         }
         ptr_start++;
     }
-	gprintf("done\n");
+	//gprintf("done\n");
     return found;
 }
 
@@ -78,7 +78,7 @@ bool loadIOS(int ios, bool launch_game)
 	WDVD_Close();
 	USBStorage_Deinit();
 
-	gprintf("AHBPROT state before reloading: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
+	//gprintf("AHBPROT state before reloading: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
 	IOSPATCH_AHBPROT();
 
 	void *backup = MEM1_alloc(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
@@ -100,7 +100,7 @@ bool loadIOS(int ios, bool launch_game)
 	gprintf("%s, Current IOS: %i\n", iosOK ? "OK" : "FAILED!", IOS_GetVersion());
 
 	IOSPATCH_AHBPROT();
-	gprintf("Current AHBPROT state: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
+	//gprintf("Current AHBPROT state: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
 
  	if (launch_game)
 	{

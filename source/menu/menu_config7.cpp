@@ -140,7 +140,9 @@ int CMenu::_config7(void)
 				newpartition[i] = toupper(newpartition[i]);
 
 			gprintf("Switching partition to %s\n", newpartition);
+			_showWaitMessage();
 			_loadList();
+			_hideWaitMessage();
 		}
 	}
 	

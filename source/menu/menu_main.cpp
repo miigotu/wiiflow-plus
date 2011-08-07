@@ -305,6 +305,7 @@ int CMenu::main(void)
 				char *partition;
 				if(!block)
 				{
+					_showWaitMessage();
 					_hideMain();
 
 					bool isD2Xv7 = IOS_GetRevision() % 100 == 7;

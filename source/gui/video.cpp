@@ -592,7 +592,7 @@ void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool use
 		SMART_FREE(waitThreadStack);		
 		waitThreadStack = SmartBuf((unsigned char *)__real_malloc(stack_size), SmartBuf::SRCALL_MALLOC);
 		waitThreadStack = smartMem2Alloc(stack_size);
-		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, waitThreadStack.get(), stack_size, 40);
+		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, waitThreadStack.get(), stack_size, LWP_PRIO_HIGHEST);
 	}
 }
 
