@@ -823,7 +823,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 		retFont.setWeight(weight);
 		return retFont;
 	}
-	// Then try to find the same font with a different size
+/* 	// Then try to find the same font with a different size
 	i = fontSet.lower_bound(CMenu::FontDesc(filename, 0));
 	if (i != fontSet.end() && i->first.first == filename)
 	{
@@ -831,7 +831,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 		retFont.newSize(fontSize, lineSpacing, weight);
 		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
 		return retFont;
-	}
+	} */
 	// TTF not found in memory, load it to create a new font
  	if (!useDefault && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fontSize, lineSpacing, weight, index))
 	{
@@ -1456,6 +1456,9 @@ bool CMenu::_loadChannelList(void)
 	bool disable_emu = m_cfg.getBool("NAND", "disable", true);
 	static bool last_emu_state = disable_emu;
 
+	if(!disable_emu && !DeviceHandler::Instance()->IsInserted(currentPartition))
+		return false;
+
 	static bool first = true;
 	bool failed = false;
 
@@ -1555,6 +1558,9 @@ bool CMenu::_loadList(void)
 bool CMenu::_loadGameList(void)
 {
 	currentPartition = m_cfg.getInt("GAMES", "partition", 1);
+	if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+		return false;
+
 	gprintf("%s\n", DeviceName[currentPartition]);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
 	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso");
@@ -1564,6 +1570,9 @@ bool CMenu::_loadGameList(void)
 bool CMenu::_loadHomebrewList()
 {
 	currentPartition = m_cfg.getInt("HOMEBREW", "partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
+	if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+		return false;
+
 	gprintf("%s\n", DeviceName[currentPartition]);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
 	m_gameList.Load(sfmt(HOMEBREW_DIR, DeviceName[currentPartition]), ".dol|.elf");
