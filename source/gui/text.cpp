@@ -206,24 +206,6 @@ bool SFont::fromBuffer(const SmartBuf &buffer, u32 bufferSize, u32 size, u32 lsp
 	return true;
 }
 
-bool SFont::newSize(u32 size, u32 lspacing, u32 w)
-{
-	if (!data || !font) return false;
-	size = min(max(6u, size), 1000u);
-	weight = min(w, 32u);
-	lineSpacing = min(max(6u, lspacing), 1000u);
-	font->loadFont(data.get(), dataSize, size, weight, index, false);
-	return true;
-}
-
-bool SFont::setWeight(u32 w)
-{
-	if (!data || !font) return false;
-	weight = min(w, 32u);
-	font->loadFont(data.get(), dataSize, 0, weight, index, false); // Keep the size of the previous font
-	return true;
-}
-
 bool SFont::fromFile(const char *filename, u32 size, u32 lspacing, u32 w, u32 idx)
 {
 	if (!font) return false;
@@ -356,11 +338,13 @@ void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 		if (words.empty())
 		{
 			posY += (float)m_font.lineSpacing;
+			continue;
 		}
+
 		for (u32 i = 0; i < words.size(); ++i)
 		{
 			float wordWidth = m_font.font->getWidth(words[i].text.c_str());
-			if (posX == 0.f || posX + (float)wordWidth <= width)
+			if (posX == 0.f || posX + (float)wordWidth + space * 2 <= width)
 			{
 				words[i].targetPos = Vector3D(posX, posY, 0.f);
 				posX += wordWidth + space;

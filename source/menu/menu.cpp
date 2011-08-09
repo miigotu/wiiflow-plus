@@ -119,7 +119,7 @@ void CMenu::init(u8 usableDevices)
 				break;
 			}
 
-	_loadDefaultFont(CONF_GetLanguage() != CONF_LANG_KOREAN);
+	_loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 
 	if(drive == check) // Should not happen
 	{
@@ -691,7 +691,7 @@ void CMenu::_buildMenus(void)
 {
 	SThemeData theme;
 
-	if(!m_base_font.get()) _loadDefaultFont(CONF_GetLanguage() != CONF_LANG_KOREAN);
+	if(!m_base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 	
 	// Default fonts
 	theme.btnFont = _font(theme.fontSet, "GENERAL", "button_font", BUTTONFONT);
@@ -702,7 +702,7 @@ void CMenu::_buildMenus(void)
 
 	theme.titleFont = _font(theme.fontSet, "GENERAL", "title_font", TITLEFONT);
 	theme.titleFontColor = m_theme.getColor("GENERAL", "title_font_color", 0xD0BFDFFF);
-
+	
 	theme.thxFont = _font(theme.fontSet, "GENERAL", "thxfont", THANKSFONT);
 	theme.txtFontColor = m_theme.getColor("GENERAL", "text_font_color", 0xFFFFFFFF);
 	
@@ -777,61 +777,48 @@ void CMenu::_buildMenus(void)
 SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index)
 {
 	SFont retFont;
-
 	bool useDefault = false;
+	bool general = strncmp(domain, "GENERAL", 7) == 0;
+
 	string filename = m_theme.getString(domain, key);
+	if(filename.empty() && !general)
+		filename = m_theme.getString("GENERAL", key);
 	if(filename.empty())
 	{
 		useDefault = true;
 		filename = key;
 	}
 
-	for (u32 c = 0; c < filename.size(); ++c)
-		if (filename[c] >= 'A' && filename[c] <= 'Z')
-			filename[c] |= 0x20;
+	filename = upperCase(filename);
 
 	string fontSizeKey = key;
 	fontSizeKey += "_size";
 
 	u32 def_fontSize = fontSize;
 	fontSize = (u32)m_theme.getInt(domain, fontSizeKey);
-	fontSize = fontSize <= 0 ? def_fontSize : fontSize;
-	fontSize = min(max(6u, fontSize), 300u);
+	if(!general && fontSize <= 0) fontSize = (u32)m_theme.getInt("GENERAL", fontSizeKey);
+	fontSize = min(max(6u, fontSize <= 0 ? def_fontSize : fontSize), 300u);
 
 	string lineSpacingKey = key;
 	lineSpacingKey += "_line_height";
 
 	u32 def_lineSpacing = lineSpacing;
 	lineSpacing = (u32)m_theme.getInt(domain, lineSpacingKey);
-	lineSpacing = lineSpacing <= 0 ? def_lineSpacing : lineSpacing;
-	lineSpacing = min(max(6u, lineSpacing), 300u);
+	if(!general && lineSpacing <= 0) lineSpacing = (u32)m_theme.getInt("GENERAL", lineSpacingKey);
+	lineSpacing = min(max(6u, lineSpacing <= 0 ? def_lineSpacing : lineSpacing), 300u);
 
 	string weightKey = key;
 	weightKey += "_weight";
 
 	u32 def_weight = weight;
 	weight = (u32)m_theme.getInt(domain, weightKey);
-	weight = weight <= 0 ? def_weight : weight;
-	weight = max(1u,min(weight, 32u));
+	if(!general && weight <= 0) weight = (u32)m_theme.getInt("GENERAL", weightKey);
+	weight = max(1u, min(weight <= 0 ? def_weight : weight, 32u));
 
 	// Try to find the same font with the same size
 	CMenu::FontSet::iterator i = fontSet.find(CMenu::FontDesc(filename, fontSize));
-	if (i != fontSet.end())
-	{
-		retFont = i->second;
-		retFont.lineSpacing = lineSpacing;
-		retFont.setWeight(weight);
-		return retFont;
-	}
-/* 	// Then try to find the same font with a different size
-	i = fontSet.lower_bound(CMenu::FontDesc(filename, 0));
-	if (i != fontSet.end() && i->first.first == filename)
-	{
-		retFont = i->second;
-		retFont.newSize(fontSize, lineSpacing, weight);
-		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
-		return retFont;
-	} */
+	if (i != fontSet.end()) return i->second;
+
 	// TTF not found in memory, load it to create a new font
  	if (!useDefault && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fontSize, lineSpacing, weight, index))
 	{
@@ -839,7 +826,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
 		return retFont;
 	}
-	if(!m_base_font) _loadDefaultFont(CONF_GetLanguage() != CONF_LANG_KOREAN);
+	if(!m_base_font) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 	if(retFont.fromBuffer(m_base_font, m_base_font_size, fontSize, lineSpacing, weight, index))
 	{
 		// Default font

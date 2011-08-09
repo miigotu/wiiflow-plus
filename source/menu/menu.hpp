@@ -41,7 +41,7 @@ class CMenu
 {
 public:
 	CMenu(CVideo &vid);
-	~CMenu(void) {}
+	~CMenu(void) {cleanup();}
 	void init(u8 usableDevices);
 	void error(const wstringEx &msg);
 	int main(void);
@@ -294,8 +294,6 @@ private:
 	u32 m_codeLblUser[4];
 //About menu
 	u32 m_aboutLblTitle;
-	u32 m_aboutLblOrigAuthor;
-	u32 m_aboutLblAuthor;
 	u32 m_aboutLblInfo;
 	u32 m_aboutLblUser[4];
 	u32 m_aboutLblIOS;

@@ -79,27 +79,27 @@ bool loadIOS(int ios, bool launch_game)
 	USBStorage_Deinit();
 
 	//gprintf("AHBPROT state before reloading: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
-	IOSPATCH_AHBPROT();
+	//IOSPATCH_AHBPROT();
 
-	void *backup = MEM1_alloc(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
+/* 	void *backup = MEM1_alloc(0x200000);	// 0x126CA0 bytes were needed last time i checked. But take more just in case.
 	if (backup != 0)
 	{
 		memcpy(backup, &__Arena2Lo, 0x200000);
 		DCFlushRange(backup, 0x200000);
-	}
+	} */
 
 	bool iosOK = IOS_ReloadIOS(ios) == 0;
 
-	if (backup != 0)
+/* 	if (backup != 0)
 	{
 		memcpy(&__Arena2Lo, backup, 0x200000);
 		DCFlushRange(&__Arena2Lo, 0x200000);
 		free(backup);
-	}
+	} */
 
 	gprintf("%s, Current IOS: %i\n", iosOK ? "OK" : "FAILED!", IOS_GetVersion());
 
-	IOSPATCH_AHBPROT();
+	//IOSPATCH_AHBPROT();
 	//gprintf("Current AHBPROT state: %s\n", HAVE_AHBPROT ? "enabled" : "disabled");
 
  	if (launch_game)

@@ -725,9 +725,8 @@ void CButtonsMgr::_drawLbl(CButtonsMgr::SLabel &b)
 	guMtxTransApply(modelViewMtx, modelViewMtx, posX, posY, 0.f);
 	GX_LoadPosMtxImm(modelViewMtx, GX_PNMTX0);
 	if (b.moveByX != 0 || b.moveByY != 0)
-	{
-		GX_SetScissor(b.moveByX == 0 ? 0 : b.targetPos.x - b.moveByX, b.moveByY == 0 ? 0 : (b.targetPos.y - b.moveByY) - 10 - b.font.lineSpacing, m_vid.width(), m_vid.height());
-	}
+		GX_SetScissor(b.targetPos.x - b.moveByX - m_vid.width()/2, b.targetPos.x - b.moveByX  - m_vid.height()/2, b.w, b.h);
+
 	b.text.draw();
 	if (b.moveByX != 0 || b.moveByY != 0)
 		GX_SetScissor(0, 0, m_vid.width(), m_vid.height());

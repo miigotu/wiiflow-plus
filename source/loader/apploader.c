@@ -2,7 +2,6 @@
 #include <ogcsys.h>
 #include <string.h>
 
-#include "load_dol.h"
 #include "apploader.h"
 #include "wdvd.h"
 #include "patchcode.h"

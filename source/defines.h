@@ -13,11 +13,13 @@
 #define TITLES_FILENAME			"titles.ini"
 #define CTITLES_FILENAME		"custom_titles.ini"
 
-#define LOADER_AUTHOR			"Kwiirk & Waninkoko, Hermes"
-#define GUI_AUTHOR				"Hibernatus, Narolez, r-win, Miigotu"
-#define THANKS					"Lustar, CedWii, Benjay, Domi78, Oops, Celtiore, Jiiwah, FluffyKiwi, Roku93, Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical, WiiPower, Hermes, Spidy1000, Dimok"
+#define DEVELOPERS				"r-win, Miigotu, Overj0y"
+#define PAST_DEVELOPERS			"Hibernatus, Narolez, Hulk"
+#define LOADER_AUTHOR			"Kwiirk, Waninkoko, Hermes"
+#define GUI_AUTHOR				"Hibernatus"
+#define THANKS					"Lustar, CedWii, Benjay, Domi78, Oops, Celtiore, Jiiwah, FluffyKiwi, Roku93, Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical, WiiPower, Hermes, Spidy1000, Dimok "
 #define THANKS_SITES			"devkitpro.org, wiibrew.org, wiitdb.com, ohloh.net, wiifanart.com, wiiflowiki.com"
-#define THANKS_CODE				"CFG Loader, uLoader, USB Loader GX, NeoGamma, WiiXplorer"
+#define THANKS_CODE				"CFG Loader, uLoader, USB Loader GX, NeoGamma, WiiXplorer, Triiforce, Mighty Channels"
 
 #define WIINNERTAG_URL 			"http://www.wiinnertag.com/wiinnertag_scripts/update_sign.php?key={KEY}&game_id={ID6}"
 #define DUTAG_URL				"http://tag.darkumbra.net/{KEY}.update={ID6}"
