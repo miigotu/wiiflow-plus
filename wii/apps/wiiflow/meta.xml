@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <app version="2.2">
 		<name> WiiFlow</name>
-		<coder>r-win, Miigotu &amp; Hulk</coder>
+		<coder>r-win, Miigotu</coder>
 		<version>2.2rc1</version>
 		<release_date>TBD</release_date>
 		<short_description>USB Loader</short_description>
-		<long_description>WiiFlow is a USB Loader that can be installed on a FAT/NTFS HDD or SD.Controls :
-
+		<long_description>WiiFlow is a USB Backup Loader and Nand Emulator.
+Controls :
 - Main menu (coverflow) :
 -- Up / Down		Previous / next game (vertical)
 -- Left / Right		Previous / next game (horizontal)
@@ -15,10 +15,10 @@
 -- B+Home			Reload Wiiflow
 -- Home				Exit
 -- 1 / 2			Previous / next coverflow mode
--- B+Left / B+Right	Previous / next page
+-- B+Left / B+Right	Change Song
 -- B+UP / B+DOWN	Alphabetic search
 -- B+Minus			Switch Partition
--- B+Plus			Select sorting
+-- B+Plus			Sort Games
 
 - Game :
 -- A on box			Show the backside

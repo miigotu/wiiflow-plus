@@ -17,16 +17,16 @@ NOTE: Also see http://www.wiiflowiki.com
  -------------------------------
 You can either install WiiFlow to a SD-Card or on your Harddisk. Both types has 
 advantages and disadvantages: If you install on a SD-Card you will need the 
-SD-Card to operate with WiiFlow. must always let the SD-Card inside your 
-Wii and with write-protect off. Otherwise WiiFlow will not work properly.
+SD-Card to operate with WiiFlow. With this setup, you must always let the SD-Card inside
+your Wii and with write-protect off. Otherwise WiiFlow will not work properly.
 Also, with covers and settings and fanart/trailers/etc an SD will become full very fast.
 
-It is better to install WiiFlow on your Harddisk but you will need a FAT or NTFS
-partition for it. Since HBC does not support ntfs, a forwarder is required to boot 
-a dol which is placed on an NTFS partition.
+It is better to install WiiFlow on your Harddisk but you will need a FAT32, NTFS, or EXT2/3/4
+partition for it. Since HBC does not support ntfs, a forwarder is required to boot a dol which
+is placed on an NTFS partition.
 
-If you have a WBFS only Harddisk, you would need to repartition it. 
-That will delete all of your Wii-Games on it.
+If you have a WBFS only hard disk, you would need to repartition it, which will delete all
+of your Wii-Games on it. If you do this we suggest you backup as many of your games as you can.
 
   1.2 Installation of WiiFlow:
  ------------------------------------------
@@ -60,7 +60,7 @@ Wiiflow is now set up for basic use.
  ----------------------
 1.3.1) Starting WiiFlow via Homebrew-Channel
 You need to save the file "boot.dol" into a FAT partition in the directory device:\apps\wiiflow\ 
-so that the Homebrew-Channel can find it. The files meta.xml and icon.png belongs to 
+so that the Homebrew-Channel can find it. The files meta.xml and icon.png belongs in 
 that directory too, but they are not necessary for the execution.
 
 1.3.2) Starting WiiFlow through a Forwarder-Channel

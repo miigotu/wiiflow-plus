@@ -567,6 +567,7 @@ void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> argum
 void CMenu::_launchChannel(dir_discHdr *hdr)
 {
 	Channels channel;
+	u8 ios = channel.GetRequestedIOS(hdr->hdr.chantitle);
 	u32 *data = channel.Load(hdr->hdr.chantitle, (char *)hdr->hdr.id);
 	if(data != NULL)
 	{
@@ -578,6 +579,14 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
 		int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 		const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
+
+		int gameIOS;
+		if (!m_gcfg2.getInt(id, "ios", &gameIOS) && _installed_cios.size() > 0)
+		{
+			CIOSItr itr = _installed_cios.find(gameIOS);
+			gameIOS = (itr == _installed_cios.end()) ? 0 : itr->first;
+		}
+		else gameIOS = 0;
 
 		u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 		hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 0);
@@ -593,6 +602,84 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg1.getInt("PLAYCOUNT", id, 0) + 1); 
 		m_gcfg1.setUInt("LASTPLAYED", id, time(NULL)); 
 
+		if (has_enabled_providers() && _initNetwork() == 0)
+			add_game_to_card(id.c_str());
+
+		bool emu_disabled = m_cfg.getBool("NAND", "disable", true);
+		string path = m_cfg.getString("NAND", "path", "");
+
+		m_gcfg1.save();
+		m_gcfg2.save();
+		m_cat.save();
+		m_cfg.save();
+
+		setLanguage(language);
+
+		SmartBuf cheatFile;
+		u32 cheatSize = 0;
+		if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
+		ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
+
+		bool iosLoaded = false;
+
+		// Reload IOS, if requested
+		if (gameIOS != mainIOS)
+		{
+			if(!emu_disabled) Nand::Instance()->Disable_Emu();
+
+			if(gameIOS < 0x64)
+			{
+				if ( _installed_cios.size() <= 0)
+				{
+					error(sfmt("No cios found!"));
+					Sys_LoadMenu();
+				}
+				u8 IOS[3];
+				IOS[0] = ios;
+				IOS[1] = 56;
+				IOS[2] = 57;
+				bool found = false;
+				for(u8 num = 0; !found && num < 4; num++)
+				{
+					if(IOS[num] == 0) num++;
+					for(CIOSItr itr = _installed_cios.begin(); !found && itr != _installed_cios.end(); itr++)
+					{
+						if(itr->second == IOS[num])
+						{
+							gameIOS = itr->first;
+							found = true;
+						}
+					}
+				}
+				if(!found)
+				{
+					error(sfmt("Couldn't find a cIOS using base %i, or 56/57", IOS[0]));
+					return;
+				}
+			}
+			gprintf("Reloading IOS into %d\n", gameIOS);
+			cleanup(true);
+			if (!loadIOS(gameIOS, true))
+			{
+				error(sfmt("Couldn't load IOS %i", gameIOS));
+				return;
+			}
+			iosLoaded = true;
+		}
+
+		if(iosLoaded && !emu_disabled)
+		{
+			Nand::Instance()->Set_Partition(currentPartition == 0 ? currentPartition : currentPartition - 1);
+			Nand::Instance()->Set_NandPath(path.c_str());
+			if(Nand::Instance()->Enable_Emu(currentPartition == 0 ? EMU_SD : EMU_USB) < 0)
+			{
+				Nand::Instance()->Disable_Emu();
+				error(L"Enabling emu after reload failed!");
+				Sys_LoadMenu();
+				return;
+			}
+		}
+
 		if (rtrn != NULL && strlen(rtrn) == 4)
 		{			
 			int rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
@@ -607,22 +694,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 			gprintf("Return to channel %s. Using new d2x way\n", IOS_Ioctlv(ESHandle, 0xA1, 1, 0, vector) != -101 ? "Succeeded" : "Failed!" );
 			IOS_Close(ESHandle);
 		}
-			
-		if (has_enabled_providers() && _initNetwork() == 0)
-			add_game_to_card(id.c_str());
 		
-		m_gcfg1.save();
-		m_gcfg2.save();
-		m_cat.save();
-		m_cfg.save();
-
-		setLanguage(language);
-
-		SmartBuf cheatFile;
-		u32 cheatSize = 0;
-		if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
-		ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
-
 		CheckGameSoundThread(true);
 		//MEM1_cleanup();		MEM1_clear();
 		cleanup();

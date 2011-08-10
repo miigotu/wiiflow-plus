@@ -90,6 +90,24 @@ u32 * Channels::Load(u64 title, char *id)
 	return GetDol(title, id, &Size, bootcontent, false);	
 }
 
+u8 Channels::GetRequestedIOS(u64 title)
+{
+	u8 IOS = 0;
+
+	char tmd[ISFS_MAXPATH];
+	sprintf(tmd, "/title/%08x/%08x/content/title.tmd", TITLE_UPPER(title), TITLE_LOWER(title));
+
+	u32 size;
+	u8 *titleTMD = (u8 *) ISFS_GetFile((u8 *) &tmd, &size, -1);
+
+	if(size > 0x18B)
+		IOS = titleTMD[0x18B];
+		
+	SAFE_FREE(titleTMD);
+
+	return IOS;
+}
+
 bool Channels::Launch(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode)
 {
 	return BootChannel(data, chantitle, vidMode, vipatch, countryString, patchVidMode);
