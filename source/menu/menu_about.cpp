@@ -1,5 +1,6 @@
 
 #include "menu.hpp"
+#include "nand.hpp"
 #include "svnrev.h"
 
 #include "sys.h"
@@ -14,6 +15,9 @@ void CMenu::_about(void)
 	int thanks_x = 0, thanks_y = 0;
 	u32 thanks_w = 0, thanks_h = 0;
 	bool first = true;
+
+	m_btnMgr.reset(m_aboutLblInfo, true);
+
 	SetupInput();
 	_showAbout();
 
@@ -146,6 +150,8 @@ void CMenu::_textAbout(void)
 		);
 
 	u32 ver;
+	Nand::Instance()->Disable_Emu();
 	char* InfoIos=get_iosx_info_from_tmd(mainIOS, &ver);
+	Nand::Instance()->Enable_Emu();
 	m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"IOS%i base %s"), mainIOS, InfoIos), true);
 }

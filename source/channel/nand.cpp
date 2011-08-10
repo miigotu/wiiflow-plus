@@ -1,6 +1,7 @@
 /***************************************************************************
  * Copyright (C) 2011
  * by Miigotu
+ * Rewritten code from Mighty Channels and Triiforce
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any
@@ -56,6 +57,14 @@ void Nand::DestroyInstance()
 {
 	if(instance) delete instance;
 	instance = NULL;
+}
+
+void Nand::Init(const char *path, u8 partition, bool disable)
+{
+	EmuDevice = disable ? REAL_NAND : partition == 0 ? EMU_SD : EMU_USB;
+	Partition = disable ? REAL_NAND : partition > 0 ? partition - 1 : partition;
+	Set_NandPath(path);
+	Disabled = disable;
 }
 
 s32 Nand::Nand_Mount(NandDevice *Device)
@@ -201,14 +210,14 @@ s32 Nand::Nand_Disable(void)
 } 
 
 
-s32 Nand::Enable_Emu(int selection)
+s32 Nand::Enable_Emu()
 {
-	if(MountedDevice == selection)
+	if(MountedDevice == EmuDevice || Disabled)
 		return 0;
 
 	Disable_Emu();
 
-	NandDevice *Device = &NandDeviceList[selection];
+	NandDevice *Device = &NandDeviceList[EmuDevice];
 
 	s32 ret = Nand_Mount(Device);
 	if (ret < 0) 
@@ -224,7 +233,7 @@ s32 Nand::Enable_Emu(int selection)
 		return ret;
 	}
 
-	MountedDevice = selection;
+	MountedDevice = EmuDevice;
 
 	return 0;
 }	
@@ -272,4 +281,9 @@ void Nand::Set_FullMode(bool fullmode)
 const char* Nand::Get_NandPath(void)
 {
 	return NandPath;
+}
+
+int Nand::Get_Partition(void)
+{
+	return Partition;
 }

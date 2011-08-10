@@ -88,8 +88,7 @@ void CMenu::_showConfig4(void)
 
 	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
 
-	bool disable_emu = m_cfg.getBool("NAND", "disable", true);
-	if(!disable_emu) Nand::Instance()->Disable_Emu();
+	Nand::Instance()->Disable_Emu();
 
 	m_channels.Init(0x00010001, langCode, true);
 	amountOfChannels = m_channels.Count();
@@ -106,16 +105,8 @@ void CMenu::_showConfig4(void)
 			}
 		}
 	}
-	if(!disable_emu)
-	{
-		int currentEmuPartition = m_cfg.getInt("NAND", "partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
-		if((IOS_GetRevision() % 100 != 7 || currentEmuPartition == 0) && DeviceHandler::Instance()->IsInserted(currentEmuPartition))
-			DeviceHandler::Instance()->UnMount(currentEmuPartition);
-		Nand::Instance()->Set_Partition(currentEmuPartition == 0 ? currentEmuPartition : currentEmuPartition - 1);
-		Nand::Instance()->Set_NandPath(m_cfg.getString("NAND", "path", "").c_str());
-		if(Nand::Instance()->Enable_Emu(currentPartition == 0 ? EMU_SD : EMU_USB) < 0)
-			Nand::Instance()->Disable_Emu();
-	}
+
+	Nand::Instance()->Enable_Emu();
 
 	m_btnMgr.setText(m_config4LblReturnToVal, channelName);
 }

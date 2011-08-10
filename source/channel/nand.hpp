@@ -32,25 +32,28 @@ class Nand
 		static void DestroyInstance();
 
 		/* Prototypes */
-		s32 Enable_Emu(int selection);
+		void Init(const char *path, u8 partition, bool disable = false);
+		s32 Enable_Emu();
 		s32 Disable_Emu();
 
 		void Set_Partition(int partition);
-		void Set_NandPath(const char * path);
 		void Set_FullMode(bool fullmode);
 		const char * Get_NandPath(void);
+		int Get_Partition(void);
 
 		s32 Identify(u64 titleid, u32 *ios);
 		
 	private:
-		Nand() : MountedDevice(0), Partition(0), FullMode(0x100), NandPath(){}
-		~Nand(void){ Disable_Emu(); }
+		Nand() : MountedDevice(0), Partition(0), FullMode(0x100), NandPath(), EmuDevice(REAL_NAND), Disabled(true) {}
+		~Nand(void){ /* Disable_Emu(); */ }
 
 		/* Prototypes */
 		s32 Nand_Mount(NandDevice *Device);
 		s32 Nand_Unmount(NandDevice *Device);
 		s32 Nand_Enable(NandDevice *Device);
 		s32 Nand_Disable(void);
+
+		void Set_NandPath(const char * path);
 
 		s32 Identify_GenerateTik(signed_blob **outbuf, u32 *outlen);
 
@@ -60,6 +63,9 @@ class Nand
 		char NandPath[32];
 
 		u32 inbuf[8] ATTRIBUTE_ALIGN(32);
+
+		int EmuDevice;
+		bool Disabled;
 		
 		static Nand * instance;
 };

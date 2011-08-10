@@ -2095,7 +2095,12 @@ wchar_t CCoverFlow::prevLetter(void)
 	wchar_t c = upperCaseWChar(m_items[curPos].title.c_str()[0]);
 	for (i = 1; i < n; ++i)
 		if (upperCaseWChar(m_items[loopNum(curPos - i, n)].title.c_str()[0]) != c)
+		{
+			c = upperCaseWChar(m_items[loopNum(curPos - i, n)].title.c_str()[0]);
+			while(i < n && upperCaseWChar(m_items[loopNum(curPos - i, n)].title.c_str()[0]) == c) ++i;
+			i--;
 			break;
+		}
 	if (i < n)
 	{
 		_setJump(-i);

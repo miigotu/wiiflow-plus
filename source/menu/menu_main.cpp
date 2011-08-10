@@ -245,7 +245,7 @@ int CMenu::main(void)
 			const char *domain = _domainFromView();
 
 			//Search by Alphabet
-			if (BTN_DOWN_PRESSED)
+			if (BTN_DOWN_PRESSED || BTN_UP_PRESSED)
 			{
 				if (m_cfg.getInt(domain, "sort", SORT_ALPHA) != SORT_ALPHA)
 				{
@@ -253,20 +253,7 @@ int CMenu::main(void)
 					m_cfg.setInt(domain, "sort", SORT_ALPHA);
 				}
 				curLetter.resize(1);
-				curLetter[0] = m_cf.nextLetter();
-				m_showtimer = 60;
-				m_btnMgr.setText(m_mainLblLetter, curLetter);
-				m_btnMgr.show(m_mainLblLetter);
-			}
-			else if (BTN_UP_PRESSED)
-			{
-				if (m_cfg.getInt(domain, "sort", SORT_ALPHA) != SORT_ALPHA)
-				{
-					m_cf.setSorting((Sorting)SORT_ALPHA);
-					m_cfg.setInt(domain, "sort", SORT_ALPHA);
-				}
-				curLetter.resize(1);
-				curLetter[0] = m_cf.prevLetter();
+				curLetter[0] = BTN_UP_PRESSED ? m_cf.prevLetter() : m_cf.nextLetter();
 				m_showtimer = 60;
 				m_btnMgr.setText(m_mainLblLetter, curLetter);
 				m_btnMgr.show(m_mainLblLetter);
@@ -376,7 +363,7 @@ int CMenu::main(void)
 					m_cfg.setInt(domain, "sort", SORT_ALPHA);
 				}
 				curLetter.resize(1);
-				curLetter[0] = m_cf.prevLetter();
+				curLetter[0] = m_btnMgr.selected(m_mainBtnPrev) ? m_cf.prevLetter() : m_cf.nextLetter();
 				m_showtimer = 60;
 				m_btnMgr.setText(m_mainLblLetter, curLetter);
 				m_btnMgr.show(m_mainLblLetter);

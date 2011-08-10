@@ -180,6 +180,10 @@ void CMenu::init(u8 usableDevices)
 			return;
 		}
 	}
+	Nand::Instance()->Init(m_cfg.getString("NAND", "path", "").c_str(),
+		m_cfg.getInt("NAND", "partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str())),
+		m_cfg.getBool("NAND", "disable", true)
+		);
 
 	_load_installed_cioses();
 
@@ -1447,9 +1451,9 @@ bool CMenu::_loadChannelList(void)
 		return false;
 
 	static bool first = true;
-	bool failed = false;
+	static bool failed = false;
 
-	bool changed = lastPartition != currentPartition || last_emu_state != disable_emu || first;
+	bool changed = lastPartition != currentPartition || last_emu_state != disable_emu || first || failed;
 
 	gprintf("%s, which is %s\n", disable_emu ? "NAND" : DeviceName[currentPartition], changed ? "refreshing." : "cached.");
 
@@ -1476,13 +1480,13 @@ bool CMenu::_loadChannelList(void)
 		if((IOS_GetRevision() % 100 != 7 || currentPartition == 0) && DeviceHandler::Instance()->IsInserted(currentPartition))
 			DeviceHandler::Instance()->UnMount(currentPartition);
 
-		Nand::Instance()->Set_Partition(disable_emu ? REAL_NAND : currentPartition == 0 ? currentPartition : currentPartition - 1);
-		Nand::Instance()->Set_NandPath(path.c_str());
-		if(Nand::Instance()->Enable_Emu(disable_emu ? REAL_NAND : currentPartition == 0 ? EMU_SD : EMU_USB) < 0)
+		Nand::Instance()->Init(path.c_str(), currentPartition, disable_emu);
+		if(Nand::Instance()->Enable_Emu() < 0)
 		{
 			Nand::Instance()->Disable_Emu();
 			failed = true;
 		}
+		else failed = false;
 	}
 
 	if(first && !disable_emu && !failed)
@@ -1507,7 +1511,8 @@ bool CMenu::_loadChannelList(void)
 	string nandpath = sfmt("%s:%s", DeviceName[currentPartition], path.empty() ? "/" : path.c_str());
 	gprintf("nandpath = %s\n", nandpath.c_str());
 
-	m_gameList.LoadChannels(disable_emu ? "" : nandpath, 0);
+	if(!failed)
+		m_gameList.LoadChannels(disable_emu ? "" : nandpath, 0);
 	
 	lastPartition = currentPartition;
 	last_emu_state = disable_emu;

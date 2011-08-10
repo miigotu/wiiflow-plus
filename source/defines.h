@@ -17,7 +17,13 @@
 #define PAST_DEVELOPERS			"Hibernatus, Narolez, Hulk"
 #define LOADER_AUTHOR			"Kwiirk, Waninkoko, Hermes"
 #define GUI_AUTHOR				"Hibernatus"
-#define THANKS					"Lustar, CedWii, Benjay, Domi78, Oops, Celtiore, Jiiwah, FluffyKiwi, Roku93, Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical, WiiPower, Hermes, Spidy1000, Dimok "
+
+#define THANKS	\
+"Lustar, CedWii, Benjay, Domi78, Oops, Celtiore, Jiiwah, FluffyKiwi, Roku93, \
+Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical, \
+WiiPower, Hermes, Spidy1000, Dimok, Kovani, Drexyl, DvZ, Etheboss, FIX94, GaiaKnight, \
+nibb, NJ7, Plasma, Pakatus, ravmn, spidercaleb, Ziggy34, And to anyone who has donated or contributed to Wiiflow that we missed!"
+
 #define THANKS_SITES			"devkitpro.org, wiibrew.org, wiitdb.com, ohloh.net, wiifanart.com, wiiflowiki.com"
 #define THANKS_CODE				"CFG Loader, uLoader, USB Loader GX, NeoGamma, WiiXplorer, Triiforce, Mighty Channels"
 

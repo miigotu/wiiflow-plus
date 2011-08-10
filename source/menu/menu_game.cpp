@@ -559,6 +559,9 @@ void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> argum
 		cleanup();
 		Close_Inputs();
 		USBStorage_Deinit();
+
+		Nand::Instance()->Disable_Emu();
+
 		bootHB = true;
 	}
 	m_exit = true;
@@ -569,6 +572,9 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 	Channels channel;
 	u8 ios = channel.GetRequestedIOS(hdr->hdr.chantitle);
 	u32 *data = channel.Load(hdr->hdr.chantitle, (char *)hdr->hdr.id);
+	
+	Nand::Instance()->Disable_Emu();
+
 	if(data != NULL)
 	{
 		string id = string((const char *) hdr->hdr.id);
@@ -625,8 +631,6 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		// Reload IOS, if requested
 		if (gameIOS != mainIOS)
 		{
-			if(!emu_disabled) Nand::Instance()->Disable_Emu();
-
 			if(gameIOS < 0x64)
 			{
 				if ( _installed_cios.size() <= 0)
@@ -659,7 +663,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 			}
 			gprintf("Reloading IOS into %d\n", gameIOS);
 			cleanup(true);
-			if (!loadIOS(gameIOS, true))
+			if (gameIOS != mainIOS && !loadIOS(gameIOS, true))
 			{
 				error(sfmt("Couldn't load IOS %i", gameIOS));
 				return;
@@ -667,15 +671,13 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 			iosLoaded = true;
 		}
 
-		if(iosLoaded && !emu_disabled)
+		if(!emu_disabled)
 		{
-			Nand::Instance()->Set_Partition(currentPartition == 0 ? currentPartition : currentPartition - 1);
-			Nand::Instance()->Set_NandPath(path.c_str());
-			if(Nand::Instance()->Enable_Emu(currentPartition == 0 ? EMU_SD : EMU_USB) < 0)
+			if(Nand::Instance()->Enable_Emu() < 0)
 			{
 				Nand::Instance()->Disable_Emu();
 				error(L"Enabling emu after reload failed!");
-				Sys_LoadMenu();
+				if(iosLoaded) Sys_LoadMenu();
 				return;
 			}
 		}
@@ -709,12 +711,12 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 {
 	string id = string((const char *) hdr->hdr.id);
+	Nand::Instance()->Disable_Emu();
 
 	bool gc = false;
 	if (dvd)
 	{
 		u32 cover = 0;
-
 
 		Disc_SetUSB(NULL);
 		if (WDVD_GetCoverStatus(&cover) < 0)
@@ -760,7 +762,9 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
 	int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
-	
+
+	bool emulate_save = m_gcfg2.testOptBool(id, "save_emulation", m_cfg.getBool("GAMES", "save_emulation", false));
+		
 	int gameIOS;
 	if (!m_gcfg2.getInt(id, "ios", &gameIOS) && _installed_cios.size() > 0)
 	{
@@ -812,7 +816,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 
 	net_wc24cleanup();
-		
+
 	// Reload IOS, if requested
 	if (gameIOS != mainIOS)
 	{
@@ -827,6 +831,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 			IOS[0] = GetRequestedGameIOS(hdr);
 			IOS[1] = 56;
 			IOS[2] = 57;
+			gprintf("Game requested IOS: %u\n", IOS[0]);
 			bool found = false;
 			for(u8 num = 0; !found && num < 4; num++)
 			{
@@ -848,19 +853,36 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		}
 		gprintf("Reloading IOS into %d\n", gameIOS);
 		cleanup(true);
-		if (!loadIOS(gameIOS, true))
+		if (gameIOS != mainIOS && !loadIOS(gameIOS, true))
 		{
 			error(sfmt("Couldn't load IOS %i", gameIOS));
 			return;
 		}
 		iosLoaded = true;
 	}
+
+	if(emulate_save)
+	{
+		Nand::Instance()->Init(Nand::Instance()->Get_NandPath(), Nand::Instance()->Get_Partition(), false);
+		int nandPartition = Nand::Instance()->Get_Partition();
+		if((IOS_GetRevision() % 100 != 7 || nandPartition == 0) && DeviceHandler::Instance()->IsInserted(nandPartition))
+			DeviceHandler::Instance()->UnMount(nandPartition);
+		if(Nand::Instance()->Enable_Emu() < 0)
+		{
+			Nand::Instance()->Disable_Emu();
+			error(L"Enabling emu after reload failed!");
+			if (iosLoaded) Sys_LoadMenu();
+			return;
+		}
+		if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+			DeviceHandler::Instance()->Mount(currentPartition);
+	}
 	
 	//MEM1_cleanup();	MEM1_clear();
 	if (IOS_GetRevision() < D2X_MIN_REV)
 	{
 		error(sfmt("d2x rev %i or higher is required.\nPlease install the latest version.", gameIOS, D2X_MIN_REV));
-		Sys_LoadMenu();
+		if (iosLoaded) Sys_LoadMenu();
 	}
 
 	if (!m_directLaunch)
@@ -909,7 +931,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		WII_Initialize();
 		if (WII_LaunchTitle(0x0000000100000100ULL)<0)
 			Sys_LoadMenu();
-	} 
+	}
 	else 
 	{
 		gprintf("Booting game\n");
