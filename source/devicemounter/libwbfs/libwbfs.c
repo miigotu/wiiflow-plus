@@ -686,8 +686,8 @@ int wbfs_get_fragments(wbfs_disc_t *d, _frag_append_t append_fragment, void *cal
 int wbfs_iso_file_read(wbfs_disc_t*d,u32 offset, u8 *data, u32 len)
 {
 	if (!d || d->p != &wbfs_iso_file) return -1;
-	//int fd = (int)d->header; //HMM?
-	int fd = d->i;
+	int fd = (int)d->header; //HMM?
+	//int fd = d->i;
 	off_t off = ((u64)offset) << 2;
 	off_t ret_off;
 	int ret;
@@ -705,8 +705,8 @@ u32 wbfs_disc_sector_used(wbfs_disc_t *d, u32 *num_blk)
 
 	if (d->p == &wbfs_iso_file)
 	{
-		//int fd = (int)d->header; //HMM?
-		int fd = d->i;
+		int fd = (int)d->header; //HMM?
+		//int fd = d->i;
 		struct stat st;
 		if (fstat(fd, &st) == -1) return 0;
 		if (num_blk) *num_blk = (st.st_size >> 9); // in 512 units

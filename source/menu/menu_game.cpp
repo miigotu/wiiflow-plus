@@ -661,14 +661,17 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 					return;
 				}
 			}
-			gprintf("Reloading IOS into %d\n", gameIOS);
-			cleanup(true);
-			if (gameIOS != mainIOS && !loadIOS(gameIOS, true))
+			if (gameIOS != mainIOS)
 			{
-				error(sfmt("Couldn't load IOS %i", gameIOS));
-				return;
+				gprintf("Reloading IOS into %d\n", gameIOS);
+				cleanup(true);
+				if(!loadIOS(gameIOS, true))
+				{
+					error(sfmt("Couldn't load IOS %i", gameIOS));
+					return;
+				}
+				iosLoaded = true;
 			}
-			iosLoaded = true;
 		}
 
 		if(!emu_disabled)
@@ -851,14 +854,17 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 				return;
 			}
 		}
-		gprintf("Reloading IOS into %d\n", gameIOS);
-		cleanup(true);
-		if (gameIOS != mainIOS && !loadIOS(gameIOS, true))
+		if (gameIOS != mainIOS)
 		{
-			error(sfmt("Couldn't load IOS %i", gameIOS));
-			return;
+			gprintf("Reloading IOS into %d\n", gameIOS);
+			cleanup(true);
+			if(!loadIOS(gameIOS, true))
+			{
+				error(sfmt("Couldn't load IOS %i", gameIOS));
+				return;
+			}
+			iosLoaded = true;
 		}
-		iosLoaded = true;
 	}
 
 	if(emulate_save)
