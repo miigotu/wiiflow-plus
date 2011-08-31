@@ -30,13 +30,6 @@
 extern "C" {extern u8 currentPartition;}
 extern bool bootHB;
 
-enum {
-	COVERFLOW_USB,
-	COVERFLOW_CHANNEL,
-	COVERFLOW_HOMEBREW,
-	COVERFLOW_MAX
-};
-
 class CMenu
 {
 public:

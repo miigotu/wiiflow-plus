@@ -3,6 +3,7 @@
 #include "WiiTDB.hpp"
 #include "config.hpp"
 #include "defines.h"
+#include "channels.h"
 
 template <typename T>
 void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs)
@@ -100,12 +101,10 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 	
 	string GTitle;
 
-	string custom_titles_path;
-
 	Config custom_titles;
 	if (settingsDir.size() > 0)
 	{
-		custom_titles_path = sfmt("%s/" CTITLES_FILENAME, settingsDir.c_str());
+		string custom_titles_path = sfmt("%s/" CTITLES_FILENAME, settingsDir.c_str());
 		custom_titles.load(custom_titles_path.c_str());
 	}
 
@@ -159,7 +158,8 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, 0).intVal();
 			
 			if(GTitle.size() > 0 || (wiiTDB.IsLoaded() && wiiTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
-			{				
+			{
+				Asciify((char *)GTitle.c_str());
 				strcpy(tmp.hdr.title, GTitle.c_str());
 				tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.GetCaseColor((char *)tmp.hdr.id);
 				//gprintf("Found title in WiiTDB.xml: %s\n", tmp.hdr.title);
@@ -179,6 +179,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 
 			if (tmp.hdr.magic == 0x5D1C9EA3)
 			{
+				Asciify(tmp.hdr.title);
 				headerlist.push_back(tmp);
 				continue;
 			}
@@ -191,8 +192,10 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				/* Get header */
 				if(wbfs_get_disc_info(part, 0, (u8*)&tmp.hdr,	sizeof(discHdr), NULL) == 0
 				&& memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) != 0)
+				{
+					Asciify(tmp.hdr.title);
 					headerlist.push_back(tmp);
-
+				}
 				WBFS_Ext_ClosePart(part);
 				continue;
 			}
@@ -241,6 +244,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			gprintf("Name: %s\n", tmp.hdr.title);
 			gprintf("Path: %s\n", tmp.path); */
 
+			Asciify(tmp.hdr.title);
 			headerlist.push_back(tmp);
 			continue;
 		}
@@ -260,10 +264,11 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
 				int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, 0).intVal();			
 				if(GTitle.size() > 0 || (wiiTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
-				{				
+				{
 					strcpy(tmp.hdr.title, GTitle.c_str());
 					tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.GetCaseColor((char *)tmp.hdr.id);
 				}
+				Asciify(tmp.hdr.title);
 				headerlist.push_back(tmp);
 			}			
 			continue;
@@ -272,6 +277,57 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 
 	if(wiiTDB.IsLoaded())
 		wiiTDB.CloseFile();
+}
+
+template <>
+void CList<dir_discHdr>::GetChannels(safe_vector<dir_discHdr> &headerlist, string settingsDir, u32 channelType, string curLanguage)
+{
+	Channels m_channels;
+	m_channels.Init(channelType, curLanguage, true);
+
+	Config custom_titles;
+	if (settingsDir.size() > 0)
+	{
+		string custom_titles_path = sfmt("%s/" CTITLES_FILENAME, settingsDir.c_str());
+		custom_titles.load(custom_titles_path.c_str());
+	}
+
+	WiiTDB wiiTDB;
+	if (settingsDir.size() > 0)
+	{
+		wiiTDB.OpenFile(sfmt("%s/wiitdb.xml", settingsDir.c_str()).c_str());
+		if(curLanguage.size() == 0) curLanguage = "EN";
+		wiiTDB.SetLanguageCode(curLanguage.c_str());
+	}
+
+	u32 count = m_channels.Count();
+
+	headerlist.reserve(count);
+
+	for (u32 i = 0; i < count; ++i)
+	{
+		Channel *chan = m_channels.GetChannel(i);
+		
+		if (chan->id == NULL) continue; // Skip invalid channels
+
+		dir_discHdr tmp;
+		bzero(&tmp, sizeof(dir_discHdr));
+
+		memcpy(tmp.hdr.id, chan->id, 4);
+		wcstombs(tmp.hdr.title, chan->name, sizeof(tmp.hdr.title));
+		string GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
+		int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, 0).intVal();
+
+		if(GTitle.size() > 0 || (wiiTDB.IsLoaded() && wiiTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
+			strcpy(tmp.hdr.title, GTitle.c_str());
+
+		Asciify(tmp.hdr.title);
+
+		tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.GetCaseColor((char *)tmp.hdr.id);
+		tmp.hdr.chantitle = chan->title;
+	
+		headerlist.push_back(tmp);
+	}
 }
 
 template <typename T>

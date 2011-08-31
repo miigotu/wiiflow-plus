@@ -8,6 +8,13 @@
 
 using namespace std;
 
+enum {
+	COVERFLOW_USB,
+	COVERFLOW_CHANNEL,
+	COVERFLOW_HOMEBREW,
+	COVERFLOW_MAX
+};
+
 template <typename T = dir_discHdr>
 class CachedList : public safe_vector<T>
 {
@@ -24,11 +31,20 @@ class CachedList : public safe_vector<T>
 		m_channelLang = m_lastchannelLang = channelLang;
 		m_loaded = false;
 		m_database = "";
-		force_update = false;
+		for(u32 i = 0; i < COVERFLOW_MAX; i++)
+			force_update[i] = false;
 		
 	}
 
-	void Update() { force_update = true; }													/* Force db update on next load */
+	void Update(u32 view = COVERFLOW_MAX)					/* Force db update on next load */
+	{
+		if(view == COVERFLOW_MAX)
+			for(u32 i = 0; i < COVERFLOW_MAX; i++)
+				force_update[i] = true;
+		else
+			force_update[view] = true;
+	}
+
     void Load(string path, string containing);
 	void LoadChannels(string path, u32 channelType);
 
@@ -48,7 +64,7 @@ class CachedList : public safe_vector<T>
     bool m_loaded;
     bool m_update;
     bool m_wbfsFS;
-	bool force_update;
+	u8 force_update[COVERFLOW_MAX];
     CList<T> list;
     string m_database;
     string m_cacheDir;

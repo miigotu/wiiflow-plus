@@ -1,5 +1,4 @@
 #include "cachedlist.hpp"
-#include "channels.h"
 #include <typeinfo>
 
 template <class T>
@@ -14,16 +13,16 @@ void CachedList<T>::Load(string path, string containing)													/* Load All
 	
 	if(!m_wbfsFS)
 	{
-		if(force_update)
+		if(force_update[COVERFLOW_USB] || force_update[COVERFLOW_HOMEBREW])
 			remove(m_database.c_str());
 
 		struct stat filestat, cache;
 		gprintf("%s\n", path.c_str());
 		if(stat(path.c_str(), &filestat) == -1) return;
-		m_update = force_update || m_lastLanguage != m_curLanguage || stat(m_database.c_str(), &cache) == -1 || filestat.st_mtime > cache.st_mtime;
+		m_update = force_update[COVERFLOW_USB] || force_update[COVERFLOW_HOMEBREW] || m_lastLanguage != m_curLanguage || stat(m_database.c_str(), &cache) == -1 || filestat.st_mtime > cache.st_mtime;
 	}
 
-	force_update = false;
+	force_update[COVERFLOW_USB] = force_update[COVERFLOW_HOMEBREW] = false;
 
 	bool music = typeid(T) == typeid(std::string);
 
@@ -34,7 +33,6 @@ void CachedList<T>::Load(string path, string containing)													/* Load All
 		list.GetPaths(pathlist, containing, path, m_wbfsFS);
 		list.GetHeaders(pathlist, *this, m_settingsDir, m_curLanguage);
 		
-		// Load titles and custom_titles files
 		m_loaded = true;
 		m_update = false;
 		m_lastLanguage = m_curLanguage;
@@ -61,7 +59,7 @@ void CachedList<dir_discHdr>::LoadChannels(string path, u32 channelType)								
 	if(emu)
 	{
 		m_database = sfmt("%s/%s.db", m_cacheDir.c_str(), make_db_name(sfmt("%s/CHANNELS", path.c_str())).c_str());
-		if(force_update)
+		if(force_update[COVERFLOW_CHANNEL])
 			remove(m_database.c_str());
 
 		//gprintf("%s\n", m_database.c_str());
@@ -72,40 +70,15 @@ void CachedList<dir_discHdr>::LoadChannels(string path, u32 channelType)								
 		//gprintf("%s\n", newpath.c_str());
 		if(stat(newpath.c_str(), &filestat) == -1) return;
 		//gprintf("stat succeed\n");
-		m_update = force_update || m_lastchannelLang != m_channelLang || stat(m_database.c_str(), &cache) == -1 || filestat.st_mtime > cache.st_mtime;
+		m_update = force_update[COVERFLOW_CHANNEL] || m_lastchannelLang != m_channelLang || stat(m_database.c_str(), &cache) == -1 || filestat.st_mtime > cache.st_mtime;
 	}
 
-	force_update = false;
+	force_update[COVERFLOW_CHANNEL] = false;
 
 	if(m_update)
 	{
-		Channels m_channels;
-		m_channels.Init(channelType, m_channelLang, true);
-
-		u32 count = m_channels.Count();
-		u32 len = sizeof (dir_discHdr);
-
-		SmartBuf buffer = smartMem2Alloc(len);
-		if (!buffer) return;
-
-		this->reserve(count);
-		dir_discHdr *b = (dir_discHdr *)buffer.get();
-
-		for (u32 i = 0; i < count; ++i)
-		{
-			Channel *chan = m_channels.GetChannel(i);
-			
-			if (chan->id == NULL) continue; // Skip invalid channels
-
-			memset(b, 0, len);
-			memcpy(b->hdr.id, chan->id, 4);
-			wcstombs(b->hdr.title, chan->name, sizeof(b->hdr.title));
-			b->hdr.chantitle = chan->title;
+		list.GetChannels(*this, m_settingsDir, channelType, m_channelLang);
 		
-			this->push_back(*b);
-		}
-		
-		// Load titles and custom_titles files
 		m_loaded = true;
 		m_update = false;
 		m_lastchannelLang = m_channelLang;
