@@ -1686,11 +1686,33 @@ bool CCoverFlow::_sortByGameID(CItem item1, CItem item2)
 {
 	u32 s = min(strlen((char *) &item1.hdr->hdr.id), strlen((char *) &item2.hdr->hdr.id));
 	for (u32 k = 0; k < s; ++k)
-		if (upperCaseWChar(item2.hdr->hdr.id[k]) < upperCaseWChar(item1.hdr->hdr.id[k]))
+	{
+		if (toupper(item1.hdr->hdr.id[k]) > toupper(item2.hdr->hdr.id[k]))
 			return false;
-		else if (upperCaseWChar(item1.hdr->hdr.id[k]) > upperCaseWChar(item2.hdr->hdr.id[k]))
+		else if (toupper(item1.hdr->hdr.id[k]) < toupper(item2.hdr->hdr.id[k]))
 			return true;
+	}
+
 	return strlen((char *) &item1.hdr->hdr.id) < strlen((char *) &item2.hdr->hdr.id);
+}
+
+bool CCoverFlow::_sortByAlpha(CItem item1, CItem item2)
+{
+	u32 s = min(strlen(item1.hdr->hdr.title), strlen(item2.hdr->hdr.title));
+	char * title1 = (char *)upperCase(item1.hdr->hdr.title).c_str();
+	char * title2 = (char *)upperCase(item2.hdr->hdr.title).c_str();
+
+	for (u32 j = 0, k = 0; j < s && k < s; ++k && ++j)
+	{
+		while (!isalnum(title1[j]) && title1[j+1] != 0) j++;
+		while (!isalnum(title2[k]) && title2[k+1] != 0) k++;
+
+		if (title1[j] < title2[k])
+			return true;
+		else if(title1[j] > title2[k])
+			return false;
+	}
+	return strlen(title1) < strlen(title2);
 }
 
 bool CCoverFlow::start(const char *id)
@@ -1699,7 +1721,7 @@ bool CCoverFlow::start(const char *id)
 
 	// Sort items
 	if (m_sorting == SORT_ALPHA)
-		sort(m_items.begin(), m_items.end());
+		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByAlpha);
 	else if (m_sorting == SORT_PLAYCOUNT)
 		sort(m_items.begin(), m_items.end(), CCoverFlow::_sortByPlayCount);
 	else if (m_sorting == SORT_LASTPLAYED)

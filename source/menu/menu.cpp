@@ -216,13 +216,16 @@ void CMenu::init(u8 usableDevices)
 	m_current_view = usableDevices > 1 ? COVERFLOW_USB : COVERFLOW_CHANNEL;
 
 	const char *domain = _domainFromView();
-
+	const char *checkDir = m_current_view == COVERFLOW_HOMEBREW ? HOMEBREW_DIR : GAMES_DIR;
+	
 	u8 partition = m_cfg.getInt(domain, "partition");  //Auto find a valid partition and fix old ini partition settings.
-	if(partition < USB1 || partition > USB8 || partition > DeviceHandler::Instance()->GetMountedCount(partition))
+	if(m_current_view != COVERFLOW_CHANNEL && (partition < USB1 || partition > USB8 || !DeviceHandler::Instance()->IsInserted(partition)))
 	{
 		m_cfg.remove(domain, "partition");
 		for(int i = USB1; i <= USB8; i++) // Find a usb partition with the wbfs folder or wbfs file system, else leave it blank (defaults to 1 later)
-			if (DeviceHandler::Instance()->IsInserted(i) && (DeviceHandler::Instance()->GetFSType(i) == PART_FS_WBFS || stat(sfmt(GAMES_DIR, DeviceName[i]).c_str(), &dummy) == 0))
+			if (DeviceHandler::Instance()->IsInserted(i)
+				&& ((m_current_view != COVERFLOW_HOMEBREW && DeviceHandler::Instance()->GetFSType(i) == PART_FS_WBFS)
+				|| stat(sfmt(checkDir, DeviceName[i]).c_str(), &dummy) == 0))
 			{
 				m_cfg.setInt(domain, "partition", i);
 				break;
@@ -1511,8 +1514,7 @@ bool CMenu::_loadChannelList(void)
 	string nandpath = sfmt("%s:%s", DeviceName[currentPartition], path.empty() ? "/" : path.c_str());
 	gprintf("nandpath = %s\n", nandpath.c_str());
 
-	if(!failed)
-		m_gameList.LoadChannels(disable_emu ? "" : nandpath, 0);
+	if(!failed) m_gameList.LoadChannels(disable_emu ? "" : nandpath, 0);
 	
 	lastPartition = currentPartition;
 	last_emu_state = disable_emu;
@@ -1526,6 +1528,8 @@ bool CMenu::_loadList(void)
 	m_gameList.clear();
 
 	gprintf("Loading items of ");
+
+	if(m_cfg.getBool(_domainFromView(), "update_cache")) m_gameList.Update(m_current_view);
 
 	bool retval;
 	switch(m_current_view)
@@ -1544,6 +1548,8 @@ bool CMenu::_loadList(void)
 			break;
 	}
 	
+	m_cfg.remove(_domainFromView(), "update_cache");
+
 	return retval;
 }
 
@@ -1567,6 +1573,7 @@ bool CMenu::_loadHomebrewList()
 
 	gprintf("%s\n", DeviceName[currentPartition]);
 	DeviceHandler::Instance()->Open_WBFS(currentPartition);
+
 	m_gameList.Load(sfmt(HOMEBREW_DIR, DeviceName[currentPartition]), ".dol|.elf");
 	return m_gameList.size() > 0 ? true : false;
 }
@@ -1757,4 +1764,28 @@ const char *CMenu::_domainFromView()
 			return "GAMES";
 	}
 	return "NULL";
+}
+
+void CMenu::UpdateCache(u32 view)
+{
+	if(view == COVERFLOW_MAX)
+	{
+		UpdateCache(COVERFLOW_USB);
+		UpdateCache(COVERFLOW_HOMEBREW);
+		UpdateCache(COVERFLOW_CHANNEL);
+		return;
+	}
+
+	const char *domain;
+	switch(view)
+	{
+		case COVERFLOW_CHANNEL:
+			domain = "NAND";
+		case COVERFLOW_HOMEBREW:
+			domain = "HOMEBREW";
+		default:
+			domain = "GAMES";
+	}
+
+	m_cfg.setBool(domain, "update_cache", true);
 }

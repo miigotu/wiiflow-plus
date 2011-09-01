@@ -1053,7 +1053,7 @@ int CMenu::_wiitdbDownloaderAsync()
 				
 				// Update cache
 				m_gameList.SetLanguage(m_curLanguage);
-				m_gameList.Update();
+				UpdateCache();
 				
 				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg24", L"Updating cache..."), 0.f);

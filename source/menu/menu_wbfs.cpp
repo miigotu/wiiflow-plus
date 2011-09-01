@@ -224,7 +224,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 	if (done && (op == CMenu::WO_REMOVE_GAME || op == CMenu::WO_ADD_GAME))
 	{
 		m_gameList.SetLanguage(m_curLanguage);
-		m_gameList.Update(COVERFLOW_USB);
+		UpdateCache(COVERFLOW_USB);
 
 		_loadList();
 		_initCF();

@@ -324,6 +324,8 @@ private:
 	static bool _sortByPlayCount(CItem item1, CItem item2);
 	static bool _sortByLastPlayed(CItem item1, CItem item2);
 	static bool _sortByGameID(CItem item1, CItem item2);
+	static bool _sortByAlpha(CItem item1, CItem item2);
+
 private:
 	static int _coverLoader(CCoverFlow *cf);
 	static float _step(float cur, float tgt, float spd);

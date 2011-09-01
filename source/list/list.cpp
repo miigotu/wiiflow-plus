@@ -312,6 +312,7 @@ void CList<dir_discHdr>::GetChannels(safe_vector<dir_discHdr> &headerlist, strin
 
 		dir_discHdr tmp;
 		bzero(&tmp, sizeof(dir_discHdr));
+		tmp.hdr.index = headerlist.size();
 
 		memcpy(tmp.hdr.id, chan->id, 4);
 		wcstombs(tmp.hdr.title, chan->name, sizeof(tmp.hdr.title));
@@ -328,6 +329,9 @@ void CList<dir_discHdr>::GetChannels(safe_vector<dir_discHdr> &headerlist, strin
 	
 		headerlist.push_back(tmp);
 	}
+
+	if(wiiTDB.IsLoaded())
+		wiiTDB.CloseFile();
 }
 
 template <typename T>
