@@ -1052,7 +1052,7 @@ int CMenu::_wiitdbDownloaderAsync()
 				remove(zippath.c_str());
 				
 				// Update cache
-				m_gameList.SetLanguage(m_curLanguage);
+				m_gameList.SetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str());
 				UpdateCache();
 				
 				LWP_MutexLock(m_mutex);

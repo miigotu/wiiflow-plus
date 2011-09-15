@@ -223,7 +223,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 	_hideWBFS();
 	if (done && (op == CMenu::WO_REMOVE_GAME || op == CMenu::WO_ADD_GAME))
 	{
-		m_gameList.SetLanguage(m_curLanguage);
+		m_gameList.SetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str());
 		UpdateCache(COVERFLOW_USB);
 
 		_loadList();

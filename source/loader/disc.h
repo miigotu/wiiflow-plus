@@ -53,6 +53,7 @@ struct dir_discHdr
 {
 	struct discHdr hdr;
 	char path[256];
+	wchar_t title[64];
 } ATTRIBUTE_PACKED;
 
 struct gc_discHdr
@@ -78,7 +79,7 @@ struct gc_discHdr
 
 	/* Game title */
 	char title[124];
-};
+} ATTRIBUTE_PACKED;
 
 #ifdef __cplusplus
 extern "C" {

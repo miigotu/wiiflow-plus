@@ -11,8 +11,8 @@ void CMEM2Alloc::init(unsigned int size)
 {
 	m_baseAddress = (SBlock *)(((u32)SYS_GetArena2Lo() + 31) & ~31);
 	m_endAddress = (SBlock *)((char *)m_baseAddress + std::min(size * 0x100000, (SYS_GetArena2Size() - 0x20 - 31) & ~31)); // Round down - an extra 32 for wdvd_unencrypted read
-	if (m_endAddress > (SBlock *)0x93300000 - 0x20)
-		m_endAddress = (SBlock *)0x93300000 - 0x20;
+	if (m_endAddress > (SBlock *)0x93000000)
+		m_endAddress = (SBlock *)0x93000000;
 	SYS_SetArena2Lo(m_endAddress + 0x20);
 	LWP_MutexInit(&m_mutex, 0);
 }

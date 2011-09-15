@@ -247,16 +247,34 @@ int CMenu::main(void)
 			//Search by Alphabet
 			if (BTN_DOWN_PRESSED || BTN_UP_PRESSED)
 			{
-				if (m_cfg.getInt(domain, "sort", SORT_ALPHA) != SORT_ALPHA)
+				int sorting = m_cfg.getInt(domain, "sort", SORT_ALPHA);
+				if (sorting != SORT_ALPHA && sorting != SORT_PLAYERS && sorting != SORT_WIFIPLAYERS)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt(domain, "sort", SORT_ALPHA);
 				}
-				curLetter.resize(1);
-				curLetter[0] = BTN_UP_PRESSED ? m_cf.prevLetter() : m_cf.nextLetter();
+				wchar_t c[2] = {0, 0};
+				BTN_UP_PRESSED ? m_cf.prevLetter(c) : m_cf.nextLetter(c);
+
+				curLetter.clear();
+				curLetter = wstringEx(c);
+
 				m_showtimer = 60;
-				m_btnMgr.setText(m_mainLblLetter, curLetter);
-				m_btnMgr.show(m_mainLblLetter);
+				if(sorting == SORT_ALPHA)
+				{
+					m_btnMgr.setText(m_mainLblLetter, curLetter);
+					m_btnMgr.show(m_mainLblLetter);
+				}
+				else
+				{
+					if(sorting == SORT_PLAYERS)
+						curLetter += m_loc.getWString(m_curLanguage, "players", L" Players");
+					else if(sorting == SORT_WIFIPLAYERS)
+						curLetter += m_loc.getWString(m_curLanguage, "wifiplayers", L" Wifi Players");
+
+					m_btnMgr.setText(m_mainLblNotice, curLetter);
+					m_btnMgr.show(m_mainLblNotice);
+				}
 			}
 			//Change songs
 			else if (BTN_LEFT_PRESSED)
@@ -269,7 +287,7 @@ int CMenu::main(void)
 				u32 sort = 0;
 				sort = m_cfg.getInt(domain, "sort", 0);
 				++sort;
-				if (sort >= 4) sort = 0;
+				if (sort >= SORT_MAX) sort = 0;
 				m_cf.setSorting((Sorting)sort);
 				m_cfg.setInt(domain, "sort", sort);
 				wstringEx curSort ;
@@ -281,6 +299,15 @@ int CMenu::main(void)
 					curSort = m_loc.getWString(m_curLanguage, "bylastplayed", L"By Last Played");
 				else if (sort == SORT_GAMEID)
 					curSort = m_loc.getWString(m_curLanguage, "bygameid", L"By Game I.D.");
+				else if (sort == SORT_ESRB)
+					curSort = m_loc.getWString(m_curLanguage, "byesrb", L"By ESRB");
+				else if (sort == SORT_WIFIPLAYERS)
+					curSort = m_loc.getWString(m_curLanguage, "bywifiplayers", L"By Wifi Players");
+				else if (sort == SORT_PLAYERS)
+					curSort = m_loc.getWString(m_curLanguage, "byplayers", L"By Players");
+				else if (sort == SORT_CONTROLLERS)
+					curSort = m_loc.getWString(m_curLanguage, "bygameid", L"By Controllers");
+
 				m_showtimer=60; 
 				m_btnMgr.setText(m_mainLblNotice, curSort);
 				m_btnMgr.show(m_mainLblNotice);
@@ -357,16 +384,36 @@ int CMenu::main(void)
 			else if (m_btnMgr.selected(m_mainBtnNext) || m_btnMgr.selected(m_mainBtnPrev))
 			{
 				const char *domain = _domainFromView();
-				if (m_cfg.getInt(domain, "sort", SORT_ALPHA) != SORT_ALPHA)
+				int sorting = m_cfg.getInt(domain, "sort", SORT_ALPHA);
+				if (sorting != SORT_ALPHA && sorting != SORT_PLAYERS && sorting != SORT_WIFIPLAYERS)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt(domain, "sort", SORT_ALPHA);
 				}
-				curLetter.resize(1);
-				curLetter[0] = m_btnMgr.selected(m_mainBtnPrev) ? m_cf.prevLetter() : m_cf.nextLetter();
+				wchar_t c[2] = {0, 0};
+				m_btnMgr.selected(m_mainBtnPrev) ? m_cf.prevLetter(c) : m_cf.nextLetter(c);
 				m_showtimer = 60;
-				m_btnMgr.setText(m_mainLblLetter, curLetter);
-				m_btnMgr.show(m_mainLblLetter);
+				
+				curLetter.clear();
+				curLetter = wstringEx(c);
+
+
+
+				if(sorting == SORT_ALPHA)
+				{
+					m_btnMgr.setText(m_mainLblLetter, curLetter);
+					m_btnMgr.show(m_mainLblLetter);
+				}
+				else
+				{
+					if(sorting == SORT_PLAYERS)
+						curLetter += m_loc.getWString(m_curLanguage, "players", L" Players");
+					else if(sorting == SORT_WIFIPLAYERS)
+						curLetter += m_loc.getWString(m_curLanguage, "wifiplayers", L" Wifi Players");
+
+					m_btnMgr.setText(m_mainLblNotice, curLetter);
+					m_btnMgr.show(m_mainLblNotice);
+				}
 			}
 		}
 		else if (done==0 && m_cat.getBool("GENERAL", "category_on_start", false))

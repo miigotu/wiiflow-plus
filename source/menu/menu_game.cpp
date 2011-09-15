@@ -270,7 +270,6 @@ void CMenu::_game(bool launch)
 		if(startGameSound < 1) startGameSound++;
 
 		string id(m_cf.getId());
-		string title(m_cf.getTitle());
 		u64 chantitle = m_cf.getChanTitle();
 
 		if (startGameSound == -5)

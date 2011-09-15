@@ -13,7 +13,7 @@
 #define TITLES_FILENAME			"titles.ini"
 #define CTITLES_FILENAME		"custom_titles.ini"
 
-#define DEVELOPERS				"r-win, Miigotu, Overj0y"
+#define DEVELOPERS				"r-win, Miigotu, OverjoY"
 #define PAST_DEVELOPERS			"Hibernatus, Narolez, Hulk"
 #define LOADER_AUTHOR			"Kwiirk, Waninkoko, Hermes"
 #define GUI_AUTHOR				"Hibernatus"
@@ -24,7 +24,7 @@ Spayrosam, Bluescreen81, Chappy23, BlindDude, Bubba, DJTaz, OggZee, Usptactical,
 WiiPower, Hermes, Spidy1000, Dimok, Kovani, Drexyl, DvZ, Etheboss, FIX94, GaiaKnight, \
 nibb, NJ7, Plasma, Pakatus, ravmn, spidercaleb, Ziggy34, And to anyone who has donated or contributed to Wiiflow that we missed!"
 
-#define THANKS_SITES			"devkitpro.org, wiibrew.org, wiitdb.com, ohloh.net, wiifanart.com, wiiflowiki.com"
+#define THANKS_SITES			"devkitpro.org, wiibrew.org, wiitdb.com, ohloh.net, wiifanart.com, wiiflowiki.com, tgames.fr.nf"
 #define THANKS_CODE				"CFG Loader, uLoader, USB Loader GX, NeoGamma, WiiXplorer, Triiforce, Mighty Channels"
 
 #define WIINNERTAG_URL 			"http://www.wiinnertag.com/wiinnertag_scripts/update_sign.php?key={KEY}&game_id={ID6}"

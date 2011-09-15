@@ -250,7 +250,7 @@ void CMenu::init(u8 usableDevices)
 	makedir((char *)m_wipDir.c_str());
 
 	makedir((char *)m_listCacheDir.c_str());
-	m_gameList.Init(m_listCacheDir, m_settingsDir, m_curLanguage, m_loc.getString(m_curLanguage, "wiitdb_code", "EN"));
+	m_gameList.Init(m_listCacheDir, m_settingsDir, m_loc.getString(m_curLanguage, "wiitdb_code", "EN"));
 
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
@@ -1160,15 +1160,13 @@ void CMenu::_initCF(void)
 				}
 			}
 
-			wstringEx w = wstringEx(m_gameList[i].hdr.title);
-
 			int playcount = m_gcfg1.getInt("PLAYCOUNT", id, 0);
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
 
 			if(m_gamelistdump)
-				m_dump.setWString(domain, m_current_view != COVERFLOW_USB ? id.substr(0, 4) : id, w);
+				m_dump.setWString(domain, m_current_view != COVERFLOW_USB ? id.substr(0, 4) : id, m_gameList[i].title);
 
-			m_cf.addItem(&m_gameList[i], w.c_str(), chantitle, sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), m_gameList[i].hdr.casecolor, playcount, lastPlayed);
+			m_cf.addItem(&m_gameList[i], sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
 		}
 	}
 	m_gcfg1.unload();

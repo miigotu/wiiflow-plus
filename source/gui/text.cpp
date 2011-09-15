@@ -461,73 +461,22 @@ string rtrim(string s)
 	return s;
 }
 
-void Asciify(char *str)
+void Asciify( wchar_t *str )
 {
-	const char *ptr = str;
-	char *ctr = str;
+	const wchar_t *ptr = str;
+	wchar_t *ctr = str;
 	
-	for( u32 i=0; i < strlen(str); i++ )
-	{
-		switch(str[i])
+	while(*ptr != '\0')
+    {
+		switch(*ptr)
 		{
-			case 0xc3:
-			case 0x8c:
-			case 0xe2:
-			case 0x27:
-				ctr--;
+			case 0x14c:
+				*ctr = 0x4f;
 				break;
-			case 0x87:
-				*ctr = 0x80; 
-				break;
-			case 0xa7:
-				*ctr = 0x87; 
-				break;
-			case 0xa0:
-				*ctr = 0x85; 
-				break;
-			case 0xa2:
-				*ctr = 0x83; 
-				break;
-			case 0x80:
-				*ctr = 0x41; 
-				break;
-			case 0x82:
-				*ctr = 0x41; 
-				break;
-			case 0xaa:
-				*ctr = 0x88; 
-				break;
-			case 0xa8:
-				*ctr = 0x8a; 
-				break;
-			case 0xa9:
-				*ctr = 0xe9;  
-				break;	
-			case 0x89:
-				*ctr = 0x90; 
-				break;
-			case 0x88:
-				*ctr = 0x45; 
-				break;
-			case 0xc5:
-				*ctr = 0x4f; 
-				break;
-			case 0xb1:
-				*ctr = 0xe4; 
-				break;
-			case 0x9f:
-				*ctr = 0xe1; 
-				break;
-			case 0xab:
-				*ctr = 0xeb;
-				break;
-			default:
-				*ctr = str[i];
-				break;				
 		}
-		ctr++;
+		*ctr = *ptr;
+		++ptr;
+		++ctr;	
 	}
-	
-	*ctr = *ptr;
 	*ctr = '\0';
 }

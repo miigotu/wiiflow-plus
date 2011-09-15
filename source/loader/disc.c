@@ -33,7 +33,7 @@
 u32 appentrypoint;
 	
 /* Disc pointers */
-static u32 *buffer = (u32 *)0x93300000-0x20;
+static u32 *buffer = (u32 *)0x93000000;
 static u8  *diskid = (u8  *)0x80000000;
 
 GXRModeObj *disc_vmode = NULL;

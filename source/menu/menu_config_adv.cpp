@@ -199,7 +199,7 @@ int CMenu::_configAdv(void)
 	if (m_gameList.empty() || lang_changed)
 	{
 		if(lang_changed)
-			m_gameList.SetLanguage(m_curLanguage);
+			m_gameList.SetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str());
 		_loadList();
 	}
 	lang_changed = false;

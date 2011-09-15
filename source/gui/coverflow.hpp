@@ -25,7 +25,12 @@ enum Sorting
 	SORT_ALPHA,
 	SORT_PLAYCOUNT,
 	SORT_LASTPLAYED,
-	SORT_GAMEID
+	SORT_GAMEID,
+	SORT_WIFIPLAYERS,
+	SORT_PLAYERS,
+	SORT_MAX,
+	SORT_ESRB,
+	SORT_CONTROLLERS,
 };
 
 class CCoverFlow
@@ -38,7 +43,7 @@ public:
 	// Cover list management
 	void clear(void);
 	void reserve(u32 capacity);
-	void addItem(dir_discHdr *hdr, const wchar_t *title, const u64 chantitle, const char *picPath, const char *boxPicPath, CColor coverColor = CColor(0xFFFFFFFF), int playcount = 0, unsigned int lastPlayed = 0);
+	void addItem(dir_discHdr *hdr, const char *picPath, const char *boxPicPath, int playcount = 0, unsigned int lastPlayed = 0);
 	bool empty(void) const { return m_items.empty(); }
 	// 
 	bool start(const char *id = 0);
@@ -51,8 +56,10 @@ public:
 	bool findId(const char *id, bool instant = false);
 	void pageUp(void);
 	void pageDown(void);
-	wchar_t nextLetter(void);
-	wchar_t prevLetter(void);
+	void nextLetter(wchar_t *c);
+	void prevLetter(wchar_t *c);
+	void nextPlayers(bool wifi, wchar_t *c);
+	void prevPlayers(bool wifi, wchar_t *c);
 	void left(void);
 	void right(void);
 	void up(void);
@@ -118,7 +125,7 @@ public:
 	std::string getNextId(void) const;
 	dir_discHdr * getHdr(void) const;
 	dir_discHdr * getNextHdr(void) const;
-	std::string getTitle(void) const;
+	wstringEx getTitle(void) const;
 	u64 getChanTitle(void) const;
 private:
 	enum DrawMode { CFDR_NORMAL, CFDR_STENCIL, CFDR_SHADOW };
@@ -176,19 +183,16 @@ private:
 	struct CItem
 	{
 		dir_discHdr *hdr;
-		wstringEx title;
-		u64 chantitle;
 		std::string picPath;
 		std::string boxPicPath;
 		std::string discPicPath;
-		CColor coverColor;
 		int playcount;
 		unsigned int lastPlayed;
 		STexture texture;
 		volatile bool boxTexture;
 		volatile enum TexState state;
 		// 
-		CItem(dir_discHdr *itemHdr, const wchar_t *itemTitle, const u64 chantitle, const char *itemPic, const char *itemBoxPic, CColor coverColor, int playcount, unsigned int lastPlayed);
+		CItem(dir_discHdr *itemHdr, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed);
 		bool operator<(const CItem &i) const;
 	};
 	struct CCover
@@ -325,6 +329,8 @@ private:
 	static bool _sortByLastPlayed(CItem item1, CItem item2);
 	static bool _sortByGameID(CItem item1, CItem item2);
 	static bool _sortByAlpha(CItem item1, CItem item2);
+	static bool _sortByPlayers(CItem item1, CItem item2);
+	static bool _sortByWifiPlayers(CItem item1, CItem item2);
 
 private:
 	static int _coverLoader(CCoverFlow *cf);

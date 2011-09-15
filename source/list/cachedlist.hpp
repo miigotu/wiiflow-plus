@@ -19,21 +19,16 @@ template <typename T = dir_discHdr>
 class CachedList : public safe_vector<T>
 {
   public:
-	void Init(string cachedir, string settingsDir, string curLanguage)
-	{
-		return Init(cachedir, settingsDir, curLanguage, string());
-	}
-	void Init(string cachedir, string settingsDir, string curLanguage, string channelLang)						/* Initialize Private Variables */
+	void Init(string cachedir, string settingsDir, string curLanguage)						/* Initialize Private Variables */
 	{
 		m_cacheDir = cachedir;
 		m_settingsDir = settingsDir;
 		m_curLanguage = m_lastLanguage = curLanguage;
-		m_channelLang = m_lastchannelLang = channelLang;
+		m_channelLang = m_lastchannelLang = curLanguage;
 		m_loaded = false;
 		m_database = "";
 		for(u32 i = 0; i < COVERFLOW_MAX; i++)
 			force_update[i] = false;
-		
 	}
 
 	void Update(u32 view = COVERFLOW_MAX)					/* Force db update on next load */
@@ -57,7 +52,7 @@ class CachedList : public safe_vector<T>
     void Add(T tmp) {if(m_loaded) CCache<T>(*this, m_database, tmp, ADD);}					/* Add One */
     void Remove(u32 index) {if(m_loaded) CCache<T>(*this, m_database, index, REMOVE);}		/* Remove One */
 	
-	void SetLanguage(string curLanguage) { m_curLanguage = curLanguage; }
+	void SetLanguage(string curLanguage) { m_curLanguage = m_channelLang = curLanguage; }
   private:
     string make_db_name(string path);
 

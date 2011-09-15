@@ -184,7 +184,7 @@ s32 WBFS_Ext_AddGame(progress_callback_t spinner, void *spinner_data)
 
 	char gamepath[MAX_FAT_PATH];
 	bzero(gamepath, MAX_FAT_PATH);
-
+	
 	Disc_ReadHeader(&header);
 	snprintf(folder, sizeof(folder), "%s%s/%s [%s]", wbfs_fs_drive, wbfs_ext_dir, header.title, header.id);
 	makedir((char *)folder);

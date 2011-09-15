@@ -159,11 +159,14 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			
 			if(GTitle.size() > 0 || (wiiTDB.IsLoaded() && wiiTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
 			{
-				Asciify((char *)GTitle.c_str());
-				strcpy(tmp.hdr.title, GTitle.c_str());
+				mbstowcs(tmp.title, GTitle.c_str(), sizeof(tmp.title));
+				Asciify(tmp.title);
 				tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.GetCaseColor((char *)tmp.hdr.id);
-				//gprintf("Found title in WiiTDB.xml: %s\n", tmp.hdr.title);
-				//gprintf("Case color:  0x%x\n", tmp.hdr.casecolor);
+
+				tmp.hdr.wifi = wiiTDB.GetWifiPlayers((char *)tmp.hdr.id);
+				tmp.hdr.players = wiiTDB.GetPlayers((char *)tmp.hdr.id);
+				//tmp.hdr.controllers = wiiTDB.GetAccessories((char *)tmp.hdr.id);
+
 				tmp.hdr.magic = 0x5D1C9EA3;
 				headerlist.push_back(tmp);
 				continue;
@@ -179,7 +182,9 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 
 			if (tmp.hdr.magic == 0x5D1C9EA3)
 			{
-				Asciify(tmp.hdr.title);
+				mbstowcs(tmp.title, (const char *)tmp.hdr.title, sizeof(tmp.hdr.title));
+				Asciify(tmp.title);
+
 				headerlist.push_back(tmp);
 				continue;
 			}
@@ -193,7 +198,9 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				if(wbfs_get_disc_info(part, 0, (u8*)&tmp.hdr,	sizeof(discHdr), NULL) == 0
 				&& memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) != 0)
 				{
-					Asciify(tmp.hdr.title);
+					mbstowcs(tmp.title, (const char *)tmp.hdr.title, sizeof(tmp.title));
+					Asciify(tmp.title);
+					
 					headerlist.push_back(tmp);
 				}
 				WBFS_Ext_ClosePart(part);
@@ -223,7 +230,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				}
 				else (*itr)[i] = tolower((*itr)[i]);
 			}
-			strcpy(tmp.hdr.title, (*itr).c_str());
+			mbstowcs(tmp.title, (*itr).c_str(), sizeof(tmp.title));
 
 			for (u32 i = 0; i < 6; ++i)
 				(*itr)[i] = toupper((*itr)[i]);
@@ -241,10 +248,10 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			for(u32 i = 0; i < 6; ++i)
 				gprintf("%c", tmp.hdr.id[i]);
 			gprintf("\n");
-			gprintf("Name: %s\n", tmp.hdr.title);
+			gprintf("Name: %s\n", tmp.title);
 			gprintf("Path: %s\n", tmp.path); */
 
-			Asciify(tmp.hdr.title);
+			Asciify(tmp.title);
 			headerlist.push_back(tmp);
 			continue;
 		}
@@ -265,10 +272,17 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, 0).intVal();			
 				if(GTitle.size() > 0 || (wiiTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
 				{
-					strcpy(tmp.hdr.title, GTitle.c_str());
+					mbstowcs(tmp.title, GTitle.c_str(), sizeof(tmp.title));
 					tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.GetCaseColor((char *)tmp.hdr.id);
+
+					tmp.hdr.wifi = wiiTDB.GetWifiPlayers((char *)tmp.hdr.id);
+					tmp.hdr.players = wiiTDB.GetPlayers((char *)tmp.hdr.id);
+					//tmp.hdr.controllers = wiiTDB.GetAccessories((char *)tmp.hdr.id);
+				
 				}
-				Asciify(tmp.hdr.title);
+				else mbstowcs(tmp.title, tmp.hdr.title, sizeof(tmp.title));
+
+				Asciify(tmp.title);
 				headerlist.push_back(tmp);
 			}			
 			continue;
@@ -315,16 +329,21 @@ void CList<dir_discHdr>::GetChannels(safe_vector<dir_discHdr> &headerlist, strin
 		tmp.hdr.index = headerlist.size();
 
 		memcpy(tmp.hdr.id, chan->id, 4);
-		wcstombs(tmp.hdr.title, chan->name, sizeof(tmp.hdr.title));
+		memcpy(tmp.title, chan->name, sizeof(tmp.title));
 		string GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
 		int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, 0).intVal();
 
 		if(GTitle.size() > 0 || (wiiTDB.IsLoaded() && wiiTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
-			strcpy(tmp.hdr.title, GTitle.c_str());
+			mbstowcs(tmp.title, GTitle.c_str(), sizeof(tmp.title));
 
-		Asciify(tmp.hdr.title);
+		Asciify(tmp.title);
 
 		tmp.hdr.casecolor = ccolor != 0 ? ccolor : wiiTDB.GetCaseColor((char *)tmp.hdr.id);
+
+		tmp.hdr.wifi = wiiTDB.GetWifiPlayers((char *)tmp.hdr.id);
+		tmp.hdr.players = wiiTDB.GetPlayers((char *)tmp.hdr.id);
+		//tmp.hdr.controllers = wiiTDB.GetAccessories((char *)tmp.hdr.id);
+				
 		tmp.hdr.chantitle = chan->title;
 	
 		headerlist.push_back(tmp);
