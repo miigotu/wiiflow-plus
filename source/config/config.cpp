@@ -200,7 +200,7 @@ void Config::unload(void)
 	m_domains.clear();
 }
 
-void Config::save(void)
+void Config::save(bool unload)
 {
 	if (m_changed)
 	{
@@ -215,6 +215,7 @@ void Config::save(void)
 		}
 		m_changed = false;
 	}
+	if(unload) this->unload();
 }
 
 bool Config::has(const std::string &domain, const std::string &key) const

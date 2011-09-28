@@ -963,18 +963,6 @@ out:
 	return 0;
 }
 
-int CMenu::_titleDownloaderAll(CMenu *m)
-{
-	if (!m->m_thrdWorking) return 0;
-	return m->_titleDownloader(false);
-}
-
-int CMenu::_titleDownloaderMissing(CMenu *m)
-{
-	if (!m->m_thrdWorking) return 0;
-	return m->_titleDownloader(true);
-}
-
 int CMenu::_wiitdbDownloader(CMenu *m)
 {
 	if (!m->m_thrdWorking) return 0;
@@ -1056,106 +1044,13 @@ int CMenu::_wiitdbDownloaderAsync()
 				UpdateCache();
 				
 				LWP_MutexLock(m_mutex);
-				_setThrdMsg(_t("dlmsg24", L"Updating cache..."), 0.f);
+				_setThrdMsg(_t("dlmsg26", L"Updating cache..."), 0.f);
 				LWP_MutexUnlock(m_mutex);
 
 				_loadList();
 				_initCF();
 			}
 		}
-	}
-	m_thrdWorking = false;
-	return 0;
-}
-
-int CMenu::_titleDownloader(bool missingOnly)
-{
-	Config titles;
-	bool ok = false;
-
-	u32 bufferSize = 1 * 0x080000;	// Maximum download size 512kb
-	SmartBuf buffer = smartAnyAlloc(bufferSize);
-	if (!buffer)
-	{
-		LWP_MutexLock(m_mutex);
-		_setThrdMsg(L"Not enough memory", 1.f);
-		LWP_MutexUnlock(m_mutex);
-		return 0;
-	}
-
-	titles.load(sfmt("%s/" TITLES_FILENAME, m_settingsDir.c_str()).c_str());
-	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
-	LWP_MutexLock(m_mutex);
-	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
-	LWP_MutexUnlock(m_mutex);
-	if (_initNetwork() < 0)
-	{
-		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
-		LWP_MutexUnlock(m_mutex);
-	}
-	else
-	{
-		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg11", L"Downloading..."), 0.1f);
-		LWP_MutexUnlock(m_mutex);
-		m_thrdStep = 0.1f;
-		m_thrdStepLen = 0.9f - 0.1f;
-		download = downloadfile(buffer.get(), bufferSize, sfmt(TITLES_URL, langCode.c_str()).c_str(), CMenu::_downloadProgress, this);
-		if (download.data == 0 || download.size < 42)
-		{
-			LWP_MutexLock(m_mutex);
-			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
-			LWP_MutexUnlock(m_mutex);
-		}
-		else
-		{
-			download.data[min(download.size, bufferSize - 1)] = 0;
-			const char *p = (const char *)download.data;
-			const char *txtEnd = (const char *)download.data + download.size;
-			while (p < txtEnd)
-			{
-				u32 len = strcspn((char *)p, "\n");
-				if (len > 7)
-				{
-					string l((char *)p, len);
-					u32 i = l.find_first_of('=');
-					u32 j = l.find_first_of(' ');
-					u32 n = min(i, j);
-					if (i != string::npos && n >= 4 && (n == 6 || n == 4))
-					{
-						u32 m = l.find_first_not_of(' ', i + 1);
-						if (m != string::npos)
-						{
-							ok = true;
-							wstringEx w;
-							w.fromUTF8(l.substr(m, l[l.size() - 1] == '\r' ? l.size() - 1 - m : l.size() - m).c_str());
-							if (missingOnly)
-								titles.getWString("TITLES", l.substr(0, n), w);
-							else
-								titles.setWString("TITLES", l.substr(0, n), w);
-						}
-					}
-				}
-				p += len + 1;
-			}
-			if (!ok)
-			{
-				LWP_MutexLock(m_mutex);
-				_setThrdMsg(_t("dlmsg16", L"Couldn't read file!"), 1.f);
-				LWP_MutexUnlock(m_mutex);
-			}
-		}
-	}
-	if (ok)
-	{
-		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
-		LWP_MutexUnlock(m_mutex);
-		titles.save();
-		LWP_MutexLock(m_mutex);
-		_setThrdMsg(_t("dlmsg14", L"Done."), 1.f);
-		LWP_MutexUnlock(m_mutex);
 	}
 	m_thrdWorking = false;
 	return 0;

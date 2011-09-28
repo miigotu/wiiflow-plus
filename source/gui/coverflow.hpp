@@ -185,7 +185,6 @@ private:
 		dir_discHdr *hdr;
 		std::string picPath;
 		std::string boxPicPath;
-		std::string discPicPath;
 		int playcount;
 		unsigned int lastPlayed;
 		STexture texture;

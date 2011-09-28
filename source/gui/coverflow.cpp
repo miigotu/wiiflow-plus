@@ -1337,9 +1337,7 @@ void CCoverFlow::_drawCoverBox(int i, bool mirror, CCoverFlow::DrawMode dm)
 		{
 			GX_InitTexObj(&texObj, m_dvdSkin_Black.data.get(), m_dvdSkin_Black.width, m_dvdSkin_Black.height, m_dvdSkin_Black.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
 		}
-		else {
-			GX_InitTexObj(&texObj, m_dvdSkin.data.get(), m_dvdSkin.width, m_dvdSkin.height, m_dvdSkin.format, GX_CLAMP, GX_CLAMP, GX_FALSE);	
-		}
+		else GX_InitTexObj(&texObj, m_dvdSkin.data.get(), m_dvdSkin.width, m_dvdSkin.height, m_dvdSkin.format, GX_CLAMP, GX_CLAMP, GX_FALSE);	
 		GX_LoadTexObj(&texObj, GX_TEXMAP0);
 	}
 	GX_Begin(GX_QUADS, GX_VTXFMT0, g_boxMeshQSize);
@@ -1703,12 +1701,12 @@ bool CCoverFlow::_sortByAlpha(CItem item1, CItem item2)
 
 	for (u32 j = 0, k = 0; j < s && k < s; ++j && ++k)
 	{
-		while (!iswalnum(upperCaseWChar(title1.c_str()[j])) && j < s) j++;
-		while (!iswalnum(upperCaseWChar(title2.c_str()[k])) && k < s) k++;
+		while (!iswalnum(title1[j]) && j < s) j++;
+		while (!iswalnum(title2[k]) && k < s) k++;
 
-		if (upperCaseWChar(title1.c_str()[j]) < upperCaseWChar(title2.c_str()[k]))
+		if (upperCaseWChar(title1[j]) < upperCaseWChar(title2[k]))
 			return true;
-		else if(upperCaseWChar(title1.c_str()[j]) > upperCaseWChar(title2.c_str()[k]))
+		else if(upperCaseWChar(title1[j]) > upperCaseWChar(title2[k]))
 			return false;
 	}
 	return title1.length() < title2.length();
@@ -2101,7 +2099,7 @@ void CCoverFlow::nextLetter(wchar_t *c)
 {
 	if (m_covers.empty())
 	{
-		c[0] = '\0';
+		c[0] = L'\0';
 		return;
 	}
 
@@ -2110,20 +2108,25 @@ void CCoverFlow::nextLetter(wchar_t *c)
 
 	LockMutex lock(m_mutex);
 
-	u32 i, n = m_items.size();
+	u32 i, j = 0, k = 0, n = m_items.size();
 
 	_completeJump();
 	u32 curPos = _currentPos();
 
-	c[0] = upperCaseWChar(m_items[curPos].hdr->title[0]);
+	while (!iswalnum(m_items[curPos].hdr->title[j]) && m_items[curPos].hdr->title[j+1] != L'\0') j++;
+	c[0] = upperCaseWChar(m_items[curPos].hdr->title[j]);
+
 	for (i = 1; i < n; ++i)
-		if (upperCaseWChar(m_items[loopNum(curPos + i, n)].hdr->title[0]) != c[0])
+	{
+		k = 0;
+		while (!iswalnum(m_items[loopNum(curPos + i, n)].hdr->title[k]) && m_items[loopNum(curPos + i, n)].hdr->title[k+1] != L'\0') k++;
+		if (upperCaseWChar(m_items[loopNum(curPos + i, n)].hdr->title[k]) != c[0])
 			break;
+	}
 	if (i < n)
 	{
 		_setJump(i);
-		c[0] = upperCaseWChar(m_items[loopNum(curPos + i, n)].hdr->title[0]);
-		c[0] = upperCaseWChar(m_items[loopNum(curPos + i, n)].hdr->title[0]);
+		c[0] = upperCaseWChar(m_items[loopNum(curPos + i, n)].hdr->title[k]);
 	}
 	_updateAllTargets();
 }
@@ -2132,7 +2135,7 @@ void CCoverFlow::prevLetter(wchar_t *c)
 {
 	if (m_covers.empty())
 	{
-		c[0] = '\0';
+		c[0] = L'\0';
 		return;
 	}
 
@@ -2140,23 +2143,38 @@ void CCoverFlow::prevLetter(wchar_t *c)
 		return prevPlayers(m_sorting == SORT_WIFIPLAYERS, c);
 
 	LockMutex lock(m_mutex);
-	u32 i, n = m_items.size();
+	u32 i, j = 0, k = 0, n = m_items.size();
 
 	_completeJump();
 	u32 curPos = _currentPos();
-	c[0] = upperCaseWChar(m_items[curPos].hdr->title[0]);
+	
+	while (!iswalnum(m_items[curPos].hdr->title[j]) && m_items[curPos].hdr->title[j+1] != L'\0') j++;
+	c[0] = upperCaseWChar(m_items[curPos].hdr->title[j]);
 	for (i = 1; i < n; ++i)
-		if (upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[0]) != c[0])
+	{
+		k = 0;
+		while (!iswalnum(m_items[loopNum(curPos - i, n)].hdr->title[k]) && m_items[loopNum(curPos - i, n)].hdr->title[k+1] != L'\0') k++;
+		if (upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[k]) != c[0])
 		{
-			c[0] = upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[0]);
-			while(i < n && upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[0]) == c[0]) ++i;
+			c[0] = upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[k]);
+			while(i < n)
+			{
+				++i;
+				k = 0;
+				while (!iswalnum(m_items[loopNum(curPos - i, n)].hdr->title[k]) && m_items[loopNum(curPos - i, n)].hdr->title[k+1] != L'\0') k++;
+				if(upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[k]) != c[0])
+					break;
+			}
 			i--;
 			break;
 		}
+	}
 	if (i < n)
 	{
 		_setJump(-i);
-		c[0] = upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[0]);
+		k = 0;
+		while (!iswalnum(m_items[loopNum(curPos - i, n)].hdr->title[k]) && m_items[loopNum(curPos - i, n)].hdr->title[k+1] != L'\0') k++;
+		c[0] = upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[k]);
 	}
 	_updateAllTargets();
 }
@@ -2165,7 +2183,7 @@ void CCoverFlow::nextPlayers(bool wifi, wchar_t *c)
 {
 	if (m_covers.empty())
 	{
-		c[0] = '\0';
+		c[0] = L'\0';
 		return;
 	}
 
@@ -2188,14 +2206,14 @@ void CCoverFlow::nextPlayers(bool wifi, wchar_t *c)
 	
 	char p[4] = {0 ,0 ,0 ,0};
 	sprintf(p, "%d", players);
-	mbstowcs(c, p, strlen(p)); 
+	mbstowcs(c, p, strlen(p));
 }
 
 void CCoverFlow::prevPlayers(bool wifi, wchar_t *c)
 {
 	if (m_covers.empty())
 	{
-		c[0] = '\0';
+		c[0] = L'\0';
 		return;
 	}
 

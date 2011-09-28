@@ -96,9 +96,13 @@ void CList<string>::GetHeaders(safe_vector<string> pathlist, safe_vector<string>
 template <>
 void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist, string settingsDir, string curLanguage)
 {
+	if(pathlist.size() < 1) return;
+	headerlist.reserve(pathlist.size() + headerlist.size());
+
+	gprintf("Getting headers for paths in pathlist (%d)\n", pathlist.size());
+
 	dir_discHdr tmp;
 	u32 count = 0;
-	
 	string GTitle;
 
 	Config custom_titles;
@@ -107,11 +111,6 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 		string custom_titles_path = sfmt("%s/" CTITLES_FILENAME, settingsDir.c_str());
 		custom_titles.load(custom_titles_path.c_str());
 	}
-
-	gprintf("Getting headers for paths in pathlist (%d)\n", pathlist.size());
-
-	if(pathlist.size() < 1) return;
-	headerlist.reserve(pathlist.size() + headerlist.size());
 
 	WiiTDB wiiTDB;
 	if (settingsDir.size() > 0)
@@ -146,7 +145,6 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				}
 			}
 
-//			gprintf("Get information for '%s'\n", tmp.hdr.id);
 			if (!isalnum(tmp.hdr.id[0]) || tmp.hdr.id[0] == 0 || memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) == 0)
 			{
 				gprintf("Skipping file: '%s'\n", (*itr).c_str());
@@ -195,7 +193,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 				if (!part) continue;
 
 				/* Get header */
-				if(wbfs_get_disc_info(part, 0, (u8*)&tmp.hdr,	sizeof(discHdr), NULL) == 0
+				if(wbfs_get_disc_info(part, 0, (u8*)&tmp.hdr, sizeof(discHdr), NULL) == 0
 				&& memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) != 0)
 				{
 					mbstowcs(tmp.title, (const char *)tmp.hdr.title, sizeof(tmp.title));
@@ -211,7 +209,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			|| (*itr).rfind(".elf") != string::npos || (*itr).rfind(".ELF")  != string::npos)
 		{
 			char *filename = &(*itr)[(*itr).find_last_of('/')+1];
-			//gprintf("Filename: %s\n", filename);
+
 			if(strcasecmp(filename, "boot.dol") != 0 && strcasecmp(filename, "boot.elf") != 0) continue;
 
 			(*itr)[(*itr).find_last_of('/')] = 0;
@@ -243,13 +241,6 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 					tmp.hdr.id[i] = '_';
 
 			tmp.hdr.casecolor = 0xff;
-
-			/* gprintf("Adding ID:");
-			for(u32 i = 0; i < 6; ++i)
-				gprintf("%c", tmp.hdr.id[i]);
-			gprintf("\n");
-			gprintf("Name: %s\n", tmp.title);
-			gprintf("Path: %s\n", tmp.path); */
 
 			Asciify(tmp.title);
 			headerlist.push_back(tmp);

@@ -5,7 +5,7 @@ changes=2.2 Alpha2 Now updates data folder with zip support.\nMany more changes.
 data_zip_size=456334
 dol_size=3713248
 num_versions=6
-update_url=http://update.wiiflow.org
+update_url=http://wiiflow.org/update
 type=zip
 version=228
 latestversion=228
@@ -37,7 +37,7 @@ type=dol
 #dol_size= (if type == dol, dol size in bytes, else 0)
 #num_versions= (installed version + number available in this txt file including latest version)
 #type= (dol|zip set to dol if update is for dol only without zip. defaults to zip.)
-#update_url= (http://update.wiiflow.org)
+#update_url= (http://wiiflow.org/update)
 #version= (latest version revision number)
 
 #[VERSION#]

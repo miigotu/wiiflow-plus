@@ -14,7 +14,6 @@
 
 extern "C" {extern u8 currentPartition;}
 extern int __Arena2Lo;
-int mainIOSRev = 0;
 
 #define HAVE_AHBPROT ((*(vu32*)0xcd800064 == 0xFFFFFFFF) ? 1 : 0)
 #define MEM_REG_BASE 0xd8b4000

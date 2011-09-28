@@ -15,7 +15,7 @@ Content:
 -------
 
 Q. Can it play background music?
-A. Put your OGG files in /wiiflow/music/
+A. Put your OGG/MP3 files in /wiiflow/music/
 
 
 Q. The theme Nihonflow doesn't display accents correcty.
@@ -69,5 +69,5 @@ To remove the child mode persitently, go to the settings menu, click "Unlock", t
 
 
 Q. I've found a bug.
-A. come to #wiiflow on irc.abjects.net and report it there.
+A. come to #wiiflow on irc.abjects.net, or goto the url http://tinyurl.com/wiiflowirc and report it there.
 

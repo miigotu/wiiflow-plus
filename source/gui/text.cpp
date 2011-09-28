@@ -185,7 +185,7 @@ safe_vector<wstringEx> stringToVector(const wstringEx &text, char sep)
 	return v;
 }
 
-bool SFont::fromBuffer(const SmartBuf &buffer, u32 bufferSize, u32 size, u32 lspacing, u32 w, u32 idx)
+bool SFont::fromBuffer(const SmartBuf &buffer, u32 bufferSize, u32 size, u32 lspacing, u32 w, u32 idx, const char *)
 {
 	if (!buffer || !font) return false;
 

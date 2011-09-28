@@ -6,6 +6,7 @@
 #include "sys.h"
 #include "alt_ios.h"
 #include "defines.h"
+#include "cios.hpp"
 
 const int pixels_to_skip = 10;
 
@@ -106,9 +107,9 @@ void CMenu::_initAboutMenu(CMenu::SThemeData &theme)
 	_addUserLabels(theme, m_aboutLblUser, ARRAY_SIZE(m_aboutLblUser), "ABOUT");
 	m_aboutBg = _texture(theme.texSet, "ABOUT/BG", "texture", theme.bg);
 	m_aboutLblTitle = _addLabel(theme, "ABOUT/TITLE", theme.titleFont, L"", 170, 25, 300, 75, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, emptyTex);
-	m_aboutLblInfo = _addLabel(theme, "ABOUT/INFO", theme.thxFont, L"", 40, 220, 560, 260, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	m_aboutLblInfo = _addLabel(theme, "ABOUT/INFO", theme.txtFont, L"", 40, 220, 560, 260, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP, emptyTex);
 	m_aboutBtnSystem = _addButton(theme, "ABOUT/SYSTEM_BTN", theme.btnFont, L"", 20, 410, 200, 56, theme.btnFontColor);
-	m_aboutLblIOS = _addLabel(theme, "ABOUT/IOS", theme.thxFont, L"", 240, 400, 360, 56, theme.txtFontColor, FTGX_JUSTIFY_RIGHT | FTGX_ALIGN_MIDDLE);
+	m_aboutLblIOS = _addLabel(theme, "ABOUT/IOS", theme.txtFont, L"", 240, 400, 360, 56, theme.txtFontColor, FTGX_JUSTIFY_RIGHT | FTGX_ALIGN_MIDDLE);
 	// 
 	_setHideAnim(m_aboutLblTitle, "ABOUT/TITLE", 0, 100, 0.f, 0.f);
 	_setHideAnim(m_aboutLblInfo, "ABOUT/INFO", 0, -100, 0.f, 0.f);
@@ -149,9 +150,10 @@ void CMenu::_textAbout(void)
 			false
 		);
 
-	u32 ver;
 	Nand::Instance()->Disable_Emu();
-	char* InfoIos=get_iosx_info_from_tmd(mainIOS, &ver);
+	iosinfo_t * iosInfo = cIOSInfo::GetInfo(mainIOS);
+	if(iosInfo != NULL)
+		m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"IOS%i base %i v%i"), mainIOS, iosInfo->baseios, iosInfo->version), true);
+	SAFE_FREE(iosInfo);
 	Nand::Instance()->Enable_Emu();
-	m_btnMgr.setText(m_aboutLblIOS, wfmt(_fmt("ios", L"IOS%i base %s"), mainIOS, InfoIos), true);
 }

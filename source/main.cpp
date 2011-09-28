@@ -13,20 +13,14 @@
 #include "homebrew.h"
 #include "gecko.h"
 #include "wifi_gecko.h"
+#include "cios.hpp"
+#include "nand.hpp"
 
 extern "C" { extern void __exception_setreload(int t);}
 
 CMenu *mainMenu;
 extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
 extern "C" void HideWaitMessage() {mainMenu->_hideWaitMessage(true); }
-
-void parse_ios_arg(int arg, int *ios, int *min_rev)
-{
-	*ios = arg;
-	gprintf("Passed IOS: %i\n", *ios);
-	*min_rev = D2X_MIN_REV;
-	gprintf("Passed IOS Minimum Rev: %i\n", *min_rev);
-}
 
 int main(int argc, char **argv)
 {
@@ -44,14 +38,7 @@ int main(int argc, char **argv)
 		{
 			while(argv[i][0] && !isdigit(argv[i][0])) argv[i]++;
 			if (atoi(argv[i]) < 254 && atoi(argv[i]) > 0)
-				parse_ios_arg(atoi(argv[i]), &mainIOS, &mainIOSminRev);
-		}
-		else if (argv[i] != NULL && strcasestr(argv[i], "port=") != NULL)
-		{
-			while(argv[i][0] && !isdigit(argv[i][0])) argv[i]++;
-			bool port = atoi(argv[i]);
-			if (port <= 1 && port >= 0)
-				use_port1 = port;
+				mainIOS = atoi(argv[i]);
 		}
 		else if (strlen(argv[i]) == 6)
 		{
@@ -61,14 +48,18 @@ int main(int argc, char **argv)
 					gameid = NULL;
 		}
 	}
-	gprintf("Loading cIOS: %d, Port: %d\n", mainIOS, use_port1);
+	gprintf("Loading cIOS: %d\n", mainIOS);
+
+
+	ISFS_Initialize();
 
 	// Load Custom IOS
 	bool iosOK = loadIOS(mainIOS, false);
-	mainIOSRev = IOS_GetRevision();
-	iosOK = iosOK && mainIOSRev >= mainIOSminRev;
-
 	MEM2_init(52);
+
+	u8 mainIOSBase = 0;
+	iosOK = iosOK && cIOSInfo::D2X(mainIOS, &mainIOSBase);
+	gprintf("Loaded cIOS: %u has base %u\n", mainIOS, mainIOSBase);
 
 	// Init video
 	vid.init();
@@ -118,9 +109,8 @@ int main(int argc, char **argv)
 		if(DeviceHandler::Instance()->IsInserted(SD))
 			usableDevices += 1;
 
-		if(usableDevices == 0) Sys_Exit(0);
+		if(usableDevices == 0) Sys_Exit();
 
-		ISFS_Initialize();
 		bool dipOK = Disc_Init() >= 0;
 
 		CMenu menu(vid);
@@ -128,7 +118,7 @@ int main(int argc, char **argv)
 		mainMenu = &menu;
 		if (!iosOK)
 		{
-			menu.error(sfmt("IOS %i rev%i or later is required", mainIOS, mainIOSminRev));
+			menu.error(sfmt("d2x cIOS %i rev6 or later is required", mainIOS));
 			break;
 		}
 		else if (!dipOK)
@@ -154,6 +144,9 @@ int main(int argc, char **argv)
 	
 	WifiGecko_Close();
 
-	Sys_Exit(ret);
+	Nand::Instance()->Disable_Emu();
+	Nand::DestroyInstance();
+
+	Sys_Exit();
 	return 0;
 };

@@ -20,7 +20,7 @@ public:
 	void clear(void) { m_domains.clear(); }
 	bool load(const char *filename = 0);
 	void unload(void);
-	void save(void);
+	void save(bool unload = false);
 	bool loaded(void) const { return m_loaded; }
 	bool has(const std::string &domain, const std::string &key) const;
 	// Set

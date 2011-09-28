@@ -325,7 +325,7 @@ static const char games[MAXAPPLOADERGAMES][3]=
 	"WPR",	//ArtSyle: CUBELLO
 	"WA8",	//ArtSyle: Penta Tentacles
 	"WB7",	//Midnight Pool
-	"WSP"	//Pokemon Rumble
+	"WPS"	//Pokemon Rumble
 };
 
 u32 * GetDol(u64 title, char *id, u32 *contentSize, u16 bootcontent, bool skip_bootcontent)

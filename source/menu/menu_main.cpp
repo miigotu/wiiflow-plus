@@ -306,7 +306,7 @@ int CMenu::main(void)
 				else if (sort == SORT_PLAYERS)
 					curSort = m_loc.getWString(m_curLanguage, "byplayers", L"By Players");
 				else if (sort == SORT_CONTROLLERS)
-					curSort = m_loc.getWString(m_curLanguage, "bygameid", L"By Controllers");
+					curSort = m_loc.getWString(m_curLanguage, "bycontrollers", L"By Controllers");
 
 				m_showtimer=60; 
 				m_btnMgr.setText(m_mainLblNotice, curSort);
@@ -482,7 +482,7 @@ int CMenu::main(void)
 			else if (m_btnMgr.selected(m_mainBtnInit2))
 			{
 				_hideMain();
-				_config(7);
+				_config(1);
 				if (prevTheme != m_cfg.getString("GENERAL", "theme"))
 				{
 					m_reload = true;

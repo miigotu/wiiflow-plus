@@ -13,7 +13,9 @@
 #include "network/gcard.h"
 #include "DeviceHandler.hpp"
 #include "loader/wbfs.h"
+#include "savefile.h"
 #include "wip.h"
+#include "channel_launcher.h"
 
 #include "loader/frag.h"
 #include "loader/fst.h"
@@ -185,20 +187,14 @@ static u8 GetRequestedGameIOS(dir_discHdr *hdr)
 
 	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *) &hdr->hdr.id, (char *) hdr->path);
 	if (!disc) return IOS;
-	wiidisc_t *wdisc = wd_open_disc((int(*)(void *, u32, u32, void *)) wbfs_disc_read, disc);
-	if (!wdisc)
-	{
-		WBFS_CloseDisc(disc);
-		return IOS;
-	}
 
-	u32 size;
-	u8 *titleTMD = wd_extract_file(wdisc, &size, ONLY_GAME_PARTITION, (char *) "TMD");
-
-	wd_close_disc(wdisc);
+	u8 *titleTMD = NULL;
+	u32 tmd_size = wbfs_extract_file(disc, (char *) "TMD", (void **)&titleTMD);
 	WBFS_CloseDisc(disc);
 
-	if(size > 0x18B)
+	if(!titleTMD) return IOS;
+
+	if(tmd_size > 0x18B)
 		IOS = titleTMD[0x18B];
 	return IOS;
 }
@@ -381,20 +377,17 @@ void CMenu::_game(bool launch)
 				m_cf.clear();
 				_showWaitMessage();
 
-				if (m_current_view != COVERFLOW_HOMEBREW && m_cfg.getBool("GENERAL", "write_playlog", true))
+				if (m_current_view != COVERFLOW_HOMEBREW)
 				{
-					if (banner_title[0] == 0) // No title set?
-					{					
-						// Get banner_title
-						Banner * banner = m_current_view == COVERFLOW_CHANNEL ? _extractChannelBnr(chantitle) : m_current_view == COVERFLOW_USB ? _extractBnr(hdr) : NULL;
-						if (banner != NULL)
-						{						
-							if (banner->IsValid())
-								_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str()));
-							delete banner;
-						}
-						banner = NULL;
+					// Get banner_title
+					Banner * banner = m_current_view == COVERFLOW_CHANNEL ? _extractChannelBnr(chantitle) : m_current_view == COVERFLOW_USB ? _extractBnr(hdr) : NULL;
+					if (banner != NULL)
+					{						
+						if (banner->IsValid())
+							_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str()));
+						delete banner;
 					}
+					banner = NULL;
 
 					if (Playlog_Update(id.c_str(), banner_title) < 0)
 						Playlog_Delete();
@@ -486,8 +479,7 @@ void CMenu::_game(bool launch)
 					m_btnMgr.hide(m_gameLblUser[i]);
 		}
 	}
-	m_gcfg1.save();
-	m_gcfg1.unload();
+	m_gcfg1.save(true);
 	
 	_hideGame();
 }
@@ -541,13 +533,12 @@ extern "C" {extern void USBStorage_Deinit(void);}
 
 void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> arguments)
 {
-	//MEM1_cleanup();	MEM1_clear();
 	if(LoadHomebrew(filepath))
 	{
-		m_gcfg1.save();
-		m_gcfg2.save();
-		m_cat.save();
-		m_cfg.save();
+		m_gcfg1.save(true);
+		m_gcfg2.save(true);
+		m_cat.save(true);
+		m_cfg.save(true);
 
 		AddBootArgument(filepath);
 		for(u32 i = 0; i < arguments.size(); ++i)
@@ -611,12 +602,12 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 			add_game_to_card(id.c_str());
 
 		bool emu_disabled = m_cfg.getBool("NAND", "disable", true);
-		string path = m_cfg.getString("NAND", "path", "");
+		bool emulate_mode = m_gcfg2.testOptBool(id, "full_emulation", m_cfg.getBool("NAND", "full_emulation", true));
 
-		m_gcfg1.save();
-		m_gcfg2.save();
-		m_cat.save();
-		m_cfg.save();
+		m_gcfg1.save(true);
+		m_gcfg2.save(true);
+		m_cat.save(true);
+		m_cfg.save(true);
 
 		setLanguage(language);
 
@@ -675,6 +666,10 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 
 		if(!emu_disabled)
 		{
+			if(iosLoaded) ISFS_Deinitialize();
+			ISFS_Initialize();
+
+			Nand::Instance()->Set_FullMode(emulate_mode);
 			if(Nand::Instance()->Enable_Emu() < 0)
 			{
 				Nand::Instance()->Disable_Emu();
@@ -700,7 +695,6 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		}
 		
 		CheckGameSoundThread(true);
-		//MEM1_cleanup();		MEM1_clear();
 		cleanup();
 		Close_Inputs();
 		USBStorage_Deinit();
@@ -765,8 +759,26 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
 
-	bool emulate_save = m_gcfg2.testOptBool(id, "save_emulation", m_cfg.getBool("GAMES", "save_emulation", false));
+	int emuPartition = 255;
+	m_cfg.getInt("GAMES", "savepartition", &emuPartition);
+	if(emuPartition == 255)
+		m_cfg.getInt("NAND", "partition", &emuPartition);
+
+	string emuPath = m_cfg.getString("GAMES", "savepath", m_cfg.getString("NAND", "path", ""));
+
+	bool emulate_save = emuPartition != 255 && m_gcfg2.testOptBool(id, "emulate_save", m_cfg.getBool("GAMES", "save_emulation", false));
+	bool emulate_mode = m_gcfg2.testOptBool(id, "full_emulation", m_cfg.getBool("GAMES", "full_emulation", false));
+
+	if (!dvd && get_frag_list((u8 *) hdr->hdr.id, (char *) hdr->path, sector_size) < 0)
+		return;
 		
+	if(emulate_save)
+	{
+		char basepath[64];
+		snprintf(basepath, 64, "%s:%s", DeviceName[emuPartition], emuPath.c_str());
+		CreateSavePath(basepath, hdr);
+	}
+
 	int gameIOS;
 	if (!m_gcfg2.getInt(id, "ios", &gameIOS) && _installed_cios.size() > 0)
 	{
@@ -799,15 +811,12 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if (has_enabled_providers() && _initNetwork() == 0)
 		add_game_to_card(id.c_str());
 
-	m_gcfg1.save();
-	m_gcfg2.save();
-	m_cat.save();
-	m_cfg.save();
-	setLanguage(language);
+	m_gcfg1.save(true);
+	m_gcfg2.save(true);
+	m_cat.save(true);
+	m_cfg.save(true);
 
-	// Do every disc related action before reloading IOS
-	if (!dvd && get_frag_list((u8 *) hdr->hdr.id, (char *) hdr->path, sector_size) < 0)
-		return;
+	setLanguage(language);
 
 	if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
 
@@ -868,10 +877,14 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 
 	if(emulate_save)
 	{
-		Nand::Instance()->Init(Nand::Instance()->Get_NandPath(), Nand::Instance()->Get_Partition(), false);
-		int nandPartition = Nand::Instance()->Get_Partition();
-		if((IOS_GetRevision() % 100 != 7 || nandPartition == 0) && DeviceHandler::Instance()->IsInserted(nandPartition))
-			DeviceHandler::Instance()->UnMount(nandPartition);
+		if(iosLoaded) ISFS_Deinitialize();
+		ISFS_Initialize();
+
+		Nand::Instance()->Init(emuPath.c_str(), emuPartition, false);
+		DeviceHandler::Instance()->UnMount(emuPartition);
+		
+		Nand::Instance()->Set_FullMode(emulate_mode);
+
 		if(Nand::Instance()->Enable_Emu() < 0)
 		{
 			Nand::Instance()->Disable_Emu();
@@ -881,15 +894,10 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		}
 		if(!DeviceHandler::Instance()->IsInserted(currentPartition))
 			DeviceHandler::Instance()->Mount(currentPartition);
+		DeviceHandler::Instance()->Mount(emuPartition);
+
 	}
 	
-	//MEM1_cleanup();	MEM1_clear();
-	if (IOS_GetRevision() < D2X_MIN_REV)
-	{
-		error(sfmt("d2x rev %i or higher is required.\nPlease install the latest version.", gameIOS, D2X_MIN_REV));
-		if (iosLoaded) Sys_LoadMenu();
-	}
-
 	if (!m_directLaunch)
 	{
 		if (rtrn != NULL && strlen(rtrn) == 4)
@@ -928,6 +936,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 			return;
 		}
 	}
+
 	cleanup();
 	Close_Inputs();
 	USBStorage_Deinit();

@@ -9,11 +9,8 @@ safe_vector<dir_discHdr> CMenu::_searchGames(const char *gameId)
 {
 	safe_vector<dir_discHdr> retval;
 	for (safe_vector<dir_discHdr>::iterator itr = m_gameList.begin(); itr != m_gameList.end(); itr++)
-	{
 		if (strncmp((const char *) (*itr).hdr.id, gameId, strlen(gameId)) == 0)
-		{
 			retval.push_back(*itr);
-		}
-	}
+
 	return retval;
 }

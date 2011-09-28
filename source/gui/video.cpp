@@ -510,6 +510,8 @@ void CVideo::_showWaitMessages(CVideo *m)
 		}
 		waitFrames--;
 		VIDEO_WaitVSync();
+		if ((m->m_rmode->viTVMode & VI_NON_INTERLACE) != 0)
+			VIDEO_WaitVSync();
 	}
 	if (m->m_useWiiLight)
 	{
@@ -535,8 +537,6 @@ void CVideo::CheckWaitThread(bool force)
 
 		if(LWP_ThreadIsSuspended(waitThread))
 			LWP_ResumeThread(waitThread);
-
-		VIDEO_WaitVSync();
 
 		LWP_JoinThread(waitThread, NULL);
 

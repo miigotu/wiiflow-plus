@@ -18,6 +18,8 @@
 #include "fs.h"
 #include "U8Archive.h"
 #include "nand.hpp"
+#include "cios.hpp"
+#include "loader/playlog.h"
 
 // Sounds
 extern const u8 click_wav[];
@@ -86,6 +88,9 @@ void CMenu::init(u8 usableDevices)
 	const char *drive = "empty";
 	const char *check = "empty";
 	struct stat dummy;
+
+	/* Clear Playlog */
+	Playlog_Delete();
 
 	for(int i = SD; i <= USB8; i++) //Find the first partition with a wiiflow.ini
 		if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/%s/" CFG_FILENAME, DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
@@ -307,7 +312,7 @@ void CMenu::init(u8 usableDevices)
 	float pShadowY = m_theme.getFloat("GENERAL", "pointer_shadow_y", 3.f);
 	bool pShadowBlur = m_theme.getBool("GENERAL", "pointer_shadow_blur", false);
 
-	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
+	for(int chan = WPAD_MAX_WIIMOTES-2; chan >= 0; chan--)
 	{
 		m_cursor[chan].init(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GENERAL", sfmt("pointer%i", chan+1).c_str()).c_str()).c_str(),
 			m_vid.wide(), pShadowColor, pShadowX, pShadowY, pShadowBlur, chan);
@@ -320,7 +325,7 @@ void CMenu::init(u8 usableDevices)
 	_buildMenus();
 
 	m_locked = m_cfg.getString("GENERAL", "parent_code", "").size() >= 4;
-	m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble", true));
+	m_btnMgr.setRumble(CONF_GetPadMotorMode() != 0);
 
 	int exit_to = m_cfg.getInt("GENERAL", "exit_to", 0);
 	m_disable_exit = exit_to == EXIT_TO_DISABLE;
@@ -337,7 +342,7 @@ void CMenu::init(u8 usableDevices)
 	m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
 	m_bnrSndVol = m_cfg.getInt("GENERAL", "sound_volume_bnr", 255);
 	
-	if (m_cfg.getBool(domain, "favorites_on_startup", false))
+	if (m_cfg.getBool("GENERAL", "favorites_on_startup", false))
 		m_favorites = m_cfg.getBool(domain, "favorites", false);
 	m_category = m_cat.getInt(domain, "category", 0);
 	m_max_categories = m_cat.getInt(domain, "numcategories", 12);
@@ -710,7 +715,7 @@ void CMenu::_buildMenus(void)
 	theme.titleFont = _font(theme.fontSet, "GENERAL", "title_font", TITLEFONT);
 	theme.titleFontColor = m_theme.getColor("GENERAL", "title_font_color", 0xD0BFDFFF);
 	
-	theme.thxFont = _font(theme.fontSet, "GENERAL", "thxfont", THANKSFONT);
+	theme.txtFont = _font(theme.fontSet, "GENERAL", "text_font", TEXTFONT);
 	theme.txtFontColor = m_theme.getColor("GENERAL", "text_font_color", 0xFFFFFFFF);
 	
 	// Default Sounds
@@ -761,7 +766,6 @@ void CMenu::_buildMenus(void)
 	_initErrorMenu(theme);
 	_initConfigAdvMenu(theme);
 	_initConfigSndMenu(theme);
-	_initConfig7Menu(theme);
 	_initConfig4Menu(theme);
 	_initConfigScreenMenu(theme);
 	_initConfig3Menu(theme);
@@ -781,63 +785,60 @@ void CMenu::_buildMenus(void)
 	_loadCFCfg(theme);
 }
 
-SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index)
+typedef struct
 {
-	SFont retFont;
-	bool useDefault = false;
-	bool general = strncmp(domain, "GENERAL", 7) == 0;
+	string ext;
+	u32 min;
+	u32 max;
+	u32 def;
+	u32 res;
+} FontHolder;
 
-	string filename = m_theme.getString(domain, key);
-	if(filename.empty() && !general)
-		filename = m_theme.getString("GENERAL", key);
+SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index, const char *genKey)
+{
+	string filename = "";
+	bool general = strncmp(domain, "GENERAL", 7) == 0;
+	FontHolder fonts[3] = {{ "_size", 6u, 300u, fontSize, 0 }, { "_line_height", 6u, 300u, lineSpacing, 0 }, { "_weight", 1u, 32u, weight, 0 }};
+
+	if(!general)
+		filename = m_theme.getString(domain, key);
 	if(filename.empty())
+		filename = m_theme.getString("GENERAL", genKey, genKey);
+	bool useDefault = filename == genKey;
+
+
+	for(u32 i = 0; i < 3; i++)
 	{
-		useDefault = true;
-		filename = key;
+		string defValue = genKey;
+		defValue += fonts[i].ext;
+		string value = key;
+		value += fonts[i].ext;
+
+		if(!general)
+			fonts[i].res = (u32)m_theme.getInt(domain, value);
+		if(fonts[i].res <= 0)
+			fonts[i].res = (u32)m_theme.getInt("GENERAL", defValue);
+
+		fonts[i].res = min(max(fonts[i].min, fonts[i].res <= 0 ? fonts[i].def : fonts[i].res), fonts[i].max);		
 	}
 
-	filename = upperCase(filename);
-
-	string fontSizeKey = key;
-	fontSizeKey += "_size";
-
-	u32 def_fontSize = fontSize;
-	fontSize = (u32)m_theme.getInt(domain, fontSizeKey);
-	if(!general && fontSize <= 0) fontSize = (u32)m_theme.getInt("GENERAL", fontSizeKey);
-	fontSize = min(max(6u, fontSize <= 0 ? def_fontSize : fontSize), 300u);
-
-	string lineSpacingKey = key;
-	lineSpacingKey += "_line_height";
-
-	u32 def_lineSpacing = lineSpacing;
-	lineSpacing = (u32)m_theme.getInt(domain, lineSpacingKey);
-	if(!general && lineSpacing <= 0) lineSpacing = (u32)m_theme.getInt("GENERAL", lineSpacingKey);
-	lineSpacing = min(max(6u, lineSpacing <= 0 ? def_lineSpacing : lineSpacing), 300u);
-
-	string weightKey = key;
-	weightKey += "_weight";
-
-	u32 def_weight = weight;
-	weight = (u32)m_theme.getInt(domain, weightKey);
-	if(!general && weight <= 0) weight = (u32)m_theme.getInt("GENERAL", weightKey);
-	weight = max(1u, min(weight <= 0 ? def_weight : weight, 32u));
-
 	// Try to find the same font with the same size
-	CMenu::FontSet::iterator i = fontSet.find(CMenu::FontDesc(filename, fontSize));
+	CMenu::FontSet::iterator i = fontSet.find(CMenu::FontDesc(upperCase(filename.c_str()), fonts[0].res));
 	if (i != fontSet.end()) return i->second;
 
 	// TTF not found in memory, load it to create a new font
- 	if (!useDefault && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fontSize, lineSpacing, weight, index))
+	SFont retFont;
+ 	if (!useDefault && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fonts[0].res, fonts[1].res, fonts[2].res, index))
 	{
 		// Theme Font
-		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
+		fontSet[CMenu::FontDesc(upperCase(filename.c_str()), fonts[0].res)] = retFont;
 		return retFont;
 	}
 	if(!m_base_font) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
-	if(retFont.fromBuffer(m_base_font, m_base_font_size, fontSize, lineSpacing, weight, index))
+	if(retFont.fromBuffer(m_base_font, m_base_font_size, fonts[0].res, fonts[1].res, fonts[2].res, index))
 	{
 		// Default font
-		fontSet[CMenu::FontDesc(filename, fontSize)] = retFont;
+		fontSet[CMenu::FontDesc(upperCase(filename.c_str()), fonts[0].res)] = retFont;
 		return retFont;
 	}
 	return retFont;
@@ -901,19 +902,18 @@ STexture CMenu::_texture(CMenu::TexSet &texSet, const char *domain, const char *
 // Only for loading defaults and GENERAL domains!!
 SmartGuiSound CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, const u8 * snd, u32 len, string name, bool isAllocated)
 {
-	string filename = m_theme.getString(domain, key);
+	string filename = m_theme.getString(domain, key, "");
 	if (filename.empty()) filename = name;
 
-	for (u32 c = 0; c < filename.size(); ++c)
-		if (filename[c] >= 'A' && filename[c] <= 'Z')
-			filename[c] |= 0x20;
-
-	CMenu::SoundSet::iterator i = soundSet.find(filename);
+	CMenu::SoundSet::iterator i = soundSet.find(upperCase(filename.c_str()));
 	if (i == soundSet.end())
 	{
-		if(filename != name) soundSet[filename] = SmartGuiSound(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
-		else soundSet[filename] = SmartGuiSound(new GuiSound(snd, len, filename, isAllocated));
-		return soundSet[filename];
+		if(strncmp(filename.c_str(), name.c_str(), name.size()) != 0)
+			soundSet[upperCase(filename.c_str())] = SmartGuiSound(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
+		else
+			soundSet[upperCase(filename.c_str())] = SmartGuiSound(new GuiSound(snd, len, filename, isAllocated));
+
+		return soundSet[upperCase(filename.c_str())];
 	}
 	return i->second;
 }
@@ -926,18 +926,14 @@ SmartGuiSound CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const
 	{
 		if(name.find_last_of('/') != string::npos)
 			name = name.substr(name.find_last_of('/')+1);
-		return soundSet[name];  // General/Default are already cached!
+		return soundSet[upperCase(name.c_str())];  // General/Default are already cached!
 	}
 
-	for (u32 c = 0; c < filename.size(); ++c)
-		if (filename[c] >= 'A' && filename[c] <= 'Z')
-			filename[c] |= 0x20;
-
-	CMenu::SoundSet::iterator i = soundSet.find(filename);
+	CMenu::SoundSet::iterator i = soundSet.find(upperCase(filename.c_str()));
 	if (i == soundSet.end())
 	{
-		soundSet[filename] = SmartGuiSound(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
-		return soundSet[filename];
+		soundSet[upperCase(filename.c_str())] = SmartGuiSound(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
+		return soundSet[upperCase(filename.c_str())];
 	}
 	return i->second;
 }
@@ -1147,7 +1143,7 @@ void CMenu::_initCF(void)
 		if (m_current_view == COVERFLOW_CHANNEL && chantitle == HBC_108)
 			strncpy((char *) m_gameList[i].hdr.id, "JODI", 6);
 
-		string id = string((const char *)m_gameList[i].hdr.id, m_gameList[i].hdr.id[5] == 0 ? strlen((const char *) m_gameList[i].hdr.id) : sizeof m_gameList[0].hdr.id);
+		string id = string((const char *)m_gameList[i].hdr.id, m_current_view == COVERFLOW_CHANNEL ?  4 : 6);
 		
 		if ((!m_favorites || m_gcfg1.getBool("FAVORITES", id, false)) && (!m_locked || !m_gcfg1.getBool("ADULTONLY", id, false)) && !m_gcfg1.getBool("HIDDEN", id, false))
 		{
@@ -1155,16 +1151,14 @@ void CMenu::_initCF(void)
 			{
 				const char *categories = m_cat.getString("CATEGORIES", id, "").c_str();
 				if (strlen(categories) != 12 || categories[m_category] == '0') 
-				{ // 12 categories max!
 					continue;
-				}
 			}
 
 			int playcount = m_gcfg1.getInt("PLAYCOUNT", id, 0);
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id, 0);
 
 			if(m_gamelistdump)
-				m_dump.setWString(domain, m_current_view != COVERFLOW_USB ? id.substr(0, 4) : id, m_gameList[i].title);
+				m_dump.setWString(domain, id, m_gameList[i].title);
 
 			m_cf.addItem(&m_gameList[i], sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
 		}
@@ -1172,8 +1166,7 @@ void CMenu::_initCF(void)
 	m_gcfg1.unload();
  	if (m_gamelistdump)
 	{
-		m_dump.save();
-		m_dump.unload();
+		m_dump.save(true);
 		m_cfg.setBool(domain, "dump_list", false);
 	}
  	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode", true));
@@ -1421,7 +1414,6 @@ void CMenu::_updateText(void)
 	_textConfig3();
 	_textConfigScreen();
 	_textConfig4();
-	_textConfig7();
 	_textConfigSnd();
 	_textConfigAdv();
 	_textDownload();
@@ -1458,19 +1450,49 @@ bool CMenu::_loadChannelList(void)
 
 	gprintf("%s, which is %s\n", disable_emu ? "NAND" : DeviceName[currentPartition], changed ? "refreshing." : "cached.");
 
-	u8 *sysconf = NULL, *meez = NULL;
-	u32 sysconf_size, meez_size;
+	string path = m_cfg.getString("NAND", "path", "");
 
-	char filepath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
 	if(first && !disable_emu)
 	{
+		char filepath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
+
+		u32 sysconf_size, meez_size;
+
 		sprintf(filepath, "/shared2/sys/SYSCONF");
-		sysconf = ISFS_GetFile((u8 *) &filepath, &sysconf_size, -1);
-		
+		u8 *sysconf = ISFS_GetFile((u8 *) &filepath, &sysconf_size, -1);
+
+		if(sysconf != NULL && sysconf_size > 0)
+		{
+			sprintf(filepath, "%s:%s/shared2/sys/SYSCONF", DeviceName[currentPartition], path.c_str());	
+			FILE *file = fopen(filepath, "wb");
+			if(file)
+			{
+				fwrite(sysconf, 1, sysconf_size, file);
+				gprintf("Written SYSCONF to: %s\n", filepath);
+				fclose(file);
+			}
+			else gprintf("Openning %s failed returning %i\n", filepath, file);
+			SAFE_FREE(sysconf);
+		}
+
 		sprintf(filepath, "/shared2/menu/FaceLib/RFL_DB.dat");
-		meez = ISFS_GetFile((u8 *) &filepath, &meez_size, -1);
+		u8 *meez = ISFS_GetFile((u8 *) &filepath, &meez_size, -1);
+
+		if(meez != NULL && meez_size > 0)
+		{
+			sprintf(filepath, "%s:%s/shared2/menu/FaceLib/RFL_DB.dat", DeviceName[currentPartition], path.c_str());
+			FILE *file = fopen(filepath, "wb");
+			if(file)
+			{
+				fwrite(meez, 1, meez_size, file);
+				gprintf("Written Mii's to: %s\n", filepath);
+				fclose(file);
+			}
+			else gprintf("Openning %s failed returning %i\n", filepath, file);
+			SAFE_FREE(meez);
+		}
+		first = false;
 	}
-	string path = m_cfg.getString("NAND", "path", "");
 
 	if(changed)
 	{
@@ -1478,8 +1500,7 @@ bool CMenu::_loadChannelList(void)
 		if(!DeviceHandler::Instance()->IsInserted(lastPartition))
 			DeviceHandler::Instance()->Mount(lastPartition);
 
-		if((IOS_GetRevision() % 100 != 7 || currentPartition == 0) && DeviceHandler::Instance()->IsInserted(currentPartition))
-			DeviceHandler::Instance()->UnMount(currentPartition);
+		DeviceHandler::Instance()->UnMount(currentPartition);
 
 		Nand::Instance()->Init(path.c_str(), currentPartition, disable_emu);
 		if(Nand::Instance()->Enable_Emu() < 0)
@@ -1489,22 +1510,6 @@ bool CMenu::_loadChannelList(void)
 		}
 		else failed = false;
 	}
-
-	if(first && !disable_emu && !failed)
-	{
-		s32 fd = ISFS_Open(filepath, ISFS_OPEN_WRITE);
-		ISFS_Write(fd, meez, meez_size);		
-		ISFS_Close(fd);
-
-		sprintf(filepath, "/shared2/sys/SYSCONF");
-		fd = ISFS_Open(filepath, ISFS_OPEN_WRITE);
-		ISFS_Write(fd, sysconf, sysconf_size);
-		ISFS_Close(fd);
-		
-		first = false;
-	}
-	SAFE_FREE(meez);
-	SAFE_FREE(sysconf);
 
 	if(!DeviceHandler::Instance()->IsInserted(currentPartition))
 		DeviceHandler::Instance()->Mount(currentPartition);
@@ -1632,39 +1637,17 @@ bool CMenu::_loadFile(SmartBuf &buffer, u32 &size, const char *path, const char 
 void CMenu::_load_installed_cioses()
 {
 	if (_installed_cios.size() > 0) return;
+	gprintf("Loading cIOS map\n");
 	
 	_installed_cios[0] = 1;
+	u8 base = 0;
 
 	for (u8 slot = 100; slot < 254; slot++)
-	{
-		if (checkIOS(slot) < 0
-			|| slot == 0xCA	// 202
-			|| slot == 0xDE	// 222
-			|| slot == 0xDF	// 223
-			|| slot == 0xE0	// 224
-			|| slot == 0xE1	// 225
-			|| slot == 0xEC	// 236
-			) continue;
-
-		u32 tmd_size;
-		signed_blob *s_tmd;
-		if (GetTMD(TITLE_ID(1, slot), &s_tmd, &tmd_size) != 0 || tmd_size == 0) continue;
-		tmd *TMD = (tmd *) SIGNATURE_PAYLOAD(s_tmd);
-		
-		// We have a possible cIos
-		u32 version = TMD->title_version;
-		if (s_tmd[4] == 0 && (version < 100 || version == 0xFFFF || (version > D2X_MIN_VERSION && version < D2X_MAX_VERSION) )) // Signature is empty
+		if(cIOSInfo::D2X(slot, &base))
 		{
-			char *info = get_iosx_info_from_tmd(slot, NULL);
-			if(info)
-			{
-				u8 base = atoi(info);
-				if ((base > 35 && base < 39) || (base > 52 && base < 62 && base != 54 && base != 59) || base == 70 || base == 80) // Is a cIOS!
-					_installed_cios[slot] = base;
-			}
+			gprintf("Found base %u in slot %u\n", base, slot);
+			_installed_cios[slot] = base;
 		}
-		SAFE_FREE(s_tmd);
-	}
 }
 
 void CMenu::_hideWaitMessage(bool force)
@@ -1692,8 +1675,6 @@ void CMenu::_loadDefaultFont(bool korean)
 {
 	u32 size;
 	bool retry = false;
-	
-	ISFS_Initialize();
 	
 	// Read content.map from ISFS
 	u8 *content = ISFS_GetFile((u8 *) "/shared1/content.map", &size, 0);
@@ -1738,8 +1719,6 @@ retry:
 		retry = true;
 		goto retry;
 	}
-	
-	ISFS_Deinitialize();
 	
 	SAFE_FREE(content);
 }

@@ -37,6 +37,7 @@
 #include "utils.h"
 #include "gecko.h"
 #include "mem2.hpp"
+#include "cios.hpp"
 
 static NandDevice NandDeviceList[] = {
 	{ "Disable",						0,	0x00,	0x00 },
@@ -81,9 +82,9 @@ s32 Nand::Nand_Mount(NandDevice *Device)
 		return fd;
 	}
 
-	int rev = IOS_GetRevision();
 	/* Prepare vector */
-	if(rev >= 21 && rev < 30000)
+	u8 baseIOS = 0;
+	if(cIOSInfo::D2X(IOS_GetVersion(), &baseIOS))
 	{		
 		// NOTE: 
 		// The official cIOSX rev21 by Waninkoko ignores the Partition argument
@@ -146,10 +147,11 @@ s32 Nand::Nand_Enable(NandDevice *Device)
 		return fd;
 	}
 
-	int rev = IOS_GetRevision();
+	u8 baseIOS;
+	bool goodcIOS = cIOSInfo::D2X(IOS_GetVersion(), &baseIOS);
 
 	// Set input buffer
-	if(rev >= 21 && rev < 30000 && Device->Mode != 0)
+	if(goodcIOS && Device->Mode != 0)
 	{
 		//FULL NAND emulation since rev18
 		//needed for reading images on triiforce mrc folder using ISFS commands
@@ -158,7 +160,7 @@ s32 Nand::Nand_Enable(NandDevice *Device)
 	else inbuf[0] = Device->Mode; //old method
 
 	// Enable NAND emulator
-	if(rev >= 21 && rev < 30000)
+	if(goodcIOS)
 	{
 		// NOTE: 
 		// The official cIOSX rev21 by Waninkoko provides an undocumented feature
@@ -261,16 +263,18 @@ void Nand::Set_Partition(int partition)
 void Nand::Set_NandPath(const char* path)
 {
 	int i=0;
+	if(path[0] != '/' && path[0] != '\0') i++;
 
-	while(path[i]!='\0' && i < 31)
+	while(path[i] != '\0' && i < 31)
 	{
-		NandPath[i]=path[i];
+		NandPath[i] = path[i];
 		i++;
 	}
-	if(NandPath[i-1]=='/')
-		NandPath[i-1]='\0';
+	if(NandPath[i-1] == '/')
+		NandPath[i-1] = '\0';
 
-	NandPath[i]='\0';
+	NandPath[0] = '/';
+	NandPath[i] = '\0';
 }
 
 void Nand::Set_FullMode(bool fullmode)

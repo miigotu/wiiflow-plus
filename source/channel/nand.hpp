@@ -40,9 +40,8 @@ class Nand
 		void Set_FullMode(bool fullmode);
 		const char * Get_NandPath(void);
 		int Get_Partition(void);
+		void Set_NandPath(const char * path);
 
-		s32 Identify(u64 titleid, u32 *ios);
-		
 	private:
 		Nand() : MountedDevice(0), Partition(0), FullMode(0x100), NandPath(), EmuDevice(REAL_NAND), Disabled(true) {}
 		~Nand(void){ /* Disable_Emu(); */ }
@@ -53,9 +52,6 @@ class Nand
 		s32 Nand_Enable(NandDevice *Device);
 		s32 Nand_Disable(void);
 
-		void Set_NandPath(const char * path);
-
-		s32 Identify_GenerateTik(signed_blob **outbuf, u32 *outlen);
 
 		int MountedDevice;
 		int Partition;

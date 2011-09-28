@@ -58,7 +58,6 @@ private:
 	CachedList<dir_discHdr> m_gameList;
 	Config m_cfg;
 	Config m_loc;
-	Config m_loclist;
 	Config m_cat;
 	Config m_gcfg1;
 	Config m_gcfg2;
@@ -121,7 +120,6 @@ private:
 	STexture m_config3Bg;
 	STexture m_configScreenBg;
 	STexture m_config4Bg;
-	STexture m_config7Bg;
 	STexture m_configAdvBg;
 	STexture m_configSndBg;
 	STexture m_downloadBg;
@@ -165,15 +163,17 @@ private:
 	u32 m_configBtnPageP;
 	u32 m_configBtnBack;
 	u32 m_configLblTitle;
-	u32 m_configLblBoxMode;
-	u32 m_configBtnBoxMode;
-	u32 m_configLblRumble;
-	u32 m_configBtnRumble;
 	u32 m_configLblDownload;
 	u32 m_configBtnDownload; 
 	u32 m_configLblParental;
 	u32 m_configBtnUnlock;
 	u32 m_configBtnSetCode;
+	u32 m_configLblPartitionName;
+	u32 m_configLblPartition;
+	u32 m_configBtnPartitionP;
+	u32 m_configBtnPartitionM;
+	u32 m_configBtnEmulation;
+	u32 m_configLblEmulation;
 	u32 m_configLblUser[4];
 	u32 m_configAdvLblTheme;
 	u32 m_configAdvLblCurTheme;
@@ -198,6 +198,8 @@ private:
 	u32 m_config3BtnVideoM;
 	u32 m_config3LblOcarina;
 	u32 m_config3BtnOcarina;
+	u32 m_config3LblAsyncNet;
+	u32 m_config3BtnAsyncNet;
 	u32 m_config3LblUser[4];
 	u32 m_config4LblReturnTo;
 	u32 m_config4LblReturnToVal;
@@ -244,13 +246,6 @@ private:
 	u32 m_configScreenBtnTVYM;
 	u32 m_configScreenBtnTVYP;
 	u32 m_configScreenLblUser[4];
-	u32 m_config7LblPartitionName;
-	u32 m_config7LblPartition;
-	u32 m_config7BtnPartitionP;
-	u32 m_config7BtnPartitionM;
-	u32 m_config7LblAsyncNet;
-	u32 m_config7BtnAsyncNet;
-	u32 m_config7LblUser[2];
 //Download menu
 	u32 m_downloadLblTitle;
 	u32 m_downloadPBar;
@@ -334,10 +329,6 @@ private:
 	u32 m_gameSettingsBtnVipatch;
 	u32 m_gameSettingsLblCountryPatch;
 	u32 m_gameSettingsBtnCountryPatch;
-	u32 m_gameSettingsLblGameIOS;
-	u32 m_gameSettingsLblIOS;
-	u32 m_gameSettingsBtnIOSP;
-	u32 m_gameSettingsBtnIOSM;
 	u32 m_gameSettingsLblCover;
 	u32 m_gameSettingsBtnCover;
 	u32 m_gameSettingsLblPatchVidModes;
@@ -349,8 +340,8 @@ private:
 	u32 m_gameSettingsLblHooktypeVal;
 	u32 m_gameSettingsBtnHooktypeM;
 	u32 m_gameSettingsBtnHooktypeP;
-	u32 m_gameSettingsBtnReturnTo;
-	u32 m_gameSettingsLblReturnTo;
+	u32 m_gameSettingsBtnEmulation;
+	u32 m_gameSettingsLblEmulation;
 	u32 m_gameSettingsLblDebugger;
 	u32 m_gameSettingsLblDebuggerV;
 	u32 m_gameSettingsBtnDebuggerP;
@@ -521,8 +512,7 @@ private:
 	u8 m_bnrSndVol;
 	
 	bool m_video_playing;
-	
-	u32 m_loaded_ios_base;
+
 private:
 	enum WBFS_OP { WO_ADD_GAME, WO_REMOVE_GAME, WO_FORMAT };
 	typedef std::pair<std::string, u32> FontDesc;
@@ -537,7 +527,7 @@ private:
 		SFont btnFont;
 		SFont lblFont;
 		SFont titleFont;
-		SFont thxFont;
+		SFont txtFont;
 		CColor btnFontColor;
 		CColor lblFontColor;
 		CColor txtFontColor;
@@ -589,7 +579,6 @@ private:
 	void _initConfig4Menu(SThemeData &theme);
 	void _initConfigSndMenu(SThemeData &theme);
 	void _initConfigScreenMenu(SThemeData &theme);
-	void _initConfig7Menu(SThemeData &theme);
 	void _initGameMenu(SThemeData &theme);
 	void _initDownloadMenu(SThemeData &theme);
 	void _initCodeMenu(SThemeData &theme);
@@ -613,7 +602,6 @@ private:
 	void _textConfig3(void);
 	void _textConfigScreen(void);
 	void _textConfig4(void);
-	void _textConfig7(void);
 	void _textConfigAdv(void);
 	void _textConfigSnd(void);
 	void _textGame(void);
@@ -631,7 +619,6 @@ private:
 	void _hideConfig3(bool instant = false);
 	void _hideConfigScreen(bool instant = false);
 	void _hideConfig4(bool instant = false);
-	void _hideConfig7(bool instant = false);
 	void _hideConfigAdv(bool instant = false);
 	void _hideConfigSnd(bool instant = false);
 	void _hideGame(bool instant = false);
@@ -652,7 +639,6 @@ private:
 	void _showConfig3(void);
 	void _showConfigScreen(void);
 	void _showConfig4(void);
-	void _showConfig7(void);
 	void _showConfigAdv(void);
 	void _showConfigSnd(void);
 	void _showGame(void);
@@ -677,7 +663,6 @@ private:
 	int _config3(void);
 	int _configScreen(void);
 	int _config4(void);
-	int _config7(void);
 	int _configAdv(void);
 	int _configSnd(void);
 	void _game(bool launch = false);
@@ -715,7 +700,7 @@ private:
 	void _cleanupDefaultFont();
 	const char *_domainFromView(void);
 	void UpdateCache(u32 view = COVERFLOW_MAX);
-	SFont _font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index);
+	SFont _font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index, const char *genKey);
 	STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);
 	safe_vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key);
 	void _showWaitMessage();
@@ -745,9 +730,6 @@ private:
 	static int _wiitdbDownloader(CMenu *m);
 	int _wiitdbDownloaderAsync();
 
-	int _titleDownloader(bool missingOnly);
-	static int _titleDownloaderAll(CMenu *m);
-	static int _titleDownloaderMissing(CMenu *m);
 	static s32 _networkComplete(s32 result, void *usrData);
 	void _initAsyncNetwork();
 	bool _isNetworkAvailable();

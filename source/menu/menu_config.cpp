@@ -5,7 +5,12 @@
 
 using namespace std;
 
-const int CMenu::_nbCfgPages = 7;
+static inline int loopNum(int i, int s)
+{
+	return i < 0 ? (s - (-i % s)) % s : i % s;
+}
+
+const int CMenu::_nbCfgPages = 6;
 static const int g_curPage = 1;
 
 void CMenu::_hideConfig(bool instant)
@@ -16,15 +21,17 @@ void CMenu::_hideConfig(bool instant)
 	m_btnMgr.hide(m_configBtnPageM, instant);
 	m_btnMgr.hide(m_configBtnPageP, instant);
 	m_btnMgr.hide(m_configBtnBack, instant);
-	m_btnMgr.hide(m_configLblRumble, instant);
-	m_btnMgr.hide(m_configBtnRumble, instant);
-	m_btnMgr.hide(m_configLblBoxMode, instant);
-	m_btnMgr.hide(m_configBtnBoxMode, instant);
+	m_btnMgr.hide(m_configLblPartitionName, instant);
+	m_btnMgr.hide(m_configLblPartition, instant);
+	m_btnMgr.hide(m_configBtnPartitionP, instant);
+	m_btnMgr.hide(m_configBtnPartitionM, instant);
 	m_btnMgr.hide(m_configLblDownload, instant);
 	m_btnMgr.hide(m_configBtnDownload, instant);
 	m_btnMgr.hide(m_configLblParental, instant);
 	m_btnMgr.hide(m_configBtnUnlock, instant);
 	m_btnMgr.hide(m_configBtnSetCode, instant);
+	m_btnMgr.hide(m_configBtnEmulation, instant);
+	m_btnMgr.hide(m_configLblEmulation, instant);
 	for (u32 i = 0; i < ARRAY_SIZE(m_configLblUser); ++i)
 		if (m_configLblUser[i] != -1u)
 			m_btnMgr.hide(m_configLblUser[i], instant);
@@ -35,29 +42,52 @@ void CMenu::_showConfig(void)
 	_setBg(m_configBg, m_configBg);
 	m_btnMgr.show(m_configLblTitle);
 	m_btnMgr.show(m_configBtnBack);
-	m_btnMgr.show(m_configLblRumble);
-	m_btnMgr.show(m_configBtnRumble);
-	m_btnMgr.show(m_configLblBoxMode);
-	m_btnMgr.show(m_configBtnBoxMode);
+	m_btnMgr.show(m_configLblPartitionName);
+	m_btnMgr.show(m_configLblPartition);
+	m_btnMgr.show(m_configBtnPartitionP);
+	m_btnMgr.show(m_configBtnPartitionM);
 	m_btnMgr.show(m_configLblDownload);
 	m_btnMgr.show(m_configBtnDownload);
 	m_btnMgr.show(m_configLblParental);
 	m_btnMgr.show(m_configLblPage);
 	m_btnMgr.show(m_configBtnPageM);
 	m_btnMgr.show(m_configBtnPageP);
-	if (m_locked)
-		m_btnMgr.show(m_configBtnUnlock);
-	else
+
+	if(m_current_view != COVERFLOW_HOMEBREW)
 	{
-		m_btnMgr.show(m_configBtnSetCode);
+		m_btnMgr.show(m_configBtnEmulation);
+		m_btnMgr.show(m_configLblEmulation);
 	}
+
+	m_btnMgr.show(m_locked ? m_configBtnUnlock : m_configBtnSetCode);
+
+	bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true);
+	char *partitionname = disable ? (char *)"NAND" : (char *)DeviceName[m_cfg.getInt(_domainFromView(), "partition", 1)];
+
+	for(u8 i = 0; strncmp((const char *)&partitionname[i], "\0", 1) != 0; i++)
+		partitionname[i] = toupper(partitionname[i]);
+
+
 	for (u32 i = 0; i < ARRAY_SIZE(m_configLblUser); ++i)
 		if (m_configLblUser[i] != -1u)
 			m_btnMgr.show(m_configLblUser[i]);
-	// 
+
+	m_btnMgr.setText(m_configLblPartition, (string)partitionname);
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage + 1 : CMenu::_nbCfgPages));
-	m_btnMgr.setText(m_configBtnRumble, m_cfg.getBool("GENERAL", "rumble") ? _t("on", L"On") : _t("off", L"Off"));
-	m_btnMgr.setText(m_configBtnBoxMode, m_cfg.getBool("GENERAL", "box_mode") ? _t("on", L"On") : _t("off", L"Off"));
+
+	bool isON = false;
+	switch(m_current_view)
+	{
+		case COVERFLOW_CHANNEL:
+			m_btnMgr.setText(m_configLblEmulation, _t("cfg12", L"NAND Emulation"));
+			isON = m_cfg.getBool("NAND", "disable", true);
+			break;
+		case COVERFLOW_USB:
+			m_btnMgr.setText(m_configLblEmulation, _t("cfg11", L"USB Saves Emulation"));
+			isON = !m_cfg.getBool("GAMES", "save_emulation", false);
+			break;
+	}
+	m_btnMgr.setText(m_configBtnEmulation, isON ?  _t("off", L"Off") : _t("on", L"On"));
 }
 
 void CMenu::_config(int page)
@@ -85,9 +115,6 @@ void CMenu::_config(int page)
 			case 6:
 				page = _configScreen();
 				break;
-			case 7:
-				page = _config7();
-				break;
 		}
 	m_cfg.save();
 	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode"));
@@ -98,6 +125,10 @@ int CMenu::_config1(void)
 {
 	int nextPage = 0;
 	SetupInput();
+
+	s32 bCurrentPartition = currentPartition;
+
+	gprintf("Current Partition: %d\n", currentPartition);
 	
 	_showConfig();
 	while (true)
@@ -111,7 +142,7 @@ int CMenu::_config1(void)
 			m_btnMgr.down();
 		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageM)))
 		{
-			nextPage = g_curPage == 1 && !m_locked ? 7 : max(1, m_locked ? 1 : g_curPage - 1);
+			nextPage = g_curPage == 1 && !m_locked ? CMenu::_nbCfgPages : max(1, m_locked ? 1 : g_curPage - 1);
 			if(BTN_LEFT_PRESSED || BTN_MINUS_PRESSED) m_btnMgr.click(m_configBtnPageM);
 			break;
 		}
@@ -152,19 +183,55 @@ int CMenu::_config1(void)
 				}
 				_showConfig();
 			}
-			else if (m_btnMgr.selected(m_configBtnBoxMode))
+			else if (!m_locked && (m_btnMgr.selected(m_configBtnPartitionP) || m_btnMgr.selected(m_configBtnPartitionM)))
 			{
-				m_cfg.setBool("GENERAL", "box_mode", !m_cfg.getBool("GENERAL", "box_mode"));
-				_showConfig();
+				bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true);
+				if(!disable)
+				{
+					bool isD2Xv7 = IOS_GetRevision() % 100 == 7;
+					u8 limiter = 0;
+					s8 direction = m_btnMgr.selected(m_configBtnPartitionP) ? 1 : -1;
+					currentPartition = loopNum(currentPartition + direction, (int)USB8);
+					while(!DeviceHandler::Instance()->IsInserted(currentPartition) ||
+						(m_current_view == COVERFLOW_CHANNEL && (DeviceHandler::Instance()->GetFSType(currentPartition) != PART_FS_FAT ||
+							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()) == currentPartition) ||
+							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str()) == currentPartition))) ||
+						(m_current_view == COVERFLOW_HOMEBREW && DeviceHandler::Instance()->GetFSType(currentPartition) == PART_FS_WBFS))
+					{
+						currentPartition = loopNum(currentPartition + direction, (int)USB8);
+						if (limiter > 10) break;
+						limiter++;
+					}
+
+					gprintf("Next item: %s\n", DeviceName[currentPartition]);
+					m_cfg.setInt(_domainFromView(), "partition", currentPartition);
+				}
+					_showConfig();
 			}
-			else if (m_btnMgr.selected(m_configBtnRumble))
+			else if (!m_locked && m_btnMgr.selected(m_configBtnEmulation))
 			{
-				m_cfg.setBool("GENERAL", "rumble", !m_cfg.getBool("GENERAL", "rumble"));
-				m_btnMgr.setRumble(m_cfg.getBool("GENERAL", "rumble"));
+				m_cfg.setBool("GAMES", "save_emulation", !m_cfg.getBool("GAMES", "save_emulation", false));
 				_showConfig();
 			}
 		}
 	}
+	if (currentPartition != bCurrentPartition)
+	{
+		bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true);
+		if(!disable)
+		{
+			char *newpartition = disable ? (char *)"NAND" : (char *)DeviceName[m_cfg.getInt(_domainFromView(), "partition", currentPartition)];
+				
+			for(u8 i = 0; strncmp((const char *)&newpartition[i], "\0", 1) != 0; i++)
+				newpartition[i] = toupper(newpartition[i]);
+
+			gprintf("Switching partition to %s\n", newpartition);
+			_showWaitMessage();
+			_loadList();
+			_hideWaitMessage();
+		}
+	}
+
 	_hideConfig();
 	
 	return nextPage;
@@ -180,25 +247,30 @@ void CMenu::_initConfigMenu(CMenu::SThemeData &theme)
 	m_configLblParental = _addLabel(theme, "CONFIG/PARENTAL", theme.lblFont, L"", 40, 190, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_configBtnUnlock = _addButton(theme, "CONFIG/UNLOCK_BTN", theme.btnFont, L"", 400, 190, 200, 56, theme.btnFontColor);
 	m_configBtnSetCode = _addButton(theme, "CONFIG/SETCODE_BTN", theme.btnFont, L"", 400, 190, 200, 56, theme.btnFontColor);
-	m_configLblBoxMode = _addLabel(theme, "CONFIG/BOXMODE", theme.lblFont, L"", 40, 250, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_configBtnBoxMode = _addButton(theme, "CONFIG/BOXMODE_BTN", theme.btnFont, L"", 400, 250, 200, 56, theme.btnFontColor);
-	m_configLblRumble = _addLabel(theme, "CONFIG/RUMBLE", theme.lblFont, L"", 40, 310, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_configBtnRumble = _addButton(theme, "CONFIG/RUMBLE_BTN", theme.btnFont, L"", 400, 310, 200, 56, theme.btnFontColor);
+	m_configLblPartitionName = _addLabel(theme, "CONFIG/PARTITION", theme.lblFont, L"", 40, 250, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_configLblPartition = _addLabel(theme, "CONFIG/PARTITION_BTN", theme.btnFont, L"", 456, 250, 88, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_configBtnPartitionM = _addPicButton(theme, "CONFIG/PARTITION_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 400, 250, 56, 56);
+	m_configBtnPartitionP = _addPicButton(theme, "CONFIG/PARTITION_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 250, 56, 56);
+	m_configLblEmulation = _addLabel(theme, "CONFIG/EMU_SAVE", theme.lblFont, L"", 40, 310, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_configBtnEmulation = _addButton(theme, "CONFIG/EMU_SAVE_BTN", theme.btnFont, L"", 400, 310, 200, 56, theme.btnFontColor);
 	m_configLblPage = _addLabel(theme, "CONFIG/PAGE_BTN", theme.btnFont, L"", 76, 410, 80, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_configBtnPageM = _addPicButton(theme, "CONFIG/PAGE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 20, 410, 56, 56);
 	m_configBtnPageP = _addPicButton(theme, "CONFIG/PAGE_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 156, 410, 56, 56);
 	m_configBtnBack = _addButton(theme, "CONFIG/BACK_BTN", theme.btnFont, L"", 420, 410, 200, 56, theme.btnFontColor);
 	// 
 	_setHideAnim(m_configLblTitle, "CONFIG/TITLE", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_configLblBoxMode, "CONFIG/BOXMODE", 100, 0, -2.f, 0.f);
-	_setHideAnim(m_configBtnBoxMode, "CONFIG/BOXMODE_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_configLblRumble, "CONFIG/RUMBLE", 100, 0, -2.f, 0.f);
-	_setHideAnim(m_configBtnRumble, "CONFIG/RUMBLE_BTN", 0, 0, -2.f, 0.f);
+
 	_setHideAnim(m_configLblDownload, "CONFIG/DOWNLOAD", 100, 0, -2.f, 0.f);
 	_setHideAnim(m_configBtnDownload, "CONFIG/DOWNLOAD_BTN", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_configLblParental, "CONFIG/PARENTAL", 100, 0, -2.f, 0.f);
 	_setHideAnim(m_configBtnUnlock, "CONFIG/UNLOCK_BTN", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_configBtnSetCode, "CONFIG/SETCODE_BTN", 0, 0, -2.f, 0.f);
+	_setHideAnim(m_configLblPartitionName, "CONFIG/PARTITION", 100, 0, -2.f, 0.f);
+	_setHideAnim(m_configLblPartition, "CONFIG/PARTITION_BTN", 0, 0, 1.f, -1.f);
+	_setHideAnim(m_configBtnPartitionM, "CONFIG/PARTITION_MINUS", 0, 0, 1.f, -1.f);
+	_setHideAnim(m_configBtnPartitionP, "CONFIG/PARTITION_PLUS", 0, 0, 1.f, -1.f);
+	_setHideAnim(m_configLblEmulation, "CONFIG/EMU_SAVE", 100, 0, -2.f, 0.f);
+	_setHideAnim(m_configBtnEmulation, "CONFIG/EMU_SAVE_BTN", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_configBtnBack, "CONFIG/BACK_BTN", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_configLblPage, "CONFIG/PAGE_BTN", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_configBtnPageM, "CONFIG/PAGE_MINUS", 0, 0, 1.f, -1.f);
@@ -210,12 +282,12 @@ void CMenu::_initConfigMenu(CMenu::SThemeData &theme)
 void CMenu::_textConfig(void)
 {
 	m_btnMgr.setText(m_configLblTitle, _t("cfg1", L"Settings"));
-	m_btnMgr.setText(m_configLblBoxMode, _t("cfg2", L"3D boxes"));
 	m_btnMgr.setText(m_configLblDownload, _t("cfg3", L"Download covers & titles"));
 	m_btnMgr.setText(m_configBtnDownload, _t("cfg4", L"Download"));
 	m_btnMgr.setText(m_configLblParental, _t("cfg5", L"Parental control"));
 	m_btnMgr.setText(m_configBtnUnlock, _t("cfg6", L"Unlock"));
 	m_btnMgr.setText(m_configBtnSetCode, _t("cfg7", L"Set code"));
+
+	m_btnMgr.setText(m_configLblPartitionName, _t("cfgp1", L"Game Partition"));
 	m_btnMgr.setText(m_configBtnBack, _t("cfg10", L"Back"));
-	m_btnMgr.setText(m_configLblRumble, _t("cfg11", L"Rumble"));
 }

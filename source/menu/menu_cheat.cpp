@@ -327,7 +327,7 @@ void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 {
 	_addUserLabels(theme, m_cheatLblUser, ARRAY_SIZE(m_cheatLblUser), "CHEAT");
 	m_cheatBg = _texture(theme.texSet, "CHEAT/BG", "texture", theme.bg);
-	m_cheatLblTitle = _addLabel(theme, "CHEAT/TITLE", theme.lblFont, L"Cheats", 20, 30, 600, 60, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
+	m_cheatLblTitle = _addLabel(theme, "CHEAT/TITLE", theme.titleFont, L"Cheats", 20, 30, 600, 60, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 	m_cheatBtnBack = _addButton(theme, "CHEAT/BACK_BTN", theme.btnFont, L"", 460, 410, 150, 56, theme.btnFontColor);
 	m_cheatBtnApply = _addButton(theme, "CHEAT/APPLY_BTN", theme.btnFont, L"", 240, 410, 150, 56, theme.btnFontColor);
 	m_cheatBtnDownload = _addButton(theme, "CHEAT/DOWNLOAD_BTN", theme.btnFont, L"", 240, 410, 200, 56, theme.btnFontColor);

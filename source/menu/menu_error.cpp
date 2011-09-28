@@ -15,7 +15,6 @@ void CMenu::error(const wstringEx &msg)
 	_hideConfig4();
 	_hideConfigScreen();
 	_hideConfigSnd();
-	_hideConfig7();
 	_hideDownload();
 	_hideGame();
 	_hideMain();

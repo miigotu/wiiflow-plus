@@ -63,7 +63,6 @@ INCLUDES	:=	source \
 # Default build shell script options
 #---------------------------------------------------------------------------------
 ios			:=	249
-port		:=	0
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
@@ -153,8 +152,8 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 .PHONY: $(BUILD) all clean run
 #---------------------------------------------------------------------------------
 $(BUILD):
-	@echo Building for  IOS $(ios) Port $(port).
-	@bash ./scripts/buildtype.sh $(ios) $(port)
+	@echo Building for  IOS $(ios).
+	@bash ./scripts/buildtype.sh $(ios)
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
