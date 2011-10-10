@@ -2,7 +2,7 @@
 
 #include <wiiuse/wpad.h>
 
-#include "WiiTDB.hpp"
+#include "GameTDB.hpp"
 #include "alt_ios.h"
 #include "gecko.h"
 #include "sys.h"
@@ -294,11 +294,11 @@ void CMenu::_textGameInfo(void)
 	cnt_controlsreq = 0;
 	cnt_controls = 0;
 
-	WiiTDB m_wiitdb;
-	m_wiitdb.OpenFile(sfmt("%s/wiitdb.xml", m_settingsDir.c_str()).c_str());
-	m_wiitdb.SetLanguageCode(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str());
+	GameTDB m_gametdb;
+	m_gametdb.OpenFile(sfmt("%s/wiitdb.xml", m_settingsDir.c_str()).c_str());
+	m_gametdb.SetLanguageCode(m_loc.getString(m_curLanguage, "gametdb_code", "EN").c_str());
 		
-	titlecheck = m_wiitdb.IsLoaded() && m_wiitdb.GetGameXMLInfo(m_cf.getId().c_str(), &gameinfo);
+	titlecheck = m_gametdb.IsLoaded() && m_gametdb.GetGameXMLInfo(m_cf.getId().c_str(), &gameinfo);
 	if(titlecheck)
 	{
 		gprintf("ID: %s\nTitle: %s\n", gameinfo.GameID.c_str(), gameinfo.Title.c_str());
@@ -612,6 +612,6 @@ void CMenu::_textGameInfo(void)
 	else
 		m_btnMgr.setText(m_gameinfoLblTitle, wfmt(L"%s", "No Gameinfo"), true);
 
-	m_wiitdb.CloseFile();
+	m_gametdb.CloseFile();
 
 }

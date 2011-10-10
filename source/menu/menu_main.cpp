@@ -248,7 +248,7 @@ int CMenu::main(void)
 			if (BTN_DOWN_PRESSED || BTN_UP_PRESSED)
 			{
 				int sorting = m_cfg.getInt(domain, "sort", SORT_ALPHA);
-				if (sorting != SORT_ALPHA && sorting != SORT_PLAYERS && sorting != SORT_WIFIPLAYERS)
+				if (sorting != SORT_ALPHA && sorting != SORT_PLAYERS && sorting != SORT_WIFIPLAYERS && sorting != SORT_GAMEID)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt(domain, "sort", SORT_ALPHA);
@@ -267,10 +267,7 @@ int CMenu::main(void)
 				}
 				else
 				{
-					if(sorting == SORT_PLAYERS)
-						curLetter += m_loc.getWString(m_curLanguage, "players", L" Players");
-					else if(sorting == SORT_WIFIPLAYERS)
-						curLetter += m_loc.getWString(m_curLanguage, "wifiplayers", L" Wifi Players");
+					curLetter = _getNoticeTranslation(sorting, curLetter);
 
 					m_btnMgr.setText(m_mainLblNotice, curLetter);
 					m_btnMgr.show(m_mainLblNotice);
@@ -285,9 +282,7 @@ int CMenu::main(void)
 			else if (BTN_PLUS_PRESSED && !m_locked)
 			{
 				u32 sort = 0;
-				sort = m_cfg.getInt(domain, "sort", 0);
-				++sort;
-				if (sort >= SORT_MAX) sort = 0;
+				sort = loopNum((m_cfg.getInt(domain, "sort", 0)) + 1, SORT_MAX - 1);
 				m_cf.setSorting((Sorting)sort);
 				m_cfg.setInt(domain, "sort", sort);
 				wstringEx curSort ;
@@ -385,7 +380,7 @@ int CMenu::main(void)
 			{
 				const char *domain = _domainFromView();
 				int sorting = m_cfg.getInt(domain, "sort", SORT_ALPHA);
-				if (sorting != SORT_ALPHA && sorting != SORT_PLAYERS && sorting != SORT_WIFIPLAYERS)
+				if (sorting != SORT_ALPHA && sorting != SORT_PLAYERS && sorting != SORT_WIFIPLAYERS && sorting != SORT_GAMEID)
 				{
 					m_cf.setSorting((Sorting)SORT_ALPHA);
 					m_cfg.setInt(domain, "sort", SORT_ALPHA);
@@ -397,8 +392,6 @@ int CMenu::main(void)
 				curLetter.clear();
 				curLetter = wstringEx(c);
 
-
-
 				if(sorting == SORT_ALPHA)
 				{
 					m_btnMgr.setText(m_mainLblLetter, curLetter);
@@ -406,10 +399,7 @@ int CMenu::main(void)
 				}
 				else
 				{
-					if(sorting == SORT_PLAYERS)
-						curLetter += m_loc.getWString(m_curLanguage, "players", L" Players");
-					else if(sorting == SORT_WIFIPLAYERS)
-						curLetter += m_loc.getWString(m_curLanguage, "wifiplayers", L" Wifi Players");
+					curLetter = _getNoticeTranslation(sorting, curLetter);
 
 					m_btnMgr.setText(m_mainLblNotice, curLetter);
 					m_btnMgr.show(m_mainLblNotice);
@@ -779,3 +769,92 @@ void CMenu::_textMain(void)
 	m_btnMgr.setText(m_mainLblInit, _t("main2", L"Welcome to WiiFlow. I have not found any games. Click Install to install games, or Select partition to select your partition type."), true);
 }
 
+wstringEx CMenu::_getNoticeTranslation(int sorting, wstringEx curLetter)
+{
+	if(sorting == SORT_PLAYERS)
+		curLetter += m_loc.getWString(m_curLanguage, "players", L" Players");
+	else if(sorting == SORT_WIFIPLAYERS)
+		curLetter += m_loc.getWString(m_curLanguage, "wifiplayers", L" Wifi Players");
+	else if(sorting == SORT_GAMEID)
+	{
+		switch(curLetter[0])
+		{
+			case L'C':
+			{
+				if(m_current_view != COVERFLOW_CHANNEL)
+					curLetter = m_loc.getWString(m_curLanguage, "custom", L"Custom");
+				else
+					curLetter = m_loc.getWString(m_curLanguage, "commodore", L"Commodore 64");
+				break;
+			}
+			case L'E':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "neogeo", L"Neo-Geo");
+				break;
+			}
+			case L'F':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "nes", L"Nintendo");
+				break;
+			}
+			case L'J':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "snes", L"Super Nintendo");
+				break;
+			}
+			case L'L':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "mastersystem", L"Sega Master System");
+				break;
+			}
+			case L'M':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "genesis", L"Sega Genesis");
+				break;
+			}
+			case L'N':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "nintendo64", L"Nintendo64");
+				break;
+			}
+			case L'P':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "turbografx16", L"TurboGrafx-16");
+				break;
+			}
+			case L'Q':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "turbografxcd", L"TurboGrafx-CD");
+				break;
+			}
+			case L'W':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "wiiware", L"WiiWare");
+				break;
+			}
+			case L'H':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "wiichannels", L"Offical Wii Channels");
+				break;
+			}
+			case L'R':
+			case L'S':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "wii", L"Wii");
+				break;
+			}
+			case L'D':
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "homebrew", L"Homebrew");
+				break;
+			}
+			default:
+			{
+				curLetter = m_loc.getWString(m_curLanguage, "unknown", L"Unknown");
+				break;
+			}
+		}
+	}
+	
+	return curLetter;
+}

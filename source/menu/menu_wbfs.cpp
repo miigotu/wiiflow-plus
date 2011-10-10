@@ -175,7 +175,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 						}
 						Disc_ReadHeader(&header);
 						
-						if (_searchGames((const char *) header.id).size() != 0)
+						if (_searchGamesByID((const char *) header.id).size() != 0)
 						{
 							error(_t("wbfsoperr4", L"Game already installed"));
 							out = true;
@@ -223,7 +223,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 	_hideWBFS();
 	if (done && (op == CMenu::WO_REMOVE_GAME || op == CMenu::WO_ADD_GAME))
 	{
-		m_gameList.SetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str());
+		m_gameList.SetLanguage(m_loc.getString(m_curLanguage, "gametdb_code", "EN").c_str());
 		UpdateCache(COVERFLOW_USB);
 
 		_loadList();

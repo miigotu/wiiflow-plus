@@ -26,15 +26,11 @@
  * for WiiXplorer 2010
  ***************************************************************************/
 
-#include <malloc.h>
 #include "mem2.hpp"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ogc/conf.h>
-#include <ogc/wiilaunch.h>
-#include <ogc/es.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include "channels.h"
 #include "banner.h"
@@ -78,23 +74,22 @@ Channels::~Channels()
 {
 }
 
-u32 * Channels::Load(u64 title, char *id)
+u8 * Channels::Load(u64 title, char *id)
 {
-	char app[ISFS_MAXPATH];
-	u32 Size;
-	u16 bootcontent;
+	char app[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
+	u32 bootcontent;
 
 	if(!GetAppNameFromTmd(title, app, true, &bootcontent))
 		return NULL;
 
-	return GetDol(title, id, &Size, bootcontent, false);	
+	return GetDol(title, id, bootcontent);	
 }
 
 u8 Channels::GetRequestedIOS(u64 title)
 {
 	u8 IOS = 0;
 
-	char tmd[ISFS_MAXPATH];
+	char tmd[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
 	sprintf(tmd, "/title/%08x/%08x/content/title.tmd", TITLE_UPPER(title), TITLE_LOWER(title));
 
 	u32 size;
@@ -108,7 +103,7 @@ u8 Channels::GetRequestedIOS(u64 title)
 	return IOS;
 }
 
-bool Channels::Launch(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode)
+bool Channels::Launch(u8 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode)
 {
 	return BootChannel(data, chantitle, vidMode, vipatch, countryString, patchVidMode);
 }
@@ -153,55 +148,41 @@ u64* Channels::GetChannelList(u32* count)
 	return (u64*)MEM2_realloc(channels, *count * sizeof(u64));
 }
 
-bool Channels::GetAppNameFromTmd(u64 title, char* app, bool dol, u16* bootcontent)
+bool Channels::GetAppNameFromTmd(u64 title, char* app, bool dol, u32* bootcontent)
 {
-	char tmd[ISFS_MAXPATH];
-
 	u32 high = TITLE_UPPER(title);
 	u32 low  = TITLE_LOWER(title);
 
 	bool ret = false;
 
+	char tmd[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
 	sprintf(tmd, "/title/%08x/%08x/content/title.tmd", high, low);
 
 	u32 size;
-	u32 *data = (u32 *) ISFS_GetFile((u8 *) &tmd, &size, -1);
-	if (data != NULL)
-	{
-		if (size > 0x208)
-		{
-			if (dol)
-			{
-				struct _tmd * tmd_file = (struct _tmd *) SIGNATURE_PAYLOAD(data);
-				*bootcontent = tmd_file->contents[tmd_file->boot_index].cid;
-				sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, (u32)*bootcontent);
-				//gprintf("Dol-App Path: %s\n", app);
-				ret = true;
-			}
-			else
-			{
-				u16 i;
-				struct _tmd * tmd_file = (struct _tmd *) SIGNATURE_PAYLOAD(data);
-				for(i = 0; i < tmd_file->num_contents; ++i)
-					if(tmd_file->contents[i].index == 0)
-						break;
+	u8 *data = ISFS_GetFile((u8 *) &tmd, &size, -1);
+	if (data == NULL || size < 0x208) return ret;
 
-				sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, tmd_file->contents[i].cid);
-				//gprintf("Banner-App Path: %s\n", app);
-				ret = true;
-			}
+	_tmd * tmd_file = (_tmd *) SIGNATURE_PAYLOAD((u32 *)data);
+	u16 i;
+	for(i = 0; i < tmd_file->num_contents; ++i)
+		if(tmd_file->contents[i].index == (dol ? tmd_file->boot_index : 0))
+		{
+			*bootcontent = tmd_file->contents[i].cid;
+			sprintf(app, "/title/%08x/%08x/content/%08x.app", high, low, *bootcontent);
+			ret = true;
+			break;
 		}
-		SAFE_FREE(data);
-	}
+
+	SAFE_FREE(data);
 
 	return ret;
 }
 
 Banner * Channels::GetBanner(u64 title, bool imetOnly)
 {
-	char app[ISFS_MAXPATH];
-
-	if (!GetAppNameFromTmd(title, app))
+	char app[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
+	u32 cid;
+	if (!GetAppNameFromTmd(title, app, false, &cid))
 	{
 		gprintf("No title found\n");
 		return NULL;

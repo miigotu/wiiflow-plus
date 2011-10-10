@@ -11,11 +11,11 @@
 #define APPLOADER_START (void *)0x81200000
 #endif
 #ifndef APPLOADER_END		/* Also defined in disc.h */
-#define APPLOADER_END (void *)0x816FFFF0
+#define APPLOADER_END (void *)0x81700000
 #endif
 
 #define MAX_MEM1_ARENA_LO	((void *) (((u32)APPLOADER_START)-size))
-#define MEM2_PRIORITY_SIZE	0x50000
+#define MEM2_PRIORITY_SIZE	0x1000
 
 // Forbid the use of MEM2 through malloc
 u32 MALLOC_MEM2 = 0;

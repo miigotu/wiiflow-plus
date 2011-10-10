@@ -35,7 +35,7 @@ class CMenu
 public:
 	CMenu(CVideo &vid);
 	~CMenu(void) {cleanup();}
-	void init(u8 usableDevices);
+	void init(void);
 	void error(const wstringEx &msg);
 	int main(void);
 	void cleanup(bool ios_reload = false);
@@ -252,11 +252,11 @@ private:
 	u32 m_downloadBtnCancel;
 	u32 m_downloadBtnAll;
 	u32 m_downloadBtnMissing;
-	u32 m_downloadBtnWiiTDBDownload;
-	u32 m_downloadLblWiiTDBDownload;
+	u32 m_downloadBtnGameTDBDownload;
+	u32 m_downloadLblGameTDBDownload;
 	u32 m_downloadLblMessage[2];
 	u32 m_downloadLblCovers;
-	u32 m_downloadLblWiiTDB;
+	u32 m_downloadLblGameTDB;
 	u32 m_downloadLblUser[4];
 	u32 m_downloadBtnVersion;
 	static s8 _versionDownloaderInit(CMenu *m);
@@ -679,7 +679,10 @@ private:
 	//
 	void _mainLoopCommon(bool withCF = false, bool blockReboot = false, bool adjusting = false);
 	// 
-	safe_vector<dir_discHdr> _searchGames(const char *gameId);
+	safe_vector<dir_discHdr> _searchGamesByID(const char *gameId);
+/* 	safe_vector<dir_discHdr> _searchGamesByTitle(wchar_t letter);
+	safe_vector<dir_discHdr> _searchGamesByType(const char type);
+	safe_vector<dir_discHdr> _searchGamesByRegion(const char region); */
 public:
 	void _directlaunch(const std::string &id);
 private:
@@ -721,14 +724,15 @@ private:
 	// 
 	const wstringEx _t(const char *key, const wchar_t *def = L"") { return m_loc.getWString(m_curLanguage, key, def); }
 	const wstringEx _fmt(const char *key, const wchar_t *def);
+	wstringEx _getNoticeTranslation(int sorting, wstringEx curLetter);
 	// 
 	void _setThrdMsg(const wstringEx &msg, float progress);
 	int _coverDownloader(bool missingOnly);
 	static int _coverDownloaderAll(CMenu *m);
 	static int _coverDownloaderMissing(CMenu *m);
 	static bool _downloadProgress(void *obj, int size, int position);
-	static int _wiitdbDownloader(CMenu *m);
-	int _wiitdbDownloaderAsync();
+	static int _gametdbDownloader(CMenu *m);
+	int _gametdbDownloaderAsync();
 
 	static s32 _networkComplete(s32 result, void *usrData);
 	void _initAsyncNetwork();

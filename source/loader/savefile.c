@@ -96,12 +96,12 @@ void CreateSavePath(const char *basepath, struct  dir_discHdr *hdr)
 	if(	memcmp(hdr->hdr.id, "RGW", 3) == 0)
 		titlePath = "/title/00010004";
 
-	char fullpath[ISFS_MAXPATH];
+	char fullpath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
 	
 	snprintf(fullpath, sizeof(fullpath), "%s%s", basepath, titlePath);
 	CreateNandPath(fullpath);
 
-	char nandPath[ISFS_MAXPATH];
+	char nandPath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
 	snprintf(nandPath, sizeof(nandPath), "%s/%02x%02x%02x%02x", fullpath, hdr->hdr.id[0], hdr->hdr.id[1], hdr->hdr.id[2], hdr->hdr.id[3]);
 	CreateNandPath(nandPath);
 

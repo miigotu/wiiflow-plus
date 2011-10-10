@@ -44,26 +44,14 @@ extern void __exception_closeall();
 
 static u8	Tmd_Buffer[0x49e4 + 0x1C] ALIGNED(32);
 
-#define        Sys_Magic		((u32*)0x80000020)
-#define        Version			((u32*)0x80000024)
-#define        Arena_L			((u32*)0x80000030)
-#define        BI2				((u32*)0x800000f4)
-#define        Bus_Speed		((u32*)0x800000f8)
-#define        CPU_Speed		((u32*)0x800000fc)
-
 void __Disc_SetLowMem()
 {
-	/* Setup low memory */
-	*(vu32 *)0x80000060 = 0x38A00040;
+	*(vu32 *)0x80000060 = 0x38A00040; // Dev Debugger Hook
 	*(vu32 *)0x800000E4 = 0x80431A80;
 	*(vu32 *)0x800000EC = 0x81800000; // Dev Debugger Monitor Address
 	*(vu32 *)0x800000F0 = 0x01800000; // Simulated Memory Size
 	*(vu32 *)0xCD00643C = 0x00000000; // 32Mhz on Bus
 
-	/* Copy disc ID (online check) */
-	memcpy((void *)0x80003180, (void *)0x80000000, 4);
-
-	// Patch in info missing from apploader reads
 	*Sys_Magic	= 0x0d15ea5e;
 	*Version	= 1;
 	*Arena_L	= 0x00000000;
@@ -71,12 +59,12 @@ void __Disc_SetLowMem()
 	*Bus_Speed	= 0x0E7BE2C0;
 	*CPU_Speed	= 0x2B73A840;
 
-	// From NeoGamme R4 (WiiPower)
-	*(vu32 *)0x800030F0 = 0x0000001C;
-	*(vu32 *)0x8000318C = 0x00000000;
-	*(vu32 *)0x80003190 = 0x00000000;
-	
-	// Fix for Sam & Max (WiiPower)
+	*(vu32 *)0x800030F0 = 0x0000001C; // Dol Args
+	*(vu32 *)0x8000318C = 0x00000000; // Launch Code
+	*(vu32 *)0x80003190 = 0x00000000; // Return Code
+
+	*(vu32 *)0x80003140 = *(vu32 *)0x80003188; // IOS Version Check
+	*(vu32 *)0x80003180 = *(vu32 *)0x80000000; // Game ID Online Check
 	*(vu32 *)0x80003184 = 0x80000000;
 
 	/* Flush cache */
@@ -189,16 +177,12 @@ void __Disc_SetVMode(void)
 	if (vmode != 0) VIDEO_Configure(vmode);
 		
 	/* Setup video  */
- 	VIDEO_SetBlack(FALSE);
-	VIDEO_Flush();
-	VIDEO_WaitVSync();
-	if ((vmode->viTVMode & VI_NON_INTERLACE) != 0)
-		VIDEO_WaitVSync();
-		
  	VIDEO_SetBlack(TRUE);
 	VIDEO_Flush();
 	VIDEO_WaitVSync();
-	if ((vmode->viTVMode & VI_NON_INTERLACE) != 0)
+	if (vmode->viTVMode & VI_NON_INTERLACE)
+		VIDEO_WaitVSync();
+	else while (VIDEO_GetNextField())
 		VIDEO_WaitVSync();
 }
 
@@ -291,10 +275,9 @@ s32 Disc_Wait(void)
 
 s32 Disc_SetUSB(const u8 *id)
 {
-	if (id && WBFS_DEVICE_USB && wbfs_part_fs)
-		return set_frag_list((u8 *) id);
+	if (id) return set_frag_list((u8 *) id);
 
-	return WDVD_SetUSBMode(WBFS_DEVICE_USB, (u8 *) id, -1);
+	return WDVD_SetUSBMode(wbfsDev, (u8 *) id, -1);
 }
 
 s32 Disc_ReadHeader(void *outbuf)
@@ -348,24 +331,21 @@ s32 Disc_IsGC(void)
 	return Disc_Type(1);
 }
 
-s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode, u8 ios)
+s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode)
 {
 	entry_point p_entry;
 
 	s32 ret = WDVD_OpenPartition(offset, 0, 0, 0, Tmd_Buffer);
 	if (ret < 0) return ret;
 
-	/* Disconnect Wiimotes */
-	//Close_Inputs();
-	
-	/* Setup low memory */;
-	__Disc_SetLowMem();
-
 	/* Select an appropriate video mode */
 	__Disc_SelectVMode(vidMode, 0);
 
+	/* Setup low memory */;
+	__Disc_SetLowMem();
+
 	/* Run apploader */
-	ret = Apploader_Run(&p_entry, vidMode, vmode, vipatch, countryString, patchVidMode, ios);
+	ret = Apploader_Run(&p_entry, vidMode, vmode, vipatch, countryString, patchVidMode);
 	free_wip();
 	if (ret < 0) return ret;
 
@@ -432,7 +412,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString,
 	return 0;
 }
 
-s32 Disc_WiiBoot(u8 vidMode, bool vipatch, bool countryString, u8 patchVidModes, u8 ios)
+s32 Disc_WiiBoot(u8 vidMode, bool vipatch, bool countryString, u8 patchVidModes)
 {
 	u64 offset;
 
@@ -441,5 +421,5 @@ s32 Disc_WiiBoot(u8 vidMode, bool vipatch, bool countryString, u8 patchVidModes,
 	if (ret < 0) return ret;
 
 	/* Boot partition */
-	return Disc_BootPartition(offset, vidMode, vipatch, countryString, patchVidModes, ios);
+	return Disc_BootPartition(offset, vidMode, vipatch, countryString, patchVidModes);
 }

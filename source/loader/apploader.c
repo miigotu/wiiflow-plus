@@ -32,7 +32,7 @@ static void __noprint(const char *fmt, ...)
 {
 }
 
-s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes, u8 gameIOS)
+s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes)
 {
 	void *dst = NULL;
 	int len = 0;
@@ -87,10 +87,10 @@ s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatc
 	/* Set entry point from apploader */
 	*entry = appldr_final();
 	
-	IOSReloadBlock(gameIOS);
-
-	/* ERROR 002 fix (WiiPower) */
-	*(u32 *)0x80003140 = *(u32 *)0x80003188;
+	IOSReloadBlock(IOS_GetVersion());
+	*(vu32 *)0x80003140 = *(vu32 *)0x80003188; // IOS Version Check
+	*(vu32 *)0x80003180 = *(vu32 *)0x80000000; // Game ID Online Check
+	*(vu32 *)0x80003184 = 0x80000000;
 
 	DCFlushRange((void*)0x80000000, 0x3f00);
 
@@ -246,7 +246,7 @@ static bool maindolpatches(void *dst, int len, u8 vidMode, GXRModeObj *vmode, bo
 
 	patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
 
-	if (hooktype != 0) ret = dogamehooks(dst, len, false, false);
+	if (hooktype != 0) ret = dogamehooks(dst, len, false);
 	if (vipatch) vidolpatcher(dst, len);
 	if (configbytes[0] != 0xCD) langpatcher(dst, len);
 	if (countryString) PatchCountryStrings(dst, len); // Country Patch by WiiPower

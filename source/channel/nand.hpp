@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <iostream>
+#include <string>
 
 #define REAL_NAND	0
 #define EMU_SD		1
@@ -25,6 +27,8 @@ typedef struct nandDevice
 	u32 Unmount;
 } NandDevice; 
 
+using namespace std;
+
 class Nand
 {
 	public:
@@ -32,19 +36,21 @@ class Nand
 		static void DestroyInstance();
 
 		/* Prototypes */
-		void Init(const char *path, u8 partition, bool disable = false);
+		void Init(string path, u32 partition, bool disable = false);
 		s32 Enable_Emu();
 		s32 Disable_Emu();
 
-		void Set_Partition(int partition);
-		void Set_FullMode(bool fullmode);
-		const char * Get_NandPath(void);
-		int Get_Partition(void);
-		void Set_NandPath(const char * path);
+		void Set_Partition(u32 partition) { Partition = partition; };
+		void Set_FullMode(bool fullmode) { FullMode = fullmode ? 0x100 : 0; };
+
+		const char * Get_NandPath(void) { return NandPath; };
+		u32 Get_Partition(void) { return Partition; };
+
+		void Set_NandPath(string path);
 
 	private:
-		Nand() : MountedDevice(0), Partition(0), FullMode(0x100), NandPath(), EmuDevice(REAL_NAND), Disabled(true) {}
-		~Nand(void){ /* Disable_Emu(); */ }
+		Nand() : MountedDevice(0), EmuDevice(REAL_NAND), Disabled(true), Partition(0), FullMode(0x100), NandPath() {}
+		~Nand(void){}
 
 		/* Prototypes */
 		s32 Nand_Mount(NandDevice *Device);
@@ -52,17 +58,14 @@ class Nand
 		s32 Nand_Enable(NandDevice *Device);
 		s32 Nand_Disable(void);
 
-
-		int MountedDevice;
-		int Partition;
-		int FullMode;
-		char NandPath[32];
-
-		u32 inbuf[8] ATTRIBUTE_ALIGN(32);
-
-		int EmuDevice;
+		u32 MountedDevice;
+		u32 EmuDevice;
 		bool Disabled;
-		
+
+		u32 Partition ATTRIBUTE_ALIGN(32);
+		u32 FullMode ATTRIBUTE_ALIGN(32);
+		char NandPath[32] ATTRIBUTE_ALIGN(32);
+
 		static Nand * instance;
 };
 

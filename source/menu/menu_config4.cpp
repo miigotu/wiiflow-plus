@@ -86,7 +86,7 @@ void CMenu::_showConfig4(void)
 
 	wstringEx channelName = m_loc.getWString(m_curLanguage, "disabled", L"Disabled");
 
-	string langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
+	string langCode = m_loc.getString(m_curLanguage, "gametdb_code", "EN");
 
 	Nand::Instance()->Disable_Emu();
 

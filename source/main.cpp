@@ -78,43 +78,23 @@ int main(int argc, char **argv)
 		Open_Inputs();
 
 		bool deviceAvailable = false;
-		DeviceHandler::Instance()->MountAll();
-		for(u8 device = USB1; device <= USB8; device++)
-			if(DeviceHandler::Instance()->IsInserted(device))
-				deviceAvailable = true;
 
 		u8 timeout = 0;
-  		if(!deviceAvailable)
+		while(!deviceAvailable && timeout++ != 20)
 		{
-			while(!deviceAvailable && timeout++ != 10)
-			{
-				DeviceHandler::Instance()->MountAll();
-				sleep(1);
+			DeviceHandler::Instance()->MountAll();
+			sleep(1);
 
-				for(u8 device = SD; device <= USB8; device++)
-					if(DeviceHandler::Instance()->IsInserted(device))
-						deviceAvailable = true;
-			}
+			for(u8 device = SD; device <= USB8; device++)
+				if(DeviceHandler::Instance()->IsInserted(device))
+					deviceAvailable = true;
 		}
-		
-		u8 usableDevices = 0;
-		for(u8 device = USB1; device <= USB8; device++)
-		{
-			if(DeviceHandler::Instance()->IsInserted(device))
-			{
-				gprintf("%s is Available.\n", DeviceName[device]);
-				usableDevices = 2;
-			}
-		}
-		if(DeviceHandler::Instance()->IsInserted(SD))
-			usableDevices += 1;
-
-		if(usableDevices == 0) Sys_Exit();
+		if(!deviceAvailable) Sys_Exit();
 
 		bool dipOK = Disc_Init() >= 0;
 
 		CMenu menu(vid);
-		menu.init(usableDevices);
+		menu.init();
 		mainMenu = &menu;
 		if (!iosOK)
 		{

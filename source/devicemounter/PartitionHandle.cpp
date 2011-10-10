@@ -36,7 +36,6 @@
 #include "fat.h"
 #include "ext2.h"
 #include "wbfs.h"
-#include <sdcard/wiisd_io.h>
 #include <sdcard/gcsd.h>
 
 #define PARTITION_TYPE_DOS33_EXTENDED		0x05 /* DOS 3.3+ extended partition */
@@ -141,7 +140,7 @@ bool PartitionHandle::Mount(int pos, const char * name)
 	{
 		if (interface == &__io_usbstorage)
 			SetWbfsHandle(pos, wbfs_open_partition(__WBFS_ReadUSB, __WBFS_WriteUSB, NULL, sector_size, GetSecCount(pos), GetLBAStart(pos), 0));
-		else if (interface == &__io_wiisd || interface == &__io_sdhc)
+		else if (interface == &__io_sdhc)
 			SetWbfsHandle(pos, wbfs_open_partition(__WBFS_ReadSDHC, __WBFS_WriteSDHC, NULL, sector_size, GetSecCount(pos), GetLBAStart(pos), 0));
 
 		if(GetWbfsHandle(pos)) return true;

@@ -37,7 +37,6 @@
 #include "utils.h"
 #include "gecko.h"
 #include "mem2.hpp"
-#include "cios.hpp"
 
 static NandDevice NandDeviceList[] = {
 	{ "Disable",						0,	0x00,	0x00 },
@@ -60,7 +59,7 @@ void Nand::DestroyInstance()
 	instance = NULL;
 }
 
-void Nand::Init(const char *path, u8 partition, bool disable)
+void Nand::Init(string path, u32 partition, bool disable)
 {
 	EmuDevice = disable ? REAL_NAND : partition == 0 ? EMU_SD : EMU_USB;
 	Partition = disable ? REAL_NAND : partition > 0 ? partition - 1 : partition;
@@ -70,47 +69,15 @@ void Nand::Init(const char *path, u8 partition, bool disable)
 
 s32 Nand::Nand_Mount(NandDevice *Device)
 {
-	u32 inlen = 0;
-	ioctlv *vector = NULL;
-	u32 *buffer = NULL;
-
-	/* Open FAT module */
 	s32 fd = IOS_Open("fat", 0);
-	if (fd < 0)
-	{
-		gprintf("IOS_Open('fat', 0); FAILED\n");
-		return fd;
-	}
+	if (fd < 0) return fd;
 
-	/* Prepare vector */
-	u8 baseIOS = 0;
-	if(cIOSInfo::D2X(IOS_GetVersion(), &baseIOS))
-	{		
-		// NOTE: 
-		// The official cIOSX rev21 by Waninkoko ignores the Partition argument
-		// and the nand is always expected to be on the 1st Partition.
-		// However this way earlier d2x betas having revision 21 take in 
-		// consideration the Partition argument.
-		inlen = 1;
-
-		/* Allocate memory */
-		buffer = (u32 *)MEM2_alloc(sizeof(u32)*3);
-
-		/* Set vector pointer */
-		vector = (ioctlv *)buffer;
-
-		buffer[0] = (u32)(buffer + 2);
-		buffer[1] = sizeof(u32);
-		buffer[2] = (u32)Partition;
-	}
-
-	/* Mount device */
-	s32 ret = IOS_Ioctlv(fd, Device->Mount, inlen, 0, vector);
+	static ioctlv vector[1] ATTRIBUTE_ALIGN(32);	
 	
-	/* Free memory */
-	SAFE_FREE(buffer);
+	vector[0].data = &Partition;
+	vector[0].len = sizeof(u32);
 
-	/* Close FAT module */
+	s32 ret = IOS_Ioctlv(fd, Device->Mount, 1, 0, vector);
 	IOS_Close(fd);
 
 	return ret;
@@ -118,18 +85,10 @@ s32 Nand::Nand_Mount(NandDevice *Device)
 
 s32 Nand::Nand_Unmount(NandDevice *Device)
 {
-	// Open FAT module
 	s32 fd = IOS_Open("fat", 0);
-	if (fd < 0)
-	{
-		gprintf("IOS_Open('fat', 0) FAILED\n");
-		return fd;
-	}
+	if (fd < 0) return fd;
 
-	// Unmount device
 	s32 ret = IOS_Ioctlv(fd, Device->Unmount, 0, 0, NULL);
-
-	// Close FAT module
 	IOS_Close(fd);
 
 	return ret;
@@ -137,53 +96,21 @@ s32 Nand::Nand_Unmount(NandDevice *Device)
 
 s32 Nand::Nand_Enable(NandDevice *Device)
 {
-	s32 ret;
-
-	// Open /dev/fs
 	s32 fd = IOS_Open("/dev/fs", 0);
-	if (fd < 0)
-	{
-		gprintf("IOS_Open('/dev/fs', 0) FAILED");
-		return fd;
-	}
+	if (fd < 0) return fd;
 
-	u8 baseIOS;
-	bool goodcIOS = cIOSInfo::D2X(IOS_GetVersion(), &baseIOS);
+	int NandPathlen = strlen(NandPath) + 1;
 
-	// Set input buffer
-	if(goodcIOS && Device->Mode != 0)
-	{
-		//FULL NAND emulation since rev18
-		//needed for reading images on triiforce mrc folder using ISFS commands
-		inbuf[0] = Device->Mode | FullMode;
-	}
-	else inbuf[0] = Device->Mode; //old method
+	static ioctlv vector[2] ATTRIBUTE_ALIGN(32);
 
-	// Enable NAND emulator
-	if(goodcIOS)
-	{
-		// NOTE: 
-		// The official cIOSX rev21 by Waninkoko provides an undocumented feature
-		// to set nand NandPath when mounting the device.
-		// This feature has been discovered during d2x development.
-		int NandPathlen = strlen(NandPath)+1;
+	static u32 mode ATTRIBUTE_ALIGN(32) = Device->Mode | FullMode;
 
-		/* Allocate memory */
-		u32 *buffer = (u32 *)MEM2_alloc((sizeof(u32) * 5) + NandPathlen);
-	
-		buffer[0] = (u32)(buffer + 4);
-		buffer[1] = sizeof(u32);		// actually not used by cios
-		buffer[2] = (u32)(buffer + 5);
-		buffer[3] = NandPathlen;		// actually not used by cios
-		buffer[4] = inbuf[0];			
-		strcpy((char*)(buffer+5), NandPath);
-		
-		ret = IOS_Ioctlv(fd, 100, 2, 0, (ioctlv *)buffer);
-		SAFE_FREE(buffer);
-	}
-	else ret = IOS_Ioctl(fd, 100, inbuf, sizeof(inbuf), NULL, 0);
+	vector[0].data = &mode;
+	vector[0].len = sizeof(u32);
+	vector[1].data = NandPath;
+	vector[1].len = NandPathlen;
 
-	// Close /dev/fs
+	s32 ret = IOS_Ioctlv(fd, 100, 2, 0, vector);
 	IOS_Close(fd);
 
 	return ret;
@@ -191,26 +118,15 @@ s32 Nand::Nand_Enable(NandDevice *Device)
 
 s32 Nand::Nand_Disable(void)
 {
-	// Open /dev/fs
 	s32 fd = IOS_Open("/dev/fs", 0);
-	if (fd < 0)
-	{
-		gprintf("IOS_Open('/dev/fs', 0) Failed\n");
-		return fd;
-	}
+	if (fd < 0) return fd;
 
-	// Set input buffer
-	inbuf[0] = 0;
-
-	// Disable NAND emulator
-	s32 ret = IOS_Ioctl(fd, 100, inbuf, sizeof(inbuf), NULL, 0);
-
-	// Close /dev/fs
+	u32 inbuf ATTRIBUTE_ALIGN(32) = 0;
+	s32 ret = IOS_Ioctl(fd, 100, &inbuf, sizeof(inbuf), NULL, 0);
 	IOS_Close(fd);
 
 	return ret;
 } 
-
 
 s32 Nand::Enable_Emu()
 {
@@ -222,18 +138,10 @@ s32 Nand::Enable_Emu()
 	NandDevice *Device = &NandDeviceList[EmuDevice];
 
 	s32 ret = Nand_Mount(Device);
-	if (ret < 0) 
-	{
-		gprintf(" ERROR Mount! (ret = %d)\n", ret);
-		return ret;
-	}
+	if (ret < 0) return ret;
 
 	ret = Nand_Enable(Device);
-	if (ret < 0) 
-	{
-		gprintf(" ERROR Enable! (ret = %d)\n", ret);
-		return ret;
-	}
+	if (ret < 0) return ret;
 
 	MountedDevice = EmuDevice;
 
@@ -255,39 +163,14 @@ s32 Nand::Disable_Emu()
 	return 0;
 }
 
-void Nand::Set_Partition(int partition)
+void Nand::Set_NandPath(string path)
 {
-	Partition = partition;
-}
+	if(isalnum(*(path.begin()))) path.insert(path.begin(), '/');
+	else *(path.begin()) = '/';
 
-void Nand::Set_NandPath(const char* path)
-{
-	int i=0;
-	if(path[0] != '/' && path[0] != '\0') i++;
+	if(isalnum(*(path.end()))) path.push_back('/');
+	else *(path.end()) = '/';
 
-	while(path[i] != '\0' && i < 31)
-	{
-		NandPath[i] = path[i];
-		i++;
-	}
-	if(NandPath[i-1] == '/')
-		NandPath[i-1] = '\0';
-
-	NandPath[0] = '/';
-	NandPath[i] = '\0';
-}
-
-void Nand::Set_FullMode(bool fullmode)
-{
-	FullMode = fullmode ? 0x100: 0;
-}
-
-const char* Nand::Get_NandPath(void)
-{
-	return NandPath;
-}
-
-int Nand::Get_Partition(void)
-{
-	return Partition;
+	if(path.size() <= 32)
+		memcpy(NandPath, path.c_str(), path.size());
 }

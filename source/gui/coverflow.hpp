@@ -23,9 +23,9 @@
 enum Sorting
 {
 	SORT_ALPHA,
+	SORT_GAMEID,
 	SORT_PLAYCOUNT,
 	SORT_LASTPLAYED,
-	SORT_GAMEID,
 	SORT_WIFIPLAYERS,
 	SORT_PLAYERS,
 	SORT_MAX,
@@ -60,6 +60,8 @@ public:
 	void prevLetter(wchar_t *c);
 	void nextPlayers(bool wifi, wchar_t *c);
 	void prevPlayers(bool wifi, wchar_t *c);
+	void nextID(wchar_t *c);
+	void prevID(wchar_t *c);
 	void left(void);
 	void right(void);
 	void up(void);
@@ -192,7 +194,6 @@ private:
 		volatile enum TexState state;
 		// 
 		CItem(dir_discHdr *itemHdr, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed);
-		bool operator<(const CItem &i) const;
 	};
 	struct CCover
 	{

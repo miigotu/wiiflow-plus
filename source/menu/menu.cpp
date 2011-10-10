@@ -79,11 +79,12 @@ CMenu::CMenu(CVideo &vid) :
 	bootHB = false;
 	m_gamesound_changed = false;
 	m_base_font_size = 0;
+	m_current_view = COVERFLOW_USB;
 }
 
 extern "C" { int makedir(char *newdir); }
 
-void CMenu::init(u8 usableDevices)
+void CMenu::init(void)
 {
 	const char *drive = "empty";
 	const char *check = "empty";
@@ -186,7 +187,7 @@ void CMenu::init(u8 usableDevices)
 		}
 	}
 	Nand::Instance()->Init(m_cfg.getString("NAND", "path", "").c_str(),
-		m_cfg.getInt("NAND", "partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str())),
+		m_cfg.getInt("NAND", "partition", -1),
 		m_cfg.getBool("NAND", "disable", true)
 		);
 
@@ -218,23 +219,28 @@ void CMenu::init(u8 usableDevices)
 
 	DeviceHandler::SetWatchdog(m_cfg.getUInt("GENERAL", "watchdog_timeout", 10));
 
-	m_current_view = usableDevices > 1 ? COVERFLOW_USB : COVERFLOW_CHANNEL;
-
 	const char *domain = _domainFromView();
 	const char *checkDir = m_current_view == COVERFLOW_HOMEBREW ? HOMEBREW_DIR : GAMES_DIR;
 	
-	u8 partition = m_cfg.getInt(domain, "partition");  //Auto find a valid partition and fix old ini partition settings.
-	if(m_current_view != COVERFLOW_CHANNEL && (partition < USB1 || partition > USB8 || !DeviceHandler::Instance()->IsInserted(partition)))
+	u8 partition = m_cfg.getInt(domain, "partition", -1);  //Auto find a valid partition and fix old ini partition settings.
+	if(m_current_view != COVERFLOW_CHANNEL && (partition > USB8 || !DeviceHandler::Instance()->IsInserted(partition)))
 	{
 		m_cfg.remove(domain, "partition");
-		for(int i = USB1; i <= USB8; i++) // Find a usb partition with the wbfs folder or wbfs file system, else leave it blank (defaults to 1 later)
+		for(int i = SD; i <= USB8+1; i++) // Find a usb partition with the wbfs folder or wbfs file system, else leave it blank (defaults to 1 later)
+		{
+			if(i > USB8)
+			{
+				m_current_view = COVERFLOW_CHANNEL;
+				break;
+			}
 			if (DeviceHandler::Instance()->IsInserted(i)
-				&& ((m_current_view != COVERFLOW_HOMEBREW && DeviceHandler::Instance()->GetFSType(i) == PART_FS_WBFS)
+				&& ((m_current_view == COVERFLOW_USB && DeviceHandler::Instance()->GetFSType(i) == PART_FS_WBFS)
 				|| stat(sfmt(checkDir, DeviceName[i]).c_str(), &dummy) == 0))
 			{
 				m_cfg.setInt(domain, "partition", i);
 				break;
 			}
+		}
 	}
 
 	m_cf.init(m_base_font, m_base_font_size);
@@ -253,9 +259,9 @@ void CMenu::init(u8 usableDevices)
 	makedir((char *)m_txtCheatDir.c_str());
 	makedir((char *)m_cheatDir.c_str());
 	makedir((char *)m_wipDir.c_str());
-
 	makedir((char *)m_listCacheDir.c_str());
-	m_gameList.Init(m_listCacheDir, m_settingsDir, m_loc.getString(m_curLanguage, "wiitdb_code", "EN"));
+
+	m_gameList.Init(m_listCacheDir, m_settingsDir, m_loc.getString(m_curLanguage, "gametdb_code", "EN"));
 
 	// INI files
 	m_cat.load(sfmt("%s/" CAT_FILENAME, m_settingsDir.c_str()).c_str());
@@ -1434,7 +1440,7 @@ const wstringEx CMenu::_fmt(const char *key, const wchar_t *def)
 
 bool CMenu::_loadChannelList(void)
 {
-	currentPartition = m_cfg.getInt("NAND", "partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
+	currentPartition = m_cfg.getInt("NAND", "partition", -1);
 	static u8 lastPartition = currentPartition;
 
 	bool disable_emu = m_cfg.getBool("NAND", "disable", true);
@@ -1463,7 +1469,7 @@ bool CMenu::_loadChannelList(void)
 
 		if(sysconf != NULL && sysconf_size > 0)
 		{
-			sprintf(filepath, "%s:%s/shared2/sys/SYSCONF", DeviceName[currentPartition], path.c_str());	
+			sprintf(filepath, "%s:%sshared2/sys/SYSCONF", DeviceName[currentPartition], path.c_str());	
 			FILE *file = fopen(filepath, "wb");
 			if(file)
 			{
@@ -1480,7 +1486,7 @@ bool CMenu::_loadChannelList(void)
 
 		if(meez != NULL && meez_size > 0)
 		{
-			sprintf(filepath, "%s:%s/shared2/menu/FaceLib/RFL_DB.dat", DeviceName[currentPartition], path.c_str());
+			sprintf(filepath, "%s:%sshared2/menu/FaceLib/RFL_DB.dat", DeviceName[currentPartition], path.c_str());
 			FILE *file = fopen(filepath, "wb");
 			if(file)
 			{

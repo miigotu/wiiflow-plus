@@ -98,7 +98,7 @@ const u32 langpatch[3] = {0x7C600775, 0x40820010, 0x38000000};
 static const u32 oldpatch002[3] = {0x2C000000, 0x40820214, 0x3C608000};
 static const u32 newpatch002[3] = {0x2C000000, 0x48000214, 0x3C608000};
 
-bool dogamehooks(void *addr, u32 len, bool channel, bool bootcontentloaded)
+bool dogamehooks(void *addr, u32 len, bool channel)
 {
 	/*
 	0 No Hook
@@ -114,7 +114,6 @@ bool dogamehooks(void *addr, u32 len, bool channel, bool bootcontentloaded)
 	void *addr_start = addr;
 	void *addr_end = addr+len;
 	bool hookpatched = false;
-	bool multidolpatched = false;
 
 	while(addr_start < addr_end)
 	{
@@ -202,7 +201,7 @@ bool dogamehooks(void *addr, u32 len, bool channel, bool bootcontentloaded)
 				DCFlushRange(((u32*)addr_start)+1, 4);
 
 				multidolhook((u32)addr_start+sizeof(multidolchanhooks)-4);
-				multidolpatched = true;
+				hookpatched = true;
 			}
 			else if(!channel && memcmp(addr_start, multidolhooks, sizeof(multidolhooks))==0)
 			{
@@ -212,7 +211,7 @@ bool dogamehooks(void *addr, u32 len, bool channel, bool bootcontentloaded)
 		}
 		addr_start += 4;
 	}
-	return channel && bootcontentloaded ? multidolpatched : hookpatched;
+	return hookpatched;
 }
 
 void langpatcher(void *addr, u32 len)
@@ -257,19 +256,19 @@ s32 IOSReloadBlock(u8 reqios)
         return ESHandle;
 	}
 	
-	static ioctlv vector[0x08] ATTRIBUTE_ALIGN(32);		
-	static int mode ATTRIBUTE_ALIGN(32);
-    static int ios ATTRIBUTE_ALIGN(32);
+	static ioctlv vector[2] ATTRIBUTE_ALIGN(32);		
+	static u32 mode[8] ATTRIBUTE_ALIGN(32);
+    static u32 ios[8] ATTRIBUTE_ALIGN(32);
 
-	mode = 2;
-	vector[0].data = &mode;
+	mode[0] = 2;
+	vector[0].data = mode;
     vector[0].len = 4;
 
-	ios = reqios;
-	vector[1].data = &ios;
+	ios[0] = reqios;
+	vector[1].data = ios;
 	vector[1].len = 4;
 
-    s32 r = IOS_Ioctlv(ESHandle, 0xA0, 2u, 0, vector);
+    s32 r = IOS_Ioctlv(ESHandle, 0xA0, 2, 0, vector);
 	gprintf("Enable/Disable Block IOS Reload for cIOS%uv%u %s\n", IOS_GetVersion(), IOS_GetRevision() % 100, r < 0 ? "FAILED!" : "SUCCEEDED!");
 	
     IOS_Close(ESHandle);

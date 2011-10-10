@@ -170,7 +170,7 @@ s32 WDVD_Eject(void)
 
 s32 WDVD_OpenPartition(u64 offset, void* Ticket, void* Certificate, unsigned int Cert_Len, void* Out)
 {
-	static ioctlv	Vectors[5]		__attribute__((aligned(0x20)));
+	static ioctlv Vectors[5] ATTRIBUTE_ALIGN(32);
 
 	memset(inbuf, 0, sizeof inbuf);
 	memset(outbuf, 0, sizeof outbuf);
@@ -189,7 +189,7 @@ s32 WDVD_OpenPartition(u64 offset, void* Ticket, void* Certificate, unsigned int
 	Vectors[4].data		= outbuf;
 	Vectors[4].len		= 0x20;
 
-	s32 ret = IOS_Ioctlv(di_fd, IOCTL_DI_OPENPART, 3, 2, (ioctlv *)Vectors);
+	s32 ret = IOS_Ioctlv(di_fd, IOCTL_DI_OPENPART, 3, 2, Vectors);
 	if (ret < 0) return ret;
 
 	return (ret == 1) ? 0 : -ret;
@@ -321,7 +321,6 @@ s32 WDVD_SetFragList(int device, void *fraglist, int size)
 
 	DCFlushRange(fraglist, size);
 	s32 ret = IOS_Ioctl(di_fd, IOCTL_DI_SETFRAG, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
-
 	if (ret < 0) return ret;
 
 	return (ret == 1) ? 0 : -ret;

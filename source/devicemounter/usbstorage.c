@@ -126,14 +126,14 @@ s32 USBStorage_SetWatchdog(u32 seconds)
 {
 	if (fd < 0) return fd;
 
-	static ioctlv vector[0x04] ATTRIBUTE_ALIGN(32);		
-	static int secs ATTRIBUTE_ALIGN(32);
+	static ioctlv vector[1] ATTRIBUTE_ALIGN(32);		
+	static u32 secs[8] ATTRIBUTE_ALIGN(32);
 
-	secs = seconds;
-	vector[0].data = &secs;
+	secs[0] = seconds;
+	vector[0].data = secs;
     vector[0].len = 4;
 
-	return IOS_Ioctlv(fd, USB_IOCTL_UMS_WATCHDOG, 4, 0, vector);
+	return IOS_Ioctlv(fd, USB_IOCTL_UMS_WATCHDOG, 1, 0, vector);
 }
 
 s32 USBStorage_Init(void)

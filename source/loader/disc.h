@@ -5,8 +5,15 @@
 #define APPLOADER_START (void *)0x81200000
 #endif
 #ifndef APPLOADER_END		/* Also defined in mem2.hpp */
-#define APPLOADER_END (void *)0x816FFFF0
+#define APPLOADER_END (void *)0x81700000
 #endif
+
+#define	Sys_Magic	((vu32*)0x80000020)
+#define	Version		((vu32*)0x80000024)
+#define	Arena_L		((vu32*)0x80000030)
+#define	BI2			((vu32*)0x800000F4)
+#define	Bus_Speed	((vu32*)0x800000F8)
+#define	CPU_Speed	((vu32*)0x800000Fc)
 
 /* Disc header structure */
 struct discHdr
@@ -45,7 +52,7 @@ struct discHdr
 	u8 h3_verify;
 
 	/* Padding */
-	int casecolor;
+	u32 casecolor;
 	u8 unused3[26];
 } ATTRIBUTE_PACKED;
 
@@ -95,8 +102,8 @@ extern "C" {
 	s32 Disc_Type(bool);
 	s32	Disc_IsWii(void);
 	s32	Disc_IsGC(void);
-	s32	Disc_BootPartition(u64, u8, bool, bool, u8, u8);
-	s32	Disc_WiiBoot(u8, bool, bool, u8, u8);
+	s32	Disc_BootPartition(u64, u8, bool, bool, u8);
+	s32	Disc_WiiBoot(u8, bool, bool, u8);
 
 #ifdef __cplusplus
 }

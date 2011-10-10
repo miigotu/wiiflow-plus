@@ -156,7 +156,7 @@ void CVideo::init(void)
 	VIDEO_SetBlack(FALSE);
 	VIDEO_Flush();
 	VIDEO_WaitVSync();
-	if ((m_rmode->viTVMode & VI_NON_INTERLACE) != 0)
+	if (m_rmode->viTVMode & VI_NON_INTERLACE)
 		VIDEO_WaitVSync();
 	m_fifo = __real_memalign(32, DEFAULT_FIFO_SIZE);
 	memset(m_fifo, 0, DEFAULT_FIFO_SIZE);
@@ -510,8 +510,6 @@ void CVideo::_showWaitMessages(CVideo *m)
 		}
 		waitFrames--;
 		VIDEO_WaitVSync();
-		if ((m->m_rmode->viTVMode & VI_NON_INTERLACE) != 0)
-			VIDEO_WaitVSync();
 	}
 	if (m->m_useWiiLight)
 	{

@@ -8,7 +8,7 @@
 #include "http.h"
 #include "sys.h"
 
-#define GECKOURL "http://geckocodes.org/codes/R/%s.txt"
+#define GECKOURL "http://geckocodes.org/codes/%c/%s.txt"
 #define CHEATSPERPAGE 4
 
 void CMenu::_hideCheatDownload(bool instant)
@@ -51,11 +51,14 @@ u32 CMenu::_downloadCheatFileAsync(void *obj)
 		return -2;
 	}
 
-	block cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, m->m_cf.getId().c_str()).c_str(),CMenu::_downloadProgress, m);
+	string id = m->m_cf.getId();
+	char type = id[0] == 'S' ? 'R' : id[0];
+
+	block cheatfile = downloadfile(buffer.get(), bufferSize, sfmt(GECKOURL, type, id.c_str()).c_str(),CMenu::_downloadProgress, m);
 
 	if (cheatfile.data != NULL && cheatfile.size > 65 && cheatfile.data[0] != '<')
 	{
-		FILE *file = fopen(fmt("%s/%s.txt", m->m_txtCheatDir.c_str(), m->m_cf.getId().c_str()), "wb");
+		FILE *file = fopen(fmt("%s/%s.txt", m->m_txtCheatDir.c_str(), id.c_str()), "wb");
 				
 		if (file != NULL)
 		{

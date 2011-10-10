@@ -21,33 +21,17 @@
 #include <ogc/lwp_watchdog.h>
 #include <time.h>
 
-#define TAG_GAME_ID		"gameid"
-#define TAG_LOC			"loc"
-#define TAG_REGION		"region"
-#define TITLES_URL		"http://www.wiitdb.com/titles.txt?LANG=%s"
-#define WIITDB_URL		"http://www.wiitdb.com/wiitdb.zip?LANG=%s&FALLBACK=TRUE&WIIWARE=TRUE"
+#define TAG_GAME_ID		"{gameid}"
+#define TAG_LOC			"{loc}"
+#define TITLES_URL		"http://www.gametdb.com/titles.txt?LANG=%s"
+#define GAMETDB_URL		"http://www.gametdb.com/wiitdb.zip?LANG=%s&FALLBACK=TRUE&WIIWARE=TRUE"
 #define UPDATE_URL_VERSION	"http://update.wiiflow.org/txt/versions.txt"
 
 using namespace std;
 
-static const char FMT_BPIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/other/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/other/{gameid6}.png";
-static const char FMT_BPIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/coverfullHQ/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/EN/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfullHQ/other/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/EN/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/coverfull/other/{gameid4}.png";
-static const char FMT_PIC6_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid6}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/other/{gameid6}.png";
-static const char FMT_PIC4_URL[] = "http://wiitdb.com/wiitdb/artwork/cover/{loc}/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/EN/{gameid4}.png"\
-"|http://wiitdb.com/wiitdb/artwork/cover/other/{gameid4}.png";
+static const char FMT_BPIC_URL[] = "http://art.gametdb.com/wii/coverfullHQ/{loc}/{gameid}.png"\
+"|http://art.gametdb.com/wii/coverfull/{loc}/{gameid}.png";
+static const char FMT_PIC_URL[] = "http://art.gametdb.com/wii/cover/{loc}/{gameid}.png";
 
 static block download = { 0, 0 };
 static string countryCode(const string &gameId)
@@ -132,47 +116,12 @@ static string countryCode(const string &gameId)
 	return "other";
 }
 
-static string makeURL(const string &format, const string &gameId, const string &country)
+static string makeURL(const string format, const string gameId, const string country)
 {
-	string url;
-	string::size_type i = 0;
+	string url = format;
+	url.replace(url.find(TAG_LOC), strlen(TAG_LOC), country.c_str());
+	url.replace(url.find(TAG_GAME_ID), strlen(TAG_GAME_ID), gameId.c_str());
 
-	if (format.empty()) return string();
-	url.reserve(format.size() + 42);
-	while (i != string::npos)
-	{
-		string::size_type j = format.find_first_of('{', i);
-		if (j != i)
-			url += format.substr(i, j == string::npos ? string::npos : j - i);
-		i = j;
-		if (i != string::npos)
-		{
-			++i;
-			j = format.find_first_of('}', i);
-			if (j == string::npos) break;
-			if (j > i + 1)
-			{
-				string k = format.substr(i, j - i);
-				if (k.substr(0, k.size() - 1) == TAG_GAME_ID && k[k.size() - 1] >= '3' && k[k.size() - 1] <= '6')
-					url += gameId.substr(0, (string::size_type)(k[k.size() - 1] - '0'));
-				else if (k == TAG_LOC)
-					url += country;
-				else if (k == TAG_REGION)
-					switch(gameId[3])
-					{
-					case 'E':
-						url += "ntsc";
-						break;
-					case 'J':
-						url += "ntscj";
-						break;
-					default:
-						url += "pal";
-					}
-			}
-			i = j + 1;
-		}
-	}
 	return url;
 }
 
@@ -182,13 +131,13 @@ void CMenu::_hideDownload(bool instant)
 	m_btnMgr.hide(m_downloadBtnCancel, instant);
 	m_btnMgr.hide(m_downloadBtnAll, instant);
 	m_btnMgr.hide(m_downloadBtnMissing, instant);
-	m_btnMgr.hide(m_downloadBtnWiiTDBDownload, instant);
+	m_btnMgr.hide(m_downloadBtnGameTDBDownload, instant);
 	m_btnMgr.hide(m_downloadPBar, instant);
 	m_btnMgr.hide(m_downloadLblMessage[0], 0, 0, -2.f, 0.f, instant);
 	m_btnMgr.hide(m_downloadLblMessage[1], 0, 0, -2.f, 0.f, instant);
 	m_btnMgr.hide(m_downloadLblCovers, instant);
-	m_btnMgr.hide(m_downloadLblWiiTDBDownload, instant);
-	m_btnMgr.hide(m_downloadLblWiiTDB, instant);
+	m_btnMgr.hide(m_downloadLblGameTDBDownload, instant);
+	m_btnMgr.hide(m_downloadLblGameTDB, instant);
 	for (u32 i = 0; i < ARRAY_SIZE(m_downloadLblUser); ++i)
 		if (m_downloadLblUser[i] != -1u)
 			m_btnMgr.hide(m_downloadLblUser[i], instant);
@@ -197,7 +146,7 @@ void CMenu::_hideDownload(bool instant)
 void CMenu::_showDownload(void)
 {
 	_setBg(m_downloadBg, m_downloadBg);
-	m_btnMgr.show(m_downloadLblWiiTDB);
+	m_btnMgr.show(m_downloadLblGameTDB);
 	m_btnMgr.show(m_downloadLblTitle);
 	m_btnMgr.show(m_downloadBtnCancel);
 	m_btnMgr.show(m_downloadBtnAll);
@@ -205,8 +154,8 @@ void CMenu::_showDownload(void)
 	m_btnMgr.show(m_downloadLblCovers);
 	if (!m_locked)
 	{
-		m_btnMgr.show(m_downloadLblWiiTDBDownload);
-		m_btnMgr.show(m_downloadBtnWiiTDBDownload);
+		m_btnMgr.show(m_downloadLblGameTDBDownload);
+		m_btnMgr.show(m_downloadBtnGameTDBDownload);
 	}
 	for (u32 i = 0; i < ARRAY_SIZE(m_downloadLblUser); ++i)
 		if (m_downloadLblUser[i] != -1u)
@@ -368,12 +317,8 @@ int CMenu::_coverDownloader(bool missingOnly)
 	}
 	bool savePNG = m_cfg.getBool("GENERAL", "keep_png", true);
 
-	safe_vector<string> fmtURLBox = stringToVector(
-									m_cfg.getString("GENERAL", m_current_view != COVERFLOW_USB ? "url_full_covers_id4" : "url_full_covers_id6",
-									m_current_view != COVERFLOW_USB ? FMT_BPIC4_URL : FMT_BPIC6_URL), '|');
-	safe_vector<string> fmtURLFlat = stringToVector(
-									m_cfg.getString("GENERAL", m_current_view != COVERFLOW_USB ? "url_flat_covers_id4" : "url_flat_covers_id6",
-									m_current_view != COVERFLOW_USB ? FMT_PIC4_URL : FMT_PIC6_URL), '|');
+	safe_vector<string> fmtURLBox = stringToVector(m_cfg.getString("GENERAL", "url_full_covers", FMT_BPIC_URL), '|');
+	safe_vector<string> fmtURLFlat = stringToVector(m_cfg.getString("GENERAL", "url_flat_covers", FMT_PIC_URL), '|');
 
 	u32 nbSteps = m_gameList.size();
 	u32 step = 0;
@@ -425,27 +370,35 @@ int CMenu::_coverDownloader(bool missingOnly)
 			bool success = false;
 			FILE *file = NULL;
 
-			safe_vector<string> newID(1);
+			string newID = m_newID.getString(domain, coverList[i], coverList[i]);
 
-			newID[0] = m_newID.getString(domain, coverList[i], coverList[i]);
-
- 			if(!newID[0].empty() && strncasecmp(newID[0].c_str(), coverList[i].c_str(), m_current_view != COVERFLOW_USB ? 4 : 6) == 0)
+ 			if(!newID.empty() && strncasecmp(newID.c_str(), coverList[i].c_str(), m_current_view != COVERFLOW_USB ? 4 : 6) == 0)
 				m_newID.remove(domain, coverList[i]);
-			else if(!newID[0].empty())
+			else if(!newID.empty())
 			{
-				 gprintf("old id = %s\nnew id = %s\n", coverList[i].c_str(), newID[0].c_str());
+				 gprintf("old id = %s\nnew id = %s\n", coverList[i].c_str(), newID.c_str());
 			}
 
 			for (u32 j = 0; !success && j < fmtURLBox.size() && !m_thrdStop; ++j)
 			{
 
-				url = makeURL(fmtURLBox[j], newID[0], countryCode(newID[0]));
+				url = makeURL(fmtURLBox[j], newID, countryCode(newID));
 				if (j == 0) ++step;
 				m_thrdStep = listWeight + dlWeight * (float)step / (float)nbSteps;
 				LWP_MutexLock(m_mutex);
 				_setThrdMsg(wfmt(_fmt("dlmsg3", L"Downloading from %s"), url.c_str()), m_thrdStep);
 				LWP_MutexUnlock(m_mutex);
 				download = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
+
+				if (download.data == NULL && newID[3] != 'E')
+				{
+					url = makeURL(fmtURLBox[j], newID, "US");
+					LWP_MutexLock(m_mutex);
+					_setThrdMsg(wfmt(_fmt("dlmsg3", L"Downloading from %s"), url.c_str()), m_thrdStep);
+					LWP_MutexUnlock(m_mutex);
+					download = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
+				}
+
 				if (download.data != NULL)
 				{
 					if (savePNG)
@@ -481,11 +434,19 @@ int CMenu::_coverDownloader(bool missingOnly)
 					if (m_thrdStop) break;
 					for (u32 j = 0; !success && j < fmtURLFlat.size() && !m_thrdStop; ++j)
 					{
-						url = makeURL(fmtURLFlat[j], newID[0], countryCode(newID[0]));
+						url = makeURL(fmtURLFlat[j], newID, countryCode(newID));
 						LWP_MutexLock(m_mutex);
 						_setThrdMsg(wfmt(_fmt("dlmsg8", L"Full cover not found. Downloading from %s"), url.c_str()), listWeight + dlWeight * (float)step / (float)nbSteps);
 						LWP_MutexUnlock(m_mutex);
 						download = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
+						if (download.data == NULL && newID[3] != 'E')
+						{
+							url = makeURL(fmtURLFlat[j], newID, "EN");
+							LWP_MutexLock(m_mutex);
+							_setThrdMsg(wfmt(_fmt("dlmsg3", L"Downloading from %s"), url.c_str()), m_thrdStep);
+							LWP_MutexUnlock(m_mutex);
+							download = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
+						}
 						if (download.data != NULL)
 						{
 							if (savePNG)
@@ -535,7 +496,7 @@ void CMenu::_download(string gameId)
 	int msg = 0;
 	wstringEx prevMsg;
 	
-	bool _updateWiitdb = false;
+	bool _updateGametdb = false;
 
 	SetupInput();
 	_showDownload();
@@ -561,9 +522,9 @@ void CMenu::_download(string gameId)
 				m_btnMgr.setProgress(m_downloadPBar, 0.f);
 				m_btnMgr.hide(m_downloadBtnAll);
 				m_btnMgr.hide(m_downloadBtnMissing);
-				m_btnMgr.hide(m_downloadBtnWiiTDBDownload);
+				m_btnMgr.hide(m_downloadBtnGameTDBDownload);
 				m_btnMgr.hide(m_downloadLblCovers);
-				m_btnMgr.hide(m_downloadLblWiiTDBDownload);
+				m_btnMgr.hide(m_downloadLblGameTDBDownload);
 				m_thrdStop = false;
 				m_thrdWorking = true;
 				gameId.clear();
@@ -572,22 +533,22 @@ void CMenu::_download(string gameId)
 				else
 					LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_coverDownloaderMissing, (void *)this, 0, 8192, 40);
 			}
-			else if (m_btnMgr.selected(m_downloadBtnWiiTDBDownload) && !m_thrdWorking)
+			else if (m_btnMgr.selected(m_downloadBtnGameTDBDownload) && !m_thrdWorking)
 			{
 //				bool dlAll = m_btnMgr.selected(m_downloadBtnAllTitles);
 				m_btnMgr.show(m_downloadPBar);
 				m_btnMgr.setProgress(m_downloadPBar, 0.f);
 				m_btnMgr.hide(m_downloadBtnAll);
 				m_btnMgr.hide(m_downloadBtnMissing);
-				m_btnMgr.hide(m_downloadBtnWiiTDBDownload);
+				m_btnMgr.hide(m_downloadBtnGameTDBDownload);
 				m_btnMgr.hide(m_downloadLblCovers);
-				m_btnMgr.hide(m_downloadLblWiiTDBDownload);
+				m_btnMgr.hide(m_downloadLblGameTDBDownload);
 				m_thrdStop = false;
 				m_thrdWorking = true;
 				
-				_updateWiitdb = true;
+				_updateGametdb = true;
 
-				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_wiitdbDownloader, (void *)this, 0, 8192, 40);		
+				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_gametdbDownloader, (void *)this, 0, 8192, 40);		
 			}
 			else if (m_btnMgr.selected(m_downloadBtnCancel))
 			{
@@ -613,7 +574,7 @@ void CMenu::_download(string gameId)
 			m_btnMgr.setProgress(m_downloadPBar, m_thrdProgress);
 			if (m_thrdProgress == 1.f)
 			{
-				if (_updateWiitdb)
+				if (_updateGametdb)
 					break;
 				m_btnMgr.setText(m_downloadBtnCancel, _t("dl2", L"Back"));
 			}
@@ -648,21 +609,21 @@ void CMenu::_initDownloadMenu(CMenu::SThemeData &theme)
 	m_downloadLblCovers = _addLabel(theme, "DOWNLOAD/COVERS", theme.btnFont, L"", 40, 150, 320, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_downloadBtnAll = _addButton(theme, "DOWNLOAD/ALL_BTN", theme.btnFont, L"", 370, 150, 230, 56, theme.btnFontColor);
 	m_downloadBtnMissing = _addButton(theme, "DOWNLOAD/MISSING_BTN", theme.btnFont, L"", 370, 210, 230, 56, theme.btnFontColor);
-	m_downloadLblWiiTDBDownload = _addLabel(theme, "DOWNLOAD/WIITDB_DOWNLOAD", theme.btnFont, L"", 40, 270, 320, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_downloadBtnWiiTDBDownload = _addButton(theme, "DOWNLOAD/WIITDB_DOWNLOAD_BTN", theme.btnFont, L"", 370, 270, 230, 56, theme.btnFontColor);
-	m_downloadLblWiiTDB = _addLabel(theme, "DOWNLOAD/WIITDB", theme.btnFont, L"", 40, 400, 370, 60, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_downloadLblGameTDBDownload = _addLabel(theme, "DOWNLOAD/GAMETDB_DOWNLOAD", theme.btnFont, L"", 40, 270, 320, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_downloadBtnGameTDBDownload = _addButton(theme, "DOWNLOAD/GAMETDB_DOWNLOAD_BTN", theme.btnFont, L"", 370, 270, 230, 56, theme.btnFontColor);
+	m_downloadLblGameTDB = _addLabel(theme, "DOWNLOAD/GAMETDB", theme.btnFont, L"", 40, 400, 370, 60, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_downloadLblMessage[0] = _addLabel(theme, "DOWNLOAD/MESSAGE1", theme.lblFont, L"", 40, 228, 560, 100, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_downloadLblMessage[1] = _addLabel(theme, "DOWNLOAD/MESSAGE2", theme.lblFont, L"", 40, 228, 560, 100, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
-	// 
+	//
 	_setHideAnim(m_downloadLblTitle, "DOWNLOAD/TITLE", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_downloadPBar, "DOWNLOAD/PROGRESS_BAR", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_downloadLblCovers, "DOWNLOAD/COVERS", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_downloadBtnCancel, "DOWNLOAD/CANCEL_BTN", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_downloadBtnAll, "DOWNLOAD/ALL_BTN", 0, 0, -2.f, 0.f);
 	_setHideAnim(m_downloadBtnMissing, "DOWNLOAD/MISSING_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadLblWiiTDBDownload, "DOWNLOAD/WIITDB_DOWNLOAD", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadBtnWiiTDBDownload, "DOWNLOAD/WIITDB_DOWNLOAD_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadLblWiiTDB, "DOWNLOAD/WIITDB", 0, 0, -2.f, 0.f);
+	_setHideAnim(m_downloadLblGameTDBDownload, "DOWNLOAD/GAMETDB_DOWNLOAD", 0, 0, -2.f, 0.f);
+	_setHideAnim(m_downloadBtnGameTDBDownload, "DOWNLOAD/GAMETDB_DOWNLOAD_BTN", 0, 0, -2.f, 0.f);
+	_setHideAnim(m_downloadLblGameTDB, "DOWNLOAD/GAMETDB", 0, 0, -2.f, 0.f);
 	_hideDownload(true);
 	_textDownload();
 }
@@ -673,10 +634,10 @@ void CMenu::_textDownload(void)
 	m_btnMgr.setText(m_downloadBtnAll, _t("dl3", L"All"));
 	m_btnMgr.setText(m_downloadBtnMissing, _t("dl4", L"Missing"));
 	m_btnMgr.setText(m_downloadLblTitle, _t("dl5", L"Download"));
-	m_btnMgr.setText(m_downloadBtnWiiTDBDownload, _t("dl6", L"Download"));
+	m_btnMgr.setText(m_downloadBtnGameTDBDownload, _t("dl6", L"Download"));
 	m_btnMgr.setText(m_downloadLblCovers, _t("dl8", L"Covers"));
-	m_btnMgr.setText(m_downloadLblWiiTDBDownload, _t("dl12", L"WiiTDB"));
-	m_btnMgr.setText(m_downloadLblWiiTDB, _t("dl10", L"Please donate\nto WiiTDB.com"));
+	m_btnMgr.setText(m_downloadLblGameTDBDownload, _t("dl12", L"GameTDB"));
+	m_btnMgr.setText(m_downloadLblGameTDB, _t("dl10", L"Please donate\nto GameTDB.com"));
 }
 
 s8 CMenu::_versionTxtDownloaderInit(CMenu *m) //Handler to download versions txt file
@@ -963,13 +924,13 @@ out:
 	return 0;
 }
 
-int CMenu::_wiitdbDownloader(CMenu *m)
+int CMenu::_gametdbDownloader(CMenu *m)
 {
 	if (!m->m_thrdWorking) return 0;
-	return m->_wiitdbDownloaderAsync();
+	return m->_gametdbDownloaderAsync();
 }
 
-int CMenu::_wiitdbDownloaderAsync()
+int CMenu::_gametdbDownloaderAsync()
 {
 	string langCode;
 
@@ -982,7 +943,7 @@ int CMenu::_wiitdbDownloaderAsync()
 		LWP_MutexUnlock(m_mutex);
 		return 0;
 	}
-	langCode = m_loc.getString(m_curLanguage, "wiitdb_code", "EN");
+	langCode = m_loc.getString(m_curLanguage, "gametdb_code", "EN");
 	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
 	LWP_MutexUnlock(m_mutex);
@@ -999,7 +960,7 @@ int CMenu::_wiitdbDownloaderAsync()
 		LWP_MutexUnlock(m_mutex);
 		m_thrdStep = 0.0f;
 		m_thrdStepLen = 1.0f;
-		download = downloadfile(buffer.get(), bufferSize, sfmt(WIITDB_URL, langCode.c_str()).c_str(), CMenu::_downloadProgress, this);
+		download = downloadfile(buffer.get(), bufferSize, sfmt(GAMETDB_URL, langCode.c_str()).c_str(), CMenu::_downloadProgress, this);
 		if (download.data == 0)
 		{
 			LWP_MutexLock(m_mutex);
@@ -1014,7 +975,7 @@ int CMenu::_wiitdbDownloaderAsync()
 
 			remove(zippath.c_str());
 			
-			_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), "WiiTDB.zip"), 1.f);
+			_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), "wiitdb.zip"), 1.f);
 			FILE *file = fopen(zippath.c_str(), "wb");
 			if (file == NULL)
 			{
@@ -1040,7 +1001,7 @@ int CMenu::_wiitdbDownloaderAsync()
 				remove(zippath.c_str());
 				
 				// Update cache
-				m_gameList.SetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str());
+				m_gameList.SetLanguage(m_loc.getString(m_curLanguage, "gametdb_code", "EN").c_str());
 				UpdateCache();
 				
 				LWP_MutexLock(m_mutex);

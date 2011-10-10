@@ -2,10 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
-#include <ogc/isfs.h>
 #include <stdio.h>
-#include <wiiuse/wpad.h>
 
 #include "disc.h"
 #include "patchcode.h"
@@ -26,58 +23,35 @@ void _unstub_start();
 
 extern void __exception_closeall();
 
-bool bootcontent_used = false;
-
 typedef void (*entrypoint) (void);
 
 typedef struct _dolheader{
-	u32 text_pos[7];
-	u32 data_pos[11];
-	u32 text_start[7];
-	u32 data_start[11];
-	u32 text_size[7];
-	u32 data_size[11];
+	u32 section_pos[18];
+	u32 section_start[18];
+	u32 section_size[18];
 	u32 bss_start;
 	u32 bss_size;
 	u32 entry_point;
-} dolheader;
+	u32 padding[7];
+} __attribute__((packed)) dolheader;
 
 u32 entryPoint;
 
-s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode)
+s32 BootChannel(u8 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode)
 {
+	u32 ios;
+	Identify(chantitle, &ios);
+
 	entryPoint = LoadChannel(data);
 	SAFE_FREE(data);
 
 	/* Select an appropriate video mode */
 	GXRModeObj * vmode = __Disc_SelectVMode(vidMode, chantitle);
 
-	u32 ios;
-	Identify(chantitle, &ios);
+	/* Set time */
+	__Disc_SetTime();
 
-	//ISFS_Deinitialize();
-
-	/*if (entryPoint != 0x3400)
-		__Disc_SetLowMem();*/
-
-	if (entryPoint != 0x3400)
-	{
-		//gprintf("Setting bus speed\n");
-		*(u32*)0x800000F8 = 0x0E7BE2C0;
-		//gprintf("Setting cpu speed\n");
-		*(u32*)0x800000FC = 0x2B73A840;
-
-		DCFlushRange((void*)0x800000F8, 0xFF);
-	}
-	
-	// Remove 002 error
-	*(u16 *)0x80003140 = ios;
-	*(u16 *)0x80003142 = 0xffff;
-	*(u16 *)0x80003188 = ios;
-	*(u16 *)0x8000318A = 0xffff;
-	
-	DCFlushRange((void*)0x80003140, 4);
-	DCFlushRange((void*)0x80003188, 4);
+	__Disc_SetLowMem();
 
 	if (hooktype != 0)
 		ocarina_do_code();
@@ -86,11 +60,22 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool country
 
 	entrypoint appJump = (entrypoint)entryPoint;
 
-	/* Set time */
-	__Disc_SetTime();
+	IOSReloadBlock(IOS_GetVersion());
 
 	/* Set an appropriate video mode */
 	__Disc_SetVMode();
+
+	// IOS Version Check
+	*(vu32*)0x80003140	= ((ios << 16)) | 0xFFFF;
+	*(vu32*)0x80003188	= ((ios << 16)) | 0xFFFF;
+	DCFlushRange((void *)0x80003140, 32);
+	DCFlushRange((void *)0x80003188, 32);
+
+	// Game ID Online Check
+	*(vu32 *)0x80000000 = TITLE_LOWER(chantitle);
+	*(vu32 *)0x80003180 = TITLE_LOWER(chantitle);
+	DCFlushRange((void *)0x80000000, 32);
+	DCFlushRange((void *)0x80003180, 32);
 
 	/* Shutdown IOS subsystems */
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
@@ -141,57 +126,36 @@ s32 BootChannel(u32 *data, u64 chantitle, u8 vidMode, bool vipatch, bool country
 	return 0;
 }
 
-void*	dolchunkoffset[18];
-u32		dolchunksize[18];
-u32		dolchunkcount;
+void *dolchunkoffset[18];
+u32	dolchunksize[18];
+u32	dolchunkcount;
 
-u32 LoadChannel(u32 *buffer)
+u32 LoadChannel(u8 *buffer)
 {
 	dolchunkcount = 0;
-	
 	dolheader *dolfile = (dolheader *)buffer;
-	
-	//gprintf("Entrypoint: %08x\n", dolfile->entry_point);
-	//gprintf("BSS: %08x, size = %08x(%u)\n", dolfile->bss_start, dolfile->bss_size, dolfile->bss_size);
 
-	memset((void *)dolfile->bss_start, 0, dolfile->bss_size);
-	DCFlushRange((void *)dolfile->bss_start, dolfile->bss_size);
-	
-    //gprintf("BSS cleared\n");
-	
-	int i;
- 	for (i = 0; i < 7; i++)
+	if(dolfile->bss_start)
 	{
-		if ((!dolfile->text_size[i]) || (dolfile->text_start[i] < 0x100)) continue;
-		if(dolfile->text_pos[i] < sizeof(dolheader))
-			continue;
-
-		dolchunkoffset[dolchunkcount] = (void *)dolfile->text_start[i];
-		dolchunksize[dolchunkcount] = dolfile->text_size[i];
-
-		gprintf("Moving text section %u from offset %08x to %08x-%08x...\n", i, dolfile->text_pos[i], dolchunkoffset[dolchunkcount], dolchunkoffset[dolchunkcount]+dolchunksize[dolchunkcount]);
-
-		memmove (dolchunkoffset[dolchunkcount], (void *)buffer + dolfile->text_pos[i], dolchunksize[dolchunkcount]);
-		DCFlushRange (dolchunkoffset[dolchunkcount], dolchunksize[dolchunkcount]);
-		ICInvalidateRange (dolchunkoffset[dolchunkcount],dolchunksize[dolchunkcount]);
-		
-		dolchunkcount++;
+		ICInvalidateRange((void *)dolfile->bss_start, dolfile->bss_size);
+		memset((void *)dolfile->bss_start, 0, dolfile->bss_size);
+		DCFlushRange((void *)dolfile->bss_start, dolfile->bss_size);
 	}
 
-	for(i = 0; i < 11; i++)
+	int i;
+	for(i = 0; i < 18; i++)
 	{
-		if ((!dolfile->data_size[i]) || (dolfile->data_start[i] < 0x100)) continue;
-		if(dolfile->data_pos[i] < sizeof(dolheader))
-			continue;
+		if (!dolfile->section_size[i]) continue;
+		if (dolfile->section_pos[i] < sizeof(dolheader)) continue;
+		if(!(dolfile->section_start[i] & 0x80000000)) dolfile->section_start[i] |= 0x80000000;
 
-		dolchunkoffset[dolchunkcount] = (void *)dolfile->data_start[i];
-		dolchunksize[dolchunkcount] = dolfile->data_size[i];			
+		dolchunkoffset[dolchunkcount] = (void *)dolfile->section_start[i];
+		dolchunksize[dolchunkcount] = dolfile->section_size[i];			
 
-		gprintf("Moving data section %u from offset %08x to %08x-%08x...\n", i, dolfile->data_pos[i], dolchunkoffset[dolchunkcount], dolchunkoffset[dolchunkcount]+dolchunksize[dolchunkcount]);
-
-		memmove (dolchunkoffset[dolchunkcount], (void *)buffer + dolfile->data_pos[i], dolchunksize[dolchunkcount]);
-		DCFlushRange (dolchunkoffset[dolchunkcount], dolchunksize[dolchunkcount]);
-		ICInvalidateRange (dolchunkoffset[dolchunkcount],dolchunksize[dolchunkcount]);
+		gprintf("Moving section %u from offset %08x to %08x-%08x...\n", i, dolfile->section_pos[i], dolchunkoffset[dolchunkcount], dolchunkoffset[dolchunkcount]+dolchunksize[dolchunkcount]);
+		ICInvalidateRange(dolchunkoffset[dolchunkcount], dolchunksize[dolchunkcount]);
+		memmove (dolchunkoffset[dolchunkcount], buffer + dolfile->section_pos[i], dolchunksize[dolchunkcount]);
+		DCFlushRange(dolchunkoffset[dolchunkcount], dolchunksize[dolchunkcount]);
 
 		dolchunkcount++;
 	}
@@ -205,17 +169,13 @@ void PatchChannel(u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryStrin
 
 	for (i=0;i < dolchunkcount;i++)
 	{		
-		if (!bootcontent_used)
-		{
-			patchVideoModes(dolchunkoffset[i], dolchunksize[i], vidMode, vmode, patchVidModes);
-			if (vipatch) vidolpatcher(dolchunkoffset[i], dolchunksize[i]);
-			if (configbytes[0] != 0xCD) langpatcher(dolchunkoffset[i], dolchunksize[i]);
-			if (countryString) PatchCountryStrings(dolchunkoffset[i], dolchunksize[i]); // Country Patch by WiiPower
-		}
+		patchVideoModes(dolchunkoffset[i], dolchunksize[i], vidMode, vmode, patchVidModes);
+		if (vipatch) vidolpatcher(dolchunkoffset[i], dolchunksize[i]);
+		if (configbytes[0] != 0xCD) langpatcher(dolchunkoffset[i], dolchunksize[i]);
+		if (countryString) PatchCountryStrings(dolchunkoffset[i], dolchunksize[i]);
 
-		// Before this can be done, the codehandler needs to be in memory, and the code to patch needs to be in the right pace
 		if (hooktype != 0)
-			if (dogamehooks(dolchunkoffset[i], dolchunksize[i], true, bootcontent_used))
+			if (dogamehooks(dolchunkoffset[i], dolchunksize[i], true))
 				hookpatched = true;
 	}
 	if (hooktype != 0 && !hookpatched)
@@ -227,24 +187,17 @@ void PatchChannel(u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryStrin
 
 bool Identify_GenerateTik(signed_blob **outbuf, u32 *outlen)
 {
-	/* Allocate memory */
 	signed_blob *buffer = (signed_blob *)MEM2_alloc(STD_SIGNED_TIK_SIZE);
 	if (!buffer) return false;
-
-	/* Clear buffer */
 	memset(buffer, 0, STD_SIGNED_TIK_SIZE);
 
-	/* Generate signature */
-	sig_rsa2048 *signature=(sig_rsa2048 *)buffer;
+	sig_rsa2048 *signature = (sig_rsa2048 *)buffer;
 	signature->type = ES_SIG_RSA2048;
 
-	/* Generate ticket */
 	tik *tik_data  = (tik *)SIGNATURE_PAYLOAD(buffer);
-
 	strcpy(tik_data->issuer, "Root-CA00000001-XS00000003");
 	memset(tik_data->cidx_mask, 0xFF, 32);
 
-	/* Set values */
 	*outbuf = buffer;
 	*outlen = STD_SIGNED_TIK_SIZE;
 
@@ -316,145 +269,33 @@ bool Identify(u64 titleid, u32 *ios)
 	return ret < 0 ? false : true;
 }
 
-#define MAXAPPLOADERGAMES 7
-static const char games[MAXAPPLOADERGAMES][3]=
+u8 * GetDol(u64 title, char *id, u32 bootcontent)
 {
-	"WAL",	//ArtSyle: light trax
-	"WDH",	//ArtSyle: Rotohex
-	"WOB",	//ArtSyle: ORBIENT
-	"WPR",	//ArtSyle: CUBELLO
-	"WA8",	//ArtSyle: Penta Tentacles
-	"WB7",	//Midnight Pool
-	"WPS"	//Pokemon Rumble
-};
-
-u32 * GetDol(u64 title, char *id, u32 *contentSize, u16 bootcontent, bool skip_bootcontent)
-{
-	u32 i;
-	for(i = 0; i < MAXAPPLOADERGAMES; i++)
-		if(memcmp(id, &games[i], 3) == 0)
-			skip_bootcontent = true;
-	
-	bootcontent_used = !skip_bootcontent;
-
-	char filepath[ISFS_MAXPATH + 1];
+	char filepath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
 	sprintf(filepath, "/title/%08x/%08x/content/%08x.app", TITLE_UPPER(title), TITLE_LOWER(title), bootcontent);
 	
-	if (skip_bootcontent) // skip_bootcontent to load without apploader
-	{
-		gprintf("Searching for main DOL...\n");
-		bootcontent_used = !FindDol(title, filepath, bootcontent);
-	}
-	
 	gprintf("Loading DOL: %s...", filepath);
-
-	u32 *data = (u32 *) ISFS_GetFile((u8 *) &filepath, contentSize, -1);
+	u32 contentSize = 0;
+	u8 *data = ISFS_GetFile((u8 *) &filepath, &contentSize, -1);
 	if (data != NULL)
 	{	
 		gprintf("Done!\n");
 	
-		if (isLZ77compressed((u8*)data))
+		if (isLZ77compressed(data))
 		{
 			u8 *decompressed;
-			if (decompressLZ77content((u8 *)data, *contentSize, &decompressed, contentSize) < 0)
+			u32 size = 0;
+			if (decompressLZ77content(data, contentSize, &decompressed, &size) < 0)
 			{
 				gprintf("Decompression failed\n");
 				SAFE_FREE(data);
 				return NULL;
 			}
 			SAFE_FREE(data);
-			data = (u32 *)decompressed;
+			data = decompressed;
 		}	
 		return data;
 	}
 	gprintf("Failed!\n");
 	return NULL;
-}
-
-bool FindDol(u64 title, char *DolPath, u16 bootcontent)
-{
-	u32 high = TITLE_UPPER(title);
-	u32 low = TITLE_LOWER(title);
-
-	u8 check[6] = {0x00, 0x00, 0x01, 0x00, 0x00, 0x00};
- 
-	char path[ISFS_MAXPATH + 1];
-	sprintf(path, "/title/%08x/%08x/content", high, low);
-	
-	u32 Countall = 0;
-	if(ISFS_ReadDir(path, NULL, &Countall) != ISFS_OK)
-	{
-		gprintf("Error: could not get dir entry count!\n");
-		return false;
-	}
-
-	size_t bufferSize = ((12 + 1) * Countall) + 1;
-	char *namesBuffer = (char *)MEM2_alloc(ALIGN32(bufferSize));
-	char *holder = namesBuffer;
-	if(namesBuffer == NULL)
-	{
-		gprintf("ERROR: could not allocate buffer for name list!\n");
-		return false;
-	}
-
-	if(ISFS_ReadDir(path, namesBuffer, &Countall) != ISFS_OK)
-	{
-		gprintf("Reading content folder of the title failed!\n");
-		SAFE_FREE(holder);
-		return false;
-	}
-	DCFlushRange(namesBuffer, bufferSize);
-	ICInvalidateRange(namesBuffer, bufferSize);
-
-	while (strlen(namesBuffer) != 0)
-	{
-		if (strcasestr(namesBuffer, ".app") != NULL && strtoul(namesBuffer, NULL, 16) != bootcontent)
-		{	
-			sprintf(path, "/title/%08x/%08x/content/%s", high, low, namesBuffer);
-			gprintf("Checking --> %s\n", path);
-
-			u32 size = 0;
-			u32 *data = (u32 *) ISFS_GetFile((u8 *) &path, &size, 6);
-			if (data != NULL && size == 6)
-			{
-				if (isLZ77compressed((u8*)data))
-				{
-					gprintf("Found LZ77 %s compressed content --> %s\n", data[0] == 0x10 ? "0x10" : "0x11", namesBuffer);
-					gprintf("This is most likely the main DOL, decompressing for checking\n");
-					
-					u32 *compressed = (u32 *) ISFS_GetFile((u8 *) &path, &size, -1);
-					if (compressed != NULL)
-					{
-						u8 *decompressed;
-						u32 decomp_size = 0;
-						if (decompressLZ77content((u8 *)compressed, 32, &decompressed, &decomp_size) < 0)
-						{
-							gprintf("Decompressing file...Failed!\n");
-							SAFE_FREE(compressed);
-							continue;
-						}
-						memcpy(data, decompressed, 6);
-						SAFE_FREE(decompressed);
-						SAFE_FREE(compressed);
-					}
-				}
-			
-				if(memcmp(data, check, 6) == 0)
-				{
-					gprintf("Found DOL --> %s\n", namesBuffer);
-					sprintf(DolPath, "%s", path);
-					SAFE_FREE(holder);	
-					SAFE_FREE(data);
-					return true;
-				} 
-				SAFE_FREE(data);
-			}
-		}
-		namesBuffer += strlen(namesBuffer) + 1;
-	}
-		
-	SAFE_FREE(holder);	
-	
-	gprintf("No .dol found\n");
-	return false;
 }

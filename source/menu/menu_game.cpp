@@ -21,7 +21,7 @@
 #include "loader/fst.h"
 
 #include "gui/WiiMovie.hpp"
-#include "gui/WiiTDB.hpp"
+#include "gui/GameTDB.hpp"
 #include "channels.h"
 #include "nand.hpp"
 #include "alt_ios.h"
@@ -46,7 +46,7 @@ extern const u8 deletes_png[];
 
 extern u32 sector_size;
 extern int mainIOS;
-static u64 sm_title_id  ATTRIBUTE_ALIGN(32);
+static u64 sm_title_id[8]  ATTRIBUTE_ALIGN(32);
 
 const string CMenu::_translations[23] = {
 	"Default",
@@ -384,7 +384,7 @@ void CMenu::_game(bool launch)
 					if (banner != NULL)
 					{						
 						if (banner->IsValid())
-							_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "wiitdb_code", "EN").c_str()));
+							_extractBannerTitle(banner, GetLanguage(m_loc.getString(m_curLanguage, "gametdb_code", "EN").c_str()));
 						delete banner;
 					}
 					banner = NULL;
@@ -557,34 +557,61 @@ void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> argum
 	m_exit = true;
 }
 
+static const char systems[11] = { 'C', 'E', 'F', 'J', 'L', 'M', 'N', 'P', 'Q', 'W', 'H' };
+
 void CMenu::_launchChannel(dir_discHdr *hdr)
 {
 	Channels channel;
 	u8 ios = channel.GetRequestedIOS(hdr->hdr.chantitle);
-	u32 *data = channel.Load(hdr->hdr.chantitle, (char *)hdr->hdr.id);
+	u8 *data = NULL;
 	
+	string id = string((const char *) hdr->hdr.id);
+
+	bool forwarder = true;
+	for (u8 num = 0; num < ARRAY_SIZE(systems); num++)
+	{
+		if(id[0] == systems[num])
+		{
+			forwarder = false;
+			break;
+		}
+	}
+
+	forwarder = m_gcfg2.getBool(id, "custom", forwarder) || strncmp(id.c_str(), "WIMC", 4) == 0;
+
+	if(!forwarder)
+		data = channel.Load(hdr->hdr.chantitle, (char *)id.c_str());
+
 	Nand::Instance()->Disable_Emu();
 
-	if(data != NULL)
+	if(!forwarder && data == NULL) return;
+
+	bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
+	bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("NAND", "cheat", false));
+	bool countryPatch = m_gcfg2.testOptBool(id, "country_patch", m_cfg.getBool("GENERAL", "country_patch", false));
+	u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
+	int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
+	const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
+	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
+
+	int gameIOS = 0;
+
+	if(!forwarder)
 	{
-		string id = string((const char *) hdr->hdr.id);
-
-		bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
-		bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("NAND", "cheat", false));
-		bool countryPatch = m_gcfg2.testOptBool(id, "country_patch", m_cfg.getBool("GENERAL", "country_patch", false));
-		u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
-		int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
-		const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
-
-		int gameIOS;
-		if (!m_gcfg2.getInt(id, "ios", &gameIOS) && _installed_cios.size() > 0)
+		int userIOS = 0;
+		if (m_gcfg2.getInt(id, "ios", &userIOS) && _installed_cios.size() > 0)
 		{
-			CIOSItr itr = _installed_cios.find(gameIOS);
-			gameIOS = (itr == _installed_cios.end()) ? 0 : itr->first;
+			for(CIOSItr itr = _installed_cios.begin(); itr != _installed_cios.end(); itr++)
+			{
+				if(itr->second == userIOS || itr->first == userIOS)
+				{
+					gameIOS = itr->first;
+					break;
+				}
+				else gameIOS = 0;
+			}
 		}
-		else gameIOS = 0;
 
-		u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 		hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 0);
 		debuggerselect = m_gcfg2.getBool(id, "debugger", false) ? 1 : 0;
 
@@ -593,22 +620,27 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 
 		if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
 		if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
+	}
 
-		m_cfg.setString("NAND", "current_item", id);
-		m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg1.getInt("PLAYCOUNT", id, 0) + 1); 
-		m_gcfg1.setUInt("LASTPLAYED", id, time(NULL)); 
+	m_cfg.setString("NAND", "current_item", id);
+	m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg1.getInt("PLAYCOUNT", id, 0) + 1); 
+	m_gcfg1.setUInt("LASTPLAYED", id, time(NULL));
 
-		if (has_enabled_providers() && _initNetwork() == 0)
-			add_game_to_card(id.c_str());
+	if(!forwarder && has_enabled_providers() && _initNetwork() == 0)
+		add_game_to_card(id.c_str());
 
-		bool emu_disabled = m_cfg.getBool("NAND", "disable", true);
-		bool emulate_mode = m_gcfg2.testOptBool(id, "full_emulation", m_cfg.getBool("NAND", "full_emulation", true));
+	bool emu_disabled = m_cfg.getBool("NAND", "disable", true);
+	bool emulate_mode = m_gcfg2.testOptBool(id, "full_emulation", m_cfg.getBool("NAND", "full_emulation", true));
 
-		m_gcfg1.save(true);
-		m_gcfg2.save(true);
-		m_cat.save(true);
-		m_cfg.save(true);
+	m_gcfg1.save(true);
+	m_gcfg2.save(true);
+	m_cat.save(true);
+	m_cfg.save(true);
 
+	bool iosLoaded = false;
+
+	if(!forwarder)
+	{
 		setLanguage(language);
 
 		SmartBuf cheatFile;
@@ -616,7 +648,6 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
 		ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
 
-		bool iosLoaded = false;
 
 		// Reload IOS, if requested
 		if (gameIOS != mainIOS)
@@ -629,7 +660,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 					Sys_LoadMenu();
 				}
 				u8 IOS[3];
-				IOS[0] = ios;
+				IOS[0] = gameIOS == 0 ? ios : gameIOS;
 				IOS[1] = 56;
 				IOS[2] = 57;
 				bool found = false;
@@ -638,7 +669,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 					if(IOS[num] == 0) num++;
 					for(CIOSItr itr = _installed_cios.begin(); !found && itr != _installed_cios.end(); itr++)
 					{
-						if(itr->second == IOS[num])
+						if(itr->second == IOS[num] || itr->first == IOS[num])
 						{
 							gameIOS = itr->first;
 							found = true;
@@ -664,44 +695,51 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 			}
 		}
 
-		if(!emu_disabled)
-		{
-			if(iosLoaded) ISFS_Deinitialize();
-			ISFS_Initialize();
-
-			Nand::Instance()->Set_FullMode(emulate_mode);
-			if(Nand::Instance()->Enable_Emu() < 0)
-			{
-				Nand::Instance()->Disable_Emu();
-				error(L"Enabling emu after reload failed!");
-				if(iosLoaded) Sys_LoadMenu();
-				return;
-			}
-		}
-
-		if (rtrn != NULL && strlen(rtrn) == 4)
-		{			
-			int rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
-			
-			static ioctlv vector[1] __attribute__((aligned(0x20)));			
-			sm_title_id = (((u64)(0x00010001) << 32) | (rtrnID&0xFFFFFFFF));
-			
-			vector[0].data = &sm_title_id;
-			vector[0].len = 8;
-			
-			s32 ESHandle = IOS_Open("/dev/es", 0);
-			gprintf("Return to channel %s. Using new d2x way\n", IOS_Ioctlv(ESHandle, 0xA1, 1, 0, vector) != -101 ? "Succeeded" : "Failed!" );
-			IOS_Close(ESHandle);
-		}
-		
-		CheckGameSoundThread(true);
-		cleanup();
-		Close_Inputs();
-		USBStorage_Deinit();
-
-		if(!channel.Launch(data, hdr->hdr.chantitle, videoMode, vipatch, countryPatch, patchVidMode))
-			Sys_LoadMenu();
 	}
+
+	if(!emu_disabled)
+	{
+		if(iosLoaded) ISFS_Deinitialize();
+		ISFS_Initialize();
+
+		Nand::Instance()->Set_FullMode(emulate_mode);
+		if(Nand::Instance()->Enable_Emu() < 0)
+		{
+			Nand::Instance()->Disable_Emu();
+			error(L"Enabling emu after reload failed!");
+			if(iosLoaded) Sys_LoadMenu();
+			return;
+		}
+	}
+
+	if (rtrn != NULL && strlen(rtrn) == 4)
+	{			
+		int rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
+		
+		static ioctlv vector[1]  ATTRIBUTE_ALIGN(32);
+		sm_title_id[0] = (((u64)(0x00010001) << 32) | (rtrnID&0xFFFFFFFF));
+		
+		vector[0].data = sm_title_id;
+		vector[0].len = 8;
+		
+		s32 ESHandle = IOS_Open("/dev/es", 0);
+		gprintf("Return to channel %s. Using new d2x way\n", IOS_Ioctlv(ESHandle, 0xA1, 1, 0, vector) != -101 ? "Succeeded" : "Failed!" );
+		IOS_Close(ESHandle);
+	}
+	
+	CheckGameSoundThread(true);
+	cleanup();
+	Close_Inputs();
+	USBStorage_Deinit();
+
+	if(forwarder)
+	{
+		WII_Initialize();
+		if (WII_LaunchTitle(hdr->hdr.chantitle) < 0)
+			Sys_LoadMenu();	
+	}
+	else if(!channel.Launch(data, hdr->hdr.chantitle, videoMode, vipatch, countryPatch, patchVidMode))
+		Sys_LoadMenu();
 }
 
 void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
@@ -759,33 +797,39 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
 	const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
 
-	int emuPartition = 255;
-	m_cfg.getInt("GAMES", "savepartition", &emuPartition);
-	if(emuPartition == 255)
-		m_cfg.getInt("NAND", "partition", &emuPartition);
+	int emuPartition = m_cfg.getInt("GAMES", "savepartition", -1);
+	if(emuPartition == -1)
+		emuPartition = m_cfg.getInt("NAND", "partition", -1);
 
 	string emuPath = m_cfg.getString("GAMES", "savepath", m_cfg.getString("NAND", "path", ""));
 
 	bool emulate_save = emuPartition != 255 && m_gcfg2.testOptBool(id, "emulate_save", m_cfg.getBool("GAMES", "save_emulation", false));
 	bool emulate_mode = m_gcfg2.testOptBool(id, "full_emulation", m_cfg.getBool("GAMES", "full_emulation", false));
 
-	if (!dvd && get_frag_list((u8 *) hdr->hdr.id, (char *) hdr->path, sector_size) < 0)
+	if (!dvd && get_frag_list((u8 *) hdr->hdr.id, (char *) hdr->path, currentPartition == 0 ? 0x200 : sector_size) < 0)
 		return;
 		
-	if(emulate_save)
+	if(!dvd && emulate_save)
 	{
 		char basepath[64];
 		snprintf(basepath, 64, "%s:%s", DeviceName[emuPartition], emuPath.c_str());
 		CreateSavePath(basepath, hdr);
 	}
 
-	int gameIOS;
-	if (!m_gcfg2.getInt(id, "ios", &gameIOS) && _installed_cios.size() > 0)
-	{
-		CIOSItr itr = _installed_cios.find(gameIOS);
-		gameIOS = (itr == _installed_cios.end()) ? 0 : itr->first;
-	}
-	else gameIOS = 0;
+		int gameIOS = 0;
+		int userIOS = 0;
+		if (m_gcfg2.getInt(id, "ios", &userIOS) && _installed_cios.size() > 0)
+		{
+			for(CIOSItr itr = _installed_cios.begin(); itr != _installed_cios.end(); itr++)
+			{
+				if(itr->second == userIOS || itr->first == userIOS)
+				{
+					gameIOS = itr->first;
+					break;
+				}
+				else gameIOS = 0;
+			}
+		}
 
 	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 0); // hooktype is defined in patchcode.h
@@ -829,7 +873,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	net_wc24cleanup();
 
 	// Reload IOS, if requested
-	if (gameIOS != mainIOS)
+	if (!dvd && gameIOS != mainIOS)
 	{
 		if(gameIOS < 0x64)
 		{
@@ -839,7 +883,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 				Sys_LoadMenu();
 			}
  			u8 IOS[3];
-			IOS[0] = GetRequestedGameIOS(hdr);
+			IOS[0] = gameIOS == 0 ? GetRequestedGameIOS(hdr) : gameIOS;
 			IOS[1] = 56;
 			IOS[2] = 57;
 			gprintf("Game requested IOS: %u\n", IOS[0]);
@@ -904,11 +948,11 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		{			
 			int rtrnID = rtrn[0] << 24 | rtrn[1] << 16 | rtrn[2] << 8 | rtrn[3];
 			
-			static ioctlv vector[1] __attribute__((aligned(0x20)));			
+			static ioctlv vector[1]  ATTRIBUTE_ALIGN(32);
 
-			sm_title_id = (((u64)(0x00010001) << 32) | (rtrnID&0xFFFFFFFF));
+			sm_title_id[0] = (((u64)(0x00010001) << 32) | (rtrnID&0xFFFFFFFF));
 			
-			vector[0].data = &sm_title_id;
+			vector[0].data = sm_title_id;
 			vector[0].len = 8;
 			
 			s32 ESHandle = IOS_Open("/dev/es", 0);
@@ -923,7 +967,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		if (ret < 0)
 		{
 			gprintf("Set USB failed: %d\n", ret);
-			error(L"Disc_SetUSB failed");
+			error(wfmt(L"Set USB failed: %d\n", ret).c_str());
 			if (iosLoaded) Sys_LoadMenu();
 			return;
 		}
@@ -949,7 +993,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	else 
 	{
 		gprintf("Booting game\n");
-		if (Disc_WiiBoot(videoMode, vipatch, countryPatch, patchVidMode, gameIOS) < 0)
+		if (Disc_WiiBoot(videoMode, vipatch, countryPatch, patchVidMode) < 0)
 			Sys_LoadMenu();
 	}
 }
@@ -1051,7 +1095,7 @@ void CMenu::_gameSoundThread(CMenu *m)
 		m->m_gameSoundHdr = NULL;
 		return;
 	}
-	_extractBannerTitle(banner, GetLanguage(m->m_loc.getString(m->m_curLanguage, "wiitdb_code", "EN").c_str()));
+	_extractBannerTitle(banner, GetLanguage(m->m_loc.getString(m->m_curLanguage, "gametdb_code", "EN").c_str()));
 	
 	const u8 *soundBin = banner->GetFile((char *) "sound.bin", &sndSize);
 

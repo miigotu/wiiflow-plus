@@ -155,15 +155,13 @@ int frag_remap(FragList *ff, FragList *log, FragList *phy)
 
 int get_frag_list(u8 *id, char *path, const u32 hdd_sector_size)
 {
-	if (wbfs_part_fs == PART_FS_WBFS) return 0;
-
 	char fname[1024];
 	bzero(fname, 1024);
 	u32 length = strlen(path);
 	strcpy(fname, path);
 
 	if(fname[length-1] > '0' && fname[length-1] < '9') return 0;
-	bool isWBFS = strcasestr(strrchr(fname,'.'), ".wbfs") != 0;
+	bool isWBFS = wbfs_part_fs != PART_FS_WBFS && strcasestr(strrchr(fname,'.'), ".wbfs") != 0;
 
 	struct stat st;
 	FragList *fs = malloc(sizeof(FragList));
@@ -275,7 +273,6 @@ out:
 
 int set_frag_list(u8 *id)
 {
-	if (wbfs_part_fs == PART_FS_WBFS) return 1;
 	if (frag_list == NULL) return -2;
 
 	// (+1 for header which is same size as fragment)
@@ -287,15 +284,16 @@ int set_frag_list(u8 *id)
 	else ghexdump(frag_list, size); */
 
 	int ret = WDVD_SetFragList(wbfsDev, frag_list, size);
-	
+
 	free(frag_list);
 	frag_list = NULL;
 
 	if (ret) return ret;
-
+	
 	// verify id matches
 	char discid[32] ATTRIBUTE_ALIGN(32);
 	memset(discid, 0, sizeof(discid));
+
 	ret = WDVD_UnencryptedRead(discid, 32, 0);
 	gprintf("Reading ID after setting fraglist: %s (expected: %s)\n", discid, id);
 	return (strncasecmp((char *) id, discid, 6) != 0) ? -3 : 0;

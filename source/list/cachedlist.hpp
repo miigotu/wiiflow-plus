@@ -27,6 +27,7 @@ class CachedList : public safe_vector<T>
 		m_channelLang = m_lastchannelLang = curLanguage;
 		m_loaded = false;
 		m_database = "";
+		m_update = false;
 		for(u32 i = 0; i < COVERFLOW_MAX; i++)
 			force_update[i] = false;
 	}
