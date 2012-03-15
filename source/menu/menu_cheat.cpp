@@ -33,9 +33,7 @@ u32 CMenu::_downloadCheatFileAsync(void *obj)
 
 	m->m_thrdStop = false;
 
-	LWP_MutexLock(m->m_mutex);
 	m->_setThrdMsg(m->_t("cfgg23", L"Downloading cheat file..."), 0);
-	LWP_MutexUnlock(m->m_mutex);
 
 	if (m->_initNetwork() < 0)
 	{
@@ -229,6 +227,9 @@ void CMenu::_CheatSettings()
 				}
 				if (thread != LWP_THREAD_NULL)
 				{
+					if(LWP_ThreadIsSuspended(thread))
+						LWP_ResumeThread(thread);
+
 					LWP_JoinThread(thread, NULL);
 					thread = LWP_THREAD_NULL;
 				}
@@ -324,7 +325,6 @@ void CMenu::_showCheatSettings(void)
 		
 	}
 }
-
 
 void CMenu::_initCheatSettingsMenu(CMenu::SThemeData &theme)
 {

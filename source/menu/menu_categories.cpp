@@ -63,7 +63,6 @@ void CMenu::_showCategorySettings(void)
 			m_btnMgr.show(m_categoryLblUser[i]);
 }
 
-
 void CMenu::_initCategorySettingsMenu(CMenu::SThemeData &theme)
 {
 	_addUserLabels(theme, m_categoryLblUser, ARRAY_SIZE(m_categoryLblUser), "CATEGORY");

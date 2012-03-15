@@ -27,6 +27,7 @@
 #define PART_FS_NTFS 2
 #define PART_FS_EXT  3
 
+extern "C" { extern void __exception_setreload(int t);}
 extern "C" {extern u8 currentPartition;}
 extern bool bootHB;
 
@@ -565,10 +566,10 @@ private:
 		float minMaxVal[4][2];
 	};
 	// 
-	bool _loadChannelList(void);
-	bool _loadList(void);
-	bool _loadHomebrewList(void);
-	bool _loadGameList(void);
+	void _loadChannelList(void);
+	void _loadList(void);
+	void _loadHomebrewList(void);
+	void _loadGameList(void);
 	void _initCF(void);
 	// 
 	void _initMainMenu(SThemeData &theme);
@@ -703,7 +704,7 @@ private:
 	void _cleanupDefaultFont();
 	const char *_domainFromView(void);
 	void UpdateCache(u32 view = COVERFLOW_MAX);
-	SFont _font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index, const char *genKey);
+	SFont _font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index);
 	STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);
 	safe_vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key);
 	void _showWaitMessage();
@@ -715,7 +716,15 @@ private:
 	u16 _textStyle(const char *domain, const char *key, u16 def);
 	u32 _addButton(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color);
 	u32 _addPicButton(SThemeData &theme, const char *domain, STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height);
-	u32 _addLabel(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style);
+	typedef enum
+	{
+		ADD_LABEL = 0,
+		ADD_TEXT,
+		ADD_TITLE
+	} CMenu_Alias;
+	u32 _addText(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style);
+	u32 _addTitle(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style);
+	u32 _addLabel(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, CMenu_Alias type = ADD_LABEL);
 	u32 _addLabel(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, STexture &bg);
 	u32 _addProgressBar(SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height);
 	void _setHideAnim(u32 id, const char *domain, int dx, int dy, float scaleX, float scaleY);

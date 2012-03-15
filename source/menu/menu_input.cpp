@@ -4,7 +4,6 @@
 
 using namespace std;
 
-
 static const u32 g_repeatDelay = 25;
 
 void CMenu::SetupInput()
@@ -23,7 +22,7 @@ void CMenu::SetupInput()
 		wmote_roll_skip[chan] = 0;
 	}
 	
-	enable_wmote_roll = m_cfg.getBool("GENERAL", "wiimote_gestures", false);
+	enable_wmote_roll = m_cfg.getBool("GENERAL", "wiimote_gestures");
 }
 
 static int CalculateRepeatSpeed(float magnitude, int current_value)

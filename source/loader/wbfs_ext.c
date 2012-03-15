@@ -148,13 +148,9 @@ void WBFS_Ext_ClosePart(wbfs_t* part)
 
 s32 WBFS_Ext_RemoveGame(u8 *discid, char *gamepath)
 {
-	//split_create(&split, gamepath, 0, 0, true);
-	//split_close(&split);
-
 	DIR *dir_iter;
 	struct dirent *ent;
 	char file[MAX_FAT_PATH];
-
 	char folder[MAX_FAT_PATH];
 	STRCOPY(folder, gamepath);
 	char *p = strrchr(folder, '/');
@@ -167,28 +163,38 @@ s32 WBFS_Ext_RemoveGame(u8 *discid, char *gamepath)
 		if (ent->d_name[0] == '.') continue;
 
 		snprintf(file, sizeof(file), "%s/%s", folder, ent->d_name);
-		remove(file);
-		break;
+		if(discid && strstr(file, (char *)discid) != NULL)
+			remove(file);
 	}
+
 	closedir(dir_iter);
-	unlink(folder);
+
+	if(strlen(folder) > 11)
+		unlink(folder);
+
 	return 0;
 }
 
 s32 WBFS_Ext_AddGame(progress_callback_t spinner, void *spinner_data)
 {
-	struct discHdr header ATTRIBUTE_ALIGN(32);
-
 	char folder[MAX_FAT_PATH];
 	bzero(folder, MAX_FAT_PATH);
 
+	snprintf(folder, sizeof(folder), "%s%s", wbfs_fs_drive, wbfs_ext_dir);
+	makedir((char *)folder);
+
+	struct discHdr header ATTRIBUTE_ALIGN(32);
+	Disc_ReadHeader(&header);
+
+	char *illegal = "\"*/:<>?\\|", *cp, *cleantitle;
+	asprintf(&cleantitle, header.title);
+	for (cp = strpbrk(cleantitle, illegal); cp; cp = strpbrk(cp, illegal))
+		if(cp) *cp = '_';
+	
 	char gamepath[MAX_FAT_PATH];
 	bzero(gamepath, MAX_FAT_PATH);
-	
-	Disc_ReadHeader(&header);
-	snprintf(folder, sizeof(folder), "%s%s/%s [%s]", wbfs_fs_drive, wbfs_ext_dir, header.title, header.id);
-	makedir((char *)folder);
-	snprintf(gamepath, sizeof(gamepath), "%s/%s.wbfs", folder, header.id);
+	snprintf(gamepath, sizeof(gamepath), "%s/%s [%s].wbfs", folder, cleantitle, header.id);
+	free(cleantitle);
 
 	u64 size = (u64)143432*2*0x8000ULL;
 	u32 n_sector = size / 512;
@@ -222,7 +228,7 @@ s32 WBFS_Ext_AddGame(progress_callback_t spinner, void *spinner_data)
 
 	WBFS_Ext_ClosePart(part);
 	
-	if(ret < 0) WBFS_Ext_RemoveGame(NULL, gamepath);
+	if(ret < 0) WBFS_Ext_RemoveGame(header.id, gamepath);
 
 	return ret < 0 ? ret : 0;
 }

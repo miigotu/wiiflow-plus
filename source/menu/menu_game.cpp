@@ -105,7 +105,6 @@ const CMenu::SOption CMenu::_vidModePatch[4] = {
 	{ "vmpall", L"All" }
 };
 
-
 const CMenu::SOption CMenu::_hooktype[8] = {
 	{ "disabled", L"Disabled" },
 	{ "hooktype1", L"VBI" },
@@ -305,7 +304,7 @@ void CMenu::_game(bool launch)
 				
 				_hideGame();
 				WiiMovie movie(videoPath.c_str());
-				movie.SetScreenSize(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480), m_cfg.getInt("GENERAL", "tv_x", 0), m_cfg.getInt("GENERAL", "tv_y", 0));
+				movie.SetScreenSize(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480), m_cfg.getInt("GENERAL", "tv_x"), m_cfg.getInt("GENERAL", "tv_y"));
 				movie.SetVolume(m_cfg.getInt("GENERAL", "sound_volume_bnr", 255));
 				//_stopSounds();		
 				movie.Play();
@@ -353,9 +352,9 @@ void CMenu::_game(bool launch)
 				}
 			}
 			else if (m_btnMgr.selected(m_gameBtnFavoriteOn) || m_btnMgr.selected(m_gameBtnFavoriteOff))
-				m_gcfg1.setBool("FAVORITES", id, !m_gcfg1.getBool("FAVORITES", id, false));
+				m_gcfg1.setBool("FAVORITES", id, !m_gcfg1.getBool("FAVORITES", id));
 			else if (m_btnMgr.selected(m_gameBtnAdultOn) || m_btnMgr.selected(m_gameBtnAdultOff))
-				m_gcfg1.setBool("ADULTONLY", id, !m_gcfg1.getBool("ADULTONLY", id, false));
+				m_gcfg1.setBool("ADULTONLY", id, !m_gcfg1.getBool("ADULTONLY", id));
 			else if (m_btnMgr.selected(m_gameBtnBack))
 			{
 				m_gameSound.Stop();
@@ -444,7 +443,7 @@ void CMenu::_game(bool launch)
 		}
 		if (m_show_zone_game)
 		{
-			bool b = m_gcfg1.getBool("FAVORITES", id, false);
+			bool b = m_gcfg1.getBool("FAVORITES", id);
 			m_btnMgr.show(b ? m_gameBtnFavoriteOn : m_gameBtnFavoriteOff);
 			m_btnMgr.hide(b ? m_gameBtnFavoriteOff : m_gameBtnFavoriteOn);
 			m_btnMgr.show(m_gameBtnPlay);
@@ -455,7 +454,7 @@ void CMenu::_game(bool launch)
 
 			if (!m_locked)
 			{
-				b = m_gcfg1.getBool("ADULTONLY", id, false);
+				b = m_gcfg1.getBool("ADULTONLY", id);
 				m_btnMgr.show(b ? m_gameBtnAdultOn : m_gameBtnAdultOff);
 				m_btnMgr.hide(b ? m_gameBtnAdultOff : m_gameBtnAdultOn);
 				m_btnMgr.show(m_gameBtnSettings);
@@ -586,13 +585,13 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 
 	if(!forwarder && data == NULL) return;
 
-	bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
-	bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("NAND", "cheat", false));
-	bool countryPatch = m_gcfg2.testOptBool(id, "country_patch", m_cfg.getBool("GENERAL", "country_patch", false));
-	u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
-	int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
+	bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch"));
+	bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("NAND", "cheat"));
+	bool countryPatch = m_gcfg2.testOptBool(id, "country_patch", m_cfg.getBool("GENERAL", "country_patch"));
+	u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode"), ARRAY_SIZE(CMenu::_videoModes) - 1u);
+	int language = min((u32)m_gcfg2.getInt(id, "language"), ARRAY_SIZE(CMenu::_languages) - 1u);
 	const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
-	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
+	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes"), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 
 	int gameIOS = 0;
 
@@ -612,18 +611,18 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 			}
 		}
 
-		hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 0);
-		debuggerselect = m_gcfg2.getBool(id, "debugger", false) ? 1 : 0;
+		hooktype = (u32) m_gcfg2.getInt(id, "hooktype");
+		debuggerselect = m_gcfg2.getBool(id, "debugger");
 
 		if ((debuggerselect || cheat) && hooktype == 0) hooktype = 1;
 		if (!debuggerselect && !cheat) hooktype = 0;
 
-		if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
-		if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
+		if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode"), ARRAY_SIZE(CMenu::_videoModes) - 1);
+		if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language"), ARRAY_SIZE(CMenu::_languages) - 1);
 	}
 
 	m_cfg.setString("NAND", "current_item", id);
-	m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg1.getInt("PLAYCOUNT", id, 0) + 1); 
+	m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg1.getInt("PLAYCOUNT", id) + 1); 
 	m_gcfg1.setUInt("LASTPLAYED", id, time(NULL));
 
 	if(!forwarder && has_enabled_providers() && _initNetwork() == 0)
@@ -647,7 +646,6 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		u32 cheatSize = 0;
 		if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
 		ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
-
 
 		// Reload IOS, if requested
 		if (gameIOS != mainIOS)
@@ -738,7 +736,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 		if (WII_LaunchTitle(hdr->hdr.chantitle) < 0)
 			Sys_LoadMenu();	
 	}
-	else if(!channel.Launch(data, hdr->hdr.chantitle, videoMode, vipatch, countryPatch, patchVidMode))
+	else if(!channel.Launch(data, hdr->hdr.chantitle, videoMode, vipatch, countryPatch, patchVidMode, m_vid.wide()))
 		Sys_LoadMenu();
 }
 
@@ -790,21 +788,21 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 			id[i] = header->id[i];
 		SAFE_FREE(header);
 	}
-	bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch", false));
-	bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("GAMES", "cheat", false));
-	bool countryPatch = m_gcfg2.testOptBool(id, "country_patch", m_cfg.getBool("GENERAL", "country_patch", false));
-	u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
-	int language = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
+	bool vipatch = m_gcfg2.testOptBool(id, "vipatch", m_cfg.getBool("GENERAL", "vipatch"));
+	bool cheat = m_gcfg2.testOptBool(id, "cheat", m_cfg.getBool("GAMES", "cheat"));
+	bool countryPatch = m_gcfg2.testOptBool(id, "country_patch", m_cfg.getBool("GENERAL", "country_patch"));
+	u8 videoMode = (u8)min((u32)m_gcfg2.getInt(id, "video_mode"), ARRAY_SIZE(CMenu::_videoModes) - 1u);
+	int language = min((u32)m_gcfg2.getInt(id, "language"), ARRAY_SIZE(CMenu::_languages) - 1u);
 	const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
 
 	int emuPartition = m_cfg.getInt("GAMES", "savepartition", -1);
 	if(emuPartition == -1)
 		emuPartition = m_cfg.getInt("NAND", "partition", -1);
 
-	string emuPath = m_cfg.getString("GAMES", "savepath", m_cfg.getString("NAND", "path", ""));
+	string emuPath = m_cfg.getString("GAMES", "savepath", m_cfg.getString("NAND", "path"));
 
-	bool emulate_save = emuPartition != 255 && m_gcfg2.testOptBool(id, "emulate_save", m_cfg.getBool("GAMES", "save_emulation", false));
-	bool emulate_mode = m_gcfg2.testOptBool(id, "full_emulation", m_cfg.getBool("GAMES", "full_emulation", false));
+	bool emulate_save = emuPartition != 255 && m_gcfg2.testOptBool(id, "emulate_save", m_cfg.getBool("GAMES", "save_emulation"));
+	bool emulate_mode = m_gcfg2.testOptBool(id, "full_emulation", m_cfg.getBool("GAMES", "full_emulation"));
 
 	if (!dvd && get_frag_list((u8 *) hdr->hdr.id, (char *) hdr->path, currentPartition == 0 ? 0x200 : sector_size) < 0)
 		return;
@@ -831,9 +829,9 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 			}
 		}
 
-	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
-	hooktype = (u32) m_gcfg2.getInt(id, "hooktype", 0); // hooktype is defined in patchcode.h
-	debuggerselect = m_gcfg2.getBool(id, "debugger", false) ? 1 : 0; // debuggerselect is defined in fst.h
+	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes"), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
+	hooktype = (u32) m_gcfg2.getInt(id, "hooktype"); // hooktype is defined in patchcode.h
+	debuggerselect = m_gcfg2.getBool(id, "debugger"); // debuggerselect is defined in fst.h
 
 	if ((debuggerselect || cheat) && hooktype == 0) hooktype = 1;
 	if (!debuggerselect && !cheat) hooktype = 0;
@@ -846,8 +844,8 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	bool iosLoaded = false;
 
 	CheckGameSoundThread(true);
-	if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1);
-	if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language", 0), ARRAY_SIZE(CMenu::_languages) - 1);
+	if (videoMode == 0)	videoMode = (u8)min((u32)m_cfg.getInt("GENERAL", "video_mode"), ARRAY_SIZE(CMenu::_videoModes) - 1);
+	if (language == 0)	language = min((u32)m_cfg.getInt("GENERAL", "game_language"), ARRAY_SIZE(CMenu::_languages) - 1);
 	m_cfg.setString("GAMES", "current_item", id);
 	m_gcfg1.setInt("PLAYCOUNT", id, m_gcfg1.getInt("PLAYCOUNT", id, 0) + 1);
 	m_gcfg1.setUInt("LASTPLAYED", id, time(NULL));
@@ -993,7 +991,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	else 
 	{
 		gprintf("Booting game\n");
-		if (Disc_WiiBoot(videoMode, vipatch, countryPatch, patchVidMode) < 0)
+		if (Disc_WiiBoot(videoMode, vipatch, countryPatch, patchVidMode, m_vid.wide()) < 0)
 			Sys_LoadMenu();
 	}
 }
@@ -1041,8 +1039,8 @@ void CMenu::_initGameMenu(CMenu::SThemeData &theme)
 	m_gameBtnSettings = _addPicButton(theme, "GAME/SETTINGS_BTN", texSettings, texSettingsSel, 460, 242, 48, 48);
 	m_gameBtnDelete = _addPicButton(theme, "GAME/DELETE_BTN", texDelete, texDeleteSel, 532, 242, 48, 48);
 
-	m_gameButtonsZone.x = m_theme.getInt("GAME/ZONES", "buttons_x", 0);
-	m_gameButtonsZone.y = m_theme.getInt("GAME/ZONES", "buttons_y", 0);
+	m_gameButtonsZone.x = m_theme.getInt("GAME/ZONES", "buttons_x");
+	m_gameButtonsZone.y = m_theme.getInt("GAME/ZONES", "buttons_y");
 	m_gameButtonsZone.w = m_theme.getInt("GAME/ZONES", "buttons_w", 640);
 	m_gameButtonsZone.h = m_theme.getInt("GAME/ZONES", "buttons_h", 480);
 	m_gameButtonsZone.hide = m_theme.getBool("GAME/ZONES", "buttons_hide", true);

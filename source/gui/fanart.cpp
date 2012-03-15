@@ -63,8 +63,8 @@ bool CFanart::load(Config &m_globalConfig, const char *path, const char *id)
         m_defaultDelay = m_globalConfig.getInt("FANART", "delay_after_animation", 200);
         m_delayAfterAnimation = m_cfg.getInt("GENERAL", "delay_after_animation", m_defaultDelay);
         m_allowArtworkOnTop = m_globalConfig.getBool("FANART", "allow_artwork_on_top", true);
-	    m_globalHideCover = m_globalConfig.getOptBool("FANART", "hidecover", 2); // 0 is false, 1 is true, 2 is default
-	    m_globalShowCoverAfterAnimation = m_globalConfig.getOptBool("FANART", "show_cover_after_animation", 2);
+	    m_globalHideCover = m_globalConfig.getOptBool("FANART", "hidecover");
+	    m_globalShowCoverAfterAnimation = m_globalConfig.getOptBool("FANART", "show_cover_after_animation");
    	}
 	
 	m_bg = fanBg;
@@ -117,7 +117,7 @@ fanart_showafter defaults to False
     if (m_globalShowCoverAfterAnimation != 2)
         return m_globalShowCoverAfterAnimation == 0 || !isAnimationComplete();
     // rules 7 and 8
-    if (m_cfg.getBool("GENERAL", "show_cover_after_animation", false))
+    if (m_cfg.getBool("GENERAL", "show_cover_after_animation"))
         return !isAnimationComplete();
     // rule 9
     return true;
@@ -183,15 +183,15 @@ CFanartElement::CFanartElement(Config &cfg, const char *dir, int artwork)
 	
 	m_show_on_top = cfg.getBool(section, "show_on_top", true);
 	
-	m_x = cfg.getInt(section, "x", 0);
-	m_y = cfg.getInt(section, "y", 0);
+	m_x = cfg.getInt(section, "x");
+	m_y = cfg.getInt(section, "y");
 	m_scaleX = cfg.getFloat(section, "scale_x", 1.f);
 	m_scaleY = cfg.getFloat(section, "scale_y", 1.f);
 	m_alpha = min(cfg.getInt(section, "alpha", 255), 255);
-	m_delay = (int) (cfg.getFloat(section, "delay", 0.f) * 50);
-	m_angle = cfg.getFloat(section, "angle", 0.f);
+	m_delay = (int) (cfg.getFloat(section, "delay") * 50);
+	m_angle = cfg.getFloat(section, "angle");
 
-	m_event_duration = (int) (cfg.getFloat(section, "duration", 0.f) * 50);
+	m_event_duration = (int) (cfg.getFloat(section, "duration") * 50);
 	m_event_x = m_event_duration == 0 ? m_x : cfg.getInt(section, "event_x", m_x);
 	m_event_y = m_event_duration == 0 ? m_y : cfg.getInt(section, "event_y", m_y);
 	m_event_scaleX = m_event_duration == 0 ? m_scaleX : cfg.getInt(section, "event_scale_x", m_scaleX);

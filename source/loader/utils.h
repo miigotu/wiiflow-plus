@@ -7,11 +7,14 @@
 #define MB_SIZE		1048576.0
 #define GB_SIZE		1073741824.0
 
+#define MAX_FAT_PATH   1024
+
 /* Macros */
 #define round_up(x,n)	(-(-(x) & -(n)))
 
 #define ALIGN(x) (((x) + 3) & ~3)
 #define ALIGN32(x) (((x) + 31) & ~31)
+#define ALIGNED(x) __attribute__((aligned(x)))
 
 #define SMART_FREE(P)		{if(!!P)P.release();}
 #define SAFE_FREE(P)		{if(P != NULL){free(P);P = NULL;}}
@@ -37,6 +40,9 @@ u64 le64(u64);
 u32 le32(u32);
 u16 le16(u16);
 int makedir(char *newdir);
+
+typedef volatile unsigned short vu16;
+typedef volatile unsigned int vu32;
 
 bool str_replace(char *str, const char *olds, const char *news, int size);
 bool str_replace_all(char *str, const char *olds, const char *news, int size);

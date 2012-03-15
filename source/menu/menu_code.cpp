@@ -1,7 +1,6 @@
 
 #include "menu.hpp"
 
-
 extern const u8 delete_png[];
 extern const u8 deletes_png[];
 

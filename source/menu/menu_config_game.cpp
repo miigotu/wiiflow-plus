@@ -201,7 +201,6 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.hide(m_gameSettingsLblCountryPatch);
 		m_btnMgr.hide(m_gameSettingsBtnCountryPatch);
 
-
 		m_btnMgr.hide(m_gameSettingsBtnEmulation);
 		m_btnMgr.hide(m_gameSettingsLblEmulation);
 	}
@@ -294,7 +293,7 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.setText(m_gameSettingsBtnCategory[i], _optBoolToString(m_gameSettingCategories[i] == '1'));
 
 	m_btnMgr.setText(m_gameSettingsBtnEmulation,  _optBoolToString(m_gcfg2.getBool(id, "emulate_save")));		
-	m_btnMgr.setText(m_gameSettingsLblDebuggerV, m_gcfg2.getBool(id, "debugger", false) ? _t("gecko", L"Gecko") : _t("def", L"Default"));		
+	m_btnMgr.setText(m_gameSettingsLblDebuggerV, m_gcfg2.getBool(id, "debugger") ? _t("gecko", L"Gecko") : _t("def", L"Default"));		
 }
 
 void CMenu::_gameSettings(void)

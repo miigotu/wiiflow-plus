@@ -75,7 +75,7 @@ void CMenu::_showConfig4(void)
  
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
 	int i;
-	i = min(max(0, m_cfg.getInt("GENERAL", "exit_to", 0)), (int)ARRAY_SIZE(CMenu::_exitTo) - 1);
+	i = min(max(0, m_cfg.getInt("GENERAL", "exit_to")), (int)ARRAY_SIZE(CMenu::_exitTo) - 1);
 	m_btnMgr.setText(m_config4BtnHome, _t(CMenu::_exitTo[i].id, CMenu::_exitTo[i].text));
 	m_btnMgr.setText(m_config4BtnSaveFavMode, m_cfg.getBool("GENERAL", "favorites_on_startup") ? _t("on", L"On") : _t("off", L"Off"));
 	m_btnMgr.setText(m_config4BtnCategoryOnBoot, m_cat.getBool("GENERAL", "category_on_start") ? _t("on", L"On") : _t("off", L"Off"));
@@ -143,7 +143,7 @@ int CMenu::_config4(void)
 				break;
 			else if (m_btnMgr.selected(m_config4BtnHome))
 			{
-				int exit_to = (int)loopNum((u32)m_cfg.getInt("GENERAL", "exit_to", 0) + 1, ARRAY_SIZE(CMenu::_exitTo));
+				int exit_to = (int)loopNum((u32)m_cfg.getInt("GENERAL", "exit_to") + 1, ARRAY_SIZE(CMenu::_exitTo));
 				m_cfg.setInt("GENERAL", "exit_to", exit_to);
 				Sys_ExitTo(exit_to);
 				m_disable_exit = exit_to == 3;
@@ -156,7 +156,7 @@ int CMenu::_config4(void)
 			}
 			else if (m_btnMgr.selected(m_config4BtnCategoryOnBoot))
 			{
-				m_cat.setBool("GENERAL", "category_on_start", !m_cat.getBool("GENERAL", "category_on_start", false));
+				m_cat.setBool("GENERAL", "category_on_start", !m_cat.getBool("GENERAL", "category_on_start"));
 				_showConfig4();
 			}
 			else if (m_btnMgr.selected(m_config4BtnReturnToP))

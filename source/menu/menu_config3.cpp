@@ -1,7 +1,6 @@
 
 #include "menu.hpp"
 
-
 #define ARRAY_SIZE(a)	(sizeof a / sizeof a[0])
 
 using namespace std;
@@ -65,16 +64,16 @@ void CMenu::_showConfig3(void)
 			m_btnMgr.show(m_config3LblUser[i]);
 	// 
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
-	int i = min(max(0, m_cfg.getInt("GENERAL", "video_mode", 0)), (int)ARRAY_SIZE(CMenu::_videoModes) - 1);
+	int i = min(max(0, m_cfg.getInt("GENERAL", "video_mode")), (int)ARRAY_SIZE(CMenu::_videoModes) - 1);
 
 	m_btnMgr.setText(m_config3LblVideo, _t(CMenu::_videoModes[i].id, CMenu::_videoModes[i].text));
-	i = min(max(0, m_cfg.getInt("GENERAL", "game_language", 0)), (int)ARRAY_SIZE(CMenu::_languages) - 1);
+	i = min(max(0, m_cfg.getInt("GENERAL", "game_language")), (int)ARRAY_SIZE(CMenu::_languages) - 1);
 
 	m_btnMgr.setText(m_config3LblLanguage, _t(CMenu::_languages[i].id, CMenu::_languages[i].text));
 
-	m_btnMgr.setText(m_config3BtnAsyncNet, m_cfg.getBool("GENERAL", "async_network", false) ? _t("on", L"On") : _t("off", L"Off"));
+	m_btnMgr.setText(m_config3BtnAsyncNet, m_cfg.getBool("GENERAL", "async_network") ? _t("on", L"On") : _t("off", L"Off"));
 
-	m_btnMgr.setText(m_config3BtnOcarina, m_cfg.getBool(_domainFromView(), "cheat", false) ? _t("on", L"On") : _t("off", L"Off"));
+	m_btnMgr.setText(m_config3BtnOcarina, m_cfg.getBool(_domainFromView(), "cheat") ? _t("on", L"On") : _t("off", L"Off"));
 }
 
 int CMenu::_config3(void)
@@ -110,23 +109,23 @@ int CMenu::_config3(void)
 			else if (m_btnMgr.selected(m_config3BtnLanguageP) || m_btnMgr.selected(m_config3BtnLanguageM))
 			{
 				s8 direction = m_btnMgr.selected(m_config3BtnLanguageP) ? 1 : -1;
-				m_cfg.setInt("GENERAL", "game_language", (int)loopNum((u32)m_cfg.getInt("GENERAL", "game_language", 0) + direction, ARRAY_SIZE(CMenu::_languages)));
+				m_cfg.setInt("GENERAL", "game_language", (int)loopNum((u32)m_cfg.getInt("GENERAL", "game_language") + direction, ARRAY_SIZE(CMenu::_languages)));
 				_showConfig3();
 			}
 			else if (m_btnMgr.selected(m_config3BtnVideoP) || m_btnMgr.selected(m_config3BtnVideoM))
 			{
 				s8 direction = m_btnMgr.selected(m_config3BtnVideoP) ? 1 : -1;
-				m_cfg.setInt("GENERAL", "video_mode", (int)loopNum((u32)m_cfg.getInt("GENERAL", "video_mode", 0) + direction, ARRAY_SIZE(CMenu::_videoModes)));
+				m_cfg.setInt("GENERAL", "video_mode", (int)loopNum((u32)m_cfg.getInt("GENERAL", "video_mode") + direction, ARRAY_SIZE(CMenu::_videoModes)));
 				_showConfig3();
 			}
 			else if (m_btnMgr.selected(m_config3BtnAsyncNet))
 			{
-				m_cfg.setBool("GENERAL", "async_network", !m_cfg.getBool("GENERAL", "async_network", false));
+				m_cfg.setBool("GENERAL", "async_network", !m_cfg.getBool("GENERAL", "async_network"));
 				_showConfig3();
 			}
 			else if (m_btnMgr.selected(m_config3BtnOcarina))
 			{
-				m_cfg.setBool(_domainFromView(), "cheat", !m_cfg.getBool(_domainFromView(), "cheat", false));
+				m_cfg.setBool(_domainFromView(), "cheat", !m_cfg.getBool(_domainFromView(), "cheat"));
 				_showConfig3();
 			}
 		}

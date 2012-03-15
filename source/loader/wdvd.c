@@ -17,9 +17,11 @@
 #define IOCTL_DI_STOPLASER	0xD2
 #define IOCTL_DI_OFFSET		0xD9
 #define IOCTL_DI_DISC_BCA	0xDA
+#define IOCTL_DI_REQUESTERROR	0xE0
 #define IOCTL_DI_STOPMOTOR	0xE3
-#define IOCTL_DI_SETWBFSMODE	0xF4
+#define IOCTL_DI_DVDLowAudioBufferConfig	0xE4
 
+#define IOCTL_DI_SETWBFSMODE	0xF4
 #define IOCTL_DI_SETFRAG	0xF9
 #define IOCTL_DI_GETMODE	0xFA
 #define IOCTL_DI_HELLO		0xFB
@@ -31,6 +33,38 @@ static u32 outbuf[8] ATTRIBUTE_ALIGN(32);
 static const char di_fs[] ATTRIBUTE_ALIGN(32) = "/dev/di";
 static s32 di_fd = -1;
 
+s32 WDVD_setstreaming()
+{
+	u8 ioctl;
+	ioctl = IOCTL_DI_DVDLowAudioBufferConfig;
+
+	memset(inbuf, 0, 0x20);
+	memset(outbuf, 0, 0x20);
+
+	inbuf[0] = (ioctl << 24);
+
+	if ( (*(u32*)0x80000008)>>24 )
+	{
+		inbuf[1] = 1;
+		if( ((*(u32*)0x80000008)>>16) & 0xFF )
+		{
+			inbuf[2] = 10;
+		} else 
+		{
+			inbuf[2] = 0;
+		}
+	}
+	else
+	{		
+		inbuf[1] = 0;
+		inbuf[2] = 0;
+	}			
+	DCFlushRange(inbuf, 0x20);
+	
+	int Ret = IOS_Ioctl(di_fd, ioctl, inbuf, 0x20, outbuf, 0x20);
+
+	return ((Ret == 1) ? 0 : -Ret);
+}
 
 s32 WDVD_Init(void)
 {
@@ -234,6 +268,21 @@ s32 WDVD_Read(void *buf, u32 len, u64 offset)
 
 	s32 ret = IOS_Ioctl(di_fd, IOCTL_DI_READ, inbuf, sizeof(inbuf), buf, len);
 	if (ret < 0) return ret;
+
+	return (ret == 1) ? 0 : -ret;
+}
+
+s32 WDVD_LowRequestError(u32 *error)
+{
+	memset(inbuf, 0, sizeof(inbuf));
+	
+	inbuf[0] = IOCTL_DI_REQUESTERROR << 24;
+	
+	s32 ret = IOS_Ioctl(di_fd, IOCTL_DI_REQUESTERROR, inbuf, sizeof(inbuf), outbuf, sizeof(outbuf));
+	if (ret < 0) return ret;
+	
+	if (ret == 1) 	
+		memcpy(error, outbuf, sizeof(u32));
 
 	return (ret == 1) ? 0 : -ret;
 }

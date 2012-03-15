@@ -56,11 +56,7 @@ void CMenu::_addDiscProgress(int status, int total, void *user_data)
 	float progress = total == 0 ? 0.f : (float)status / (float)total;
 	// Don't synchronize too often
 	if (progress - m.m_thrdProgress >= 0.01f)
-	{
-		LWP_MutexLock(m.m_mutex);
 		m._setThrdMsg(L"", progress);
-		LWP_MutexUnlock(m.m_mutex);
-	}
 }
 
 int CMenu::_gameInstaller(void *obj)
@@ -81,24 +77,18 @@ int CMenu::_gameInstaller(void *obj)
 	
 	if ((f32)comp_size + (f32)128*1024 >= free * GB_SIZE)
 	{
-		LWP_MutexLock(m.m_mutex);
 		m._setThrdMsg(wfmt(m._fmt("wbfsop10", L"Not enough space : %lld blocks needed, %i available"), comp_size, free), 0.f);
-		LWP_MutexUnlock(m.m_mutex);
 		ret = -1;
 	}
 	else
 	{	
-		LWP_MutexLock(m.m_mutex);
 		m._setThrdMsg(L"", 0);
-		LWP_MutexUnlock(m.m_mutex);
 		
 		ret = WBFS_AddGame(CMenu::_addDiscProgress, obj);
-		LWP_MutexLock(m.m_mutex);
 		if (ret == 0)
 			m._setThrdMsg(m._t("wbfsop8", L"Game installed"), 1.f);
 		else
 			m._setThrdMsg(m._t("wbfsop9", L"An error has occurred"), 1.f);
-		LWP_MutexUnlock(m.m_mutex);
 		slotLight(true);
 	}
 	m.m_thrdWorking = false;

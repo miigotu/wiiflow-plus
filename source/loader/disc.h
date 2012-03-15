@@ -81,11 +81,11 @@ struct gc_discHdr
 	/* Magic word */
 	u32 magic;
 
-	/* Padding */
-	u8 unused2[4];
-
 	/* Game title */
-	char title[124];
+	char title[64];
+	
+	/* Padding */
+	u8 unused2[64];
 } ATTRIBUTE_PACKED;
 
 #ifdef __cplusplus
@@ -102,8 +102,8 @@ extern "C" {
 	s32 Disc_Type(bool);
 	s32	Disc_IsWii(void);
 	s32	Disc_IsGC(void);
-	s32	Disc_BootPartition(u64, u8, bool, bool, u8);
-	s32	Disc_WiiBoot(u8, bool, bool, u8);
+	s32	Disc_BootPartition(u64, u8, bool, bool, u8, int);
+	s32	Disc_WiiBoot(u8, bool, bool, u8, int);
 
 #ifdef __cplusplus
 }

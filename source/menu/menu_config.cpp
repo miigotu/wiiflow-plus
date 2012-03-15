@@ -2,7 +2,6 @@
 #include "menu.hpp"
 #include "sys.h"
 
-
 using namespace std;
 
 static inline int loopNum(int i, int s)
@@ -67,7 +66,6 @@ void CMenu::_showConfig(void)
 	for(u8 i = 0; strncmp((const char *)&partitionname[i], "\0", 1) != 0; i++)
 		partitionname[i] = toupper(partitionname[i]);
 
-
 	for (u32 i = 0; i < ARRAY_SIZE(m_configLblUser); ++i)
 		if (m_configLblUser[i] != -1u)
 			m_btnMgr.show(m_configLblUser[i]);
@@ -84,7 +82,7 @@ void CMenu::_showConfig(void)
 			break;
 		case COVERFLOW_USB:
 			m_btnMgr.setText(m_configLblEmulation, _t("cfg11", L"USB Saves Emulation"));
-			isON = !m_cfg.getBool("GAMES", "save_emulation", false);
+			isON = !m_cfg.getBool("GAMES", "save_emulation");
 			break;
 	}
 	m_btnMgr.setText(m_configBtnEmulation, isON ?  _t("off", L"Off") : _t("on", L"On"));
@@ -168,7 +166,7 @@ int CMenu::_config1(void)
 			{
 				char code[4];
 				_hideConfig();
-				if (_code(code) && memcmp(code, m_cfg.getString("GENERAL", "parent_code", "").c_str(), 4) == 0)
+				if (_code(code) && memcmp(code, m_cfg.getString("GENERAL", "parent_code").c_str(), 4) == 0)
 					m_locked = false;
 				_showConfig();
 			}
@@ -210,7 +208,7 @@ int CMenu::_config1(void)
 			}
 			else if (!m_locked && m_btnMgr.selected(m_configBtnEmulation))
 			{
-				m_cfg.setBool("GAMES", "save_emulation", !m_cfg.getBool("GAMES", "save_emulation", false));
+				m_cfg.setBool("GAMES", "save_emulation", !m_cfg.getBool("GAMES", "save_emulation"));
 				_showConfig();
 			}
 		}

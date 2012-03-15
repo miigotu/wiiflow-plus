@@ -552,7 +552,7 @@ void CVideo::waitMessage(float delay)
 
 void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool useWiiLight)
 {
-	hideWaitMessage(true);
+	//hideWaitMessage(true);
 
 	m_useWiiLight = useWiiLight;
 
@@ -587,9 +587,14 @@ void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool use
 	{
 		m_showWaitMessage = true;
 		unsigned int stack_size = (unsigned int)32768;  //Try 32768?
-		SMART_FREE(waitThreadStack);
-		waitThreadStack = SmartBuf((unsigned char *)__real_malloc(stack_size), SmartBuf::SRCALL_MALLOC);
-		waitThreadStack = smartMem2Alloc(stack_size);
+		if(!waitThreadStack.get())
+			waitThreadStack = smartMem2Alloc(stack_size);
+			//waitThreadStack = SmartBuf((unsigned char *)__real_malloc(stack_size), SmartBuf::SRCALL_MALLOC);
+		if(!waitThreadStack.get())
+		{
+			m_showWaitMessage = false;
+			return;
+		}
 		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, waitThreadStack.get(), stack_size, 30);
 	}
 }

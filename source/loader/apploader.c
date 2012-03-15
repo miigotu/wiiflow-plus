@@ -24,7 +24,7 @@ typedef void  (*app_entry)(void (**init)(void (*report)(const char *fmt, ...)), 
 /* Variables */
 static u32 buffer[0x20] ATTRIBUTE_ALIGN(32);
 
-static bool maindolpatches(void *dst, int len, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes);
+static bool maindolpatches(void *dst, int len, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes, int aspectRatio);
 static bool Remove_001_Protection(void *Address, int Size);
 static bool PrinceOfPersiaPatch();
 
@@ -32,7 +32,7 @@ static void __noprint(const char *fmt, ...)
 {
 }
 
-s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes)
+s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes, int aspectRatio)
 {
 	void *dst = NULL;
 	int len = 0;
@@ -72,7 +72,7 @@ s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatc
 	{
 		/* Read data from DVD */
 		WDVD_Read(dst, len, (u64)(offset << 2));
-		if(maindolpatches(dst, len, vidMode, vmode, vipatch, countryString, patchVidModes))
+		if(maindolpatches(dst, len, vidMode, vmode, vipatch, countryString, patchVidModes, aspectRatio))
 			hookpatched = true;
 	}
 
@@ -87,10 +87,13 @@ s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatc
 	/* Set entry point from apploader */
 	*entry = appldr_final();
 	
-	IOSReloadBlock(IOS_GetVersion());
-	*(vu32 *)0x80003140 = *(vu32 *)0x80003188; // IOS Version Check
-	*(vu32 *)0x80003180 = *(vu32 *)0x80000000; // Game ID Online Check
-	*(vu32 *)0x80003184 = 0x80000000;
+	//IOSReloadBlock(IOS_GetVersion()); //Commented From Mod
+	//*(vu32 *)0x80003140 = *(vu32 *)0x80003188; // IOS Version Check
+	//*(vu32 *)0x80003180 = *(vu32 *)0x80000000; // Game ID Online Check
+	//*(vu32 *)0x80003184 = 0x80000000;
+
+	/* ERROR 002 fix (WiiPower) */
+	*(u32 *)0x80003140 = *(u32 *)0x80003188; //From Mod, Moved from Disc_BootPartition
 
 	DCFlushRange((void*)0x80000000, 0x3f00);
 
@@ -238,13 +241,14 @@ bool NewSuperMarioBrosPatch(void *Address, int Size)
 	return false;
 }
 
-static bool maindolpatches(void *dst, int len, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes)
+static bool maindolpatches(void *dst, int len, u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryString, u8 patchVidModes, int aspectRatio)
 {
 	bool ret = false;
 
 	DCFlushRange(dst, len);
 
 	patchVideoModes(dst, len, vidMode, vmode, patchVidModes);
+	PatchAspectRatio(dst, len, aspectRatio);
 
 	if (hooktype != 0) ret = dogamehooks(dst, len, false);
 	if (vipatch) vidolpatcher(dst, len);

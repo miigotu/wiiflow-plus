@@ -34,8 +34,8 @@ extern const u8 favoriteson_png[];
 extern const u8 favoritesons_png[];
 extern const u8 favoritesoff_png[];
 extern const u8 favoritesoffs_png[];
-
 extern const u8 btnhomebrew_png[];
+extern const u8 btnhomebrews_png[];
 
 static inline int loopNum(int i, int s)
 {
@@ -144,14 +144,14 @@ int CMenu::main(void)
 {
 	wstringEx curLetter;
 	string prevTheme = m_cfg.getString("GENERAL", "theme", "default");
-	bool use_grab = m_cfg.getBool("GENERAL", "use_grab", false);
-	show_homebrew = !m_cfg.getBool("HOMEBREW", "disable", false);
+	bool use_grab = m_cfg.getBool("GENERAL", "use_grab");
+	show_homebrew = !m_cfg.getBool("HOMEBREW", "disable");
 
 	m_reload = false;
 	static u32 disc_check = 0;
 	int done = 0;
 
-	if (m_cfg.getBool("GENERAL", "async_network", false) || has_enabled_providers())
+	if (m_cfg.getBool("GENERAL", "async_network") || has_enabled_providers() || m_cfg.getBool("DEBUG", "wifi_gecko"))
 		_initAsyncNetwork();
 
 	SetupInput();
@@ -161,7 +161,7 @@ int CMenu::main(void)
 	m_curGameId.clear();
 	_initCF();
 
-	lwp_t coverStatus = LWP_THREAD_NULL;
+	static lwp_t coverStatus = LWP_THREAD_NULL;
 	unsigned int stack_size = (unsigned int)32768;
 	SmartBuf coverstatus_stack = smartMem2Alloc(stack_size);	
 	LWP_CreateThread(&coverStatus, (void *(*)(void *))CMenu::GetCoverStatusAsync, (void *)this, coverstatus_stack.get(), stack_size, 40);
@@ -169,8 +169,11 @@ int CMenu::main(void)
 	{
 		_mainLoopCommon(true);
 
-		if (m_initialCoverStatusComplete)
+		if (m_initialCoverStatusComplete && coverStatus != LWP_THREAD_NULL)
 		{
+			if(LWP_ThreadIsSuspended(coverStatus))
+				LWP_ResumeThread(coverStatus);
+
 			LWP_JoinThread(coverStatus, NULL);
 			coverStatus = LWP_THREAD_NULL;
 			SMART_FREE(coverstatus_stack);
@@ -406,7 +409,7 @@ int CMenu::main(void)
 				}
 			}
 		}
-		else if (done==0 && m_cat.getBool("GENERAL", "category_on_start", false))
+		else if (done==0 && m_cat.getBool("GENERAL", "category_on_start"))
 		{
 			done = 1; //set done so it doesnt keep doing it
 			// show categories menu
@@ -566,7 +569,7 @@ int CMenu::main(void)
 			m_btnMgr.hide(m_mainBtnFavoritesOn);
 			m_btnMgr.hide(m_mainBtnFavoritesOff);
 		}
-		if (!m_cfg.getBool("GENERAL", "hideviews", false) && (m_gameList.empty() || m_show_zone_main2))
+		if (!m_cfg.getBool("GENERAL", "hideviews") && (m_gameList.empty() || m_show_zone_main2))
 		{
 			switch(m_current_view)
 			{
@@ -626,9 +629,15 @@ int CMenu::main(void)
 	m_cat.save();
 //	m_loc.save();
 	gprintf("Wait for dvd\n");
-	LWP_JoinThread(coverStatus, NULL);
-	coverStatus = LWP_THREAD_NULL;
-	SMART_FREE(coverstatus_stack);
+	if (coverStatus != LWP_THREAD_NULL)
+	{
+		if(LWP_ThreadIsSuspended(coverStatus))
+			LWP_ResumeThread(coverStatus);
+
+		LWP_JoinThread(coverStatus, NULL);
+		coverStatus = LWP_THREAD_NULL;
+		SMART_FREE(coverstatus_stack);
+	}
 	gprintf("Done with main\n");
 	return m_reload ? 1 : 0;
 }
@@ -677,7 +686,7 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	texChannel.fromPNG(btnchannel_png);
 	texChannels.fromPNG(btnchannels_png);
 	texHomebrew.fromPNG(btnhomebrew_png);
-	texHomebrews.fromPNG(btnhomebrew_png);
+	texHomebrews.fromPNG(btnhomebrews_png);
 	texPrev.fromPNG(btnprev_png);
 	texPrevS.fromPNG(btnprevs_png);
 	texNext.fromPNG(btnnext_png);

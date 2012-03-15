@@ -23,13 +23,28 @@ static bool return_to_priiloader = false;
 static bool return_to_disable = false;
 static bool return_to_bootmii = false;
 
+
+void __Wpad_PowerCallback(s32 chan)
+{
+	/* Poweroff console */
+	shutdown = 1;
+}
+
 void Open_Inputs(void)
 {
-	if(WPAD_GetStatus() != WPAD_STATE_ENABLED && WPAD_GetStatus() != WPAD_STATE_ENABLING)
+	s32 status = WPAD_GetStatus();
+	if(status != WPAD_STATE_ENABLED && status != WPAD_STATE_ENABLING)
 	{
-		WPAD_Init();
+		/* Initialize Wiimote subsystem */
 		PAD_Init();
+		WPAD_Init();
+
+		/* Set POWER button callback */
+		WPAD_SetPowerButtonCallback(__Wpad_PowerCallback);
+	
 		WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+	
+		WPAD_SetIdleTimeout(60*5); // idle after 5 minutes
 	}
 }
 
@@ -72,6 +87,10 @@ void Sys_ExitTo(int option)
 	else if(return_to_priiloader)
 	{
 		Write32(0x8132fffb,0x4461636f);
+	}
+	else
+	{
+		Write32(0x8132fffb,0xffffffff);
 	}
 }
 

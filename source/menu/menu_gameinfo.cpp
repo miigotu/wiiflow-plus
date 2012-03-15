@@ -11,8 +11,10 @@ extern const u8		wifi1_png[];
 extern const u8		wifi2_png[];
 extern const u8		wifi4_png[];
 extern const u8		wifi8_png[];
+extern const u8		wifi10_png[];
 extern const u8		wifi12_png[];
 extern const u8		wifi16_png[];
+extern const u8		wifi18_png[];
 extern const u8		wifi32_png[];
 
 extern const u8		wiimote1_png[];
@@ -24,6 +26,7 @@ extern const u8		wiimote8_png[];
 extern const u8		guitar_png[];
 extern const u8		guitarR_png[];
 extern const u8		microphone_png[];
+extern const u8		keyboard_png[];
 extern const u8		gcncontroller_png[];
 extern const u8		classiccontroller_png[];
 extern const u8		nunchuk_png[];
@@ -309,8 +312,7 @@ void CMenu::_textGameInfo(void)
 		m_btnMgr.setText(m_gameinfoLblPublisher, wfmt(_fmt("gameinfo2",L"Publisher: %s"), gameinfo.Publisher.c_str()), true);
 		m_btnMgr.setText(m_gameinfoLblRegion, wfmt(_fmt("gameinfo3",L"Region: %s"), gameinfo.Region.c_str()), true);
 
-		string wGenres = vectorToString(gameinfo.Genres, ", ");
-		m_btnMgr.setText(m_gameinfoLblGenre, wfmt(_fmt("gameinfo5",L"Genre: %s"), wGenres.c_str()), true);
+		m_btnMgr.setText(m_gameinfoLblGenre, wfmt(_fmt("gameinfo5",L"Genre: %s"), gameinfo.Genres.c_str()), true);
 
 		int year = gameinfo.PublishDate >> 16;
         int day = gameinfo.PublishDate & 0xFF;
@@ -397,29 +399,32 @@ void CMenu::_textGameInfo(void)
 			m_wifi.fromPNG(wifi4_png);
 		else if (gameinfo.WifiPlayers == 8)
 			m_wifi.fromPNG(wifi8_png);
+		else if (gameinfo.WifiPlayers == 10)
+			m_wifi.fromPNG(wifi10_png);
 		else if (gameinfo.WifiPlayers == 12)
 			m_wifi.fromPNG(wifi12_png);
 		else if (gameinfo.WifiPlayers == 16)
 			m_wifi.fromPNG(wifi16_png);
+		else if (gameinfo.WifiPlayers == 18)
+			m_wifi.fromPNG(wifi18_png);
 		else if (gameinfo.WifiPlayers == 32)
 			m_wifi.fromPNG(wifi32_png);
 
-		if(gameinfo.WifiPlayers > 0)
-			m_btnMgr.setTexture(m_gameinfoLblWifiplayers, m_wifi);
-		else 
-			m_btnMgr.setTexture(m_gameinfoLblWifiplayers, emptyTex);
+		m_btnMgr.setTexture(m_gameinfoLblWifiplayers, gameinfo.WifiPlayers > 0 ? m_wifi : emptyTex);
 
-		u8	wiimote=0,
-			nunchuk=0,
-            classiccontroller=0,
-            balanceboard=0,
-            dancepad=0,
-            guitar=0,
-            gamecube=0,
-            motionplus=0,
-            drums=0,
-			microphone=0,
-			wheel=0;
+		u8	wiimote = 0,
+			nunchuk = 0,
+            classiccontroller = 0,
+            balanceboard = 0,
+            dancepad = 0,
+            guitar = 0,
+            gamecube = 0,
+            motionplus = 0,
+            drums = 0,
+			microphone = 0,
+			wheel = 0,
+			keyboard = 0,
+			x = 0;
 		
 		//check required controlls
 		for (safe_vector<Accessory>::iterator acc_itr = gameinfo.Accessories.begin(); acc_itr != gameinfo.Accessories.end(); acc_itr++)
@@ -427,22 +432,23 @@ void CMenu::_textGameInfo(void)
 			if (!acc_itr->Required) continue;
 			
 			if (strcmp((acc_itr->Name).c_str(), "wiimote") == 0)
-                wiimote=1;
+                wiimote = 1;
             else if (strcmp((acc_itr->Name).c_str(), "nunchuk") == 0)
-                nunchuk=1;
+                nunchuk = 1;
             else if (strcmp((acc_itr->Name).c_str(), "guitar") == 0)
-                guitar=1;
+                guitar = 1;
             else if (strcmp((acc_itr->Name).c_str(), "drums") == 0)
-                drums=1;
+                drums = 1;
             else if (strcmp((acc_itr->Name).c_str(), "dancepad") == 0)
-                dancepad=1;
+                dancepad = 1;
             else if (strcmp((acc_itr->Name).c_str(), "motionplus") == 0)
-                motionplus=1;
+                motionplus = 1;
             else if (strcmp((acc_itr->Name).c_str(), "balanceboard") == 0)
-                balanceboard=1;
+                balanceboard = 1;
+			else if (strcmp((acc_itr->Name).c_str(), "keyboard") == 0)
+                keyboard = 1;
         }
 
-		u8 x = 0;
 		u8 max_controlsReq = ARRAY_SIZE(m_gameinfoLblControlsReq);
 		
 		if(wiimote && x < max_controlsReq)
@@ -501,6 +507,12 @@ void CMenu::_textGameInfo(void)
 			m_btnMgr.setTexture(m_gameinfoLblControlsReq[x] ,m_controlsreq[x], 60, 60);
 			x++;
 		}
+		if(keyboard && x < max_controlsReq)
+		{
+			m_controlsreq[x].fromPNG(keyboard_png);
+			m_btnMgr.setTexture(m_gameinfoLblControlsReq[x] ,m_controlsreq[x], 60, 60);
+			x++;
+		}
 
 		cnt_controlsreq = x;
 
@@ -508,45 +520,48 @@ void CMenu::_textGameInfo(void)
 			//m_btnMgr.setTexture(m_gameinfoLblControlsReq[i] ,m_controlsreq[i]);
 
 		//check optional controlls
-		wiimote=0,
-		nunchuk=0,
-        classiccontroller=0,
-        balanceboard=0,
-        dancepad=0,
-        guitar=0,
-        gamecube=0,
-        motionplus=0,
-        drums=0,
-		microphone=0,
-		wheel=0;
+		wiimote = 0,
+		nunchuk = 0,
+        classiccontroller = 0,
+        balanceboard = 0,
+        dancepad = 0,
+        guitar = 0,
+        gamecube = 0,
+        motionplus = 0,
+        drums = 0,
+		microphone = 0,
+		wheel = 0,
+		keyboard = 0,
+		x = 0;
 
 		for (safe_vector<Accessory>::iterator acc_itr = gameinfo.Accessories.begin(); acc_itr != gameinfo.Accessories.end(); acc_itr++)
 		{
 			if (acc_itr->Required) continue;
 		
             if (strcmp((acc_itr->Name).c_str(), "classiccontroller") == 0)
-                classiccontroller=1;
+                classiccontroller = 1;
             else if (strcmp((acc_itr->Name).c_str(), "nunchuk") == 0)
-                nunchuk=1;
+                nunchuk = 1;
             else if (strcmp((acc_itr->Name).c_str(), "guitar") == 0)
-                guitar=1;
+                guitar = 1;
             else if (strcmp((acc_itr->Name).c_str(), "drums") == 0)
-                drums=1;
+                drums = 1;
             else if (strcmp((acc_itr->Name).c_str(), "dancepad") == 0)
-                dancepad=1;
+                dancepad = 1;
             else if (strcmp((acc_itr->Name).c_str(), "motionplus") == 0)
-                motionplus=1;
+                motionplus = 1;
             else if (strcmp((acc_itr->Name).c_str(), "balanceboard") == 0)
-                balanceboard=1;
+                balanceboard = 1;
             else if (strcmp((acc_itr->Name).c_str(), "microphone") == 0)
-                microphone=1;
+                microphone = 1;
             else if (strcmp((acc_itr->Name).c_str(), "gamecube") == 0)
-                gamecube=1;
+                gamecube = 1;
 			else if (strcmp((acc_itr->Name).c_str(), "wheel") == 0)
-                wheel=1;
+                wheel = 1;
+			else if (strcmp((acc_itr->Name).c_str(), "keyboard") == 0)
+                keyboard = 1;
         }
-		
-		x = 0;
+
 		u8 max_controls = ARRAY_SIZE(m_gameinfoLblControls);
 		
 		if(classiccontroller && x < max_controls)
@@ -602,6 +617,11 @@ void CMenu::_textGameInfo(void)
 		if(wheel && x < max_controls)
 		{
 			m_controls[x].fromPNG(wheel_png);
+			x++;
+		}
+		if(keyboard && x < max_controls)
+		{
+			m_controls[x].fromPNG(keyboard_png);
 			x++;
 		}
 

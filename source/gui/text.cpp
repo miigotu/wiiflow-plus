@@ -185,7 +185,7 @@ safe_vector<wstringEx> stringToVector(const wstringEx &text, char sep)
 	return v;
 }
 
-bool SFont::fromBuffer(const SmartBuf &buffer, u32 bufferSize, u32 size, u32 lspacing, u32 w, u32 idx, const char *)
+bool SFont::fromBuffer(const SmartBuf &buffer, u32 bufferSize, u32 size, u32 lspacing, u32 w, u32 idx)
 {
 	if (!buffer || !font) return false;
 
@@ -208,7 +208,7 @@ bool SFont::fromBuffer(const SmartBuf &buffer, u32 bufferSize, u32 size, u32 lsp
 
 bool SFont::fromFile(const char *filename, u32 size, u32 lspacing, u32 w, u32 idx)
 {
-	if (!font) return false;
+	if (!font || !filename) return false;
 	size = min(max(6u, size), 1000u);
 	weight = min(w, 32u);
 	index = idx = 0;
@@ -479,4 +479,28 @@ void Asciify( wchar_t *str )
 		++ctr;	
 	}
 	*ctr = '\0';
+}
+
+void Asciify2( char *str ) //From Mod
+{
+	u8 i=0;
+	for( i=0; i < strlen(str); ++i )
+	{
+		if( str[i] < 0x20 || str[i] > 0x7F )
+			str[i] = '_';
+		else {
+			switch( str[i] )
+			{
+				case '*':
+				case '\"':
+				case ':':
+				case '|':
+				case '<':
+				case '>':
+				case '?':
+					str[i] = '_';
+				break;
+			}
+		}
+	}
 }

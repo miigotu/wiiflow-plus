@@ -41,6 +41,9 @@ void CMenu::_system()
 		{
 			if (thread != LWP_THREAD_NULL)
 			{
+				if(LWP_ThreadIsSuspended(thread))
+					LWP_ResumeThread(thread);
+
 				LWP_JoinThread(thread, NULL);
 				thread = LWP_THREAD_NULL;
 			}
@@ -170,6 +173,9 @@ void CMenu::_system()
 	}
 	if (thread != LWP_THREAD_NULL)
 	{
+		if(LWP_ThreadIsSuspended(thread))
+			LWP_ResumeThread(thread);
+
 		LWP_JoinThread(thread, NULL);
 		thread = LWP_THREAD_NULL;
 	}

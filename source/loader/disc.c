@@ -46,12 +46,17 @@ static u8	Tmd_Buffer[0x49e4 + 0x1C] ALIGNED(32);
 
 void __Disc_SetLowMem()
 {
+	/* Setup low memory */
 	*(vu32 *)0x80000060 = 0x38A00040; // Dev Debugger Hook
 	*(vu32 *)0x800000E4 = 0x80431A80;
 	*(vu32 *)0x800000EC = 0x81800000; // Dev Debugger Monitor Address
 	*(vu32 *)0x800000F0 = 0x01800000; // Simulated Memory Size
 	*(vu32 *)0xCD00643C = 0x00000000; // 32Mhz on Bus
 
+	/* Copy disc ID (online check) */
+	memcpy((void *)0x80003180, (void *)0x80000000, 4); //From Mod
+
+	// Patch in info missing from apploader reads
 	*Sys_Magic	= 0x0d15ea5e;
 	*Version	= 1;
 	*Arena_L	= 0x00000000;
@@ -63,8 +68,8 @@ void __Disc_SetLowMem()
 	*(vu32 *)0x8000318C = 0x00000000; // Launch Code
 	*(vu32 *)0x80003190 = 0x00000000; // Return Code
 
-	*(vu32 *)0x80003140 = *(vu32 *)0x80003188; // IOS Version Check
-	*(vu32 *)0x80003180 = *(vu32 *)0x80000000; // Game ID Online Check
+	//*(vu32 *)0x80003140 = *(vu32 *)0x80003188; // IOS Version Check Commented From Mod
+	//*(vu32 *)0x80003180 = *(vu32 *)0x80000000; // Game ID Online Check Commented From Mod	
 	*(vu32 *)0x80003184 = 0x80000000;
 
 	/* Flush cache */
@@ -247,7 +252,12 @@ s32 Disc_Open(void)
 	memset(diskid, 0, 32);
 
 	/* Read disc ID */
-	return WDVD_ReadDiskId(diskid);
+	ret = WDVD_ReadDiskId(diskid);
+	
+	/* Directly set Audio Streaming for GC */
+	WDVD_setstreaming();
+	
+	return ret;
 }
 
 s32 Disc_Wait(void)
@@ -331,10 +341,12 @@ s32 Disc_IsGC(void)
 	return Disc_Type(1);
 }
 
-s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode)
+s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString, u8 patchVidMode, int aspectRatio)
 {
 	entry_point p_entry;
 
+	IOSReloadBlock(IOS_GetVersion());
+	
 	s32 ret = WDVD_OpenPartition(offset, 0, 0, 0, Tmd_Buffer);
 	if (ret < 0) return ret;
 
@@ -345,7 +357,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString,
 	__Disc_SetLowMem();
 
 	/* Run apploader */
-	ret = Apploader_Run(&p_entry, vidMode, vmode, vipatch, countryString, patchVidMode);
+	ret = Apploader_Run(&p_entry, vidMode, vmode, vipatch, countryString, patchVidMode, aspectRatio);
 	free_wip();
 	if (ret < 0) return ret;
 
@@ -372,7 +384,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString,
 	/* Shutdown IOS subsystems */
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 
-	 /* Originally from tueidj - taken from NeoGamme (thx) */
+	/* Originally from tueidj - taken from NeoGamma (thx) */
 	*(vu32*)0xCC003024 = 1;
 	
 	// fix for PeppaPig
@@ -382,16 +394,14 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString,
 	
 	gprintf("Jumping to entrypoint\n");
 	
-	if (hooktype != 0)
+	if (hooktype != 0) //2x "nop\n" removed From Mod
 	{
 		__asm__(
 			"lis %r3, appentrypoint@h\n"
 			"ori %r3, %r3, appentrypoint@l\n"
 			"lwz %r3, 0(%r3)\n"
 			"mtlr %r3\n"
-			"nop\n"
 			"lis %r3, 0x8000\n"
-			"nop\n"
 			"ori %r3, %r3, 0x18A8\n"
 			"nop\n"
 			"mtctr %r3\n"
@@ -412,7 +422,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode, bool vipatch, bool countryString,
 	return 0;
 }
 
-s32 Disc_WiiBoot(u8 vidMode, bool vipatch, bool countryString, u8 patchVidModes)
+s32 Disc_WiiBoot(u8 vidMode, bool vipatch, bool countryString, u8 patchVidModes, int aspectRatio)
 {
 	u64 offset;
 
@@ -421,5 +431,5 @@ s32 Disc_WiiBoot(u8 vidMode, bool vipatch, bool countryString, u8 patchVidModes)
 	if (ret < 0) return ret;
 
 	/* Boot partition */
-	return Disc_BootPartition(offset, vidMode, vipatch, countryString, patchVidModes);
+	return Disc_BootPartition(offset, vidMode, vipatch, countryString, patchVidModes, aspectRatio);
 }

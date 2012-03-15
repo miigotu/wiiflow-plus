@@ -19,12 +19,14 @@ s32 WDVD_OpenPartition(u64 offset, void* Ticket, void* Certificate, unsigned int
 s32 WDVD_ClosePartition(void);
 s32 WDVD_UnencryptedRead(void *, u32, u64);
 s32 WDVD_Read(void *, u32, u64);
+s32 WDVD_LowRequestError(u32 *error);
 s32 WDVD_WaitForDisc(void);
 s32 WDVD_GetCoverStatus(u32 *);
 s32 WDVD_SetUSBMode(u32, const u8 *, s32);
 s32 WDVD_Eject(void);
 s32 WDVD_Read_Disc_BCA(void *);
 s32 WDVD_SetFragList(int device, void *fraglist, int size);
+s32 WDVD_setstreaming();
 
 #ifdef __cplusplus
 }

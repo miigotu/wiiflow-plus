@@ -1,7 +1,6 @@
 
 #include "menu.hpp"
 
-
 using namespace std;
 
 const CMenu::SCFParamDesc CMenu::_cfParams[] = {

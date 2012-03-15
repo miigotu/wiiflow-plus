@@ -165,17 +165,17 @@ void CMenu::_showDownload(void)
 void CMenu::_setThrdMsg(const wstringEx &msg, float progress)
 {
 	if (m_thrdStop) return;
+	LWP_MutexLock(m_mutex);
 	if (msg != L"...") m_thrdMessage = msg;
 	m_thrdMessageAdded = true;
 	m_thrdProgress = progress;
+	LWP_MutexUnlock(m_mutex);
 }
 
 bool CMenu::_downloadProgress(void *obj, int size, int position)
 {
 	CMenu *m = (CMenu *)obj;
-	LWP_MutexLock(m->m_mutex);
 	m->_setThrdMsg(L"...", m->m_thrdStep + m->m_thrdStepLen * ((float)position / (float)size));
-	LWP_MutexUnlock(m->m_mutex);
 	return !m->m_thrdStop;
 }
 
@@ -250,21 +250,14 @@ s32 CMenu::_networkComplete(s32 ok, void *usrData)
 	
 	m->m_networkInit = ok == 0;
 	m->m_thrdNetwork = false;
-
-	bool wifigecko = m->m_cfg.getBool("GENERAL", "wifi_gecko", false);
-	gprintf("NET: Network init complete, enabled wifi_gecko: %s\n", wifigecko ? "yes" : "no");
-
-	if (wifigecko)
+	if (m->m_cfg.getBool("DEBUG", "wifi_gecko"))
 	{
 		// Get ip
-		std::string ip = m->m_cfg.getString("GENERAL", "wifi_gecko_ip");
-		u16 port = m->m_cfg.getInt("GENERAL", "wifi_gecko_port");
+		std::string ip = m->m_cfg.getString("DEBUG", "wifi_gecko_ip");
+		u16 port = m->m_cfg.getInt("DEBUG", "wifi_gecko_port");
 
 		if (ip.size() > 0 && port != 0)
-		{
-			gprintf("NET: WIFI Gecko to %s:%d\n", ip.c_str(), port);
 			WifiGecko_Init(ip.c_str(), port);
-		}
 	}
 
 	return 0;
@@ -309,9 +302,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 	SmartBuf buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(L"Not enough memory!", 1.f);
-		LWP_MutexUnlock(m_mutex);
 		m_thrdWorking = false;
 		return 0;
 	}
@@ -327,9 +318,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 		coverList.reserve(m_gameList.size());
 		for (u32 i = 0; i < m_gameList.size() && !m_thrdStop; ++i)
 		{
-			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg7", L"Listing covers to download..."), listWeight * (float)step / (float)nbSteps);
-			LWP_MutexUnlock(m_mutex);
 			++step;
 			string id((const char *)m_gameList[i].hdr.id, sizeof m_gameList[i].hdr.id);
 			path = sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str());
@@ -345,14 +334,10 @@ int CMenu::_coverDownloader(bool missingOnly)
 	{
 		step = 0;
 		nbSteps = 1 + n * 2;
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg1", L"Initializing network..."), listWeight + dlWeight * (float)step / (float)nbSteps);
-		LWP_MutexUnlock(m_mutex);
 		if (_initNetwork() < 0)
 		{
-			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
-			LWP_MutexUnlock(m_mutex);
 			m_thrdWorking = false;
 			return 0;
 		}
@@ -385,17 +370,13 @@ int CMenu::_coverDownloader(bool missingOnly)
 				url = makeURL(fmtURLBox[j], newID, countryCode(newID));
 				if (j == 0) ++step;
 				m_thrdStep = listWeight + dlWeight * (float)step / (float)nbSteps;
-				LWP_MutexLock(m_mutex);
 				_setThrdMsg(wfmt(_fmt("dlmsg3", L"Downloading from %s"), url.c_str()), m_thrdStep);
-				LWP_MutexUnlock(m_mutex);
 				download = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
 
 				if (download.data == NULL && newID[3] != 'E')
 				{
 					url = makeURL(fmtURLBox[j], newID, "US");
-					LWP_MutexLock(m_mutex);
 					_setThrdMsg(wfmt(_fmt("dlmsg3", L"Downloading from %s"), url.c_str()), m_thrdStep);
-					LWP_MutexUnlock(m_mutex);
 					download = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
 				}
 
@@ -404,9 +385,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 					if (savePNG)
 					{
 						path = sfmt("%s/%s.png", m_boxPicDir.c_str(), coverList[i].c_str());
-						LWP_MutexLock(m_mutex);
 						_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), path.c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
-						LWP_MutexUnlock(m_mutex);
 						file = fopen(path.c_str(), "wb");
 						if (file != NULL)
 						{
@@ -415,9 +394,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 						}
 					}
 
-					LWP_MutexLock(m_mutex);
 					_setThrdMsg(wfmt(_fmt("dlmsg10", L"Making %s"), sfmt("%s.wfc", coverList[i].c_str()).c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
-					LWP_MutexUnlock(m_mutex);
 					if (m_cf.preCacheCover(coverList[i].c_str(), download.data, true))
 					{
 						++count;
@@ -435,25 +412,19 @@ int CMenu::_coverDownloader(bool missingOnly)
 					for (u32 j = 0; !success && j < fmtURLFlat.size() && !m_thrdStop; ++j)
 					{
 						url = makeURL(fmtURLFlat[j], newID, countryCode(newID));
-						LWP_MutexLock(m_mutex);
 						_setThrdMsg(wfmt(_fmt("dlmsg8", L"Full cover not found. Downloading from %s"), url.c_str()), listWeight + dlWeight * (float)step / (float)nbSteps);
-						LWP_MutexUnlock(m_mutex);
 						download = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
 						if (download.data == NULL && newID[3] != 'E')
 						{
 							url = makeURL(fmtURLFlat[j], newID, "EN");
-							LWP_MutexLock(m_mutex);
 							_setThrdMsg(wfmt(_fmt("dlmsg3", L"Downloading from %s"), url.c_str()), m_thrdStep);
-							LWP_MutexUnlock(m_mutex);
 							download = downloadfile(buffer.get(), bufferSize, url.c_str(), CMenu::_downloadProgress, this);
 						}
 						if (download.data != NULL)
 						{
 							if (savePNG)
 							{
-								LWP_MutexLock(m_mutex);
 								_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), path.c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
-								LWP_MutexUnlock(m_mutex);
 								file = fopen(path.c_str(), "wb");
 								if (file != NULL)
 								{
@@ -462,9 +433,7 @@ int CMenu::_coverDownloader(bool missingOnly)
 								}
 							}
 
-							LWP_MutexLock(m_mutex);
 							_setThrdMsg(wfmt(_fmt("dlmsg10", L"Making %s"), sfmt("%s.wfc", coverList[i].c_str()).c_str()), listWeight + dlWeight * (float)(step + 1) / (float)nbSteps);
-							LWP_MutexUnlock(m_mutex);
 							if (m_cf.preCacheCover(coverList[i].c_str(), download.data, false))
 							{
 								++countFlat;
@@ -480,12 +449,10 @@ int CMenu::_coverDownloader(bool missingOnly)
 		coverList.clear();
 		m_newID.unload();
 	}
-	LWP_MutexLock(m_mutex);
 	if (countFlat == 0)
 		_setThrdMsg(wfmt(_fmt("dlmsg5", L"%i/%i files downloaded."), count, n), 1.f);
 	else
 		_setThrdMsg(wfmt(_fmt("dlmsg9", L"%i/%i files downloaded. %i are front covers only."), count + countFlat, n, countFlat), 1.f);
-	LWP_MutexUnlock(m_mutex);
 	m_thrdWorking = false;
 	return 0;
 }
@@ -593,6 +560,9 @@ void CMenu::_download(string gameId)
 	}
 	if (thread != LWP_THREAD_NULL)
 	{
+		if(LWP_ThreadIsSuspended(thread))
+			LWP_ResumeThread(thread);
+
 		LWP_JoinThread(thread, NULL);
 		thread = LWP_THREAD_NULL;
 	}
@@ -652,46 +622,28 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 	SmartBuf buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(L"Not enough memory", 1.f);
-		LWP_MutexUnlock(m_mutex);
 		m_thrdWorking = false;
 		return 0;
 	}
 
-	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
-	LWP_MutexUnlock(m_mutex);
 	
 	if (_initNetwork() < 0)
-	{
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
-		LWP_MutexUnlock(m_mutex);
-	}
 	else
 	{
-		// DLoad txt file
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg11", L"Downloading..."), 0.2f);
-		LWP_MutexUnlock(m_mutex);
 
 		m_thrdStep = 0.2f;
 		m_thrdStepLen = 0.9f - 0.2f;
 		gprintf("TXT update URL: %s\n\n", m_cfg.getString("GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str());
 		download = downloadfile(buffer.get(), bufferSize, m_cfg.getString("GENERAL", "updatetxturl", UPDATE_URL_VERSION).c_str(),CMenu::_downloadProgress, this);
 		if (download.data == 0 || download.size < 19)
-		{
-			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg20", L"No version information found."), 1.f); // TODO: Check for 16
-			LWP_MutexUnlock(m_mutex);
-		}
 		else
 		{
-			// txt download finished, now save file
-			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
-			LWP_MutexUnlock(m_mutex);			
 			
 			FILE *file = fopen(m_ver.c_str(), "wb");
 			if (file != NULL)
@@ -703,30 +655,15 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 				int svnrev = atoi(SVN_REV);
 				gprintf("Installed Version: %d\n", svnrev);
 				m_version.load(m_ver.c_str());
-				int rev = m_version.getInt("GENERAL", "version", 0);
+				int rev = m_version.getInt("GENERAL", "version");
 				gprintf("Latest available Version: %d\n", rev);
 				if (svnrev < rev)
-				{
-					// new version available
-					LWP_MutexLock(m_mutex);
 					_setThrdMsg(_t("dlmsg19", L"New update available!"), 1.f);
-					LWP_MutexUnlock(m_mutex);
-				}
 				else
-				{
-					// no new version available
-					LWP_MutexLock(m_mutex);
 					_setThrdMsg(_t("dlmsg17", L"No new updates found."), 1.f);
-					LWP_MutexUnlock(m_mutex);
-				}
 			}
 			else
-			{
-				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
-				LWP_MutexUnlock(m_mutex);
-			}
-
 		}
 	}
 	m_thrdWorking = false;
@@ -758,11 +695,8 @@ s8 CMenu::_versionDownloader() // code to download new version
 		rename(dol_backup, m_dol.c_str());
 		filestr.open(m_dol.c_str());
 		if (filestr.fail())
-		{
-			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg18", L"boot.dol not found at default path!"), 1.f);
-			LWP_MutexUnlock(m_mutex);
-		}
+
 		filestr.close();
 		sleep(3);
 		m_thrdWorking = false;
@@ -774,32 +708,24 @@ s8 CMenu::_versionDownloader() // code to download new version
 	SmartBuf buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(L"Not enough memory!", 1.f);
-		LWP_MutexUnlock(m_mutex);
 		sleep(3);
 		m_thrdWorking = false;
 		return 0;
 	}
 
-	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
-	LWP_MutexUnlock(m_mutex);
 	
 	if (_initNetwork() < 0)
 	{
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
-		LWP_MutexUnlock(m_mutex);
 		sleep(3);
 		m_thrdWorking = false;
 		return 0;
 	}
 
 	// Load actual file
-	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg22", L"Updating application directory..."), 0.2f);
-	LWP_MutexUnlock(m_mutex);
 
 	m_thrdStep = 0.2f;
 	m_thrdStepLen = 0.9f - 0.2f;
@@ -809,18 +735,14 @@ s8 CMenu::_versionDownloader() // code to download new version
 	download = downloadfile(buffer.get(), bufferSize, m_app_update_url, CMenu::_downloadProgress, this);
 	if (download.data == 0 || download.size < m_app_update_size)
 	{
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
-		LWP_MutexUnlock(m_mutex);
 		sleep(3);
 		m_thrdWorking = false;
 		return 0;
 	}
 	
 	// download finished, backup boot.dol and write new files.
-	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.8f);
-	LWP_MutexUnlock(m_mutex);			
 	
 	remove(dol_backup);
 	rename(m_dol.c_str(), dol_backup);
@@ -833,9 +755,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 		fwrite(download.data, 1, download.size, file);
 		SAFE_CLOSE(file);
 		
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
-		LWP_MutexUnlock(m_mutex);
 
 		ZipFile zFile(m_app_update_zip.c_str());
 		bool result = zFile.ExtractAll(m_appDir.c_str());
@@ -849,23 +769,17 @@ s8 CMenu::_versionDownloader() // code to download new version
 
 		//memset(&buffer, 0, bufferSize);  should we be clearing the buffer of any possible data before downloading?
 
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg23", L"Updating data directory..."), 0.2f);
-		LWP_MutexUnlock(m_mutex);
 
 		download = downloadfile(buffer.get(), bufferSize, m_data_update_url, CMenu::_downloadProgress, this);
 		if (download.data == 0 || download.size < m_data_update_size)
 		{
-			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
-			LWP_MutexUnlock(m_mutex);
 			goto success;
 		}
 		
 		// download finished, write new files.
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
-		LWP_MutexUnlock(m_mutex);
 		
 		remove(m_data_update_zip.c_str());
 
@@ -875,20 +789,14 @@ s8 CMenu::_versionDownloader() // code to download new version
 			fwrite(download.data, 1, download.size, file);
 			SAFE_CLOSE(file);
 			
-			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
-			LWP_MutexUnlock(m_mutex);
 			
 			ZipFile zDataFile(m_data_update_zip.c_str());
 			result = zDataFile.ExtractAll(m_dataDir.c_str());
 			remove(m_data_update_zip.c_str());
 
 			if (!result)
-			{
-				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
-				LWP_MutexUnlock(m_mutex);
-			}
 		}
 
 	}
@@ -896,16 +804,12 @@ s8 CMenu::_versionDownloader() // code to download new version
 		goto fail;
 
 success:
-	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg21", L"WiiFlow will now exit to allow the update to take effect."), 1.f);
-	LWP_MutexUnlock(m_mutex);
 
     filestr.open(m_dol.c_str());
     if (filestr.fail())
 	{
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg25", L"Extraction must have failed! Renaming the backup to boot.dol"), 1.f);
-		LWP_MutexUnlock(m_mutex);
 		rename(dol_backup, m_dol.c_str());
 	}
     filestr.close();
@@ -915,9 +819,7 @@ success:
 
 fail:
 	rename(dol_backup, m_dol.c_str());
-	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg15", L"Saving failed!"), 1.f);
-	LWP_MutexUnlock(m_mutex);
 out:
 	sleep(3);
 	m_thrdWorking = false;
@@ -938,35 +840,21 @@ int CMenu::_gametdbDownloaderAsync()
 	SmartBuf buffer = smartAnyAlloc(bufferSize);
 	if (!buffer)
 	{
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(L"Not enough memory", 1.f);
-		LWP_MutexUnlock(m_mutex);
 		return 0;
 	}
 	langCode = m_loc.getString(m_curLanguage, "gametdb_code", "EN");
-	LWP_MutexLock(m_mutex);
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
-	LWP_MutexUnlock(m_mutex);
 	if (_initNetwork() < 0)
-	{
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
-		LWP_MutexUnlock(m_mutex);
-	}
 	else
 	{
-		LWP_MutexLock(m_mutex);
 		_setThrdMsg(_t("dlmsg11", L"Downloading..."), 0.0f);
-		LWP_MutexUnlock(m_mutex);
 		m_thrdStep = 0.0f;
 		m_thrdStepLen = 1.0f;
 		download = downloadfile(buffer.get(), bufferSize, sfmt(GAMETDB_URL, langCode.c_str()).c_str(), CMenu::_downloadProgress, this);
 		if (download.data == 0)
-		{
-			LWP_MutexLock(m_mutex);
 			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
-			LWP_MutexUnlock(m_mutex);
-		}
 		else
 		{
 			string zippath = sfmt("%s/wiitdb.zip", m_settingsDir.c_str());
@@ -981,9 +869,7 @@ int CMenu::_gametdbDownloaderAsync()
 			{
 				gprintf("Can't save zip file\n");
 	
-				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg15", L"Couldn't save ZIP file"), 1.f);
-				LWP_MutexUnlock(m_mutex);
 			}
 			else
 			{
@@ -1004,9 +890,7 @@ int CMenu::_gametdbDownloaderAsync()
 				m_gameList.SetLanguage(m_loc.getString(m_curLanguage, "gametdb_code", "EN").c_str());
 				UpdateCache();
 				
-				LWP_MutexLock(m_mutex);
 				_setThrdMsg(_t("dlmsg26", L"Updating cache..."), 0.f);
-				LWP_MutexUnlock(m_mutex);
 
 				_loadList();
 				_initCF();

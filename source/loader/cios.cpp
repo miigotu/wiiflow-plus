@@ -42,16 +42,11 @@ static u32 allowedBases[] = { 37, 38, 53, 55, 56, 57, 58 };
 /* Check if the cIOS is a D2X. */
 bool cIOSInfo::D2X(u8 ios, u8 *base)
 {
-	bool ret = false;
-
 	iosinfo_t *info = GetInfo(ios);
-	if(info != NULL)
-	{
-		*base = (u8)info->baseios;
-		SAFE_FREE(info);
-		ret = true;
-	}
-	return ret;
+	if(!info) return false;
+	*base = (u8)info->baseios;
+	SAFE_FREE(info);
+	return true;
 }
 
 /*
@@ -74,13 +69,13 @@ iosinfo_t *cIOSInfo::GetInfo(u8 ios)
 	}
 
 	char filepath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
-	sprintf(filepath, "/title/%08x/%08x/content/%08x.app", 0x00000001, ios, *(u8 *)((u32)TMD+0x1E7));
+	sprintf(filepath, "/title/00000001/%08x/content/%08x.app", ios, *(u8 *)((u32)TMD+0x1E7));
 
 	SAFE_FREE(TMD);
 
 	u32 size = 0;
 	u8 *buffer = ISFS_GetFile((u8 *) filepath, &size, sizeof(iosinfo_t));
-	if(!buffer) return NULL;
+	if(!buffer || size <= 0) return NULL;
 
 	iosinfo_t *iosinfo = (iosinfo_t *) buffer;
 
@@ -101,5 +96,7 @@ iosinfo_t *cIOSInfo::GetInfo(u8 ios)
 		SAFE_FREE(buffer);
 		return NULL;
 	}
+	SAFE_FREE(buffer);
+	
 	return iosinfo;
 }

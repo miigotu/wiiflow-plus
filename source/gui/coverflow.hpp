@@ -117,6 +117,7 @@ public:
 	void setSounds(const SmartGuiSound &sound, const SmartGuiSound &hoverSound, const SmartGuiSound &selectSound, const SmartGuiSound &cancelSound);
 	void setSoundVolume(u8 vol);
 	void stopSound(void);
+	void playSound(SmartGuiSound snd);
 	// 
 	void applySettings(void);
 	void setCachePath(const char *path, bool deleteSource, bool compress);
@@ -242,6 +243,9 @@ private:
 	STexture m_dvdSkin;
 	STexture m_dvdSkin_Red;
 	STexture m_dvdSkin_Black;
+	STexture m_dvdSkin_Yellow;
+	STexture m_dvdSkin_GreenOne;
+	STexture m_dvdSkin_GreenTwo;
 	// Settings
 	std::string m_pngLoadCover;
 	std::string m_pngLoadCoverFlat;
@@ -276,8 +280,7 @@ private:
 	Vector3D m_flipCoverPos;
 	Vector3D m_flipCoverAngle;
 	Vector3D m_flipCoverScale;
-	u8 sndCopyNum;
-	SmartGuiSound m_sound[4];
+	SmartGuiSound m_sound;
 	SmartGuiSound m_hoverSound;
 	SmartGuiSound m_selectSound;
 	SmartGuiSound m_cancelSound;
@@ -297,6 +300,7 @@ private:
 	void _drawCover(int i, bool mirror, CCoverFlow::DrawMode dm);
 	void _drawCoverFlat(int i, bool mirror, CCoverFlow::DrawMode dm);
 	void _drawCoverBox(int i, bool mirror, CCoverFlow::DrawMode dm);
+	bool _checkCoverColor(char* gameID, const char* checkID[], int len);
 	void _updateTarget(int i, bool instant = false);
 	void _updateAllTargets(bool instant = false);
 	void _loadCover(int i, int item);
@@ -320,18 +324,12 @@ private:
 	bool _invisibleCover(u32 x, u32 y);
 	void _instantTarget(int i);
 	void _transposeCover(safe_vector<CCover> &dst, u32 rows, u32 columns, int pos);
-	void _playSound(void);
-	
-	void _stopSound(SmartGuiSound snd);
-	void _playSound(SmartGuiSound snd);
-	
 	static bool _sortByPlayCount(CItem item1, CItem item2);
 	static bool _sortByLastPlayed(CItem item1, CItem item2);
 	static bool _sortByGameID(CItem item1, CItem item2);
 	static bool _sortByAlpha(CItem item1, CItem item2);
 	static bool _sortByPlayers(CItem item1, CItem item2);
 	static bool _sortByWifiPlayers(CItem item1, CItem item2);
-
 private:
 	static int _coverLoader(CCoverFlow *cf);
 	static float _step(float cur, float tgt, float spd);
