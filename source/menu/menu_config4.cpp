@@ -122,13 +122,15 @@ int CMenu::_config4(void)
 			m_btnMgr.down();
 		if (BTN_LEFT_PRESSED || BTN_MINUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageM)))
 		{
-			nextPage = max(1, m_locked ? 1 : g_curPage - 1);
+			nextPage = m_locked ? 1 : loopNum(g_curPage - 1, CMenu::_nbCfgPages + 1);
+			if(nextPage <= 0) nextPage = CMenu::_nbCfgPages;
 			if(BTN_LEFT_PRESSED || BTN_MINUS_PRESSED) m_btnMgr.click(m_configBtnPageM);
 			break;
 		}
-		if (!m_locked && (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageP))))
+		if (BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED || (BTN_A_PRESSED && m_btnMgr.selected(m_configBtnPageP)))
 		{
-			nextPage = min(g_curPage + 1, CMenu::_nbCfgPages);
+			nextPage = m_locked ? 1 : loopNum(g_curPage + 1, CMenu::_nbCfgPages + 1);
+			if(nextPage <= 0) nextPage = 1;
 			if(BTN_RIGHT_PRESSED || BTN_PLUS_PRESSED) m_btnMgr.click(m_configBtnPageP);
 			break;
 		}

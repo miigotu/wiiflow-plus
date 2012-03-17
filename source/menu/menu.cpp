@@ -617,23 +617,23 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 	m_cf.setTitlePos(true,
 		_getCFV3D(domainSel, "text_left_pos", Vector3D(-4.f, 0.f, 1.3f), otherScrnFmt),
 		_getCFV3D(domainSel, "text_right_pos", Vector3D(4.f, 0.f, 1.3f), otherScrnFmt),
-		_getCFV3D(domainSel, "text_center_pos", Vector3D(1.7f, 1.8f, 1.6f), otherScrnFmt));
+		_getCFV3D(domainSel, "text_center_pos", Vector3D(.6f, 1.6f, 1.6f), otherScrnFmt));
 		
 	m_cf.setTitleWidth(false,
-		_getCFFloat(domain, "text_side_wrap_width", 500.f, otherScrnFmt),
-		_getCFFloat(domain, "text_center_wrap_width", 500.f, otherScrnFmt));
+		_getCFFloat(domain, "text_side_wrap_width", 600.f, otherScrnFmt),
+		_getCFFloat(domain, "text_center_wrap_width", 600.f, otherScrnFmt));
 		
 	m_cf.setTitleWidth(true,
-		_getCFFloat(domainSel, "text_side_wrap_width", 500.f, otherScrnFmt),
-		_getCFFloat(domainSel, "text_center_wrap_width", 310.f, otherScrnFmt));
+		_getCFFloat(domainSel, "text_side_wrap_width", 600.f, otherScrnFmt),
+		_getCFFloat(domainSel, "text_center_wrap_width", 380.f, otherScrnFmt));
 		
 	m_cf.setTitleStyle(false,
 		_textStyle(domain.c_str(), "text_side_style", FTGX_ALIGN_MIDDLE | FTGX_JUSTIFY_CENTER),
-		_textStyle(domain.c_str(), "text_center_style", FTGX_ALIGN_MIDDLE | FTGX_JUSTIFY_CENTER));
+		_textStyle(domain.c_str(), "text_center_style", FTGX_ALIGN_BOTTOM | FTGX_JUSTIFY_CENTER));
 		
 	m_cf.setTitleStyle(true,
 		_textStyle(domainSel.c_str(), "text_side_style", FTGX_ALIGN_MIDDLE | FTGX_JUSTIFY_CENTER),
-		_textStyle(domainSel.c_str(), "text_center_style", FTGX_ALIGN_TOP | FTGX_JUSTIFY_RIGHT));
+		_textStyle(domainSel.c_str(), "text_center_style", FTGX_ALIGN_TOP | FTGX_JUSTIFY_LEFT));
 		
 	m_cf.setColors(false,
 		m_theme.getColor(domain, "color_beg", 0xCFFFFFFF),
@@ -1052,14 +1052,14 @@ u32 CMenu::_addText(CMenu::SThemeData &theme, const char *domain, int x, int y, 
 
 u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height, u16 style, STexture &bg, const wstringEx &text)
 {
-	CColor c(theme.lblFontColor);
+	CColor c(theme.btnFontColor);
 
 	c = m_theme.getColor(domain, "color", c);
 	x = m_theme.getInt(domain, "x", x);
 	y = m_theme.getInt(domain, "y", y);
 	width = m_theme.getInt(domain, "width", width);
 	height = m_theme.getInt(domain, "height", height);
-	SFont font = _font(theme.fontSet, domain, LABELFONT);
+	SFont font = _font(theme.fontSet, domain, BUTTONFONT);
 	STexture texBg = _texture(theme.texSet, domain, "background_texture", bg);
 	style = _textStyle(domain, "style", style);
 

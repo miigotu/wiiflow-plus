@@ -9,12 +9,12 @@ const u8 WIIFONT_HASH_KOR[] =	{0xb7, 0x15, 0x6d, 0xf0, 0xf4, 0xae, 0x07, 0x8f, 0
 #define FONT_BOLD	36u
 #define FONT_NOBOLD	8u
 
-#define TITLEFONT_PT_SZ	36u
-#define BTNFONT_PT_SZ	24u
-#define LBLFONT_PT_SZ	24u
-#define TEXTFONT_PT_SZ	14u
+#define TITLEFONT_PT_SZ	28u
+#define LBLFONT_PT_SZ	22u
+#define BTNFONT_PT_SZ	18u
+#define TEXTFONT_PT_SZ	18u
 
 #define TITLEFONT	"title_font", TITLEFONT_PT_SZ
-#define BUTTONFONT	"button_font", BTNFONT_PT_SZ
 #define LABELFONT	"label_font", LBLFONT_PT_SZ
+#define BUTTONFONT	"button_font", BTNFONT_PT_SZ
 #define TEXTFONT	"text_font", TEXTFONT_PT_SZ

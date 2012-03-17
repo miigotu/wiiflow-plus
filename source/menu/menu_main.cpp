@@ -416,33 +416,20 @@ int CMenu::main(void)
 					_hideMain();
 					_wbfsOp(CMenu::WO_ADD_GAME);
 					if (prevTheme != m_cfg.getString("GENERAL", "theme"))
-					{
-						m_reload = true;
+					m_reload = true;
+					if(m_reload)
 						break;
-					}
 					_showMain();
 				}
 			}
-			else if (m_btnMgr.selected(m_mainBtnInit2))
+			else if (m_btnMgr.selected(m_mainBtnConfig) || m_btnMgr.selected(m_mainBtnInit2))
 			{
 				_hideMain();
 				_config(1);
 				if (prevTheme != m_cfg.getString("GENERAL", "theme"))
-				{
 					m_reload = true;
+				if(m_reload)
 					break;
-				}
-				_showMain();
-			}
-			else if (m_btnMgr.selected(m_mainBtnConfig))
-			{
-				_hideMain();
-				_config(1);
-				if (prevTheme != m_cfg.getString("GENERAL", "theme") || m_reload == true)
-				{
-					m_reload = true;
-					break;
-				}
 				_showMain();
 			}
 			else if (m_btnMgr.selected(m_mainBtnInfo))
@@ -469,16 +456,13 @@ int CMenu::main(void)
 				m_curGameId = m_cf.getId();
 				_initCF();
 			}
-			else if (!m_cf.empty())
+			else if (!m_cf.empty() && m_cf.select())
 			{
-				if (m_cf.select())
-				{
-					_hideMain();
-					_game(BTN_B_HELD);
-					if(m_exit) break;
-					m_cf.cancel();
-					_showMain();
-				}
+				_hideMain();
+				_game(BTN_B_HELD);
+				if(m_exit) break;
+				m_cf.cancel();
+				_showMain();
 			}
 		}
 		if(use_grab) _getGrabStatus();

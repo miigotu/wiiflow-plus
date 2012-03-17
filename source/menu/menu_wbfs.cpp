@@ -113,7 +113,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 			m_btnMgr.setText(m_wbfsLblDialog, _t("wbfsadddlg", L"Please insert the disc you want to copy, then click on Go."));
 			break;
 		case CMenu::WO_REMOVE_GAME:
-			m_btnMgr.setText(m_wbfsLblDialog, wfmt(_fmt("wbfsremdlg", L"To permanently remove the game : %s, click on Go."), m_cf.getTitle().c_str()));
+			m_btnMgr.setText(m_wbfsLblDialog, wfmt(_fmt("wbfsremdlg", L"To permanently remove the game : %s, click on Go."), m_cf.getTitle().toUTF8().c_str()));
 			break;
 		case CMenu::WO_FORMAT:
 			break;
@@ -180,15 +180,15 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 						LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_gameInstaller, (void *)this, 0, 8 * 1024, 64);
 						break;
 					case CMenu::WO_REMOVE_GAME:
-						WBFS_RemoveGame((u8 *)m_cf.getId().c_str(), (char *) m_cf.getHdr()->path);
+						done = WBFS_RemoveGame((u8 *)m_cf.getId().c_str(), (char *) m_cf.getHdr()->path) == 0;
+						m_btnMgr.setText(m_wbfsLblMessage, done ? _t("wbfsop7", L"Game deleted") : _t("wbfsop11", L"Deleting game failed!"));
+						out = !done;
 						m_btnMgr.show(m_wbfsPBar);
 						m_btnMgr.setProgress(m_wbfsPBar, 0.f, true);
 						m_btnMgr.setProgress(m_wbfsPBar, 1.f);
 						m_btnMgr.hide(m_wbfsLblDialog);
 						m_btnMgr.hide(m_wbfsBtnGo);
 						m_btnMgr.show(m_wbfsLblMessage);
-						m_btnMgr.setText(m_wbfsLblMessage, _t("wbfsop7", L"Game deleted"));
-						done = true;
 						break;
 					case CMenu::WO_FORMAT:
 						break;
