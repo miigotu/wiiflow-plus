@@ -176,7 +176,7 @@ addr:
 	@echo Loading addr2line with symbols from boot.elf..
 	@echo Press ctrl+c to exit.
 	@echo Enter an address from the stack dump:
-	@powerpc-eabi-addr2line -f -e boot.elf
+	@powerpc-eabi-addr2line -f -C -e boot.elf
 
 #---------------------------------------------------------------------------------
 else

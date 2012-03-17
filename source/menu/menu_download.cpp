@@ -573,27 +573,27 @@ void CMenu::_initDownloadMenu(CMenu::SThemeData &theme)
 {
 	_addUserLabels(theme, m_downloadLblUser, ARRAY_SIZE(m_downloadLblUser), "DOWNLOAD");
 	m_downloadBg = _texture(theme.texSet, "DOWNLOAD/BG", "texture", theme.bg);
-	m_downloadLblTitle = _addLabel(theme, "DOWNLOAD/TITLE", theme.titleFont, L"", 20, 30, 600, 60, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
+	m_downloadLblTitle = _addTitle(theme, "DOWNLOAD/TITLE", 20, 30, 600, 60, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 	m_downloadPBar = _addProgressBar(theme, "DOWNLOAD/PROGRESS_BAR", 40, 200, 560, 20);
-	m_downloadBtnCancel = _addButton(theme, "DOWNLOAD/CANCEL_BTN", theme.btnFont, L"", 420, 410, 200, 56, theme.btnFontColor);
-	m_downloadLblCovers = _addLabel(theme, "DOWNLOAD/COVERS", theme.btnFont, L"", 40, 150, 320, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_downloadBtnAll = _addButton(theme, "DOWNLOAD/ALL_BTN", theme.btnFont, L"", 370, 150, 230, 56, theme.btnFontColor);
-	m_downloadBtnMissing = _addButton(theme, "DOWNLOAD/MISSING_BTN", theme.btnFont, L"", 370, 210, 230, 56, theme.btnFontColor);
-	m_downloadLblGameTDBDownload = _addLabel(theme, "DOWNLOAD/GAMETDB_DOWNLOAD", theme.btnFont, L"", 40, 270, 320, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_downloadBtnGameTDBDownload = _addButton(theme, "DOWNLOAD/GAMETDB_DOWNLOAD_BTN", theme.btnFont, L"", 370, 270, 230, 56, theme.btnFontColor);
-	m_downloadLblGameTDB = _addLabel(theme, "DOWNLOAD/GAMETDB", theme.btnFont, L"", 40, 400, 370, 60, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_downloadLblMessage[0] = _addLabel(theme, "DOWNLOAD/MESSAGE1", theme.lblFont, L"", 40, 228, 560, 100, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
-	m_downloadLblMessage[1] = _addLabel(theme, "DOWNLOAD/MESSAGE2", theme.lblFont, L"", 40, 228, 560, 100, theme.txtFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	m_downloadBtnCancel = _addButton(theme, "DOWNLOAD/CANCEL_BTN", 420, 410, 200, 56);
+	m_downloadLblCovers = _addLabel(theme, "DOWNLOAD/COVERS", 40, 150, 320, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_downloadBtnAll = _addButton(theme, "DOWNLOAD/ALL_BTN", 370, 150, 230, 56);
+	m_downloadBtnMissing = _addButton(theme, "DOWNLOAD/MISSING_BTN", 370, 210, 230, 56);
+	m_downloadLblGameTDBDownload = _addLabel(theme, "DOWNLOAD/GAMETDB_DOWNLOAD", 40, 270, 320, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_downloadBtnGameTDBDownload = _addButton(theme, "DOWNLOAD/GAMETDB_DOWNLOAD_BTN", 370, 270, 230, 56);
+	m_downloadLblGameTDB = _addLabel(theme, "DOWNLOAD/GAMETDB", 40, 400, 370, 60, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_downloadLblMessage[0] = _addLabel(theme, "DOWNLOAD/MESSAGE1", 40, 228, 560, 100, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	m_downloadLblMessage[1] = _addLabel(theme, "DOWNLOAD/MESSAGE2", 40, 228, 560, 100, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	//
-	_setHideAnim(m_downloadLblTitle, "DOWNLOAD/TITLE", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadPBar, "DOWNLOAD/PROGRESS_BAR", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadLblCovers, "DOWNLOAD/COVERS", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadBtnCancel, "DOWNLOAD/CANCEL_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadBtnAll, "DOWNLOAD/ALL_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadBtnMissing, "DOWNLOAD/MISSING_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadLblGameTDBDownload, "DOWNLOAD/GAMETDB_DOWNLOAD", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadBtnGameTDBDownload, "DOWNLOAD/GAMETDB_DOWNLOAD_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_downloadLblGameTDB, "DOWNLOAD/GAMETDB", 0, 0, -2.f, 0.f);
+	_setHideAnim(m_downloadLblTitle, "DOWNLOAD/TITLE", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_downloadPBar, "DOWNLOAD/PROGRESS_BAR", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_downloadLblCovers, "DOWNLOAD/COVERS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_downloadBtnCancel, "DOWNLOAD/CANCEL_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_downloadBtnAll, "DOWNLOAD/ALL_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_downloadBtnMissing, "DOWNLOAD/MISSING_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_downloadLblGameTDBDownload, "DOWNLOAD/GAMETDB_DOWNLOAD", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_downloadBtnGameTDBDownload, "DOWNLOAD/GAMETDB_DOWNLOAD_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_downloadLblGameTDB, "DOWNLOAD/GAMETDB", 0, 0, 1.f, 0.f);
 	_hideDownload(true);
 	_textDownload();
 }

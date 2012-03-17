@@ -344,7 +344,11 @@ void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 		for (u32 i = 0; i < words.size(); ++i)
 		{
 			float wordWidth = m_font.font->getWidth(words[i].text.c_str());
-			if (posX == 0.f || posX + (float)wordWidth + space * 2 <= width)
+			int spaceNum = 4;
+			while(words[i].text.find(L" ") != string::npos)
+				spaceNum++;
+
+			if (posX == 0.f || posX + (float)wordWidth + space * spaceNum <= width)
 			{
 				words[i].targetPos = Vector3D(posX, posY, 0.f);
 				posX += wordWidth + space;

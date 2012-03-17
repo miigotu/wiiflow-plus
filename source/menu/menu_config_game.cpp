@@ -9,11 +9,6 @@
 
 using namespace std;
 
-static inline int loopNum(int i, int s)
-{
-	return i < 0 ? (s - (-i % s)) % s : i % s;
-}
-
 u8 m_gameSettingCategories[12];
 u32 g_numGCfPages = 3;
 
@@ -52,8 +47,10 @@ void CMenu::_hideGameSettings(bool instant)
 	m_btnMgr.hide(m_gameSettingsBtnHooktypeP, instant);
 	m_btnMgr.hide(m_gameSettingsBtnCategoryMain, instant);
 	m_btnMgr.hide(m_gameSettingsLblCategoryMain, instant);
-	m_btnMgr.hide(m_gameSettingsBtnEmulation, instant);
+	m_btnMgr.hide(m_gameSettingsLblEmulationVal, instant);
 	m_btnMgr.hide(m_gameSettingsLblEmulation, instant);
+	m_btnMgr.hide(m_gameSettingsBtnEmulationP, instant);
+	m_btnMgr.hide(m_gameSettingsBtnEmulationM, instant);
 	m_btnMgr.hide(m_gameSettingsLblDebugger, instant);
 	m_btnMgr.hide(m_gameSettingsLblDebuggerV, instant);
 	m_btnMgr.hide(m_gameSettingsBtnDebuggerP, instant);
@@ -181,12 +178,14 @@ void CMenu::_showGameSettings(void)
 
 		m_btnMgr.show(m_gameSettingsLblCountryPatch);
 		m_btnMgr.show(m_gameSettingsBtnCountryPatch);
-		
-		if(!m_cfg.getBool("NAND", "disable", true) && m_current_view == COVERFLOW_USB)
+
+		if(m_current_view == COVERFLOW_USB)
 		{
-			m_btnMgr.show(m_gameSettingsBtnEmulation);
+			m_btnMgr.show(m_gameSettingsLblEmulationVal);
 			m_btnMgr.show(m_gameSettingsLblEmulation);
-		}
+			m_btnMgr.show(m_gameSettingsBtnEmulationP);
+			m_btnMgr.show(m_gameSettingsBtnEmulationM);
+		}		
 	}
 	else
 	{
@@ -201,8 +200,10 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.hide(m_gameSettingsLblCountryPatch);
 		m_btnMgr.hide(m_gameSettingsBtnCountryPatch);
 
-		m_btnMgr.hide(m_gameSettingsBtnEmulation);
+		m_btnMgr.hide(m_gameSettingsLblEmulationVal);
 		m_btnMgr.hide(m_gameSettingsLblEmulation);
+		m_btnMgr.hide(m_gameSettingsBtnEmulationP);
+		m_btnMgr.hide(m_gameSettingsBtnEmulationM);
 	}
 
 	u32 i = 0;
@@ -210,7 +211,7 @@ void CMenu::_showGameSettings(void)
 	//Categories Pages
 	if (m_gameSettingsPage == 51)
 	{
-		for (i = 1; i < (u32)min(m_max_categories+1, 5); ++i)
+		for (i = 1; i < (u32)min(m_max_categories + 1, 5); ++i)
 		{
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
@@ -218,7 +219,7 @@ void CMenu::_showGameSettings(void)
 	}
 	else
 	{
-		for (i = 1; i < 5; ++i)
+		for (i = 1; i < (u32)min(m_max_categories + 1, 5); ++i)
 		{
 			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
@@ -226,7 +227,7 @@ void CMenu::_showGameSettings(void)
 	}
 	if (m_gameSettingsPage == 52)
 	{
-		for (i = 5; i < (u32)min(m_max_categories+1, 9); ++i)
+		for (i = 5; i < (u32)min(m_max_categories + 1, 9); ++i)
 		{
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
@@ -234,7 +235,7 @@ void CMenu::_showGameSettings(void)
 	}
 	else
 	{
-		for (i = 5; i < 9; ++i)
+		for (i = 5; i < (u32)min(m_max_categories + 1, 9); ++i)
 		{
 			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
@@ -242,7 +243,7 @@ void CMenu::_showGameSettings(void)
 	}
 	if (m_gameSettingsPage == 53)
 	{
-		for (i = 9; i < (u32)min(m_max_categories+1, 12);++i)
+		for (i = 9; i < (u32)min(m_max_categories + 1, 12); ++i)
 		{
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
@@ -250,7 +251,7 @@ void CMenu::_showGameSettings(void)
 	}
 	else
 	{
-		for (i = 9; i < 12; ++i)
+		for (i = 9; i < (u32)min(m_max_categories + 1, 12); ++i)
 		{
 			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
@@ -262,38 +263,39 @@ void CMenu::_showGameSettings(void)
 			m_btnMgr.show(m_gameSettingsLblUser[i]);
 
 	string id(m_cf.getId());
-	int page = m_gameSettingsPage;
+	u32 page = m_gameSettingsPage;
 
-	u32 maxpage = 3;
-	if (m_gameSettingsPage > maxpage)
-		page = m_gameSettingsPage-50;
+	if (page > g_numGCfPages)
+		page -= 50;
 
-	m_btnMgr.setText(m_gameSettingsLblPage, wfmt(L"%i / %i", page, maxpage));
+	m_btnMgr.setText(m_gameSettingsLblPage, wfmt(L"%i / %i", page, g_numGCfPages));
 	m_btnMgr.setText(m_gameSettingsBtnOcarina, _optBoolToString(m_gcfg2.getOptBool(id, "cheat")));
-	m_btnMgr.setText(m_gameSettingsBtnVipatch, _optBoolToString(m_gcfg2.getOptBool(id, "vipatch", 0)));
-	m_btnMgr.setText(m_gameSettingsBtnCountryPatch, _optBoolToString(m_gcfg2.getOptBool(id, "country_patch", 0)));
-	i = min((u32)m_gcfg2.getInt(id, "video_mode", 0), ARRAY_SIZE(CMenu::_videoModes) - 1u);
+	m_btnMgr.setText(m_gameSettingsBtnVipatch, _optBoolToString(m_gcfg2.getOptBool(id, "vipatch")));
+	m_btnMgr.setText(m_gameSettingsBtnCountryPatch, _optBoolToString(m_gcfg2.getOptBool(id, "country_patch")));
+	i = min((u32)m_gcfg2.getInt(id, "video_mode"), ARRAY_SIZE(CMenu::_videoModes) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblVideo, _t(CMenu::_videoModes[i].id, CMenu::_videoModes[i].text));
-	i = min((u32)m_gcfg2.getInt(id, "language", 0), ARRAY_SIZE(CMenu::_languages) - 1u);
+	i = min((u32)m_gcfg2.getInt(id, "language"), ARRAY_SIZE(CMenu::_languages) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblLanguage, _t(CMenu::_languages[i].id, CMenu::_languages[i].text));
 
-	i = min((u32)m_gcfg2.getInt(id, "patch_video_modes", 0), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
+	i = min((u32)m_gcfg2.getInt(id, "patch_video_modes"), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblPatchVidModesVal, _t(CMenu::_vidModePatch[i].id, CMenu::_vidModePatch[i].text));
 
 	i = min((u32)m_gcfg2.getInt(id, "hooktype", 1), ARRAY_SIZE(CMenu::_hooktype) - 1u);
 	m_btnMgr.setText(m_gameSettingsLblHooktypeVal, _t(CMenu::_hooktype[i].id, CMenu::_hooktype[i].text));
 
-	m_btnMgr.setText(m_gameSettingsBtnCategoryMain, _fmt("cfgg16",  wfmt(L"Select",i).c_str() )); 
+	int j = EMU_DEFAULT;
+	m_gcfg2.getInt(id, "emulation", &j);
+	m_btnMgr.setText(m_gameSettingsLblEmulationVal, _t(CMenu::_Emulation[j].id, CMenu::_Emulation[j].text));	
+
+	m_btnMgr.setText(m_gameSettingsLblDebuggerV, m_gcfg2.getBool(id, "debugger") ? _t("gecko", L"Gecko") : _t("def", L"Default"));		
+	m_btnMgr.setText(m_gameSettingsBtnCategoryMain, _fmt("cfgg16",  L"Select").c_str());
 	
 	char *categories = (char *) m_cat.getString("CATEGORIES", id, "").c_str();
 	memset(&m_gameSettingCategories, '0', sizeof(m_gameSettingCategories));
 	if (strlen(categories) == sizeof(m_gameSettingCategories))
 		memcpy(&m_gameSettingCategories, categories, sizeof(m_gameSettingCategories));
-	for (int i=0; i<12; ++i)
+	for (int i = 0; i < 12; ++i)
 		m_btnMgr.setText(m_gameSettingsBtnCategory[i], _optBoolToString(m_gameSettingCategories[i] == '1'));
-
-	m_btnMgr.setText(m_gameSettingsBtnEmulation,  _optBoolToString(m_gcfg2.getBool(id, "emulate_save")));		
-	m_btnMgr.setText(m_gameSettingsLblDebuggerV, m_gcfg2.getBool(id, "debugger") ? _t("gecko", L"Gecko") : _t("def", L"Default"));		
 }
 
 void CMenu::_gameSettings(void)
@@ -351,7 +353,7 @@ void CMenu::_gameSettings(void)
 			else if (m_btnMgr.selected(m_gameSettingsBtnVipatch))
 			{
 				bool booloption = m_gcfg2.getBool(id, "vipatch");
-				if (booloption != false)
+				if (booloption)
 					m_gcfg2.remove(id, "vipatch");
 				else
 					m_gcfg2.setBool(id, "vipatch", true);
@@ -360,7 +362,7 @@ void CMenu::_gameSettings(void)
 			else if (m_btnMgr.selected(m_gameSettingsBtnCountryPatch))
 			{
 				bool booloption = m_gcfg2.getBool(id, "country_patch");
-				if (booloption != false)
+				if (booloption)
 					m_gcfg2.remove(id, "country_patch");
 				else
 					m_gcfg2.setBool(id, "country_patch", true);
@@ -369,19 +371,31 @@ void CMenu::_gameSettings(void)
 			else if (m_btnMgr.selected(m_gameSettingsBtnLanguageP) || m_btnMgr.selected(m_gameSettingsBtnLanguageM))
 			{
 				s8 direction = m_btnMgr.selected(m_gameSettingsBtnLanguageP) ? 1 : -1;
-				m_gcfg2.setInt(id, "language", (int)loopNum((u32)m_gcfg2.getInt(id, "language", 0) + direction, ARRAY_SIZE(CMenu::_languages)));
+				int value = (int)loopNum((u32)m_gcfg2.getInt(id, "language") + direction, ARRAY_SIZE(CMenu::_languages));
+				if(value)
+					m_gcfg2.setInt(id, "language", value);
+				else
+					m_gcfg2.remove(id, "language");
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnVideoP) || m_btnMgr.selected(m_gameSettingsBtnVideoM))
 			{
 				s8 direction = m_btnMgr.selected(m_gameSettingsBtnVideoP) ? 1 : -1;
-				m_gcfg2.setInt(id, "video_mode", (int)loopNum((u32)m_gcfg2.getInt(id, "video_mode", 0) + direction, ARRAY_SIZE(CMenu::_videoModes)));
+				int value = (int)loopNum((u32)m_gcfg2.getInt(id, "video_mode") + direction, ARRAY_SIZE(CMenu::_videoModes));
+				if(value)
+					m_gcfg2.setInt(id, "video_mode", value);
+				else
+					m_gcfg2.remove(id, "video_mode");
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP) || m_btnMgr.selected(m_gameSettingsBtnPatchVidModesM))
 			{
 				s8 direction = m_btnMgr.selected(m_gameSettingsBtnPatchVidModesP) ? 1 : -1;
-				m_gcfg2.setInt(id, "patch_video_modes", (int)loopNum((u32)m_gcfg2.getInt(id, "patch_video_modes", 0) + direction, ARRAY_SIZE(CMenu::_vidModePatch)));
+				int value = (int)loopNum((u32)m_gcfg2.getInt(id, "patch_video_modes") + direction, ARRAY_SIZE(CMenu::_vidModePatch));
+				if(value)
+					m_gcfg2.setInt(id, "patch_video_modes", value);
+				else
+					m_gcfg2.remove(id, "patch_video_modes");
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnCover))
@@ -401,26 +415,30 @@ void CMenu::_gameSettings(void)
 			else if (m_btnMgr.selected(m_gameSettingsBtnHooktypeP) || m_btnMgr.selected(m_gameSettingsBtnHooktypeM))
 			{
 				s8 direction = m_btnMgr.selected(m_gameSettingsBtnHooktypeP) ? 1 : -1;
-				m_gcfg2.setInt(id, "hooktype", (int)loopNum((u32)m_gcfg2.getInt(id, "hooktype", 1) + direction, ARRAY_SIZE(CMenu::_hooktype)));
+				int value = (int)loopNum((u32)m_gcfg2.getInt(id, "hooktype", 1) + direction, ARRAY_SIZE(CMenu::_hooktype));
+				if(value)
+					m_gcfg2.setInt(id, "hooktype", value);
+				else
+					m_gcfg2.remove(id, "hooktype");
 				_showGameSettings();
 			}
-			else if (m_btnMgr.selected(m_gameSettingsBtnEmulation))
+			else if (m_btnMgr.selected(m_gameSettingsBtnEmulationP) || m_btnMgr.selected(m_gameSettingsBtnEmulationM))
 			{
-				_hideGameSettings();
-				int intoption = loopNum(m_gcfg2.getOptBool(id, "emulate_save") + 1, 3);
-				if (intoption > 1)
-					m_gcfg2.remove(id, "emulate_save");
+				s8 direction = m_btnMgr.selected(m_gameSettingsBtnEmulationP) ? 1 : -1;
+				int value = (int)loopNum((u32)m_gcfg2.getInt(id, "emulation") + direction, ARRAY_SIZE(CMenu::_Emulation));
+				if(value != EMU_DEFAULT)
+					m_gcfg2.setInt(id, "emulation", value);
 				else
-					m_gcfg2.setOptBool(id, "emulate_save", intoption);
+					m_gcfg2.remove(id, "emulation");
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnDebuggerP) || m_btnMgr.selected(m_gameSettingsBtnDebuggerM))
 			{
 				bool booloption = m_gcfg2.getBool(id, "debugger");
-				if (booloption != false)
+				if (booloption)
 					m_gcfg2.remove(id, "debugger");
 				else
-				m_gcfg2.setBool(id, "debugger", true);
+					m_gcfg2.setBool(id, "debugger", true);
 				_showGameSettings();
 			}
 			else if (m_btnMgr.selected(m_gameSettingsBtnCategoryMain))
@@ -462,130 +480,133 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 {
 	_addUserLabels(theme, m_gameSettingsLblUser, ARRAY_SIZE(m_gameSettingsLblUser), "GAME_SETTINGS");
 	m_gameSettingsBg = _texture(theme.texSet, "GAME_SETTINGS/BG", "texture", theme.bg);
-	m_gameSettingsLblTitle = _addLabel(theme, "GAME_SETTINGS/TITLE", theme.titleFont, L"", 20, 30, 600, 60, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsLblTitle = _addTitle(theme, "GAME_SETTINGS/TITLE", 20, 30, 600, 60, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
 	// Page 1
-	m_gameSettingsLblCover = _addLabel(theme, "GAME_SETTINGS/COVER", theme.lblFont, L"", 40, 130, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCover = _addButton(theme, "GAME_SETTINGS/COVER_BTN", theme.btnFont, L"", 330, 130, 270, 56, theme.btnFontColor);
-	m_gameSettingsLblCategoryMain = _addLabel(theme, "GAME_SETTINGS/CAT_MAIN", theme.lblFont, L"", 40, 190, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategoryMain = _addButton(theme, "GAME_SETTINGS/CAT_MAIN_BTN", theme.btnFont, L"", 330, 190, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCover = _addLabel(theme, "GAME_SETTINGS/COVER", 40, 130, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCover = _addButton(theme, "GAME_SETTINGS/COVER_BTN", 330, 130, 270, 56);
+	m_gameSettingsLblCategoryMain = _addLabel(theme, "GAME_SETTINGS/CAT_MAIN", 40, 190, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategoryMain = _addButton(theme, "GAME_SETTINGS/CAT_MAIN_BTN", 330, 190, 270, 56);
 	
-	m_gameSettingsLblGameLanguage = _addLabel(theme, "GAME_SETTINGS/GAME_LANG", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsLblLanguage = _addLabel(theme, "GAME_SETTINGS/GAME_LANG_BTN", theme.btnFont, L"", 386, 250, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_gameSettingsLblGameLanguage = _addLabel(theme, "GAME_SETTINGS/GAME_LANG", 40, 250, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsLblLanguage = _addLabel(theme, "GAME_SETTINGS/GAME_LANG_BTN", 386, 250, 158, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnLanguageM = _addPicButton(theme, "GAME_SETTINGS/GAME_LANG_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 250, 56, 56);
 	m_gameSettingsBtnLanguageP = _addPicButton(theme, "GAME_SETTINGS/GAME_LANG_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 250, 56, 56);
 
-	m_gameSettingsLblGameVideo = _addLabel(theme, "GAME_SETTINGS/VIDEO", theme.lblFont, L"", 40, 310, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsLblVideo = _addLabel(theme, "GAME_SETTINGS/VIDEO_BTN", theme.btnFont, L"", 386, 310, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_gameSettingsLblGameVideo = _addLabel(theme, "GAME_SETTINGS/VIDEO", 40, 310, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsLblVideo = _addLabel(theme, "GAME_SETTINGS/VIDEO_BTN", 386, 310, 158, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnVideoM = _addPicButton(theme, "GAME_SETTINGS/VIDEO_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 310, 56, 56);
 	m_gameSettingsBtnVideoP = _addPicButton(theme, "GAME_SETTINGS/VIDEO_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 310, 56, 56);
 
 	// Page 2
-	m_gameSettingsLblDebugger = _addLabel(theme, "GAME_SETTINGS/GAME_DEBUGGER", theme.lblFont, L"", 40, 130, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsLblDebuggerV = _addLabel(theme, "GAME_SETTINGS/GAME_DEBUGGER_BTN", theme.btnFont, L"", 386, 130, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_gameSettingsLblDebugger = _addLabel(theme, "GAME_SETTINGS/GAME_DEBUGGER", 40, 130, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsLblDebuggerV = _addLabel(theme, "GAME_SETTINGS/GAME_DEBUGGER_BTN", 386, 130, 158, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnDebuggerM = _addPicButton(theme, "GAME_SETTINGS/GAME_DEBUGGER_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 130, 56, 56);
 	m_gameSettingsBtnDebuggerP = _addPicButton(theme, "GAME_SETTINGS/GAME_DEBUGGER_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 130, 56, 56);
-	m_gameSettingsLblHooktype = _addLabel(theme, "GAME_SETTINGS/HOOKTYPE", theme.lblFont, L"", 40, 190, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsLblHooktypeVal = _addLabel(theme, "GAME_SETTINGS/HOOKTYPE_BTN", theme.btnFont, L"", 386, 190, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_gameSettingsLblHooktype = _addLabel(theme, "GAME_SETTINGS/HOOKTYPE", 40, 190, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsLblHooktypeVal = _addLabel(theme, "GAME_SETTINGS/HOOKTYPE_BTN", 386, 190, 158, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnHooktypeM = _addPicButton(theme, "GAME_SETTINGS/HOOKTYPE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 190, 56, 56);
 	m_gameSettingsBtnHooktypeP = _addPicButton(theme, "GAME_SETTINGS/HOOKTYPE_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 190, 56, 56);
-	m_gameSettingsLblOcarina = _addLabel(theme, "GAME_SETTINGS/OCARINA", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnOcarina = _addButton(theme, "GAME_SETTINGS/OCARINA_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
-	m_gameSettingsLblCheat = _addLabel(theme, "GAME_SETTINGS/CHEAT", theme.lblFont, L"", 40, 310, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCheat = _addButton(theme, "GAME_SETTINGS/CHEAT_BTN", theme.btnFont, L"", 330, 310, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblOcarina = _addLabel(theme, "GAME_SETTINGS/OCARINA", 40, 250, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnOcarina = _addButton(theme, "GAME_SETTINGS/OCARINA_BTN", 330, 250, 270, 56);
+	m_gameSettingsLblCheat = _addLabel(theme, "GAME_SETTINGS/CHEAT", 40, 310, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCheat = _addButton(theme, "GAME_SETTINGS/CHEAT_BTN", 330, 310, 270, 56);
 	// Page 3
-	m_gameSettingsLblCountryPatch = _addLabel(theme, "GAME_SETTINGS/COUNTRY_PATCH", theme.lblFont, L"", 40, 130, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCountryPatch = _addButton(theme, "GAME_SETTINGS/COUNTRY_PATCH_BTN", theme.btnFont, L"", 380, 130, 220, 56, theme.btnFontColor);
-	m_gameSettingsLblVipatch = _addLabel(theme, "GAME_SETTINGS/VIPATCH", theme.lblFont, L"", 40, 190, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnVipatch = _addButton(theme, "GAME_SETTINGS/VIPATCH_BTN", theme.btnFont, L"", 380, 190, 220, 56, theme.btnFontColor);
-	m_gameSettingsLblPatchVidModes = _addLabel(theme, "GAME_SETTINGS/PATCH_VIDEO_MODE", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsLblPatchVidModesVal = _addLabel(theme, "GAME_SETTINGS/PATCH_VIDEO_MODE_BTN", theme.btnFont, L"", 386, 250, 158, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
-	m_gameSettingsBtnPatchVidModesM = _addPicButton(theme, "GAME_SETTINGS/PATCH_VIDEO_MODE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 250, 56, 56);
+	m_gameSettingsLblCountryPatch = _addLabel(theme, "GAME_SETTINGS/COUNTRY_PATCH", 40, 130, 340, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCountryPatch = _addButton(theme, "GAME_SETTINGS/COUNTRY_PATCH_BTN", 380, 130, 220, 56);
+	m_gameSettingsLblVipatch = _addLabel(theme, "GAME_SETTINGS/VIPATCH", 40, 190, 340, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnVipatch = _addButton(theme, "GAME_SETTINGS/VIPATCH_BTN", 380, 190, 220, 56);
+	m_gameSettingsLblPatchVidModes = _addLabel(theme, "GAME_SETTINGS/PATCH_VIDEO_MODE", 40, 250, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsLblPatchVidModesVal = _addLabel(theme, "GAME_SETTINGS/PATCH_VIDEO_MODE_BTN", 436, 250, 108, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_gameSettingsBtnPatchVidModesM = _addPicButton(theme, "GAME_SETTINGS/PATCH_VIDEO_MODE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 380, 250, 56, 56);
 	m_gameSettingsBtnPatchVidModesP = _addPicButton(theme, "GAME_SETTINGS/PATCH_VIDEO_MODE_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 250, 56, 56);
-	m_gameSettingsLblEmulation = _addLabel(theme, "GAME_SETTINGS/EMU_SAVE", theme.lblFont, L"", 40, 310, 270, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnEmulation = _addButton(theme, "GAME_SETTINGS/EMU_SAVE_BTN", theme.btnFont, L"", 330, 310, 270, 56, theme.btnFontColor);
-
+	m_gameSettingsLblEmulation = _addLabel(theme, "GAME_SETTINGS/EMU", 40, 310, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsLblEmulationVal = _addLabel(theme, "GAME_SETTINGS/EMU_BTN", 436, 310, 108, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_gameSettingsBtnEmulationM = _addPicButton(theme, "GAME_SETTINGS/EMU_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 380, 310, 56, 56);
+	m_gameSettingsBtnEmulationP = _addPicButton(theme, "GAME_SETTINGS/EMU_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 310, 56, 56);
 	//Categories Page 1 
-	//m_gameSettingsLblCategory[0] = _addLabel(theme, "GAME_SETTINGS/CAT_ALL", theme.lblFont, L"All", 40, 130, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	//m_gameSettingsBtnCategory[0] = _addButton(theme, "GAME_SETTINGS/CAT_ALL_BTN", theme.btnFont, L"", 330, 130, 270, 56, theme.btnFontColor);
+	//m_gameSettingsLblCategory[0] = _addLabel(theme, "GAME_SETTINGS/CAT_ALL", theme.lblFont, L"All", 40, 130, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	//m_gameSettingsBtnCategory[0] = _addButton(theme, "GAME_SETTINGS/CAT_ALL_BTN", 330, 130, 270, 56);
 
-	m_gameSettingsLblCategory[1] = _addLabel(theme, "GAME_SETTINGS/CAT_1", theme.lblFont, L"", 40, 130, 190, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategory[1] = _addButton(theme, "GAME_SETTINGS/CAT_1_BTN", theme.btnFont, L"", 330, 130, 270, 56, theme.btnFontColor);
-	m_gameSettingsLblCategory[2] = _addLabel(theme, "GAME_SETTINGS/CAT_2", theme.lblFont, L"", 40, 190, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategory[2] = _addButton(theme, "GAME_SETTINGS/CAT_2_BTN", theme.btnFont, L"", 330, 190, 270, 56, theme.btnFontColor);
-	m_gameSettingsLblCategory[3] = _addLabel(theme, "GAME_SETTINGS/CAT_3", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategory[3] = _addButton(theme, "GAME_SETTINGS/CAT_3_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
-	m_gameSettingsLblCategory[4] = _addLabel(theme, "GAME_SETTINGS/CAT_4", theme.lblFont, L"", 40, 310, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategory[4] = _addButton(theme, "GAME_SETTINGS/CAT_4_BTN", theme.btnFont, L"", 330, 310, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCategory[1] = _addLabel(theme, "GAME_SETTINGS/CAT_1", 40, 130, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[1] = _addButton(theme, "GAME_SETTINGS/CAT_1_BTN", 330, 130, 270, 56);
+	m_gameSettingsLblCategory[2] = _addLabel(theme, "GAME_SETTINGS/CAT_2", 40, 190, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[2] = _addButton(theme, "GAME_SETTINGS/CAT_2_BTN", 330, 190, 270, 56);
+	m_gameSettingsLblCategory[3] = _addLabel(theme, "GAME_SETTINGS/CAT_3", 40, 250, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[3] = _addButton(theme, "GAME_SETTINGS/CAT_3_BTN", 330, 250, 270, 56);
+	m_gameSettingsLblCategory[4] = _addLabel(theme, "GAME_SETTINGS/CAT_4", 40, 310, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[4] = _addButton(theme, "GAME_SETTINGS/CAT_4_BTN", 330, 310, 270, 56);
 	
 	//Categories Page 2
-	m_gameSettingsLblCategory[5] = _addLabel(theme, "GAME_SETTINGS/CAT_5", theme.lblFont, L"", 40, 130, 190, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategory[5] = _addButton(theme, "GAME_SETTINGS/CAT_5_BTN", theme.btnFont, L"", 330, 130, 270, 56, theme.btnFontColor);
-	m_gameSettingsLblCategory[6] = _addLabel(theme, "GAME_SETTINGS/CAT_6", theme.lblFont, L"", 40, 190, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategory[6] = _addButton(theme, "GAME_SETTINGS/CAT_6_BTN", theme.btnFont, L"", 330, 190, 270, 56, theme.btnFontColor);
-	m_gameSettingsLblCategory[7] = _addLabel(theme, "GAME_SETTINGS/CAT_7", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategory[7] = _addButton(theme, "GAME_SETTINGS/CAT_7_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
-	m_gameSettingsLblCategory[8] = _addLabel(theme, "GAME_SETTINGS/CAT_8", theme.lblFont, L"", 40, 310, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategory[8] = _addButton(theme, "GAME_SETTINGS/CAT_8_BTN", theme.btnFont, L"", 330, 310, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCategory[5] = _addLabel(theme, "GAME_SETTINGS/CAT_5", 40, 130, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[5] = _addButton(theme, "GAME_SETTINGS/CAT_5_BTN", 330, 130, 270, 56);
+	m_gameSettingsLblCategory[6] = _addLabel(theme, "GAME_SETTINGS/CAT_6", 40, 190, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[6] = _addButton(theme, "GAME_SETTINGS/CAT_6_BTN", 330, 190, 270, 56);
+	m_gameSettingsLblCategory[7] = _addLabel(theme, "GAME_SETTINGS/CAT_7", 40, 250, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[7] = _addButton(theme, "GAME_SETTINGS/CAT_7_BTN", 330, 250, 270, 56);
+	m_gameSettingsLblCategory[8] = _addLabel(theme, "GAME_SETTINGS/CAT_8", 40, 310, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[8] = _addButton(theme, "GAME_SETTINGS/CAT_8_BTN", 330, 310, 270, 56);
 
 	//Categories Page 3 
-	m_gameSettingsLblCategory[9] = _addLabel(theme, "GAME_SETTINGS/CAT_9", theme.lblFont, L"", 40, 130, 190, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategory[9] = _addButton(theme, "GAME_SETTINGS/CAT_9_BTN", theme.btnFont, L"", 330, 130, 270, 56, theme.btnFontColor);
-	m_gameSettingsLblCategory[10] = _addLabel(theme, "GAME_SETTINGS/CAT_10", theme.lblFont, L"", 40, 190, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategory[10] = _addButton(theme, "GAME_SETTINGS/CAT_10_BTN", theme.btnFont, L"", 330, 190, 270, 56, theme.btnFontColor);
-	m_gameSettingsLblCategory[11] = _addLabel(theme, "GAME_SETTINGS/CAT_11", theme.lblFont, L"", 40, 250, 290, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_gameSettingsBtnCategory[11] = _addButton(theme, "GAME_SETTINGS/CAT_11_BTN", theme.btnFont, L"", 330, 250, 270, 56, theme.btnFontColor);
+	m_gameSettingsLblCategory[9] = _addLabel(theme, "GAME_SETTINGS/CAT_9", 40, 130, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[9] = _addButton(theme, "GAME_SETTINGS/CAT_9_BTN", 330, 130, 270, 56);
+	m_gameSettingsLblCategory[10] = _addLabel(theme, "GAME_SETTINGS/CAT_10", 40, 190, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[10] = _addButton(theme, "GAME_SETTINGS/CAT_10_BTN", 330, 190, 270, 56);
+	m_gameSettingsLblCategory[11] = _addLabel(theme, "GAME_SETTINGS/CAT_11", 40, 250, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_gameSettingsBtnCategory[11] = _addButton(theme, "GAME_SETTINGS/CAT_11_BTN", 330, 250, 270, 56);
 
 	// 
-	m_gameSettingsLblPage = _addLabel(theme, "GAME_SETTINGS/PAGE_BTN", theme.btnFont, L"", 76, 410, 80, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_gameSettingsLblPage = _addLabel(theme, "GAME_SETTINGS/PAGE_BTN", 76, 410, 80, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnPageM = _addPicButton(theme, "GAME_SETTINGS/PAGE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 20, 410, 56, 56);
 	m_gameSettingsBtnPageP = _addPicButton(theme, "GAME_SETTINGS/PAGE_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 156, 410, 56, 56);
-	m_gameSettingsBtnBack = _addButton(theme, "GAME_SETTINGS/BACK_BTN", theme.btnFont, L"", 420, 410, 200, 56, theme.btnFontColor);
+	m_gameSettingsBtnBack = _addButton(theme, "GAME_SETTINGS/BACK_BTN", 420, 410, 200, 56);
 	// 
 	_setHideAnim(m_gameSettingsLblTitle, "GAME_SETTINGS/TITLE", 0, -200, 0.f, 1.f);
-	_setHideAnim(m_gameSettingsLblGameVideo, "GAME_SETTINGS/VIDEO", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblVideo, "GAME_SETTINGS/VIDEO_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnVideoM, "GAME_SETTINGS/VIDEO_MINUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnVideoP, "GAME_SETTINGS/VIDEO_PLUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblGameLanguage, "GAME_SETTINGS/GAME_LANG", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblLanguage, "GAME_SETTINGS/GAME_LANG_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnLanguageM, "GAME_SETTINGS/GAME_LANG_MINUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnLanguageP, "GAME_SETTINGS/GAME_LANG_PLUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblOcarina, "GAME_SETTINGS/OCARINA", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnOcarina, "GAME_SETTINGS/OCARINA_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblCheat, "GAME_SETTINGS/CHEAT", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnCheat, "GAME_SETTINGS/CHEAT_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblCountryPatch, "GAME_SETTINGS/COUNTRY_PATCH", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnCountryPatch, "GAME_SETTINGS/COUNTRY_PATCH_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblVipatch, "GAME_SETTINGS/VIPATCH", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnVipatch, "GAME_SETTINGS/VIPATCH_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblCover, "GAME_SETTINGS/COVER", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnCover, "GAME_SETTINGS/COVER_BTN", 200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblGameVideo, "GAME_SETTINGS/VIDEO", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblVideo, "GAME_SETTINGS/VIDEO_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnVideoM, "GAME_SETTINGS/VIDEO_MINUS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnVideoP, "GAME_SETTINGS/VIDEO_PLUS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblGameLanguage, "GAME_SETTINGS/GAME_LANG", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblLanguage, "GAME_SETTINGS/GAME_LANG_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnLanguageM, "GAME_SETTINGS/GAME_LANG_MINUS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnLanguageP, "GAME_SETTINGS/GAME_LANG_PLUS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblOcarina, "GAME_SETTINGS/OCARINA", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnOcarina, "GAME_SETTINGS/OCARINA_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblCheat, "GAME_SETTINGS/CHEAT", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnCheat, "GAME_SETTINGS/CHEAT_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblCountryPatch, "GAME_SETTINGS/COUNTRY_PATCH", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnCountryPatch, "GAME_SETTINGS/COUNTRY_PATCH_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblVipatch, "GAME_SETTINGS/VIPATCH", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnVipatch, "GAME_SETTINGS/VIPATCH_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblCover, "GAME_SETTINGS/COVER", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnCover, "GAME_SETTINGS/COVER_BTN", 0, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsLblPage, "GAME_SETTINGS/PAGE_BTN", 0, 200, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnPageM, "GAME_SETTINGS/PAGE_MINUS", 0, 200, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnPageP, "GAME_SETTINGS/PAGE_PLUS", 0, 200, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsBtnBack, "GAME_SETTINGS/BACK_BTN", 0, 200, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblPatchVidModes, "GAME_SETTINGS/PATCH_VIDEO_MODE", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblPatchVidModesVal, "GAME_SETTINGS/PATCH_VIDEO_MODE_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnPatchVidModesM, "GAME_SETTINGS/PATCH_VIDEO_MODE_MINUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnPatchVidModesP, "GAME_SETTINGS/PATCH_VIDEO_MODE_PLUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblHooktype, "GAME_SETTINGS/HOOKTYPE", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblHooktypeVal, "GAME_SETTINGS/HOOKTYPE_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnHooktypeM, "GAME_SETTINGS/HOOKTYPE_MINUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnHooktypeP, "GAME_SETTINGS/HOOKTYPE_PLUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblEmulation, "GAME_SETTINGS/EMU_SAVE", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnEmulation, "GAME_SETTINGS/EMU_SAVE_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblDebugger, "GAME_SETTINGS/GAME_DEBUGGER", -200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblDebuggerV, "GAME_SETTINGS/GAME_DEBUGGER_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnDebuggerM, "GAME_SETTINGS/GAME_DEBUGGER_MINUS", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsBtnDebuggerP, "GAME_SETTINGS/GAME_DEBUGGER_PLUS", 200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblPatchVidModes, "GAME_SETTINGS/PATCH_VIDEO_MODE", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblPatchVidModesVal, "GAME_SETTINGS/PATCH_VIDEO_MODE_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnPatchVidModesM, "GAME_SETTINGS/PATCH_VIDEO_MODE_MINUS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnPatchVidModesP, "GAME_SETTINGS/PATCH_VIDEO_MODE_PLUS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblHooktype, "GAME_SETTINGS/HOOKTYPE", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblHooktypeVal, "GAME_SETTINGS/HOOKTYPE_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnHooktypeM, "GAME_SETTINGS/HOOKTYPE_MINUS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnHooktypeP, "GAME_SETTINGS/HOOKTYPE_PLUS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblEmulation, "GAME_SETTINGS/EMU", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblEmulationVal, "GAME_SETTINGS/EMU_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnEmulationP, "GAME_SETTINGS/EMU_PLUS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnEmulationM, "GAME_SETTINGS/EMU_MINUS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblDebugger, "GAME_SETTINGS/GAME_DEBUGGER", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblDebuggerV, "GAME_SETTINGS/GAME_DEBUGGER_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnDebuggerM, "GAME_SETTINGS/GAME_DEBUGGER_MINUS", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnDebuggerP, "GAME_SETTINGS/GAME_DEBUGGER_PLUS", 0, 0, 1.f, 0.f);
 	//Categories
-	_setHideAnim(m_gameSettingsBtnCategoryMain, "GAME_SETTINGS/CAT_MAIN_BTN", 200, 0, 1.f, 0.f);
-	_setHideAnim(m_gameSettingsLblCategoryMain, "GAME_SETTINGS/CAT_MAIN", -200, 0, 1.f, 0.f);
-	//_setHideAnim(m_gameSettingsBtnCategory[0], "GAME_SETTINGS/CAT_ALL_BTN", 200, 0, 1.f, 0.f);
-	//_setHideAnim(m_gameSettingsLblCategory[0], "GAME_SETTINGS/CAT_ALL", -200, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsBtnCategoryMain, "GAME_SETTINGS/CAT_MAIN_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_gameSettingsLblCategoryMain, "GAME_SETTINGS/CAT_MAIN", 0, 0, 1.f, 0.f);
+	//_setHideAnim(m_gameSettingsBtnCategory[0], "GAME_SETTINGS/CAT_ALL_BTN", 0, 0, 1.f, 0.f);
+	//_setHideAnim(m_gameSettingsLblCategory[0], "GAME_SETTINGS/CAT_ALL", 0, 0, 1.f, 0.f);
 	for (int i = 1; i < 12; ++i) {
-		_setHideAnim(m_gameSettingsBtnCategory[i], sfmt("GAME_SETTINGS/CAT_%i_BTN", i).c_str(), 200, 0, 1.f, 0.f);
-		_setHideAnim(m_gameSettingsLblCategory[i], sfmt("GAME_SETTINGS/CAT_%i", i).c_str(), -200, 0, 1.f, 0.f);
+		_setHideAnim(m_gameSettingsBtnCategory[i], sfmt("GAME_SETTINGS/CAT_%i_BTN", i).c_str(), 0, 0, 1.f, 0.f);
+		_setHideAnim(m_gameSettingsLblCategory[i], sfmt("GAME_SETTINGS/CAT_%i", i).c_str(), 0, 0, 1.f, 0.f);
 	}
 
 	_hideGameSettings(true);
@@ -609,8 +630,9 @@ void CMenu::_textGameSettings(void)
 	m_btnMgr.setText(m_gameSettingsLblCategoryMain, _t("cfgg17", L"Categories"));
 	m_btnMgr.setText(m_gameSettingsBtnCategoryMain, _t("cfgg16", L"Select"));
 	m_btnMgr.setText(m_gameSettingsLblHooktype, _t("cfgg18", L"Hook Type"));
-	m_btnMgr.setText(m_gameSettingsLblEmulation, _t("cfgg24", L"Savegame Emulation"));
 	m_btnMgr.setText(m_gameSettingsLblDebugger, _t("cfgg22", L"Debugger"));
+	m_btnMgr.setText(m_gameSettingsLblEmulation, _t("cfgg24", L"Savegame Emulation"));
+
 	for (int i = 1; i < 12; ++i)
 		m_btnMgr.setText(m_gameSettingsLblCategory[i], m_cat.getWString("GENERAL", fmt("cat%d",i), wfmt(L"Category %i",i).c_str()));
 }

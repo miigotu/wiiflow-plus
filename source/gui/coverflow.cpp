@@ -218,7 +218,7 @@ CCoverFlow::CCoverFlow(void)
 
 bool CCoverFlow::init(const SmartBuf &font, u32 font_size)
 {
-	m_font.fromBuffer(font, font_size, TITLEFONT);
+	m_font.fromBuffer(font, font_size, TITLEFONT_PT_SZ, TITLEFONT_PT_SZ + 4u, FONT_BOLD, 1u);
 	m_fontColor = m_fanartFontColor = CColor(0xFFFFFFFF);
 
 	bool wide = CONF_GetAspectRatio() == CONF_ASPECT_16_9;

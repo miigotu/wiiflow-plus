@@ -1,16 +1,56 @@
-
 #include "menu.hpp"
+#include "nand.hpp"
 #include "sys.h"
+#include "loader/cios.hpp"
+#include "loader/alt_ios.h"
+#include "gecko/gecko.h"
 
 using namespace std;
 
-static inline int loopNum(int i, int s)
-{
-	return i < 0 ? (s - (-i % s)) % s : i % s;
-}
-
 const int CMenu::_nbCfgPages = 6;
 static const int g_curPage = 1;
+
+void CMenu::SwitchPartition(bool direction, bool showLabel)
+{
+	int emu_mode = EMU_DISABLED;
+	m_cfg.getInt("NAND", "emulation", &emu_mode);
+	bool enabled = (m_current_view == COVERFLOW_CHANNEL && emu_mode) || m_current_view != COVERFLOW_CHANNEL;
+	if(enabled)
+	{
+		Nand::Instance()->Disable_Emu();
+		iosinfo_t * iosInfo = cIOSInfo::GetInfo(mainIOS);
+		Nand::Instance()->Enable_Emu();
+		s8 step = direction ? 1 : -1;
+		currentPartition = loopNum(currentPartition + step, (int)USB8);
+		while(!DeviceHandler::Instance()->IsInserted(currentPartition) ||
+			(m_current_view == COVERFLOW_CHANNEL && (DeviceHandler::Instance()->GetFSType(currentPartition) != PART_FS_FAT ||
+				(iosInfo->version < 7 && DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()) == currentPartition) ||
+				(iosInfo->version < 7 && DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str()) == currentPartition))) ||
+			(m_current_view == COVERFLOW_HOMEBREW && DeviceHandler::Instance()->GetFSType(currentPartition) == PART_FS_WBFS))
+		{
+			currentPartition = loopNum(currentPartition + step, (int)USB8);
+			static u8 limiter = SD;
+			if (limiter > MAXDEVICES) break;
+			limiter++;
+		}
+
+		gprintf("Next item: %s\n", DeviceName[currentPartition]);
+	}
+
+	m_cfg.setInt(_domainFromView(), "partition", currentPartition);
+
+	if(showLabel)
+	{
+		char *partition = enabled ? (char *)DeviceName[currentPartition] : (char *)"NAND";
+
+		for(u8 i = 0; strncmp((const char *)&partition[i], "\0", 1) != 0; i++)
+			partition[i] = toupper(partition[i]);
+
+		m_showtimer=60; 
+		m_btnMgr.setText(m_mainLblNotice, (string)partition);
+		m_btnMgr.show(m_mainLblNotice);
+	}
+}
 
 void CMenu::_hideConfig(bool instant)
 {
@@ -29,8 +69,10 @@ void CMenu::_hideConfig(bool instant)
 	m_btnMgr.hide(m_configLblParental, instant);
 	m_btnMgr.hide(m_configBtnUnlock, instant);
 	m_btnMgr.hide(m_configBtnSetCode, instant);
-	m_btnMgr.hide(m_configBtnEmulation, instant);
+	m_btnMgr.hide(m_configLblEmulationVal, instant);
 	m_btnMgr.hide(m_configLblEmulation, instant);
+	m_btnMgr.hide(m_configBtnEmulationP, instant);
+	m_btnMgr.hide(m_configBtnEmulationM, instant);
 	for (u32 i = 0; i < ARRAY_SIZE(m_configLblUser); ++i)
 		if (m_configLblUser[i] != -1u)
 			m_btnMgr.hide(m_configLblUser[i], instant);
@@ -41,27 +83,26 @@ void CMenu::_showConfig(void)
 	_setBg(m_configBg, m_configBg);
 	m_btnMgr.show(m_configLblTitle);
 	m_btnMgr.show(m_configBtnBack);
-	m_btnMgr.show(m_configLblPartitionName);
-	m_btnMgr.show(m_configLblPartition);
-	m_btnMgr.show(m_configBtnPartitionP);
-	m_btnMgr.show(m_configBtnPartitionM);
-	m_btnMgr.show(m_configLblDownload);
-	m_btnMgr.show(m_configBtnDownload);
+	if(!m_locked)
+	{
+		m_btnMgr.show(m_configLblPartitionName);
+		m_btnMgr.show(m_configLblPartition);
+		m_btnMgr.show(m_configBtnPartitionP);
+		m_btnMgr.show(m_configBtnPartitionM);
+		m_btnMgr.show(m_configLblDownload);
+		m_btnMgr.show(m_configBtnDownload);
+	}
 	m_btnMgr.show(m_configLblParental);
 	m_btnMgr.show(m_configLblPage);
 	m_btnMgr.show(m_configBtnPageM);
 	m_btnMgr.show(m_configBtnPageP);
 
-	if(m_current_view != COVERFLOW_HOMEBREW)
-	{
-		m_btnMgr.show(m_configBtnEmulation);
-		m_btnMgr.show(m_configLblEmulation);
-	}
-
 	m_btnMgr.show(m_locked ? m_configBtnUnlock : m_configBtnSetCode);
 
-	bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true);
-	char *partitionname = disable ? (char *)"NAND" : (char *)DeviceName[m_cfg.getInt(_domainFromView(), "partition", -1)];
+	int emu_mode = EMU_DISABLED;
+	m_cfg.getInt("NAND", "emulation", &emu_mode);
+	bool enabled = (m_current_view == COVERFLOW_CHANNEL && emu_mode) || m_current_view != COVERFLOW_CHANNEL;
+	char *partitionname = enabled ? (char *)DeviceName[m_cfg.getInt(_domainFromView(), "partition", currentPartition)] : (char *)"NAND";
 
 	for(u8 i = 0; strncmp((const char *)&partitionname[i], "\0", 1) != 0; i++)
 		partitionname[i] = toupper(partitionname[i]);
@@ -73,19 +114,18 @@ void CMenu::_showConfig(void)
 	m_btnMgr.setText(m_configLblPartition, (string)partitionname);
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage + 1 : CMenu::_nbCfgPages));
 
-	bool isON = false;
-	switch(m_current_view)
+	if ((m_current_view == COVERFLOW_CHANNEL || m_current_view == COVERFLOW_USB) && !m_locked)
 	{
-		case COVERFLOW_CHANNEL:
-			m_btnMgr.setText(m_configLblEmulation, _t("cfg12", L"NAND Emulation"));
-			isON = m_cfg.getBool("NAND", "disable", true);
-			break;
-		case COVERFLOW_USB:
-			m_btnMgr.setText(m_configLblEmulation, _t("cfg11", L"USB Saves Emulation"));
-			isON = !m_cfg.getBool("GAMES", "save_emulation");
-			break;
+		int i = EMU_DISABLED;
+		m_cfg.getInt(_domainFromView(), "emulation", &i);
+		m_btnMgr.setText(m_configLblEmulationVal, _t(CMenu::_Emulation[i].id, CMenu::_Emulation[i].text));
+		m_btnMgr.setText(m_configLblEmulation, _t("cfg11", L"Emulation"));
+
+		m_btnMgr.show(m_configLblEmulation);
+		m_btnMgr.show(m_configLblEmulationVal);
+		m_btnMgr.show(m_configBtnEmulationP);
+		m_btnMgr.show(m_configBtnEmulationM);
 	}
-	m_btnMgr.setText(m_configBtnEmulation, isON ?  _t("off", L"Off") : _t("on", L"On"));
 }
 
 void CMenu::_config(int page)
@@ -168,6 +208,8 @@ int CMenu::_config1(void)
 				_hideConfig();
 				if (_code(code) && memcmp(code, m_cfg.getString("GENERAL", "parent_code").c_str(), 4) == 0)
 					m_locked = false;
+				else
+					error(_t("cfgg25",L"Password incorrect."));
 				_showConfig();
 			}
 			else if (m_btnMgr.selected(m_configBtnSetCode))
@@ -183,51 +225,30 @@ int CMenu::_config1(void)
 			}
 			else if (!m_locked && (m_btnMgr.selected(m_configBtnPartitionP) || m_btnMgr.selected(m_configBtnPartitionM)))
 			{
-				bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true);
-				if(!disable)
-				{
-					bool isD2Xv7 = IOS_GetRevision() % 100 == 7;
-					u8 limiter = 0;
-					s8 direction = m_btnMgr.selected(m_configBtnPartitionP) ? 1 : -1;
-					currentPartition = loopNum(currentPartition + direction, (int)USB8);
-					while(!DeviceHandler::Instance()->IsInserted(currentPartition) ||
-						(m_current_view == COVERFLOW_CHANNEL && (DeviceHandler::Instance()->GetFSType(currentPartition) != PART_FS_FAT ||
-							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()) == currentPartition) ||
-							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str()) == currentPartition))) ||
-						(m_current_view == COVERFLOW_HOMEBREW && DeviceHandler::Instance()->GetFSType(currentPartition) == PART_FS_WBFS))
-					{
-						currentPartition = loopNum(currentPartition + direction, (int)USB8);
-						if (limiter > 10) break;
-						limiter++;
-					}
-
-					gprintf("Next item: %s\n", DeviceName[currentPartition]);
-					m_cfg.setInt(_domainFromView(), "partition", currentPartition);
-				}
-					_showConfig();
+				SwitchPartition(m_btnMgr.selected(m_configBtnPartitionP));
+				_showConfig();
 			}
-			else if (!m_locked && m_btnMgr.selected(m_configBtnEmulation))
+			else if (!m_locked && (m_btnMgr.selected(m_configBtnEmulationP) || m_btnMgr.selected(m_configBtnEmulationM)))
 			{
-				m_cfg.setBool("GAMES", "save_emulation", !m_cfg.getBool("GAMES", "save_emulation"));
+				s8 direction = m_btnMgr.selected(m_configBtnEmulationP) ? 1 : -1;
+				int value = (int)loopNum((u32)m_cfg.getInt(_domainFromView(), "emulation", EMU_DISABLED) + direction, ARRAY_SIZE(CMenu::_Emulation) - 1u);
+				if(value > EMU_FULL) value = EMU_DISABLED;
+
+				if(value)
+					m_cfg.setInt(_domainFromView(), "emulation", value);
+				else
+					m_cfg.remove(_domainFromView(), "emulation");
 				_showConfig();
 			}
 		}
 	}
-	if (currentPartition != bCurrentPartition)
+	int emu_mode = EMU_DISABLED;
+	m_cfg.getInt("NAND", "emulation", &emu_mode);
+	if(currentPartition != bCurrentPartition && (m_current_view != COVERFLOW_CHANNEL || (m_current_view == COVERFLOW_CHANNEL && emu_mode)))
 	{
-		bool disable = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true);
-		if(!disable)
-		{
-			char *newpartition = disable ? (char *)"NAND" : (char *)DeviceName[m_cfg.getInt(_domainFromView(), "partition", currentPartition)];
-				
-			for(u8 i = 0; strncmp((const char *)&newpartition[i], "\0", 1) != 0; i++)
-				newpartition[i] = toupper(newpartition[i]);
-
-			gprintf("Switching partition to %s\n", newpartition);
-			_showWaitMessage();
-			_loadList();
-			_hideWaitMessage();
-		}
+		_showWaitMessage();
+		_loadList();
+		_hideWaitMessage();
 	}
 
 	_hideConfig();
@@ -239,37 +260,41 @@ void CMenu::_initConfigMenu(CMenu::SThemeData &theme)
 {
 	_addUserLabels(theme, m_configLblUser, ARRAY_SIZE(m_configLblUser), "CONFIG");
 	m_configBg = _texture(theme.texSet, "CONFIG/BG", "texture", theme.bg);
-	m_configLblTitle = _addLabel(theme, "CONFIG/TITLE", theme.titleFont, L"", 20, 30, 600, 60, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
-	m_configLblDownload = _addLabel(theme, "CONFIG/DOWNLOAD", theme.lblFont, L"", 40, 130, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_configBtnDownload = _addButton(theme, "CONFIG/DOWNLOAD_BTN", theme.btnFont, L"", 400, 130, 200, 56, theme.btnFontColor);
-	m_configLblParental = _addLabel(theme, "CONFIG/PARENTAL", theme.lblFont, L"", 40, 190, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_configBtnUnlock = _addButton(theme, "CONFIG/UNLOCK_BTN", theme.btnFont, L"", 400, 190, 200, 56, theme.btnFontColor);
-	m_configBtnSetCode = _addButton(theme, "CONFIG/SETCODE_BTN", theme.btnFont, L"", 400, 190, 200, 56, theme.btnFontColor);
-	m_configLblPartitionName = _addLabel(theme, "CONFIG/PARTITION", theme.lblFont, L"", 40, 250, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_configLblPartition = _addLabel(theme, "CONFIG/PARTITION_BTN", theme.btnFont, L"", 456, 250, 88, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_configLblTitle = _addTitle(theme, "CONFIG/TITLE", 20, 30, 600, 60, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
+	m_configLblDownload = _addLabel(theme, "CONFIG/DOWNLOAD", 40, 130, 340, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_configBtnDownload = _addButton(theme, "CONFIG/DOWNLOAD_BTN", 400, 130, 200, 56);
+	m_configLblParental = _addLabel(theme, "CONFIG/PARENTAL", 40, 190, 340, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_configBtnUnlock = _addButton(theme, "CONFIG/UNLOCK_BTN", 400, 190, 200, 56);
+	m_configBtnSetCode = _addButton(theme, "CONFIG/SETCODE_BTN", 400, 190, 200, 56);
+	m_configLblPartitionName = _addLabel(theme, "CONFIG/PARTITION", 40, 250, 340, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_configLblPartition = _addLabel(theme, "CONFIG/PARTITION_BTN", 456, 250, 88, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_configBtnPartitionM = _addPicButton(theme, "CONFIG/PARTITION_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 400, 250, 56, 56);
 	m_configBtnPartitionP = _addPicButton(theme, "CONFIG/PARTITION_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 250, 56, 56);
-	m_configLblEmulation = _addLabel(theme, "CONFIG/EMU_SAVE", theme.lblFont, L"", 40, 310, 340, 56, theme.lblFontColor, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_configBtnEmulation = _addButton(theme, "CONFIG/EMU_SAVE_BTN", theme.btnFont, L"", 400, 310, 200, 56, theme.btnFontColor);
-	m_configLblPage = _addLabel(theme, "CONFIG/PAGE_BTN", theme.btnFont, L"", 76, 410, 80, 56, theme.btnFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_configLblEmulation = _addLabel(theme, "CONFIG/EMU", 40, 310, 340, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_configLblEmulationVal = _addLabel(theme, "CONFIG/EMU_BTN", 456, 310, 88, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
+	m_configBtnEmulationM = _addPicButton(theme, "CONFIG/EMU_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 400, 310, 56, 56);
+	m_configBtnEmulationP = _addPicButton(theme, "CONFIG/EMU_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 310, 56, 56);
+	m_configLblPage = _addLabel(theme, "CONFIG/PAGE_BTN", 76, 410, 80, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_configBtnPageM = _addPicButton(theme, "CONFIG/PAGE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 20, 410, 56, 56);
 	m_configBtnPageP = _addPicButton(theme, "CONFIG/PAGE_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 156, 410, 56, 56);
-	m_configBtnBack = _addButton(theme, "CONFIG/BACK_BTN", theme.btnFont, L"", 420, 410, 200, 56, theme.btnFontColor);
+	m_configBtnBack = _addButton(theme, "CONFIG/BACK_BTN", 420, 410, 200, 56);
 	// 
-	_setHideAnim(m_configLblTitle, "CONFIG/TITLE", 0, 0, -2.f, 0.f);
+	_setHideAnim(m_configLblTitle, "CONFIG/TITLE", 0, 0, 1.f, 0.f);
 
-	_setHideAnim(m_configLblDownload, "CONFIG/DOWNLOAD", 100, 0, -2.f, 0.f);
-	_setHideAnim(m_configBtnDownload, "CONFIG/DOWNLOAD_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_configLblParental, "CONFIG/PARENTAL", 100, 0, -2.f, 0.f);
-	_setHideAnim(m_configBtnUnlock, "CONFIG/UNLOCK_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_configBtnSetCode, "CONFIG/SETCODE_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_configLblPartitionName, "CONFIG/PARTITION", 100, 0, -2.f, 0.f);
+	_setHideAnim(m_configLblDownload, "CONFIG/DOWNLOAD", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_configBtnDownload, "CONFIG/DOWNLOAD_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_configLblParental, "CONFIG/PARENTAL", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_configBtnUnlock, "CONFIG/UNLOCK_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_configBtnSetCode, "CONFIG/SETCODE_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_configLblPartitionName, "CONFIG/PARTITION", 0, 0, 1.f, 0.f);
 	_setHideAnim(m_configLblPartition, "CONFIG/PARTITION_BTN", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_configBtnPartitionM, "CONFIG/PARTITION_MINUS", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_configBtnPartitionP, "CONFIG/PARTITION_PLUS", 0, 0, 1.f, -1.f);
-	_setHideAnim(m_configLblEmulation, "CONFIG/EMU_SAVE", 100, 0, -2.f, 0.f);
-	_setHideAnim(m_configBtnEmulation, "CONFIG/EMU_SAVE_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_configBtnBack, "CONFIG/BACK_BTN", 0, 0, -2.f, 0.f);
+	_setHideAnim(m_configLblEmulation, "CONFIG/EMU", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_configLblEmulationVal, "CONFIG/EMU_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_configBtnEmulationM, "CONFIG/EMU_MINUS", 0, 0, 1.f, -1.f);
+	_setHideAnim(m_configBtnEmulationP, "CONFIG/EMU_PLUS", 0, 0, 1.f, -1.f);
+	_setHideAnim(m_configBtnBack, "CONFIG/BACK_BTN", 0, 0, 1.f, 0.f);
 	_setHideAnim(m_configLblPage, "CONFIG/PAGE_BTN", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_configBtnPageM, "CONFIG/PAGE_MINUS", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_configBtnPageP, "CONFIG/PAGE_PLUS", 0, 0, 1.f, -1.f);

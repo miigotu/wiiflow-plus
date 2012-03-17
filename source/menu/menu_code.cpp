@@ -110,24 +110,24 @@ void CMenu::_initCodeMenu(CMenu::SThemeData &theme)
 {
 	_addUserLabels(theme, m_codeLblUser, ARRAY_SIZE(m_codeLblUser), "CODE");
 	m_codeBg = _texture(theme.texSet, "CODE/BG", "texture", theme.bg);
-	m_codeLblTitle = _addLabel(theme, "CODE/CODE", theme.titleFont, L"_ _ _ _", 20, 30, 600, 60, theme.titleFontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
-	m_codeBtnKey[7] = _addButton(theme, "CODE/7_BTN", theme.btnFont, L"7", 160, 100, 100, 50, theme.btnFontColor);
-	m_codeBtnKey[8] = _addButton(theme, "CODE/8_BTN", theme.btnFont, L"8", 270, 100, 100, 50, theme.btnFontColor);
-	m_codeBtnKey[9] = _addButton(theme, "CODE/9_BTN", theme.btnFont, L"9", 380, 100, 100, 50, theme.btnFontColor);
-	m_codeBtnKey[4] = _addButton(theme, "CODE/4_BTN", theme.btnFont, L"4", 160, 180, 100, 50, theme.btnFontColor);
-	m_codeBtnKey[5] = _addButton(theme, "CODE/5_BTN", theme.btnFont, L"5", 270, 180, 100, 50, theme.btnFontColor);
-	m_codeBtnKey[6] = _addButton(theme, "CODE/6_BTN", theme.btnFont, L"6", 380, 180, 100, 50, theme.btnFontColor);
-	m_codeBtnKey[1] = _addButton(theme, "CODE/1_BTN", theme.btnFont, L"1", 160, 260, 100, 50, theme.btnFontColor);
-	m_codeBtnKey[2] = _addButton(theme, "CODE/2_BTN", theme.btnFont, L"2", 270, 260, 100, 50, theme.btnFontColor);
-	m_codeBtnKey[3] = _addButton(theme, "CODE/3_BTN", theme.btnFont, L"3", 380, 260, 100, 50, theme.btnFontColor);
-	m_codeBtnKey[0] = _addButton(theme, "CODE/0_BTN", theme.btnFont, L"0", 270, 340, 210, 50, theme.btnFontColor);
-	m_codeBtnErase = _addButton(theme, "CODE/ERASE_BTN", theme.btnFont, L"", 20, 410, 200, 56, theme.btnFontColor);
-	m_codeBtnBack = _addButton(theme, "CODE/BACK_BTN", theme.btnFont, L"", 420, 410, 200, 56, theme.btnFontColor);
+	m_codeLblTitle = _addTitle(theme, "CODE/CODE", 20, 30, 600, 60, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, L"_ _ _ _");
+	m_codeBtnKey[9] = _addButton(theme, "CODE/9_BTN", 380, 100, 100, 50, L"9");
+	m_codeBtnKey[8] = _addButton(theme, "CODE/8_BTN", 270, 100, 100, 50, L"8");
+	m_codeBtnKey[7] = _addButton(theme, "CODE/7_BTN", 160, 100, 100, 50, L"7");
+	m_codeBtnKey[6] = _addButton(theme, "CODE/6_BTN", 380, 180, 100, 50, L"6");
+	m_codeBtnKey[5] = _addButton(theme, "CODE/5_BTN", 270, 180, 100, 50, L"5");
+	m_codeBtnKey[4] = _addButton(theme, "CODE/4_BTN", 160, 180, 100, 50, L"4");
+	m_codeBtnKey[3] = _addButton(theme, "CODE/3_BTN", 380, 260, 100, 50, L"3");
+	m_codeBtnKey[2] = _addButton(theme, "CODE/2_BTN", 270, 260, 100, 50, L"2");
+	m_codeBtnKey[1] = _addButton(theme, "CODE/1_BTN", 160, 260, 100, 50, L"1");
+	m_codeBtnKey[0] = _addButton(theme, "CODE/0_BTN", 270, 340, 210, 50, L"0");
+	m_codeBtnErase = _addButton(theme, "CODE/ERASE_BTN", 20, 410, 200, 56);
+	m_codeBtnBack = _addButton(theme, "CODE/BACK_BTN", 420, 410, 200, 56);
 	// 
 	for (int i = 0; i < 10; ++i)
 		_setHideAnim(m_codeBtnKey[i], sfmt("CODE/%i_BTN", i).c_str(), 0, 0, 0.f, 0.f);
-	_setHideAnim(m_codeBtnErase, "CODE/ERASE_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_codeBtnBack, "CODE/BACK_BTN", 0, 0, -2.f, 0.f);
+	_setHideAnim(m_codeBtnErase, "CODE/ERASE_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_codeBtnBack, "CODE/BACK_BTN", 0, 0, 1.f, 0.f);
 	// 
 	_hideCode(true);
 	_textCode();

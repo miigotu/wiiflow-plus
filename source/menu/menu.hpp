@@ -27,8 +27,8 @@
 #define PART_FS_NTFS 2
 #define PART_FS_EXT  3
 
-extern "C" { extern void __exception_setreload(int t);}
-extern "C" {extern u8 currentPartition;}
+extern "C" { extern void __exception_setreload(int t); }
+extern "C" { extern u8 currentPartition; }
 extern bool bootHB;
 
 class CMenu
@@ -142,7 +142,6 @@ private:
 	u32 m_mainBtnInfo;
 	u32 m_mainBtnFavoritesOn;
 	u32 m_mainBtnFavoritesOff;
-	u32 m_mainLblLetter;
 #ifdef SHOWMEM
 	u32 m_mem2FreeSize;
 #endif
@@ -173,8 +172,11 @@ private:
 	u32 m_configLblPartition;
 	u32 m_configBtnPartitionP;
 	u32 m_configBtnPartitionM;
-	u32 m_configBtnEmulation;
+	u32 m_configLblEmulationVal;
 	u32 m_configLblEmulation;
+	u32 m_configBtnEmulationM;
+	u32 m_configBtnEmulationP;
+	enum EmuModes { EMU_DISABLED, EMU_PARTIAL, EMU_FULL, EMU_DEFAULT, EMU_ERROR };
 	u32 m_configLblUser[4];
 	u32 m_configAdvLblTheme;
 	u32 m_configAdvLblCurTheme;
@@ -265,7 +267,6 @@ private:
 	s8 _versionDownloader();
 	s8 _versionTxtDownloader();
 //Game menu
-	u32 m_gameLblInfo;
 	u32 m_gameBtnFavoriteOn;
 	u32 m_gameBtnFavoriteOff;
 	u32 m_gameBtnAdultOn;
@@ -341,7 +342,9 @@ private:
 	u32 m_gameSettingsLblHooktypeVal;
 	u32 m_gameSettingsBtnHooktypeM;
 	u32 m_gameSettingsBtnHooktypeP;
-	u32 m_gameSettingsBtnEmulation;
+	u32 m_gameSettingsLblEmulationVal;
+	u32 m_gameSettingsBtnEmulationP;
+	u32 m_gameSettingsBtnEmulationM;
 	u32 m_gameSettingsLblEmulation;
 	u32 m_gameSettingsLblDebugger;
 	u32 m_gameSettingsLblDebuggerV;
@@ -525,10 +528,6 @@ private:
 		TexSet texSet;
 		FontSet fontSet;
 		SoundSet soundSet;
-		SFont btnFont;
-		SFont lblFont;
-		SFont titleFont;
-		SFont txtFont;
 		CColor btnFontColor;
 		CColor lblFontColor;
 		CColor txtFontColor;
@@ -566,10 +565,10 @@ private:
 		float minMaxVal[4][2];
 	};
 	// 
-	void _loadChannelList(void);
 	void _loadList(void);
-	void _loadHomebrewList(void);
 	void _loadGameList(void);
+	void _loadHomebrewList(void);
+	void _loadChannelList(void);
 	void _initCF(void);
 	// 
 	void _initMainMenu(SThemeData &theme);
@@ -704,17 +703,16 @@ private:
 	void _cleanupDefaultFont();
 	const char *_domainFromView(void);
 	void UpdateCache(u32 view = COVERFLOW_MAX);
-	SFont _font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index);
+	SFont _font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize);
 	STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);
 	safe_vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key);
 	void _showWaitMessage();
 public:
 	void _hideWaitMessage(bool force = false);
 private:
-	SmartGuiSound _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, const u8 * snd, u32 len, string name, bool isAllocated);
-	SmartGuiSound _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, string name);
+	SmartGuiSound _sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, const u8 * snd, u32 len, string name);
 	u16 _textStyle(const char *domain, const char *key, u16 def);
-	u32 _addButton(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color);
+	u32 _addButton(SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height, const wstringEx &text = L"");
 	u32 _addPicButton(SThemeData &theme, const char *domain, STexture &texNormal, STexture &texSelected, int x, int y, u32 width, u32 height);
 	typedef enum
 	{
@@ -722,10 +720,10 @@ private:
 		ADD_TEXT,
 		ADD_TITLE
 	} CMenu_Alias;
-	u32 _addText(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style);
-	u32 _addTitle(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style);
-	u32 _addLabel(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, CMenu_Alias type = ADD_LABEL);
-	u32 _addLabel(SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, STexture &bg);
+	u32 _addText(SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height, u16 style, const wstringEx &text = L"");
+	u32 _addTitle(SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height, u16 style, const wstringEx &text = L"");
+	u32 _addLabel(SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height, u16 style, CMenu_Alias type = ADD_LABEL, const wstringEx &text = L"");
+	u32 _addLabel(SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height, u16 style, STexture &bg, const wstringEx &text = L"");
 	u32 _addProgressBar(SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height);
 	void _setHideAnim(u32 id, const char *domain, int dx, int dy, float scaleX, float scaleY);
 	void _addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 size, const char *domain);
@@ -770,6 +768,7 @@ private:
 	static const SOption _languages[11];
 	static const SOption _videoModes[7];
 	static const SOption _vidModePatch[4];
+	static const SOption _Emulation[4];
 	static const SOption _hooktype[8];
 	static const SOption _exitTo[5];
 	static std::map<u8, u8> _installed_cios;
@@ -777,6 +776,9 @@ private:
 	static int _version[9];
 	static const SCFParamDesc _cfParams[];
 	static const int _nbCfgPages;
+	
+	static inline int loopNum(int i, int s) { return i < 0 ? (s - (-i % s)) % s : i % s; }
+	void SwitchPartition(bool direction, bool showLabel = false);
 };
 
 #define ARRAY_SIZE(a)		(sizeof a / sizeof a[0])

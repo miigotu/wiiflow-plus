@@ -189,11 +189,12 @@ void CMenu::init(void)
 			return;
 		}
 	}
-
+	int emu_mode = EMU_DISABLED;
+	m_cfg.getInt("NAND", "emulation", &emu_mode);
 	Nand::Instance()->Init(m_cfg.getString("NAND", "path").c_str(),
 		m_cfg.getInt("NAND", "partition", currentPartition),
-		m_cfg.getBool("NAND", "disable", true)
-		);
+		emu_mode == EMU_DISABLED
+	);
 
 	_load_installed_cioses();
 
@@ -422,16 +423,16 @@ void CMenu::_loadCFCfg(SThemeData &theme)
 	const char *domain = "_COVERFLOW";
 
 	m_cf.setCachePath(m_cacheDir.c_str(), !m_cfg.getBool("GENERAL", "keep_png", true), m_cfg.getBool("GENERAL", "compress_cache"));
-	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
+	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 100));
 
 	u32 flip_wav_size = 0, select_wav_size = 0, cancel_wav_size = 0;
 	u8 *flip_wav = 0, *select_wav = 0, *cancel_wav = 0;
 
 	m_cf.setSounds(
-		_sound(theme.soundSet, domain, "flip_sound", flip_wav, flip_wav_size, string("default_flip_snd"), false),
-		_sound(theme.soundSet, domain, "hover_sound", hover_wav, hover_wav_size, string("default_hover_snd"), false),
-		_sound(theme.soundSet, domain, "select_sound", select_wav, select_wav_size, string("default_select_snd"), false),
-		_sound(theme.soundSet, domain, "cancel_sound", cancel_wav, cancel_wav_size, string("default_cancel_snd"), false)
+		_sound(theme.soundSet, domain, "flip_sound", flip_wav, flip_wav_size, string("default_flip_snd")),
+		_sound(theme.soundSet, domain, "hover_sound", hover_wav, hover_wav_size, string("default_hover_snd")),
+		_sound(theme.soundSet, domain, "select_sound", select_wav, select_wav_size, string("default_select_snd")),
+		_sound(theme.soundSet, domain, "cancel_sound", cancel_wav, cancel_wav_size, string("default_cancel_snd"))
 	);
 
 	string texLoading = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "loading_cover_box").c_str());
@@ -440,7 +441,7 @@ void CMenu::_loadCFCfg(SThemeData &theme)
 	string texNoCoverFlat = sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString(domain, "missing_cover_flat").c_str());
 	m_cf.setTextures(texLoading, texLoadingFlat, texNoCover, texNoCoverFlat);
 
-	m_cf.setFont(_font(theme.fontSet, domain, "title_font", TITLEFONT), m_theme.getColor(domain, "font_color", CColor(0xFFFFFFFF)));
+	m_cf.setFont(_font(theme.fontSet, domain, TITLEFONT), m_theme.getColor(domain, "font_color", CColor(0xFFFFFFFF)));
 
 	m_numCFVersions = min(max(2, m_theme.getInt("_COVERFLOW", "number_of_modes", 2)), 8);
 	for (u32 i = 1; i <= m_numCFVersions; ++i)
@@ -720,21 +721,21 @@ void CMenu::_buildMenus(void)
 
 	if(!m_base_font.get()) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 
-	theme.btnFont = _font(theme.fontSet, "GENERAL", "button_font", BUTTONFONT);
+	_font(theme.fontSet, "GENERAL", BUTTONFONT);
 	theme.btnFontColor = m_theme.getColor("GENERAL", "button_font_color", 0xD0BFDFFF);
 
-	theme.lblFont = _font(theme.fontSet, "GENERAL", "label_font", LABELFONT);
+	_font(theme.fontSet, "GENERAL", LABELFONT);
 	theme.lblFontColor = m_theme.getColor("GENERAL", "label_font_color", 0xD0BFDFFF);
 
-	theme.titleFont = _font(theme.fontSet, "GENERAL", "title_font", TITLEFONT);
+	_font(theme.fontSet, "GENERAL", TITLEFONT);
 	theme.titleFontColor = m_theme.getColor("GENERAL", "title_font_color", 0xD0BFDFFF);
 	
-	theme.txtFont = _font(theme.fontSet, "GENERAL", "text_font", TEXTFONT);
+	_font(theme.fontSet, "GENERAL", TEXTFONT);
 	theme.txtFontColor = m_theme.getColor("GENERAL", "text_font_color", 0xFFFFFFFF);
 
-	theme.clickSound	= _sound(theme.soundSet, "GENERAL", "click_sound", click_wav, click_wav_size, string("default_click_snd"), false);
-	theme.hoverSound	= _sound(theme.soundSet, "GENERAL", "hover_sound", hover_wav, hover_wav_size, string("default_hover_snd"), false);
-	theme.cameraSound	= _sound(theme.soundSet, "GENERAL", "camera_sound", camera_wav, camera_wav_size, string("default_camera_snd"), false);
+	theme.clickSound	= _sound(theme.soundSet, "GENERAL", "click_sound", click_wav, click_wav_size, string("default_click_snd"));
+	theme.hoverSound	= _sound(theme.soundSet, "GENERAL", "hover_sound", hover_wav, hover_wav_size, string("default_hover_snd"));
+	theme.cameraSound	= _sound(theme.soundSet, "GENERAL", "camera_sound", camera_wav, camera_wav_size, string("default_camera_snd"));
 	m_cameraSound = theme.cameraSound;
 
 	theme.btnTexL.fromPNG(butleft_png);
@@ -807,9 +808,9 @@ typedef struct
 	u32 res;
 } FontHolder;
 
-SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize, u32 lineSpacing, u32 weight, u32 index)
+SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize)
 {
-	FontHolder fonts[3] = {{ "_size", 6u, 300u, fontSize, 0 }, { "_line_height", 6u, 300u, lineSpacing, 0 }, { "_weight", 1u, 32u, weight, 0 }};
+	FontHolder fonts[3] = {{ "_size", 6u, 300u, fontSize, 0 }, { "_line_height", 6u, 300u, fontSize + 4, 0 }, { "_weight", 1u, 32u, FONT_BOLD, 0 }};
 
 	bool themeloaded = m_theme.loaded();
 	bool general = strncmp(domain, "GENERAL", 7) == 0;
@@ -844,11 +845,11 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 	if (i != fontSet.end()) return i->second;
 
 	SFont retFont;
- 	if (!useDefault && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fonts[0].res, fonts[1].res, fonts[2].res, index))
+ 	if (!useDefault && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fonts[0].res, fonts[1].res, fonts[2].res, 1))
 		return fontSet[CMenu::FontDesc(upperCase(filename.c_str()), fonts[0].res)] = retFont;
 
 	if(!m_base_font) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
-	if(retFont.fromBuffer(m_base_font, m_base_font_size, fonts[0].res, fonts[1].res, fonts[2].res, index))
+	if(retFont.fromBuffer(m_base_font, m_base_font_size, fonts[0].res, fonts[1].res, fonts[2].res, 1))
 		return fontSet[CMenu::FontDesc(upperCase(filename.c_str()), fonts[0].res)] = retFont;
 
 	return retFont;
@@ -871,6 +872,7 @@ safe_vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const
 				if (i != texSet.end())
 				{
 					textures.push_back(i->second);
+					continue;
 				}
 				STexture tex;
 				if (STexture::TE_OK == tex.fromPNGFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), GX_TF_RGBA8, ALLOC_MEM2))
@@ -905,52 +907,29 @@ STexture CMenu::_texture(CMenu::TexSet &texSet, const char *domain, const char *
 			}
 		}
 	}
+	if(filename.empty()) filename = key;
 	texSet[filename] = def;
 	return def;
 }
 
-// Only for loading defaults and GENERAL domains!!
-SmartGuiSound CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, const u8 * snd, u32 len, string name, bool isAllocated)
+SmartGuiSound CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, const u8 * snd, u32 len, string name)
 {
-	if(!snd)
-	{
-		isAllocated = true;
-		return SmartGuiSound(new GuiSound());
-	}
-	string filename = m_theme.getString(domain, key);
-	if (filename.empty()) filename = name;
+	string filename;
+	if (m_theme.loaded())
+		filename = m_theme.getString(domain, key);
 
-	CMenu::SoundSet::iterator i = soundSet.find(upperCase(filename.c_str()));
-	if (i == soundSet.end())
-	{
-		if(strncmp(filename.c_str(), name.c_str(), name.size()) != 0)
-			soundSet[upperCase(filename.c_str())] = SmartGuiSound(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
-		else
-			soundSet[upperCase(filename.c_str())] = SmartGuiSound(new GuiSound(snd, len, filename, isAllocated));
+	bool defVal = filename.empty();
 
-		return soundSet[upperCase(filename.c_str())];
-	}
-	return i->second;
-}
+	if(!defVal)
+		filename = sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str());
+	
+	CMenu::SoundSet::iterator i = soundSet.find(upperCase(defVal ? name.c_str() : filename.c_str()));
+	if (i != soundSet.end()) return i->second;
 
-//For buttons and labels only!!
-SmartGuiSound CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const char *key, string name)
-{
-	string filename = m_theme.getString(domain, key);
-	if (filename.empty())
-	{
-		if(name.find_last_of('/') != string::npos)
-			name = name.substr(name.find_last_of('/') + 1);
-		return soundSet[upperCase(name.c_str())];  // General/Default are already cached!
-	}
+	if(!defVal)
+		return soundSet[upperCase(filename.c_str())] = SmartGuiSound(new GuiSound(filename));
 
-	CMenu::SoundSet::iterator i = soundSet.find(upperCase(filename.c_str()));
-	if (i == soundSet.end())
-	{
-		soundSet[upperCase(filename.c_str())] = SmartGuiSound(new GuiSound(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str()));
-		return soundSet[upperCase(filename.c_str())];
-	}
-	return i->second;
+	return soundSet[upperCase(name.c_str())] = SmartGuiSound(new GuiSound(snd, len, name));
 }
 
 u16 CMenu::_textStyle(const char *domain, const char *key, u16 def)
@@ -974,10 +953,10 @@ u16 CMenu::_textStyle(const char *domain, const char *key, u16 def)
 	return textStyle;
 }
 
-u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color)
+u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height, const wstringEx &text)
 {
 	SButtonTextureSet btnTexSet;
-	CColor c(color);
+	CColor c(theme.btnFontColor);
 
 	c = m_theme.getColor(domain, "color", c);
 	x = m_theme.getInt(domain, "x", x);
@@ -991,10 +970,10 @@ u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, SFont font, 
 	btnTexSet.rightSel = _texture(theme.texSet, domain, "texture_right_selected", theme.btnTexRS);
 	btnTexSet.centerSel = _texture(theme.texSet, domain, "texture_center_selected", theme.btnTexCS);
 
-	font = _font(theme.fontSet, domain, "button_font", BUTTONFONT);
+	SFont font = _font(theme.fontSet, domain, BUTTONFONT);
 
-	SmartGuiSound clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound->GetName());
-	SmartGuiSound hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound->GetName());
+	SmartGuiSound clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound->GetSound(), theme.clickSound->GetLength(), theme.clickSound->GetName());
+	SmartGuiSound hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound->GetSound(), theme.hoverSound->GetLength(), theme.hoverSound->GetName());
 	
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	if (btnPos & FTGX_JUSTIFY_RIGHT)
@@ -1013,8 +992,8 @@ u32 CMenu::_addPicButton(CMenu::SThemeData &theme, const char *domain, STexture 
 	height = m_theme.getInt(domain, "height", height);
 	STexture tex1 = _texture(theme.texSet, domain, "texture_normal", texNormal);
 	STexture tex2 = _texture(theme.texSet, domain, "texture_selected", texSelected);
-	SmartGuiSound clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound->GetName());
-	SmartGuiSound hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound->GetName());
+	SmartGuiSound clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound->GetSound(), theme.clickSound->GetLength(), theme.clickSound->GetName());
+	SmartGuiSound hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound->GetSound(), theme.hoverSound->GetLength(), theme.hoverSound->GetName());
 
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	if (btnPos & FTGX_JUSTIFY_RIGHT)
@@ -1025,27 +1004,31 @@ u32 CMenu::_addPicButton(CMenu::SThemeData &theme, const char *domain, STexture 
 	return m_btnMgr.addPicButton(tex1, tex2, x, y, width, height, clickSound, hoverSound);
 }
 
-u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, CMenu_Alias type)
+u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height, u16 style, CMenu_Alias type, const wstringEx &text)
 {
-	CColor c(color);
+	CColor c;
 
-	c = m_theme.getColor(domain, "color", c);
 	x = m_theme.getInt(domain, "x", x);
 	y = m_theme.getInt(domain, "y", y);
 	width = m_theme.getInt(domain, "width", width);
 	height = m_theme.getInt(domain, "height", height);
+	SFont font;
 	switch(type)
 	{
 		case ADD_TEXT:
-			 font = _font(theme.fontSet, domain, "text_font", TEXTFONT);
+			 font = _font(theme.fontSet, domain, TEXTFONT);
+			c = CColor(theme.txtFontColor);
 			break;
 		case ADD_TITLE:
-			_font(theme.fontSet, domain, "title_font", TITLEFONT);
+			font = _font(theme.fontSet, domain, TITLEFONT);
+			c = CColor(theme.titleFontColor);
 			break;
 		default:
-			font = _font(theme.fontSet, domain, "label_font", LABELFONT);
+			font = _font(theme.fontSet, domain, LABELFONT);
+			c = CColor(theme.lblFontColor);
 			break;
 	}
+	c = m_theme.getColor(domain, "color", c);
 	style = _textStyle(domain, "style", style);
 
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
@@ -1057,26 +1040,26 @@ u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, c
 	return m_btnMgr.addLabel(font, text, x, y, width, height, c, style);
 }
 
-u32 CMenu::_addTitle(CMenu::SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style)
+u32 CMenu::_addTitle(CMenu::SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height, u16 style, const wstringEx &text)
 {
-	return _addLabel(theme, domain, font, text, x, y, width, height, color, style, ADD_TITLE);
+	return _addLabel(theme, domain, x, y, width, height, style, ADD_TITLE, text);
 }
 
-u32 CMenu::_addText(CMenu::SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style)
+u32 CMenu::_addText(CMenu::SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height, u16 style, const wstringEx &text)
 {
-	return _addLabel(theme, domain, font, text, x, y, width, height, color, style, ADD_TEXT);
+	return _addLabel(theme, domain, x, y, width, height, style, ADD_TEXT, text);
 }
 
-u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, STexture &bg)
+u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, int x, int y, u32 width, u32 height, u16 style, STexture &bg, const wstringEx &text)
 {
-	CColor c(color);
+	CColor c(theme.lblFontColor);
 
 	c = m_theme.getColor(domain, "color", c);
 	x = m_theme.getInt(domain, "x", x);
 	y = m_theme.getInt(domain, "y", y);
 	width = m_theme.getInt(domain, "width", width);
 	height = m_theme.getInt(domain, "height", height);
-	font = _font(theme.fontSet, domain, "label_font", LABELFONT);
+	SFont font = _font(theme.fontSet, domain, LABELFONT);
 	STexture texBg = _texture(theme.texSet, domain, "background_texture", bg);
 	style = _textStyle(domain, "style", style);
 
@@ -1153,7 +1136,7 @@ void CMenu::_addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 start, u32 si
 		if (m_theme.hasDomain(dom))
 		{
 			STexture emptyTex;
-			ids[i] = _addLabel(theme, dom.c_str(), theme.lblFont, L"", 40, 200, 64, 64, CColor(0xFFFFFFFF), 0, emptyTex);
+			ids[i] = _addLabel(theme, dom.c_str(), 40, 200, 64, 64, 0, emptyTex);
 			_setHideAnim(ids[i], dom.c_str(), -50, 0, 0.f, 0.f);
 		}
 		else
@@ -1179,7 +1162,7 @@ void CMenu::_initCF(void)
 		if (m_current_view == COVERFLOW_CHANNEL && chantitle == HBC_108)
 			strncpy((char *) m_gameList[i].hdr.id, "JODI", 6);
 
-		string id = string((const char *)m_gameList[i].hdr.id, m_current_view == COVERFLOW_CHANNEL ?  4 : 6);
+		string id = string((const char *)m_gameList[i].hdr.id, m_current_view == COVERFLOW_CHANNEL || m_current_view == COVERFLOW_HOMEBREW ?  4 : 6);
 		
 		if ((!m_favorites || m_gcfg1.getBool("FAVORITES", id)) && (!m_locked || !m_gcfg1.getBool("ADULTONLY", id)) && !m_gcfg1.getBool("HIDDEN", id))
 		{
@@ -1474,26 +1457,82 @@ const wstringEx CMenu::_fmt(const char *key, const wchar_t *def)
 	return def;
 }
 
+void CMenu::_loadList(void)
+{
+	m_cf.clear();
+	m_gameList.clear();
+
+	gprintf("Loading items of ");
+
+	if(m_cfg.getBool(_domainFromView(), "update_cache")) m_gameList.Update(m_current_view);
+	switch(m_current_view)
+	{
+		case COVERFLOW_CHANNEL:
+			gprintf("channel view from ");
+			_loadChannelList();
+			break;
+		case COVERFLOW_HOMEBREW:
+			gprintf("homebrew view from ");
+			_loadHomebrewList();
+			break;
+		default:
+			gprintf("usb view from ");
+			_loadGameList();
+			break;
+	}
+	
+	m_cfg.remove(_domainFromView(), "update_cache");
+}
+
+void CMenu::_loadGameList(void)
+{
+	currentPartition = m_cfg.getInt("GAMES", "partition", currentPartition);
+	if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+		return;
+
+	gprintf("%s\n", DeviceName[currentPartition]);
+	DeviceHandler::Instance()->Open_WBFS(currentPartition);
+	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso");
+}
+
+void CMenu::_loadHomebrewList()
+{
+	currentPartition = m_cfg.getInt("HOMEBREW", "partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
+	if(!DeviceHandler::Instance()->IsInserted(currentPartition))
+		return;
+
+	gprintf("%s\n", DeviceName[currentPartition]);
+	DeviceHandler::Instance()->Open_WBFS(currentPartition);
+
+	m_gameList.Load(sfmt(HOMEBREW_DIR, DeviceName[currentPartition]), ".dol|.elf");
+}
+
 void CMenu::_loadChannelList(void)
 {
 	currentPartition = m_cfg.getInt("NAND", "partition", currentPartition);
 	static u8 lastPartition = currentPartition;
 
-	bool disable_emu = m_cfg.getBool("NAND", "disable", true);
-	static bool last_emu_state = disable_emu;
+	int emu_mode = EMU_DISABLED;
+	m_cfg.getInt("NAND", "emulation", &emu_mode);
+	if(emu_mode > EMU_FULL)
+	{
+		emu_mode = EMU_DISABLED;
+		m_cfg.remove("NAND", "emulation");
+	}
+	static int last_emu_mode = emu_mode;
 
-	if(!disable_emu && !DeviceHandler::Instance()->IsInserted(currentPartition))
+	if(emu_mode != 0 && !DeviceHandler::Instance()->IsInserted(currentPartition))
 		return;
 
 	static bool first = true, failed = false;
 
-	bool changed = lastPartition != currentPartition || last_emu_state != disable_emu || first || failed;
+	bool changed = lastPartition != currentPartition || last_emu_mode != emu_mode || first || failed;
 
-	gprintf("%s, which is %s\n", disable_emu ? "NAND" : DeviceName[currentPartition], changed ? "refreshing." : "cached.");
+	gprintf("%s, which is %s\n", emu_mode ? DeviceName[currentPartition] : "NAND", changed ? "refreshing." : "cached.");
 
 	string path = m_cfg.getString("NAND", "path");
 
-	if(first && !disable_emu)
+	if(first && emu_mode)
 	{
 		char filepath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
 
@@ -1545,7 +1584,7 @@ void CMenu::_loadChannelList(void)
 
 		DeviceHandler::Instance()->UnMount(currentPartition);
 
-		Nand::Instance()->Init(path.c_str(), currentPartition, disable_emu);
+		Nand::Instance()->Init(path.c_str(), currentPartition, emu_mode == EMU_DISABLED);
 		if(Nand::Instance()->Enable_Emu() < 0)
 		{
 			Nand::Instance()->Disable_Emu();
@@ -1560,60 +1599,10 @@ void CMenu::_loadChannelList(void)
 	string nandpath = sfmt("%s:%s", DeviceName[currentPartition], path.empty() ? "/" : path.c_str());
 	gprintf("nandpath = %s\n", nandpath.c_str());
 
-	if(!failed) m_gameList.LoadChannels(disable_emu ? "" : nandpath, 0);
+	if(!failed) m_gameList.LoadChannels(emu_mode ? nandpath : "", 0);
 
 	lastPartition = currentPartition;
-	last_emu_state = disable_emu;
-}
-
-void CMenu::_loadList(void)
-{
-	m_cf.clear();
-	m_gameList.clear();
-
-	gprintf("Loading items of ");
-
-	if(m_cfg.getBool(_domainFromView(), "update_cache")) m_gameList.Update(m_current_view);
-	switch(m_current_view)
-	{
-		case COVERFLOW_CHANNEL:
-			gprintf("channel view from ");
-			_loadChannelList();
-			break;
-		case COVERFLOW_HOMEBREW:
-			gprintf("homebrew view from ");
-			_loadHomebrewList();
-			break;
-		default:
-			gprintf("usb view from ");
-			_loadGameList();
-			break;
-	}
-	
-	m_cfg.remove(_domainFromView(), "update_cache");
-}
-
-void CMenu::_loadGameList(void)
-{
-	currentPartition = m_cfg.getInt("GAMES", "partition", currentPartition);
-	if(!DeviceHandler::Instance()->IsInserted(currentPartition))
-		return;
-
-	gprintf("%s\n", DeviceName[currentPartition]);
-	DeviceHandler::Instance()->Open_WBFS(currentPartition);
-	m_gameList.Load(sfmt(GAMES_DIR, DeviceName[currentPartition]), ".wbfs|.iso");
-}
-
-void CMenu::_loadHomebrewList()
-{
-	currentPartition = m_cfg.getInt("HOMEBREW", "partition", DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()));
-	if(!DeviceHandler::Instance()->IsInserted(currentPartition))
-		return;
-
-	gprintf("%s\n", DeviceName[currentPartition]);
-	DeviceHandler::Instance()->Open_WBFS(currentPartition);
-
-	m_gameList.Load(sfmt(HOMEBREW_DIR, DeviceName[currentPartition]), ".dol|.elf");
+	last_emu_mode = emu_mode;
 }
 
 void CMenu::_stopSounds(void)

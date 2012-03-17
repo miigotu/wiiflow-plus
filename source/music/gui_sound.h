@@ -67,6 +67,12 @@ class GuiSound
 		//!Get the filepath for finding sounds which already have an instance.
 		//!\return the current instance's filepath
 		std::string GetName() { return filepath; };
+		//!Get the length for finding sounds which already have an instance.
+		//!\return the current instance's sound length
+		u32 GetLength() { return length; };
+		//!Get the sound for finding sounds which already have an instance.
+		//!\return the current instance's sound
+		u8 *GetSound() { return sound; };
 		//!Checks if the sound is currently playing
 		//!\return true if sound is playing, false otherwise
 		bool IsPlaying();

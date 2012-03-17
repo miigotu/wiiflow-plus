@@ -126,13 +126,15 @@ const CMenu::SOption CMenu::_hooktype[8] = {
 7 AXNextFrame Hook
 */
 
+const CMenu::SOption CMenu::_Emulation[4] = {
+	{ "off", L"Off" },
+	{ "partial", L"Partial" },
+	{ "full", L"Full" },
+	{ "def", L"Default" },
+};
+
 std::map<u8, u8> CMenu::_installed_cios;
 u8 banner_title[84];
-
-static inline int loopNum(int i, int s)
-{
-	return i < 0 ? (s - (-i % s)) % s : i % s;
-}
 
 static void _extractBannerTitle(Banner *bnr, int language)
 {
@@ -628,8 +630,9 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 	if(!forwarder && has_enabled_providers() && _initNetwork() == 0)
 		add_game_to_card(id.c_str());
 
-	bool emu_disabled = m_cfg.getBool("NAND", "disable", true);
-	bool emulate_mode = m_gcfg2.testOptBool(id, "full_emulation", m_cfg.getBool("NAND", "full_emulation", true));
+	int emu_mode = EMU_DISABLED;
+	if(!m_gcfg2.getInt(id, "emulation", &emu_mode) || emu_mode == EMU_DEFAULT)
+		m_cfg.getInt("NAND", "emulation", &emu_mode);
 
 	m_gcfg1.save(true);
 	m_gcfg2.save(true);
@@ -695,12 +698,12 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 
 	}
 
-	if(!emu_disabled)
+	if(emu_mode)
 	{
 		if(iosLoaded) ISFS_Deinitialize();
 		ISFS_Initialize();
 
-		Nand::Instance()->Set_FullMode(emulate_mode);
+		Nand::Instance()->Set_FullMode(emu_mode == EMU_FULL);
 		if(Nand::Instance()->Enable_Emu() < 0)
 		{
 			Nand::Instance()->Disable_Emu();
@@ -795,39 +798,40 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	int language = min((u32)m_gcfg2.getInt(id, "language"), ARRAY_SIZE(CMenu::_languages) - 1u);
 	const char *rtrn = m_gcfg2.getBool(id, "returnto", true) ? m_cfg.getString("GENERAL", "returnto").c_str() : NULL;
 
-	int emuPartition = m_cfg.getInt("GAMES", "savepartition", -1);
-	if(emuPartition == -1)
-		emuPartition = m_cfg.getInt("NAND", "partition", -1);
+	int emuPartition = currentPartition;
+	m_cfg.getInt("NAND", "partition", &emuPartition);
+	if(!m_cfg.getInt("GAMES", "savepartition", &emuPartition))
+		m_cfg.getInt("NAND", "partition", &emuPartition);
 
 	string emuPath = m_cfg.getString("GAMES", "savepath", m_cfg.getString("NAND", "path"));
 
-	bool emulate_save = emuPartition != 255 && m_gcfg2.testOptBool(id, "emulate_save", m_cfg.getBool("GAMES", "save_emulation"));
-	bool emulate_mode = m_gcfg2.testOptBool(id, "full_emulation", m_cfg.getBool("GAMES", "full_emulation"));
+	int emu_mode = EMU_DISABLED;
+	if(!m_gcfg2.getInt(id, "emulation", &emu_mode) || emu_mode == EMU_DEFAULT)
+		m_cfg.getInt("GAMES", "emulation", &emu_mode);
 
 	if (!dvd && get_frag_list((u8 *) hdr->hdr.id, (char *) hdr->path, currentPartition == 0 ? 0x200 : sector_size) < 0)
 		return;
 		
-	if(!dvd && emulate_save)
+	if(!dvd && emu_mode && !emuPath.empty())
 	{
 		char basepath[64];
 		snprintf(basepath, 64, "%s:%s", DeviceName[emuPartition], emuPath.c_str());
 		CreateSavePath(basepath, hdr);
 	}
 
-		int gameIOS = 0;
-		int userIOS = 0;
-		if (m_gcfg2.getInt(id, "ios", &userIOS) && _installed_cios.size() > 0)
+	int gameIOS = 0;
+	int userIOS = 0;
+	if (m_gcfg2.getInt(id, "ios", &userIOS) && _installed_cios.size() > 0)
+	{
+		for(CIOSItr itr = _installed_cios.begin(); itr != _installed_cios.end(); itr++)
 		{
-			for(CIOSItr itr = _installed_cios.begin(); itr != _installed_cios.end(); itr++)
+			if(itr->second == userIOS || itr->first == userIOS)
 			{
-				if(itr->second == userIOS || itr->first == userIOS)
-				{
-					gameIOS = itr->first;
-					break;
-				}
-				else gameIOS = 0;
+				gameIOS = itr->first;
+				break;
 			}
 		}
+	}
 
 	u8 patchVidMode = min((u32)m_gcfg2.getInt(id, "patch_video_modes"), ARRAY_SIZE(CMenu::_vidModePatch) - 1u);
 	hooktype = (u32) m_gcfg2.getInt(id, "hooktype"); // hooktype is defined in patchcode.h
@@ -917,15 +921,15 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 		}
 	}
 
-	if(emulate_save)
+	if(emu_mode)
 	{
 		if(iosLoaded) ISFS_Deinitialize();
 		ISFS_Initialize();
 
-		Nand::Instance()->Init(emuPath.c_str(), emuPartition, false);
+		Nand::Instance()->Init(emuPath.c_str(), emuPartition, emu_mode == EMU_DISABLED);
 		DeviceHandler::Instance()->UnMount(emuPartition);
 		
-		Nand::Instance()->Set_FullMode(emulate_mode);
+		Nand::Instance()->Set_FullMode(emu_mode == EMU_FULL);
 
 		if(Nand::Instance()->Enable_Emu() < 0)
 		{
@@ -998,7 +1002,6 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 
 void CMenu::_initGameMenu(CMenu::SThemeData &theme)
 {
-	CColor fontColor(0xD0BFDFFF);
 	STexture texFavOn;
 	STexture texFavOnSel;
 	STexture texFavOff;
@@ -1030,8 +1033,8 @@ void CMenu::_initGameMenu(CMenu::SThemeData &theme)
 	if (m_theme.loaded() && STexture::TE_OK == bgLQ.fromPNGFile(sfmt("%s/%s", m_themeDataDir.c_str(), m_theme.getString("GAME/BG", "texture").c_str()).c_str(), GX_TF_CMPR, ALLOC_MEM2, 64, 64))
 		m_gameBgLQ = bgLQ;
 
-	m_gameBtnPlay = _addButton(theme, "GAME/PLAY_BTN", theme.btnFont, L"", 420, 354, 200, 56, fontColor);
-	m_gameBtnBack = _addButton(theme, "GAME/BACK_BTN", theme.btnFont, L"", 420, 410, 200, 56, fontColor);
+	m_gameBtnPlay = _addButton(theme, "GAME/PLAY_BTN", 420, 354, 200, 56);
+	m_gameBtnBack = _addButton(theme, "GAME/BACK_BTN", 420, 410, 200, 56);
 	m_gameBtnFavoriteOn = _addPicButton(theme, "GAME/FAVORITE_ON", texFavOn, texFavOnSel, 460, 170, 48, 48);
 	m_gameBtnFavoriteOff = _addPicButton(theme, "GAME/FAVORITE_OFF", texFavOff, texFavOffSel, 460, 170, 48, 48);
 	m_gameBtnAdultOn = _addPicButton(theme, "GAME/ADULTONLY_ON", texAdultOn, texAdultOnSel, 532, 170, 48, 48);

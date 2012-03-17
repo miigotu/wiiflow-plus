@@ -225,23 +225,21 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 
 void CMenu::_initWBFSMenu(CMenu::SThemeData &theme)
 {
-	CColor fontColor(0xD0BFDFFF);
-
 	_addUserLabels(theme, m_wbfsLblUser, ARRAY_SIZE(m_wbfsLblUser), "WBFS");
 	m_wbfsBg = _texture(theme.texSet, "WBFS/BG", "texture", theme.bg);
-	m_wbfsLblTitle = _addLabel(theme, "WBFS/TITLE", theme.titleFont, L"", 20, 30, 600, 60, fontColor, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
-	m_wbfsLblDialog = _addLabel(theme, "WBFS/DIALOG", theme.lblFont, L"", 40, 90, 560, 200, CColor(0xFFDFDFDF), FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
-	m_wbfsLblMessage = _addLabel(theme, "WBFS/MESSAGE", theme.lblFont, L"", 40, 300, 560, 100, CColor(0xFFDFDFDF), FTGX_JUSTIFY_CENTER | FTGX_ALIGN_TOP);
+	m_wbfsLblTitle = _addTitle(theme, "WBFS/TITLE", 20, 30, 600, 60, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
+	m_wbfsLblDialog = _addLabel(theme, "WBFS/DIALOG", 40, 90, 560, 200, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_wbfsLblMessage = _addLabel(theme, "WBFS/MESSAGE", 40, 300, 560, 100, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_TOP);
 	m_wbfsPBar = _addProgressBar(theme, "WBFS/PROGRESS_BAR", 40, 270, 560, 20);
-	m_wbfsBtnBack = _addButton(theme, "WBFS/BACK_BTN", theme.btnFont, L"", 420, 410, 200, 56, fontColor);
-	m_wbfsBtnGo = _addButton(theme, "WBFS/GO_BTN", theme.btnFont, L"", 245, 260, 150, 56, fontColor);
+	m_wbfsBtnBack = _addButton(theme, "WBFS/BACK_BTN", 420, 410, 200, 56);
+	m_wbfsBtnGo = _addButton(theme, "WBFS/GO_BTN", 245, 260, 150, 56);
 	// 
-	_setHideAnim(m_wbfsLblTitle, "WBFS/TITLE", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_wbfsLblDialog, "WBFS/DIALOG", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_wbfsLblMessage, "WBFS/MESSAGE", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_wbfsPBar, "WBFS/PROGRESS_BAR", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_wbfsBtnBack, "WBFS/BACK_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_wbfsBtnGo, "WBFS/GO_BTN", 0, 0, -2.f, 0.f);
+	_setHideAnim(m_wbfsLblTitle, "WBFS/TITLE", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_wbfsLblDialog, "WBFS/DIALOG", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_wbfsLblMessage, "WBFS/MESSAGE", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_wbfsPBar, "WBFS/PROGRESS_BAR", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_wbfsBtnBack, "WBFS/BACK_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_wbfsBtnGo, "WBFS/GO_BTN", 0, 0, 1.f, 0.f);
 	_hideWBFS(true);
 	_textWBFS();
 }

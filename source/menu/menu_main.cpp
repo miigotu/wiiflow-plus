@@ -37,11 +37,6 @@ extern const u8 favoritesoffs_png[];
 extern const u8 btnhomebrew_png[];
 extern const u8 btnhomebrews_png[];
 
-static inline int loopNum(int i, int s)
-{
-	return i < 0 ? (s - (-i % s)) % s : i % s;
-}
-
 void CMenu::_hideMain(bool instant)
 {
 	m_btnMgr.hide(m_mainBtnNext, instant);
@@ -58,7 +53,6 @@ void CMenu::_hideMain(bool instant)
 	m_btnMgr.hide(m_mainLblInit, instant);
 	m_btnMgr.hide(m_mainBtnFavoritesOn, instant);
 	m_btnMgr.hide(m_mainBtnFavoritesOff, instant);
-	m_btnMgr.hide(m_mainLblLetter, instant);
 	m_btnMgr.hide(m_mainLblNotice, instant);
 	for (u32 i = 0; i < ARRAY_SIZE(m_mainLblUser); ++i)
 		if (m_mainLblUser[i] != -1u)
@@ -130,7 +124,9 @@ void CMenu::LoadView(void)
 	_loadCFLayout(m_cfg.getInt(_domainFromView(), "last_cf_mode", 1));
 	m_cf.applySettings();
 
-	char *mode = (m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true)) ? (char *)"NAND" : (char *)DeviceName[currentPartition];
+	int emu_mode = EMU_DISABLED;
+	m_cfg.getInt("NAND", "emulation", &emu_mode);
+	char *mode = m_current_view == COVERFLOW_CHANNEL && emu_mode ? (char *)DeviceName[currentPartition] : (char *)"NAND";
 
 	for(u8 i = 0; strncmp((const char *)&mode[i], "\0", 1) != 0; i++)
 			mode[i] = toupper(mode[i]);
@@ -263,18 +259,10 @@ int CMenu::main(void)
 				curLetter = wstringEx(c);
 
 				m_showtimer = 60;
-				if(sorting == SORT_ALPHA)
-				{
-					m_btnMgr.setText(m_mainLblLetter, curLetter);
-					m_btnMgr.show(m_mainLblLetter);
-				}
-				else
-				{
-					curLetter = _getNoticeTranslation(sorting, curLetter);
+				curLetter = _getNoticeTranslation(sorting, curLetter);
 
-					m_btnMgr.setText(m_mainLblNotice, curLetter);
-					m_btnMgr.show(m_mainLblNotice);
-				}
+				m_btnMgr.setText(m_mainLblNotice, curLetter);
+				m_btnMgr.show(m_mainLblNotice);
 			}
 			//Change songs
 			else if (BTN_LEFT_PRESSED)
@@ -313,48 +301,12 @@ int CMenu::main(void)
 			//Partition Selection
 			else if (BTN_MINUS_PRESSED && !m_locked)
 			{
-				bool block = m_current_view == COVERFLOW_CHANNEL && m_cfg.getBool("NAND", "disable", true);
-				char *partition;
-				if(!block)
-				{
-					_showWaitMessage();
-					_hideMain();
-
-					bool isD2Xv7 = IOS_GetRevision() % 100 == 7;
-					u8 limiter = 0;
-					currentPartition = loopNum(currentPartition + 1, (int)USB8);
-					while(!DeviceHandler::Instance()->IsInserted(currentPartition) ||
-						(m_current_view == COVERFLOW_CHANNEL && (DeviceHandler::Instance()->GetFSType(currentPartition) != PART_FS_FAT ||
-							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_appDir.c_str()) == currentPartition) ||
-							(!isD2Xv7 && DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str()) == currentPartition))) ||
-						(m_current_view == COVERFLOW_HOMEBREW && DeviceHandler::Instance()->GetFSType(currentPartition) == PART_FS_WBFS))
-					{
-						currentPartition = loopNum(currentPartition + 1, (int)USB8);
-						if(limiter > 10) break;
-						limiter++;
-					}
-
-					partition = (char *)DeviceName[currentPartition];
-					m_cfg.setInt(_domainFromView(), "partition", currentPartition);
-
-				}
-				else partition = (char *)"NAND";
-
-				for(u8 i = 0; strncmp((const char *)&partition[i], "\0", 1) != 0; i++)
-					partition[i] = toupper(partition[i]);
-
-				gprintf("Next item: %s\n", partition);
-
-				m_showtimer=60; 
-				m_btnMgr.setText(m_mainLblNotice, (string)partition);
-				m_btnMgr.show(m_mainLblNotice);
-
-				if(!block)
-				{
-					_loadList();
-					_showMain();
-					_initCF();
-				}
+				_showWaitMessage();
+				_hideMain();
+				SwitchPartition(true, true);
+				_loadList();
+				_showMain();
+				_initCF();
 			}
 		}
 		if (BTN_B_PRESSED)
@@ -371,8 +323,15 @@ int CMenu::main(void)
 			//Events to Switch off/on nand emu
 			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb) || m_btnMgr.selected(m_mainBtnHomebrew))
 			{
-				m_cfg.setBool("NAND", "disable", !m_cfg.getBool("NAND", "disable", true));
-				gprintf("EmuNand is %s\n", m_cfg.getBool("NAND", "disable", true) ? "Disabled" : "Enabled");
+				int emu_mode = EMU_DISABLED;
+				m_cfg.getInt("NAND", "emulation", &emu_mode);
+				int value = (int)loopNum((u32)emu_mode + 1, ARRAY_SIZE(CMenu::_Emulation));
+				if(value >= EMU_DEFAULT) value = 0;
+				if(value)
+					m_cfg.setInt("NAND", "emulation", value);
+				else
+					m_cfg.remove("NAND", "emulation");
+				gprintf("EmuNand is %s\n", value ? "Enabled" : "Disabled");
 
 				m_category = m_cat.getInt("NAND", "category", 0);
 				m_current_view = COVERFLOW_CHANNEL;
@@ -395,18 +354,10 @@ int CMenu::main(void)
 				curLetter.clear();
 				curLetter = wstringEx(c);
 
-				if(sorting == SORT_ALPHA)
-				{
-					m_btnMgr.setText(m_mainLblLetter, curLetter);
-					m_btnMgr.show(m_mainLblLetter);
-				}
-				else
-				{
-					curLetter = _getNoticeTranslation(sorting, curLetter);
+				curLetter = _getNoticeTranslation(sorting, curLetter);
 
-					m_btnMgr.setText(m_mainLblNotice, curLetter);
-					m_btnMgr.show(m_mainLblNotice);
-				}
+				m_btnMgr.setText(m_mainLblNotice, curLetter);
+				m_btnMgr.show(m_mainLblNotice);
 			}
 		}
 		else if (done==0 && m_cat.getBool("GENERAL", "category_on_start"))
@@ -532,12 +483,9 @@ int CMenu::main(void)
 		}
 		if(use_grab) _getGrabStatus();
 
-		if (m_showtimer > 0)
-			if (--m_showtimer == 0)
-			{
-				m_btnMgr.hide(m_mainLblLetter);
+		if (m_showtimer > 0 && --m_showtimer == 0)
 				m_btnMgr.hide(m_mainLblNotice);
-			}
+
 		//zones, showing and hiding buttons
 		if (!m_gameList.empty() && m_show_zone_prev)
 			m_btnMgr.show(m_mainBtnPrev);
@@ -707,15 +655,14 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainBtnDVD = _addPicButton(theme, "MAIN/DVD_BTN", texDVD, texDVDs, 470, 412, 48, 48);
 	m_mainBtnNext = _addPicButton(theme, "MAIN/NEXT_BTN", texNext, texNextS, 540, 146, 80, 80);
 	m_mainBtnPrev = _addPicButton(theme, "MAIN/PREV_BTN", texPrev, texPrevS, 20, 146, 80, 80);
-	m_mainBtnInit = _addButton(theme, "MAIN/BIG_SETTINGS_BTN", theme.titleFont, L"", 72, 180, 496, 96, CColor(0xFFFFFFFF));
-	m_mainBtnInit2 = _addButton(theme, "MAIN/BIG_SETTINGS_BTN2", theme.titleFont, L"", 72, 290, 496, 96, CColor(0xFFFFFFFF));
-	m_mainLblInit = _addLabel(theme, "MAIN/MESSAGE", theme.lblFont, L"", 40, 40, 560, 140, CColor(0xFFFFFFFF), FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
+	m_mainBtnInit = _addButton(theme, "MAIN/BIG_SETTINGS_BTN", 72, 180, 496, 96);
+	m_mainBtnInit2 = _addButton(theme, "MAIN/BIG_SETTINGS_BTN2", 72, 290, 496, 96);
+	m_mainLblInit = _addLabel(theme, "MAIN/MESSAGE", 40, 40, 560, 140, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_mainBtnFavoritesOn = _addPicButton(theme, "MAIN/FAVORITES_ON", texFavOn, texFavOnS, 300, 412, 56, 56);
 	m_mainBtnFavoritesOff = _addPicButton(theme, "MAIN/FAVORITES_OFF", texFavOff, texFavOffS, 300, 412, 56, 56);
-	m_mainLblLetter = _addLabel(theme, "MAIN/LETTER", theme.titleFont, L"", 540, 40, 80, 80, CColor(0xFFFFFFFF), FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, emptyTex);
-	m_mainLblNotice = _addLabel(theme, "MAIN/NOTICE", theme.titleFont, L"", 340, 40, 280, 80, CColor(0xFFFFFFFF), FTGX_JUSTIFY_RIGHT | FTGX_ALIGN_MIDDLE, emptyTex);
+	m_mainLblNotice = _addLabel(theme, "MAIN/NOTICE", 340, 40, 280, 80, FTGX_JUSTIFY_RIGHT | FTGX_ALIGN_MIDDLE, emptyTex);
 #ifdef SHOWMEM	
-	m_mem2FreeSize = _addLabel(theme, "MEM2", theme.titleFont, L"", 40, 300, 480, 80, CColor(0xFFFFFFFF), FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, emptyTex);
+	m_mem2FreeSize = _addLabel(theme, "MEM2", 40, 300, 480, 80, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, emptyTex);
 #endif
 	// 
 	m_mainPrevZone.x = m_theme.getInt("MAIN/ZONES", "prev_x", -32);
@@ -759,10 +706,9 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_mainBtnDVD, "MAIN/DVD_BTN", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnFavoritesOn, "MAIN/FAVORITES_ON", 0, 40, 0.f, 0.f);
 	_setHideAnim(m_mainBtnFavoritesOff, "MAIN/FAVORITES_OFF", 0, 40, 0.f, 0.f);
-	_setHideAnim(m_mainBtnInit, "MAIN/BIG_SETTINGS_BTN", 0, 0, -2.f, 0.f);
-	_setHideAnim(m_mainBtnInit2, "MAIN/BIG_SETTINGS_BTN2", 0, 0, -2.f, 0.f);
+	_setHideAnim(m_mainBtnInit, "MAIN/BIG_SETTINGS_BTN", 0, 0, 1.f, 0.f);
+	_setHideAnim(m_mainBtnInit2, "MAIN/BIG_SETTINGS_BTN2", 0, 0, 1.f, 0.f);
 	_setHideAnim(m_mainLblInit, "MAIN/MESSAGE", 0, 0, 0.f, 0.f);
-	_setHideAnim(m_mainLblLetter, "MAIN/LETTER", 0, 0, 0.f, 0.f);
 	_setHideAnim(m_mainLblNotice, "MAIN/NOTICE", 0, 0, 0.f, 0.f);
 #ifdef SHOWMEM
 	_setHideAnim(m_mem2FreeSize, "MEM2", 0, 0, 0.f, 0.f);
