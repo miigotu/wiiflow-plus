@@ -15,6 +15,7 @@ void CMenu::_about(void)
 	int amount_of_skips = 0;
 	int thanks_x = 0, thanks_y = 0;
 	u32 thanks_w = 0, thanks_h = 0;
+
 	bool first = true;
 
 	m_btnMgr.reset(m_aboutLblInfo, true);
@@ -30,10 +31,10 @@ void CMenu::_about(void)
 		{
 			// Check dimensions in the loop, because the animation can have an effect
 			m_btnMgr.getDimensions(m_aboutLblInfo, thanks_x, thanks_y, thanks_w, thanks_h); // Get original dimensions
-		}	
+		}
 		if(first)
 		{
-			m_btnMgr.moveBy(m_aboutLblInfo, 0, -(pixels_to_skip * 10));
+			m_btnMgr.moveBy(m_aboutLblInfo, 0, -1);
 			amount_of_skips++;
 			first = false;
 		}
@@ -106,7 +107,7 @@ void CMenu::_initAboutMenu(CMenu::SThemeData &theme)
 	_addUserLabels(theme, m_aboutLblUser, ARRAY_SIZE(m_aboutLblUser), "ABOUT");
 	m_aboutBg = _texture(theme.texSet, "ABOUT/BG", "texture", theme.bg);
 	m_aboutLblTitle = _addTitle(theme, "ABOUT/TITLE", 40, 25, 560, 75, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
-	m_aboutLblInfo = _addText(theme, "ABOUT/INFO", 40, 220, 560, 260, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	m_aboutLblInfo = _addText(theme, "ABOUT/INFO", 40, 120, 560, 280, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_aboutBtnSystem = _addButton(theme, "ABOUT/SYSTEM_BTN", 20, 410, 200, 56);
 	m_aboutLblIOS = _addLabel(theme, "ABOUT/IOS", 240, 400, 360, 56, FTGX_JUSTIFY_RIGHT | FTGX_ALIGN_MIDDLE);
 	// 
@@ -122,7 +123,7 @@ void CMenu::_initAboutMenu(CMenu::SThemeData &theme)
 void CMenu::_textAbout(void)
 {
 	m_btnMgr.setText(m_aboutBtnSystem, _t("sys4", L"Update"));
-	m_btnMgr.setText(m_aboutLblTitle, wfmt(_fmt("appname", L"%s v%s r%s"), APP_NAME, APP_VERSION, SVN_REV), false);
+	m_btnMgr.setText(m_aboutLblTitle, wfmt(_fmt("appname", L"%s v%s r%s"), APP_NAME, APP_VERSION, SVN_REV));
 
 	wstringEx developers(wfmt(_fmt("about6", L"Current Developers:\n%s"), DEVELOPERS));
 	wstringEx pDevelopers(wfmt(_fmt("about7", L"Past Developers:\n%s"), PAST_DEVELOPERS));
@@ -145,8 +146,7 @@ void CMenu::_textAbout(void)
 			origGUI.toUTF8().c_str(),
 			codethx.toUTF8().c_str(),
 			sites.toUTF8().c_str(),
-			thanks.toUTF8().c_str()),
-			false
+			thanks.toUTF8().c_str())
 		);
 
 	Nand::Instance()->Disable_Emu();

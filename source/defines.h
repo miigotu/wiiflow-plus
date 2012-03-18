@@ -13,7 +13,7 @@
 #define CTITLES_FILENAME		"custom_titles.ini"
 
 #define DEVELOPERS				"Miigotu"
-#define PAST_DEVELOPERS			"Hibernatus, Narolez,, r-win, Hulk"
+#define PAST_DEVELOPERS			"Hibernatus, Narolez, r-win, Hulk"
 #define LOADER_AUTHOR			"Kwiirk, Waninkoko, Hermes"
 #define GUI_AUTHOR				"Hibernatus"
 

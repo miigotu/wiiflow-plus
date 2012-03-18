@@ -533,7 +533,6 @@ void CVideo::CheckWaitThread(bool force)
 		if(LWP_ThreadIsSuspended(waitThread))
 			LWP_ResumeThread(waitThread);
 
-		if(force) while(m_showingWaitMessages);
 		LWP_JoinThread(waitThread, NULL);
 
 		SMART_FREE(waitThreadStack);

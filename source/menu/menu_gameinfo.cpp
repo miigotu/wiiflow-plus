@@ -92,14 +92,13 @@ void CMenu::_gameinfo(void)
 		{
 			// Check dimensions in the loop, because the animation can have an effect
 			m_btnMgr.getDimensions(m_gameinfoLblSynopsis, synopsis_x, synopsis_y, synopsis_w, synopsis_h); // Get original dimensions
-		}	
-		if(first && page == 1)
+		}
+		if(first)
 		{
-			m_btnMgr.moveBy(m_gameinfoLblSynopsis, 0, -(pixels_to_skip * 10));
+			m_btnMgr.moveBy(m_gameinfoLblSynopsis, 0, -1);
 			amount_of_skips++;
 			first = false;
 		}
-
 		if ((BTN_DOWN_PRESSED || BTN_DOWN_HELD) && !(m_thrdWorking && m_thrdStop) && page == 1)
 		{
 			if (synopsis_h - (amount_of_skips * pixels_to_skip) > (m_vid.height2D() - (35 + synopsis_y)))
@@ -120,9 +119,9 @@ void CMenu::_gameinfo(void)
 		{
 			page = 1;
 			amount_of_skips = 0;
-						
+			first = true;	
 			m_btnMgr.reset(m_gameinfoLblSynopsis);
-			m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.Synopsis.c_str()), true); //, line, false);
+			m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.Synopsis.c_str()));
 
 			m_btnMgr.hide(m_gameinfoLblDev, true);
 			m_btnMgr.hide(m_gameinfoLblRegion, true);
@@ -256,7 +255,7 @@ void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 	m_gameinfoLblRlsdate = _addLabel(theme, "GAMEINFO/RLSDATE", 40, 230, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblRegion = _addLabel(theme, "GAMEINFO/REGION", 40, 260, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblRating = _addLabel(theme, "GAMEINFO/RATING", 550, 380, 48, 60, 0, m_rating);
-	m_gameinfoLblSynopsis = _addText(theme, "GAMEINFO/SYNOPSIS", 40, 220, 560, 260, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	m_gameinfoLblSynopsis = _addText(theme, "GAMEINFO/SYNOPSIS", 40, 120, 560, 320, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblWifiplayers = _addLabel(theme, "GAMEINFO/WIFIPLAYERS", 550, 110, 68, 60, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP, m_wifi);
 
 	_addUserLabels(theme, m_gameinfoLblUser, 1, 1, "GAMEINFO");
@@ -307,7 +306,7 @@ void CMenu::_textGameInfo(void)
 		gprintf("ID: %s\nTitle: %s\n", gameinfo.GameID.c_str(), gameinfo.Title.c_str());
 		m_btnMgr.setText(m_gameinfoLblID, wfmt(L"%s", gameinfo.GameID.c_str()), true);
 		m_btnMgr.setText(m_gameinfoLblTitle, wfmt(L"%s", gameinfo.Title.c_str()), true);
-		m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.Synopsis.c_str()), false);
+		m_btnMgr.setText(m_gameinfoLblSynopsis, wfmt(L"%s", gameinfo.Synopsis.c_str()));
 		m_btnMgr.setText(m_gameinfoLblDev, wfmt(_fmt("gameinfo1",L"Developer: %s"), gameinfo.Developer.c_str()), true);
 		m_btnMgr.setText(m_gameinfoLblPublisher, wfmt(_fmt("gameinfo2",L"Publisher: %s"), gameinfo.Publisher.c_str()), true);
 		m_btnMgr.setText(m_gameinfoLblRegion, wfmt(_fmt("gameinfo3",L"Region: %s"), gameinfo.Region.c_str()), true);
