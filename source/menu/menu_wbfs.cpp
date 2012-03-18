@@ -97,7 +97,7 @@ int CMenu::_gameInstaller(void *obj)
 
 bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 {
-	lwp_t thread = 0;
+	lwp_t thread = LWP_THREAD_NULL;
 	static discHdr header ATTRIBUTE_ALIGN(32);
 	bool done = false;
 	bool out = false;

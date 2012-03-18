@@ -68,9 +68,6 @@ const float CVideo::_jitter8[8][2] = {
 const int CVideo::_stencilWidth = 128;
 const int CVideo::_stencilHeight = 128;
 
-static lwp_t waitThread = LWP_THREAD_NULL;
-SmartBuf waitThreadStack;
-
 extern "C"
 {
 	extern __typeof(malloc) __real_malloc;
@@ -81,7 +78,7 @@ CVideo::CVideo(void) :
 	m_rmode(NULL), m_frameBuf(), m_curFB(0), m_fifo(NULL),
 	m_yScale(0.0f), m_xfbHeight(0), m_wide(false),
 	m_width2D(640), m_height2D(480), m_x2D(0), m_y2D(0), m_aa(0), m_aaAlpha(false),
-	m_aaWidth(0), m_aaHeight(0), m_showWaitMessage(false), m_showingWaitMessages(false)
+	m_aaWidth(0), m_aaHeight(0), m_showWaitMessage(false), m_showingWaitMessages(false), waitThread(LWP_THREAD_NULL)
 {
 	memset(m_frameBuf, 0, sizeof m_frameBuf);
 }
@@ -536,6 +533,7 @@ void CVideo::CheckWaitThread(bool force)
 		if(LWP_ThreadIsSuspended(waitThread))
 			LWP_ResumeThread(waitThread);
 
+		if(force) while(m_showingWaitMessages);
 		LWP_JoinThread(waitThread, NULL);
 
 		SMART_FREE(waitThreadStack);
@@ -552,7 +550,7 @@ void CVideo::waitMessage(float delay)
 
 void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool useWiiLight)
 {
-	//hideWaitMessage(true);
+	hideWaitMessage(true);
 
 	m_useWiiLight = useWiiLight;
 

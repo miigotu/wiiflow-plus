@@ -150,7 +150,7 @@ static Banner *_extractChannelBnr(const u64 chantitle)
 	return Channels::GetBanner(chantitle);
 }
 
-static Banner *_extractBnr(dir_discHdr *hdr)
+static Banner *_extractBnr(volatile dir_discHdr *hdr)
 {
 	Banner *banner = NULL;
 	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *) &hdr->hdr.id, (char *) hdr->path);
@@ -1077,8 +1077,6 @@ struct IMD5Header
 	u8 crypto[16];
 } __attribute__((packed));
 
-SmartBuf gameSoundThreadStack;
-
 void CMenu::_gameSoundThread(CMenu *m)
 {
 	m->m_gamesound_changed = false;
@@ -1122,8 +1120,8 @@ void CMenu::_playGameSound(void)
 	m_cf.stopCoverLoader();
 
 	unsigned int stack_size = (unsigned int)32768;
-	SMART_FREE(gameSoundThreadStack);
-	gameSoundThreadStack = smartMem2Alloc(stack_size);
+	if(!gameSoundThreadStack.get())
+		gameSoundThreadStack = smartMem2Alloc(stack_size);
 	LWP_CreateThread(&m_gameSoundThread, (void *(*)(void *))CMenu::_gameSoundThread, (void *)this, gameSoundThreadStack.get(), stack_size, 40);
 }
 

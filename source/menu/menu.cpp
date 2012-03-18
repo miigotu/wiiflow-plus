@@ -423,7 +423,7 @@ void CMenu::_loadCFCfg(SThemeData &theme)
 	const char *domain = "_COVERFLOW";
 
 	m_cf.setCachePath(m_cacheDir.c_str(), !m_cfg.getBool("GENERAL", "keep_png", true), m_cfg.getBool("GENERAL", "compress_cache"));
-	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 100));
+	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 60));
 
 	u32 flip_wav_size = 0, select_wav_size = 0, cancel_wav_size = 0;
 	u8 *flip_wav = 0, *select_wav = 0, *cancel_wav = 0;
@@ -1196,7 +1196,6 @@ void CMenu::_initCF(void)
 	}
  	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode", true));
 	m_cf.setCompression(m_cfg.getBool("GENERAL", "allow_texture_compression", true));
-	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 120));
 	m_cf.setSorting((Sorting)m_cfg.getInt(domain, "sort"));
 	if (m_curGameId.empty() || !m_cf.findId(m_curGameId.c_str(), true))
 		m_cf.findId(m_cfg.getString(domain, "current_item").c_str(), true);

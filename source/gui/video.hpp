@@ -95,9 +95,9 @@ private:
 	float m_vpW;
 	float m_vpH;
 	float m_waitMessageDelay;
-	bool m_showWaitMessage;
+	volatile bool m_showWaitMessage;
 	volatile bool m_showingWaitMessages;
-	bool m_useWiiLight;
+	volatile bool m_useWiiLight;
 	safe_vector<STexture> m_waitMessages;
 	// 
 	static const int _stencilWidth;
@@ -112,6 +112,9 @@ private:
 	void _drawAASceneWithAlpha(float w, float h);
 	void _setViewPort(float x, float y, float w, float h);
 	static void _showWaitMessages(CVideo *m);
+protected:
+	SmartBuf waitThreadStack;
+	lwp_t waitThread;
 private:
 	CVideo(const CVideo &);
 };
