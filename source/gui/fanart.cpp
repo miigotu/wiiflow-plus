@@ -32,12 +32,12 @@ bool CFanart::load(Config &m_globalConfig, const char *path, const char *id)
 
 	if (!m_globalConfig.getBool("FANART", "enable_fanart", true))
 		return retval;
-	
+
 	unload();
 
 	const char *dir = fmt("%s/%s", path, id);
 	STexture fanBg, fanBgLq;
-	
+
 	STexture::TexErr texErr = fanBg.fromPNGFile(sfmt("%s/background.png", dir).c_str(), GX_TF_RGBA8);
 	if (texErr == STexture::TE_ERROR)
 	{
@@ -51,13 +51,13 @@ bool CFanart::load(Config &m_globalConfig, const char *path, const char *id)
 		if (!m_cfg.loaded()) m_cfg.load(sfmt("%s/%.3s.ini", dir, id).c_str());
 
 		fanBgLq.fromPNGFile(sfmt("%s/background_lq.png", dir).c_str(), GX_TF_RGBA8);
-		
+
 		for (int i = 1; i <= 6; i++)
 		{
 			CFanartElement elm(m_cfg, dir, i);
 			if (elm.IsValid()) m_elms.push_back(elm);
 		}
-		
+
 		m_loaded = true;
 		retval = true;
         m_defaultDelay = m_globalConfig.getInt("FANART", "delay_after_animation", 200);
@@ -66,10 +66,10 @@ bool CFanart::load(Config &m_globalConfig, const char *path, const char *id)
 	    m_globalHideCover = m_globalConfig.getOptBool("FANART", "hidecover");
 	    m_globalShowCoverAfterAnimation = m_globalConfig.getOptBool("FANART", "show_cover_after_animation");
    	}
-	
+
 	m_bg = fanBg;
 	m_bglq = fanBgLq;
-	
+
 	return retval;
 }
 
@@ -100,12 +100,12 @@ fanart_showafter defaults to False
 1   True              *             *              *               *       True
 2   False             *             *              *               *       False
 3  default          False           *              *               *       False
-4  default      default/True      True             *             True      True 
+4  default      default/True      True             *             True      True
 5  default      default/True      True             *             False     False
 6  default      default/True      False            *               *       True
 7  default      default/True     default          True           True      True
 8  default      default/True     default          True           False     False
-9    *                *               *            *               *       True   
+9    *                *               *            *               *       True
 */
     // rules 1 and 2
 	if (m_globalHideCover != 2)
@@ -167,7 +167,7 @@ void CFanart::draw(bool front)
 	GX_SetAlphaUpdate(GX_TRUE);
 	GX_SetCullMode(GX_CULL_NONE);
 	GX_SetZMode(GX_DISABLE, GX_LEQUAL, GX_TRUE);
-	
+
 	for (u32 i = 0; i < m_elms.size(); ++i)
 		if (!m_allowArtworkOnTop || ((front && m_elms[i].ShowOnTop()) || !front))
 			m_elms[i].draw();
@@ -180,9 +180,9 @@ CFanartElement::CFanartElement(Config &cfg, const char *dir, int artwork)
 	if (!m_isValid)	return;
 
 	const char *section = fmt("artwork%d", artwork);
-	
+
 	m_show_on_top = cfg.getBool(section, "show_on_top", true);
-	
+
 	m_x = cfg.getInt(section, "x");
 	m_y = cfg.getInt(section, "y");
 	m_scaleX = cfg.getFloat(section, "scale_x", 1.f);
@@ -198,7 +198,7 @@ CFanartElement::CFanartElement(Config &cfg, const char *dir, int artwork)
 	m_event_scaleY = m_event_duration == 0 ? m_scaleY : cfg.getInt(section, "event_scale_y", m_scaleY);
 	m_event_alpha = m_event_duration == 0 ? m_alpha : min(cfg.getInt(section, "event_alpha", m_alpha), 255); // Not from m_alpha, because the animation can start less translucent than m_alpha
 	m_event_angle = m_event_duration == 0 ? m_angle : cfg.getFloat(section, "event_angle", m_angle);
-	
+
 	m_step_x = m_event_duration == 0 ? 0 : (m_x - m_event_x) / m_event_duration;
 	m_step_y = m_event_duration == 0 ? 0 : (m_y - m_event_y) / m_event_duration;
 	m_step_scaleX = m_event_duration == 0 ? 0 : (m_scaleX - m_event_scaleX) / m_event_duration;
@@ -246,7 +246,7 @@ void CFanartElement::tick()
 		m_event_scaleY += m_step_scaleY;
 	if ((m_step_angle < 0 && m_event_angle > m_angle) || (m_step_angle > 0 && m_event_angle < m_angle))
 		m_event_angle = (int) (m_event_angle + m_step_angle);
-	
+
 	if (m_event_duration > 0)
 	{
 		m_event_duration--;
@@ -257,42 +257,42 @@ void CFanartElement::draw()
 {
 	if (m_event_alpha == 0 || m_event_scaleX == 0.f || m_event_scaleY == 0.f || m_delay > 0)
 		return;
-	
+
 	GXTexObj artwork;
 	Mtx modelViewMtx, idViewMtx, rotViewMtxZ;
 
 	guMtxIdentity(idViewMtx);
 	guMtxScaleApply(idViewMtx, idViewMtx, m_event_scaleX, m_event_scaleY, 1.f);
-	
+
 	guMtxRotAxisDeg(rotViewMtxZ, &_GRRaxisz, m_event_angle);
 	guMtxConcat(rotViewMtxZ, idViewMtx, modelViewMtx);
-	
+
 	guMtxTransApply(modelViewMtx, modelViewMtx, m_event_x, m_event_y, 0.f);
 	GX_LoadPosMtxImm(modelViewMtx, GX_PNMTX0);
 
 	GX_InitTexObj(&artwork, m_art.data.get(), m_art.width, m_art.height, m_art.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
 	GX_LoadTexObj(&artwork, GX_TEXMAP0);
-	
+
 	float w = (float)(m_art.width / 2); // * m_event_scaleX;
 	float h = (float)(m_art.height / 2); // * m_event_scaleY;
 
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-	
+
 	// Draw top left
 	GX_Position3f32(-w, -h, 0.f);
 	GX_Color4u8(0xFF, 0xFF, 0xFF, m_event_alpha);
 	GX_TexCoord2f32(0.f, 0.f);
-	
+
 	// Draw top right
 	GX_Position3f32(w, -h, 0.f);
 	GX_Color4u8(0xFF, 0xFF, 0xFF, m_event_alpha);
 	GX_TexCoord2f32(1.f, 0.f);
-	
+
 	// Draw bottom right
 	GX_Position3f32(w, h, 0.f);
 	GX_Color4u8(0xFF, 0xFF, 0xFF, m_event_alpha);
 	GX_TexCoord2f32(1.f, 1.f);
-	
+
 	// Draw bottom left
 	GX_Position3f32(-w, h, 0.f);
 	GX_Color4u8(0xFF, 0xFF, 0xFF, m_event_alpha);

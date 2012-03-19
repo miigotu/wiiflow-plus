@@ -21,7 +21,7 @@ void CMenu::SetupInput()
 		wmote_roll[chan] = 0;
 		wmote_roll_skip[chan] = 0;
 	}
-	
+
 	enable_wmote_roll = m_cfg.getBool("GENERAL", "wiimote_gestures");
 }
 
@@ -57,19 +57,19 @@ void CMenu::ScanInput()
 	m_show_zone_main3 = false;
 	m_show_zone_prev = false;
 	m_show_zone_next = false;
-	
+
     WPAD_ScanPads();
     PAD_ScanPads();
-	
+
 	ButtonsPressed();
 	ButtonsHeld();
 	LeftStick();
-	
+
 	for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 	{
 		wd[chan] = WPAD_Data(chan);
 		left_stick_angle[chan] = 0;
-		left_stick_mag[chan] = 0;		
+		left_stick_mag[chan] = 0;
 		right_stick_angle[chan] = 0;
 		right_stick_mag[chan] = 0;
 		switch (wd[chan]->exp.type)
@@ -183,9 +183,9 @@ void CMenu::LeftStick()
 				pointerhidedelay[chan] = 150;
 			}
 		}
-		else 
+		else
 		{
-			if(pointerhidedelay[chan] > 0 && !wii_btnsHeld && !wii_btnsPressed && !gc_btnsHeld && !gc_btnsPressed) 
+			if(pointerhidedelay[chan] > 0 && !wii_btnsHeld && !wii_btnsPressed && !gc_btnsHeld && !gc_btnsPressed)
 				pointerhidedelay[chan]--;
 			else
 			{
@@ -195,7 +195,7 @@ void CMenu::LeftStick()
 					stickPointer_x[chan] = (m_vid.width() + m_cursor[chan].width())/2;
 					stickPointer_y[chan] = (m_vid.height() + m_cursor[chan].height())/2;
 				}
-				else if (pointerhidedelay[chan] > 0) 
+				else if (pointerhidedelay[chan] > 0)
 						pointerhidedelay[chan] = 150;
 			}
 		}
@@ -227,7 +227,7 @@ bool CMenu::wii_btnRepeat(s64 btn)
 		{
 			if (m_wpadUpDelay == 0 || m_wpadUpDelay >= g_repeatDelay)
 				b = true;
-			if (m_wpadUpDelay < g_repeatDelay) 
+			if (m_wpadUpDelay < g_repeatDelay)
 				++m_wpadUpDelay;
 		}
 		else
@@ -239,7 +239,7 @@ bool CMenu::wii_btnRepeat(s64 btn)
 		{
 			if (m_wpadRightDelay == 0 || m_wpadRightDelay >= g_repeatDelay)
 				b = true;
-			if (m_wpadRightDelay < g_repeatDelay) 
+			if (m_wpadRightDelay < g_repeatDelay)
 				++m_wpadRightDelay;
 		}
 		else
@@ -251,7 +251,7 @@ bool CMenu::wii_btnRepeat(s64 btn)
 		{
 			if (m_wpadDownDelay == 0 || m_wpadDownDelay >= g_repeatDelay)
 				b = true;
-			if (m_wpadDownDelay < g_repeatDelay) 
+			if (m_wpadDownDelay < g_repeatDelay)
 				++m_wpadDownDelay;
 		}
 		else
@@ -263,7 +263,7 @@ bool CMenu::wii_btnRepeat(s64 btn)
 		{
 			if (m_wpadLeftDelay == 0 || m_wpadLeftDelay >= g_repeatDelay)
 				b = true;
-			if (m_wpadLeftDelay < g_repeatDelay) 
+			if (m_wpadLeftDelay < g_repeatDelay)
 				++m_wpadLeftDelay;
 		}
 		else
@@ -276,7 +276,7 @@ bool CMenu::wii_btnRepeat(s64 btn)
 			m_btnMgr.noClick(true);
 			if (m_wpadADelay == 0 || m_wpadADelay >= g_repeatDelay)
 				b = true;
-			if (m_wpadADelay < g_repeatDelay) 
+			if (m_wpadADelay < g_repeatDelay)
 				++m_wpadADelay;
 		}
 		else
@@ -292,7 +292,7 @@ bool CMenu::wii_btnRepeat(s64 btn)
 			m_btnMgr.noClick(true);
 			if (m_wpadBDelay == 0 || m_wpadBDelay >= g_repeatDelay)
 				b = true;
-			if (m_wpadBDelay < g_repeatDelay) 
+			if (m_wpadBDelay < g_repeatDelay)
 				++m_wpadBDelay;
 		}
 		else
@@ -313,7 +313,7 @@ bool CMenu::gc_btnRepeat(s64 btn)
 		{
 			if (m_padUpDelay == 0 || m_padUpDelay >= g_repeatDelay)
 				b = true;
-			if (m_padUpDelay < g_repeatDelay) 
+			if (m_padUpDelay < g_repeatDelay)
 				++m_padUpDelay;
 		}
 		else
@@ -325,7 +325,7 @@ bool CMenu::gc_btnRepeat(s64 btn)
 		{
 			if (m_padRightDelay == 0 || m_padRightDelay >= g_repeatDelay)
 				b = true;
-			if (m_padRightDelay < g_repeatDelay) 
+			if (m_padRightDelay < g_repeatDelay)
 				++m_padRightDelay;
 		}
 		else
@@ -337,7 +337,7 @@ bool CMenu::gc_btnRepeat(s64 btn)
 		{
 			if (m_padDownDelay == 0 || m_padDownDelay >= g_repeatDelay)
 				b = true;
-			if (m_padDownDelay < g_repeatDelay) 
+			if (m_padDownDelay < g_repeatDelay)
 				++m_padDownDelay;
 		}
 		else
@@ -350,7 +350,7 @@ bool CMenu::gc_btnRepeat(s64 btn)
 
 			if (m_padLeftDelay == 0 || m_padLeftDelay >= g_repeatDelay)
 				b = true;
-			if (m_padLeftDelay < g_repeatDelay) 
+			if (m_padLeftDelay < g_repeatDelay)
 				++m_padLeftDelay;
 		}
 		else
@@ -363,7 +363,7 @@ bool CMenu::gc_btnRepeat(s64 btn)
 			m_btnMgr.noClick(true);
 			if (m_padADelay == 0 || m_padADelay >= g_repeatDelay)
 				b = true;
-			if (m_padADelay < g_repeatDelay) 
+			if (m_padADelay < g_repeatDelay)
 				++m_padADelay;
 		}
 		else
@@ -379,7 +379,7 @@ bool CMenu::gc_btnRepeat(s64 btn)
 			m_btnMgr.noClick(true);
 			if (m_padBDelay == 0 || m_padBDelay >= g_repeatDelay)
 				b = true;
-			if (m_padBDelay < g_repeatDelay) 
+			if (m_padBDelay < g_repeatDelay)
 				++m_padBDelay;
 		}
 		else

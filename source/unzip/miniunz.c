@@ -23,7 +23,7 @@
 
 struct stat exists;
 
-static int mymkdir(const char* dirname) 
+static int mymkdir(const char* dirname)
 {
     if (stat(dirname, &exists) == 0)
 		return 0;
@@ -193,7 +193,7 @@ static int do_extract_currentfile(unzFile uf,const int* popt_extract_without_pat
 				*ptr = '\0';
                 makedir(path);
 				SAFE_FREE(path);
-				
+
                 *(filename_withoutpath-1)=c;
                 fout=fopen(write_filename,"wb");
             }

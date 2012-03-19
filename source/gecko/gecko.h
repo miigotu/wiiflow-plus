@@ -7,6 +7,10 @@
 extern "C" {
 #endif
 
+#ifdef FILE_GECKO
+	extern char gecko_logfile[MAX_FAT_PATH];
+#endif /* FILE_GECKO */
+
 	extern bool geckoinit;
 
 	//use this just like printf();

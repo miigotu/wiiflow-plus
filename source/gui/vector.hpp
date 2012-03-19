@@ -114,7 +114,7 @@ public:
 	{
 		return Vector3D(-x, -y, -z);
 	}
-	
+
 	Vector3D rotateX(float angle) const
 	{
 		angle *= 0.01745329251994329577;

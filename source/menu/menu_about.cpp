@@ -110,12 +110,12 @@ void CMenu::_initAboutMenu(CMenu::SThemeData &theme)
 	m_aboutLblInfo = _addText(theme, "ABOUT/INFO", 40, 120, 560, 280, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_aboutBtnSystem = _addButton(theme, "ABOUT/SYSTEM_BTN", 20, 410, 200, 56);
 	m_aboutLblIOS = _addLabel(theme, "ABOUT/IOS", 240, 400, 360, 56, FTGX_JUSTIFY_RIGHT | FTGX_ALIGN_MIDDLE);
-	// 
+	//
 	_setHideAnim(m_aboutLblTitle, "ABOUT/TITLE", 0, 100, 0.f, 0.f);
 	_setHideAnim(m_aboutLblInfo, "ABOUT/INFO", 0, -100, 0.f, 0.f);
 	_setHideAnim(m_aboutBtnSystem, "ABOUT/SYSTEM_BTN", 0, 0, 1.f, 0.f);
 	_setHideAnim(m_aboutLblIOS, "ABOUT/IOS", 0, 100, 0.f, 0.f);
-	// 
+	//
 	_hideAbout(true);
 	_textAbout();
 }

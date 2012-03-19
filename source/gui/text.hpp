@@ -37,7 +37,7 @@ public:
 	void draw(void);
 	int getTotalHeight();
 private:
-	
+
 	struct SWord
 	{
 		wstringEx text;

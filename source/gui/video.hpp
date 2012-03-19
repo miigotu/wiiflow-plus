@@ -99,7 +99,7 @@ private:
 	volatile bool m_showingWaitMessages;
 	volatile bool m_useWiiLight;
 	safe_vector<STexture> m_waitMessages;
-	// 
+	//
 	static const int _stencilWidth;
 	static const int _stencilHeight;
 	static const float _jitter2[2][2];

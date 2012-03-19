@@ -59,6 +59,24 @@ static void USBGeckoOutput()
         devoptab_list[STD_ERR] = &gecko_out;
 }
 
+#ifdef FILE_GECKO
+char gecko_logfile[MAX_FAT_PATH];
+static FILE *file = NULL;
+static void write_log(char *line)
+{
+	if(strlen(gecko_logfile) < 26) return;
+	if(file) while(file);;
+
+	file = fopen(gecko_logfile, "a");
+	if(!file) return;
+
+	fprintf(file, line);
+	fflush(file);
+
+	SAFE_CLOSE(file);
+}
+#endif /* FILE_GECKO */
+
 //using the gprintf from crediar because it is smaller than mine
 void gprintf( const char *format, ... )
 {
@@ -70,6 +88,9 @@ void gprintf( const char *format, ... )
 		WifiGecko_Send(tmp, strlen(tmp));
 		if (geckoinit)
 			__out_write(NULL, 0, tmp, strlen(tmp));
+#ifdef FILE_GECKO
+		else write_log(tmp);
+#endif /* FILE_GECKO */
 	}
 	va_end(va);
 
@@ -109,6 +130,10 @@ void ghexdump(void *d, int len) {
 bool InitGecko()
 {
 	if (geckoinit) return geckoinit;
+
+#ifdef FILE_GECKO
+	bzero(gecko_logfile, MAX_FAT_PATH);
+#endif /* FILE_GECKO */
 
 	USBGeckoOutput();	
 

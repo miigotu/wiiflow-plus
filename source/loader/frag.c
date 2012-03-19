@@ -230,7 +230,7 @@ int get_frag_list(u8 *id, char *path, const u32 hdd_sector_size)
 			// offset to start of partition
 			for (j = 0; j < fs->num; j++) fs->frag[j].sector += wbfs_part_lba;
 		}
-		
+
 		frag_concat(fa, fs);
 	}
 
@@ -246,7 +246,7 @@ int get_frag_list(u8 *id, char *path, const u32 hdd_sector_size)
 		}
 		frag_init(fw, MAX_FRAG);
 		ret = wbfs_get_fragments(disc, &_frag_append, fw, hdd_sector_size);
-		if (ret) 
+		if (ret)
 		{
 			ret_val = -5;
 			goto out;
@@ -289,7 +289,7 @@ int set_frag_list(u8 *id)
 	frag_list = NULL;
 
 	if (ret) return ret;
-	
+
 	// verify id matches
 	char discid[32] ATTRIBUTE_ALIGN(32);
 	memset(discid, 0, sizeof(discid));

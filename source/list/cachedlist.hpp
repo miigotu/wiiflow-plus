@@ -52,7 +52,7 @@ class CachedList : public safe_vector<T>
 
     void Add(T tmp) {if(m_loaded) CCache<T>(*this, m_database, tmp, ADD);}					/* Add One */
     void Remove(u32 index) {if(m_loaded) CCache<T>(*this, m_database, index, REMOVE);}		/* Remove One */
-	
+
 	void SetLanguage(string curLanguage) { m_curLanguage = m_channelLang = curLanguage; }
   private:
     string make_db_name(string path);

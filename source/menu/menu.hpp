@@ -80,7 +80,7 @@ class CMenu
 		std::string m_curChanId;
 
 		u8 m_numCFVersions;
-		// 
+		//
 		std::string m_themeDataDir;
 		std::string m_appDir;
 		std::string m_dataDir;
@@ -108,7 +108,7 @@ class CMenu
 		u32 m_data_update_size;
 		std::string m_ver;
 		/* End Updates */
-		// 
+		//
 		STexture m_prevBg;
 		STexture m_nextBg;
 		STexture m_curBg;
@@ -133,7 +133,7 @@ class CMenu
 		STexture m_gameBgLQ;
 		STexture m_mainBgLQ;
 		STexture m_categoryBg;
-		// 
+		//
 		u32 m_errorLblMessage;
 		u32 m_errorLblIcon;
 		u32 m_errorLblUser[4];
@@ -164,7 +164,7 @@ class CMenu
 		u32 m_configBtnBack;
 		u32 m_configLblTitle;
 		u32 m_configLblDownload;
-		u32 m_configBtnDownload; 
+		u32 m_configBtnDownload;
 		u32 m_configLblParental;
 		u32 m_configBtnUnlock;
 		u32 m_configBtnSetCode;
@@ -276,7 +276,7 @@ class CMenu
 		u32 m_gameBtnSettings;
 		u32 m_gameBtnBack;
 		u32 m_gameLblUser[4];
-	// Parental code menu	
+	// Parental code menu
 		u32 m_codeLblTitle;
 		u32 m_codeBtnKey[10];
 		u32 m_codeBtnBack;
@@ -367,9 +367,9 @@ class CMenu
 		u32 m_systemLblUser[4];
 		u32 m_systemBtnDownload;
 		u32 m_systemLblInfo;
-		u32 m_systemLblVerSelectVal;	
-		u32 m_systemBtnVerSelectM;	
-		u32 m_systemBtnVerSelectP;	
+		u32 m_systemLblVerSelectVal;
+		u32 m_systemBtnVerSelectM;
+		u32 m_systemBtnVerSelectP;
 	//Cheat menu
 		u32 m_cheatBtnBack;
 		u32 m_cheatBtnApply;
@@ -418,13 +418,13 @@ class CMenu
 		SZone m_gameButtonsZone;
 		volatile bool m_reload;
 		bool m_initialCoverStatusComplete;
-		
+
 		WPADData *wd[WPAD_MAX_WIIMOTES];
 		void LeftStick();
 		u8 pointerhidedelay[WPAD_MAX_WIIMOTES];
 		u16 stickPointer_x[WPAD_MAX_WIIMOTES];
 		u16 stickPointer_y[WPAD_MAX_WIIMOTES];
-		
+
 		u8 m_wpadLeftDelay;
 		u8 m_wpadDownDelay;
 		u8 m_wpadRightDelay;
@@ -438,7 +438,7 @@ class CMenu
 		u8 m_padUpDelay;
 		u8 m_padADelay;
 		//u8 m_padBDelay;
-		
+
 		u32 wii_btnsPressed;
 		u32 wii_btnsHeld;
 		u32 gc_btnsPressed;
@@ -478,7 +478,7 @@ class CMenu
 
 		bool WPadIR_Valid(int chan);
 		bool WPadIR_ANY(void);
-		
+
 		void ShowZone(SZone zone, bool &showZone);
 		void ShowMainZone(void);
 		void ShowMainZone2(void);
@@ -495,7 +495,7 @@ class CMenu
 
 		volatile bool m_exit;
 		volatile bool m_disable_exit;
-		
+
 		volatile bool m_networkInit;
 		volatile bool m_thrdStop;
 		volatile bool m_thrdWorking;
@@ -513,7 +513,7 @@ class CMenu
 		volatile dir_discHdr *m_gameSoundHdr;
 		volatile bool m_gamesound_changed;
 		u8 m_bnrSndVol;
-		
+
 		bool m_video_playing;
 
 	private:
@@ -563,13 +563,13 @@ class CMenu
 			float step[4];
 			float minMaxVal[4][2];
 		};
-		// 
+		//
 		void _loadList(void);
 		void _loadGameList(void);
 		void _loadHomebrewList(void);
 		void _loadChannelList(void);
 		void _initCF(void);
-		// 
+		//
 		void _initMainMenu(SThemeData &theme);
 		void _initErrorMenu(SThemeData &theme);
 		void _initConfigMenu(SThemeData &theme);
@@ -656,7 +656,7 @@ class CMenu
 		void _updateBg(void);
 		void _drawBg(void);
 		void _updateText(void);
-		// 
+		//
 		void _config(int page);
 		int _config1(void);
 		int _config3(void);
@@ -677,7 +677,7 @@ class CMenu
 		void _CategorySettings();
 		//
 		void _mainLoopCommon(bool withCF = false, bool blockReboot = false, bool adjusting = false);
-		// 
+		//
 		safe_vector<dir_discHdr> _searchGamesByID(const char *gameId);
 	/* 	safe_vector<dir_discHdr> _searchGamesByTitle(wchar_t letter);
 		safe_vector<dir_discHdr> _searchGamesByType(const char type);
@@ -727,11 +727,11 @@ class CMenu
 		void _setHideAnim(u32 id, const char *domain, int dx, int dy, float scaleX, float scaleY);
 		void _addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 size, const char *domain);
 		void _addUserLabels(CMenu::SThemeData &theme, u32 *ids, u32 start, u32 size, const char *domain);
-		// 
+		//
 		const wstringEx _t(const char *key, const wchar_t *def = L"") { return m_loc.getWString(m_curLanguage, key, def); }
 		const wstringEx _fmt(const char *key, const wchar_t *def);
 		wstringEx _getNoticeTranslation(int sorting, wstringEx curLetter);
-		// 
+		//
 		void _setThrdMsg(const wstringEx &msg, float progress);
 		int _coverDownloader(bool missingOnly);
 		static int _coverDownloaderAll(CMenu *m);
@@ -754,7 +754,7 @@ class CMenu
 		void _stopSounds(void);
 		//
 		static u32 _downloadCheatFileAsync(void *obj);
-		// 
+		//
 		void _playGameSound(void);
 		void CheckGameSoundThread(bool force = false);
 		void CheckThreads(bool force = false);
@@ -775,7 +775,7 @@ class CMenu
 		static int _version[9];
 		static const SCFParamDesc _cfParams[];
 		static const int _nbCfgPages;
-		
+
 		static inline int loopNum(int i, int s) { return i < 0 ? (s - (-i % s)) % s : i % s; }
 		void SwitchPartition(bool direction, bool showLabel = false);
 	protected:

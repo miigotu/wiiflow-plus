@@ -47,16 +47,16 @@ u8 has_enabled_providers()
 void add_game_to_card(const char *gameid)
 {
 	int i;
-	
+
 	char *url = (char *) malloc(MAX_URL_SIZE); // Too much memory, but only like 10 bytes
 	memset(url, 0, sizeof(url));
-	
+
 	for (i = 0; i < amount_of_providers && providers != NULL; i++)
 	{
 		if (strlen(providers[i].url) > 0 && strlen(providers[i].key) > 0)
 		{
 			strcpy(url, (char *) providers[i].url);
-			str_replace(url, (char *) "{KEY}", (char *) providers[i].key, MAX_URL_SIZE);		
+			str_replace(url, (char *) "{KEY}", (char *) providers[i].key, MAX_URL_SIZE);
 			str_replace(url, (char *) "{ID6}", (char *) gameid, MAX_URL_SIZE);
 
 			downloadfile(NULL, 0, (char *) url, NULL, NULL);

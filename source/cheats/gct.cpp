@@ -129,7 +129,7 @@ int GCTCheats::createGCT(int nr[],int cnt,const char * filename)
 	while (c != cnt)
 	{
 		string buf = getCheat(nr[c]);
-		
+
 		int x = 0;
 		while (x < (int)buf.size())
 		{
@@ -203,7 +203,7 @@ int GCTCheats::createTXT(const char * filename)
 			file << "#selected#" << sCheatComment[i] << endl;
 			file << endl;
 		}
-			
+
 	for (unsigned int i=0; i < iCntCheats; ++i)
 		if  (!sCheatSelected[i])
 		{
@@ -242,11 +242,11 @@ int GCTCheats::openTxtfile(const char * filename)
 	getline(filestr,sGameID);
 	if (sGameID[sGameID.length() - 1] == '\r')
 		sGameID.erase(sGameID.length() - 1);
-	
+
 	getline(filestr,sGameTitle);
 	if (sGameTitle[sGameTitle.length() - 1] == '\r')
 		sGameTitle.erase(sGameTitle.length() - 1);
-				
+
 	getline(filestr,sCheatName[i]);  // skip first line if file uses CRLF
 	if (!sGameTitle[sGameTitle.length() - 1] == '\r')
 	   filestr.seekg(0,ios_base::beg);
@@ -264,7 +264,7 @@ int GCTCheats::openTxtfile(const char * filename)
 			getline(filestr,str);
 			if (str[str.length() - 1] == '\r')
 				str.erase(str.length() - 1);
-				 
+				
 			if (str == "" || str[0] == '\r' || str[0] == '\n')
 			{
 				emptyline = true;
@@ -272,10 +272,10 @@ int GCTCheats::openTxtfile(const char * filename)
 			}
 
 			codestatus = IsCodeEx(str);
-			if (codestatus == 1) 
+			if (codestatus == 1)
 				// line contains X code, so whole cheat is dynamic
 				codedynamic = true;
-				
+
 			if (codestatus == 2)
 			{
 				// remove any garbage (comment) after code
@@ -290,7 +290,7 @@ int GCTCheats::openTxtfile(const char * filename)
 				sCheatComment[i] = str;
 
 			if (filestr.eof()) break;
-		   
+		
 		}
 
 		if (!codedynamic && cheatdata.size() > 0)
@@ -307,7 +307,7 @@ int GCTCheats::openTxtfile(const char * filename)
 		}
 		else
 			sCheatComment[i] = "";
-			
+
 		codedynamic = false;
 		if (i == MAXCHEATS) break;
 	}
@@ -358,6 +358,6 @@ int GCTCheats::IsCodeEx(const std::string& str)
 void GCTCheats::Reset()
 {
 	iCntCheats = 0;
-	for (int i=0;i<MAXCHEATS;++i) 
+	for (int i=0;i<MAXCHEATS;++i)
 		sCheatSelected[i] = false;
 }

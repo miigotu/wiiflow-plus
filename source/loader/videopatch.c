@@ -8,7 +8,7 @@
 
 extern GXRModeObj TVNtsc480Int;
 
-GXRModeObj TVPal528Prog = 
+GXRModeObj TVPal528Prog =
 {
     6,      		 // viDisplayMode
     640,             // fbWidth
@@ -29,7 +29,7 @@ GXRModeObj TVPal528Prog =
 		{6,6},{6,6},{6,6},  // pix 2
 		{6,6},{6,6},{6,6}   // pix 3
 	},
-	
+
     // vertical filter[7], 1/64 units, 6 bits each
 	{
 		 0,         // line n-1
@@ -43,7 +43,7 @@ GXRModeObj TVPal528Prog =
 
 };
 
-GXRModeObj TVPal528ProgSoft = 
+GXRModeObj TVPal528ProgSoft =
 {
     6,      		 // viDisplayMode
     640,             // fbWidth
@@ -64,7 +64,7 @@ GXRModeObj TVPal528ProgSoft =
 		{6,6},{6,6},{6,6},  // pix 2
 		{6,6},{6,6},{6,6}   // pix 3
 	},
-	
+
     // vertical filter[7], 1/64 units, 6 bits each
 	{
 		 8,         // line n-1
@@ -78,7 +78,7 @@ GXRModeObj TVPal528ProgSoft =
 
 };
 
-GXRModeObj TVPal528ProgUnknown = 
+GXRModeObj TVPal528ProgUnknown =
 {
     6,      		 // viDisplayMode
     640,             // fbWidth
@@ -99,7 +99,7 @@ GXRModeObj TVPal528ProgUnknown =
 		{9,2},{3,6},{9,10},  // pix 2
 		{9,2},{3,6},{9,10}   // pix 3
 	},
-	
+
     // vertical filter[7], 1/64 units, 6 bits each
 	{
 		 4,         // line n-1
@@ -152,7 +152,7 @@ static const GXRModeObj *g_vidmodes[] = {
 	&TVNtsc480IntDf,
 	&TVNtsc480Prog,
 
-	&TVPal528Int, 
+	&TVPal528Int,
 	&TVPal528IntDf,
 	&TVPal528Prog,
 	&TVPal528ProgSoft,

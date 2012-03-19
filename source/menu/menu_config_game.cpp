@@ -57,8 +57,8 @@ void CMenu::_hideGameSettings(bool instant)
 	m_btnMgr.hide(m_gameSettingsBtnDebuggerM, instant);
 
 	for (int i = 0; i < 12; ++i) {
-		m_btnMgr.hide(m_gameSettingsBtnCategory[i], instant); 
-		m_btnMgr.hide(m_gameSettingsLblCategory[i], instant); 
+		m_btnMgr.hide(m_gameSettingsBtnCategory[i], instant);
+		m_btnMgr.hide(m_gameSettingsLblCategory[i], instant);
 	}
 	for (u32 i = 0; i < ARRAY_SIZE(m_gameSettingsLblUser); ++i)
 		if (m_gameSettingsLblUser[i] != -1u)
@@ -104,7 +104,7 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.show(m_gameSettingsBtnLanguageP);
 		m_btnMgr.show(m_gameSettingsBtnLanguageM);
 
-		m_btnMgr.show(m_gameSettingsLblGameVideo);		
+		m_btnMgr.show(m_gameSettingsLblGameVideo);
 		m_btnMgr.show(m_gameSettingsLblVideo);
 		m_btnMgr.show(m_gameSettingsBtnVideoP);
 		m_btnMgr.show(m_gameSettingsBtnVideoM);
@@ -123,7 +123,7 @@ void CMenu::_showGameSettings(void)
 		m_btnMgr.hide(m_gameSettingsBtnLanguageP);
 		m_btnMgr.hide(m_gameSettingsBtnLanguageM);
 
-		m_btnMgr.hide(m_gameSettingsLblGameVideo);		
+		m_btnMgr.hide(m_gameSettingsLblGameVideo);
 		m_btnMgr.hide(m_gameSettingsLblVideo);
 		m_btnMgr.hide(m_gameSettingsBtnVideoP);
 		m_btnMgr.hide(m_gameSettingsBtnVideoM);
@@ -185,7 +185,7 @@ void CMenu::_showGameSettings(void)
 			m_btnMgr.show(m_gameSettingsLblEmulation);
 			m_btnMgr.show(m_gameSettingsBtnEmulationP);
 			m_btnMgr.show(m_gameSettingsBtnEmulationM);
-		}		
+		}
 	}
 	else
 	{
@@ -207,7 +207,7 @@ void CMenu::_showGameSettings(void)
 	}
 
 	u32 i = 0;
-	
+
 	//Categories Pages
 	if (m_gameSettingsPage == 51)
 	{
@@ -215,7 +215,7 @@ void CMenu::_showGameSettings(void)
 		{
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
-		}		
+		}
 	}
 	else
 	{
@@ -223,7 +223,7 @@ void CMenu::_showGameSettings(void)
 		{
 			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
-		}		
+		}
 	}
 	if (m_gameSettingsPage == 52)
 	{
@@ -231,7 +231,7 @@ void CMenu::_showGameSettings(void)
 		{
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
-		}		
+		}
 	}
 	else
 	{
@@ -239,7 +239,7 @@ void CMenu::_showGameSettings(void)
 		{
 			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
-		}		
+		}
 	}
 	if (m_gameSettingsPage == 53)
 	{
@@ -247,7 +247,7 @@ void CMenu::_showGameSettings(void)
 		{
 			m_btnMgr.show(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.show(m_gameSettingsLblCategory[i]);
-		}		
+		}
 	}
 	else
 	{
@@ -255,9 +255,9 @@ void CMenu::_showGameSettings(void)
 		{
 			m_btnMgr.hide(m_gameSettingsBtnCategory[i]);
 			m_btnMgr.hide(m_gameSettingsLblCategory[i]);
-		}	
+		}
 	}
-	
+
 	for (i = 0; i < ARRAY_SIZE(m_gameSettingsLblUser); ++i)
 		if (m_gameSettingsLblUser[i] != -1u)
 			m_btnMgr.show(m_gameSettingsLblUser[i]);
@@ -285,11 +285,11 @@ void CMenu::_showGameSettings(void)
 
 	int j = EMU_DEFAULT;
 	m_gcfg2.getInt(id, "emulation", &j);
-	m_btnMgr.setText(m_gameSettingsLblEmulationVal, _t(CMenu::_Emulation[j].id, CMenu::_Emulation[j].text));	
+	m_btnMgr.setText(m_gameSettingsLblEmulationVal, _t(CMenu::_Emulation[j].id, CMenu::_Emulation[j].text));
 
-	m_btnMgr.setText(m_gameSettingsLblDebuggerV, m_gcfg2.getBool(id, "debugger") ? _t("gecko", L"Gecko") : _t("def", L"Default"));		
+	m_btnMgr.setText(m_gameSettingsLblDebuggerV, m_gcfg2.getBool(id, "debugger") ? _t("gecko", L"Gecko") : _t("def", L"Default"));
 	m_btnMgr.setText(m_gameSettingsBtnCategoryMain, _fmt("cfgg16",  L"Select").c_str());
-	
+
 	char *categories = (char *) m_cat.getString("CATEGORIES", id, "").c_str();
 	memset(&m_gameSettingCategories, '0', sizeof(m_gameSettingCategories));
 	if (strlen(categories) == sizeof(m_gameSettingCategories))
@@ -460,7 +460,7 @@ void CMenu::_gameSettings(void)
 				}
 		}
 		else if ((WBTN_2_HELD && WBTN_1_PRESSED) || (WBTN_1_HELD && WBTN_2_PRESSED))
-		{	
+		{
 			if (m_btnMgr.selected(m_gameSettingsBtnCover))
 			{
 					m_cf.stopCoverLoader(true);	// Empty cover cache
@@ -486,7 +486,7 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	m_gameSettingsBtnCover = _addButton(theme, "GAME_SETTINGS/COVER_BTN", 330, 130, 270, 56);
 	m_gameSettingsLblCategoryMain = _addLabel(theme, "GAME_SETTINGS/CAT_MAIN", 40, 190, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsBtnCategoryMain = _addButton(theme, "GAME_SETTINGS/CAT_MAIN_BTN", 330, 190, 270, 56);
-	
+
 	m_gameSettingsLblGameLanguage = _addLabel(theme, "GAME_SETTINGS/GAME_LANG", 40, 250, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsLblLanguage = _addLabel(theme, "GAME_SETTINGS/GAME_LANG_BTN", 386, 250, 158, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnLanguageM = _addPicButton(theme, "GAME_SETTINGS/GAME_LANG_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 330, 250, 56, 56);
@@ -523,7 +523,7 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	m_gameSettingsLblEmulationVal = _addLabel(theme, "GAME_SETTINGS/EMU_BTN", 436, 310, 108, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnEmulationM = _addPicButton(theme, "GAME_SETTINGS/EMU_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 380, 310, 56, 56);
 	m_gameSettingsBtnEmulationP = _addPicButton(theme, "GAME_SETTINGS/EMU_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 310, 56, 56);
-	//Categories Page 1 
+	//Categories Page 1
 	//m_gameSettingsLblCategory[0] = _addLabel(theme, "GAME_SETTINGS/CAT_ALL", theme.lblFont, L"All", 40, 130, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	//m_gameSettingsBtnCategory[0] = _addButton(theme, "GAME_SETTINGS/CAT_ALL_BTN", 330, 130, 270, 56);
 
@@ -535,7 +535,7 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	m_gameSettingsBtnCategory[3] = _addButton(theme, "GAME_SETTINGS/CAT_3_BTN", 330, 250, 270, 56);
 	m_gameSettingsLblCategory[4] = _addLabel(theme, "GAME_SETTINGS/CAT_4", 40, 310, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsBtnCategory[4] = _addButton(theme, "GAME_SETTINGS/CAT_4_BTN", 330, 310, 270, 56);
-	
+
 	//Categories Page 2
 	m_gameSettingsLblCategory[5] = _addLabel(theme, "GAME_SETTINGS/CAT_5", 40, 130, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsBtnCategory[5] = _addButton(theme, "GAME_SETTINGS/CAT_5_BTN", 330, 130, 270, 56);
@@ -546,7 +546,7 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	m_gameSettingsLblCategory[8] = _addLabel(theme, "GAME_SETTINGS/CAT_8", 40, 310, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsBtnCategory[8] = _addButton(theme, "GAME_SETTINGS/CAT_8_BTN", 330, 310, 270, 56);
 
-	//Categories Page 3 
+	//Categories Page 3
 	m_gameSettingsLblCategory[9] = _addLabel(theme, "GAME_SETTINGS/CAT_9", 40, 130, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsBtnCategory[9] = _addButton(theme, "GAME_SETTINGS/CAT_9_BTN", 330, 130, 270, 56);
 	m_gameSettingsLblCategory[10] = _addLabel(theme, "GAME_SETTINGS/CAT_10", 40, 190, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
@@ -554,12 +554,12 @@ void CMenu::_initGameSettingsMenu(CMenu::SThemeData &theme)
 	m_gameSettingsLblCategory[11] = _addLabel(theme, "GAME_SETTINGS/CAT_11", 40, 250, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_gameSettingsBtnCategory[11] = _addButton(theme, "GAME_SETTINGS/CAT_11_BTN", 330, 250, 270, 56);
 
-	// 
+	//
 	m_gameSettingsLblPage = _addLabel(theme, "GAME_SETTINGS/PAGE_BTN", 76, 410, 80, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_gameSettingsBtnPageM = _addPicButton(theme, "GAME_SETTINGS/PAGE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 20, 410, 56, 56);
 	m_gameSettingsBtnPageP = _addPicButton(theme, "GAME_SETTINGS/PAGE_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 156, 410, 56, 56);
 	m_gameSettingsBtnBack = _addButton(theme, "GAME_SETTINGS/BACK_BTN", 420, 410, 200, 56);
-	// 
+	//
 	_setHideAnim(m_gameSettingsLblTitle, "GAME_SETTINGS/TITLE", 0, -200, 0.f, 1.f);
 	_setHideAnim(m_gameSettingsLblGameVideo, "GAME_SETTINGS/VIDEO", 0, 0, 1.f, 0.f);
 	_setHideAnim(m_gameSettingsLblVideo, "GAME_SETTINGS/VIDEO_BTN", 0, 0, 1.f, 0.f);

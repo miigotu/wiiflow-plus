@@ -31,7 +31,7 @@ extern const SMeshVert g_boxCoverMesh[];
 extern const u32 g_boxCoverMeshSize;
 extern const CTexCoord g_boxCoverFlatTex[];
 extern const CTexCoord g_boxCoverBackTex[];
-// 
+//
 extern const float g_boxCoverYCenter;
 extern const float g_coverYCenter;
 

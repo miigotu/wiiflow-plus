@@ -2,7 +2,7 @@
 #define CCACHE
 
 #include <sys/types.h>
-#include <ogcsys.h> 
+#include <ogcsys.h>
 #include <fstream>
 #include "safe_vector.hpp"
 #include "disc.h"
@@ -39,7 +39,7 @@ class CCache
 		void SaveOne(T tmp, u32 index);
 		void LoadAll(safe_vector<T> &list);
 		void LoadOne(T &tmp, u32 index);
-		
+
 		void AddOne(safe_vector<T> &list, T tmp);
 		void RemoveOne(safe_vector<T> &list, u32 index);
 

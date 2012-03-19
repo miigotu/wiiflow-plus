@@ -38,18 +38,18 @@ class CCoverFlow
 	public:
 		CCoverFlow(void);
 		~CCoverFlow(void);
-		// 
+		//
 		bool init(const SmartBuf &font, u32 font_size);
 		// Cover list management
 		void clear(void);
 		void reserve(u32 capacity);
 		void addItem(dir_discHdr *hdr, const char *picPath, const char *boxPicPath, int playcount = 0, unsigned int lastPlayed = 0);
 		bool empty(void) const { return m_items.empty(); }
-		// 
+		//
 		bool start(const char *id = 0);
 		void stopCoverLoader(bool empty = false);
 		void startCoverLoader(void);
-		// 
+		//
 		void simulateOtherScreenFormat(bool s);
 		// Commands
 		void tick(void);
@@ -113,17 +113,17 @@ class CCoverFlow
 		void setCoverFlipping(const Vector3D &pos, const Vector3D &angle, const Vector3D &scale);
 		void setBlur(u32 blurResolution, u32 blurRadius, float blurFactor);
 		bool setSorting(Sorting sorting);
-		// 
+		//
 		void setSounds(const SmartGuiSound &sound, const SmartGuiSound &hoverSound, const SmartGuiSound &selectSound, const SmartGuiSound &cancelSound);
 		void setSoundVolume(u8 vol);
 		void stopSound(void);
 		void playSound(SmartGuiSound snd);
-		// 
+		//
 		void applySettings(void);
 		void setCachePath(const char *path, bool deleteSource, bool compress);
 		bool fullCoverCached(const char *id);
 		bool preCacheCover(const char *id, const u8 *png, bool full);
-		// 
+		//
 		std::string getId(void) const;
 		std::string getNextId(void) const;
 		dir_discHdr * getHdr(void) const;
@@ -193,7 +193,7 @@ class CCoverFlow
 			STexture texture;
 			volatile bool boxTexture;
 			volatile enum TexState state;
-			// 
+			//
 			CItem(dir_discHdr *itemHdr, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed);
 		};
 		struct CCover
@@ -216,7 +216,7 @@ class CCoverFlow
 			CText title;
 			CColor shadowColor;
 			CColor targetShadowColor;
-			// 
+			//
 			CCover(void);
 		};
 		enum CLRet { CL_OK, CL_ERROR, CL_NOMEM };

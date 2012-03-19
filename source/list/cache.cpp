@@ -120,7 +120,7 @@ void CCache<T>::LoadAll(safe_vector<T> &list)
 	fseek(cache, 0, SEEK_SET);
 
 	u32 count = (u32)(fileSize / sizeof(T));
-	
+
 	list.reserve(count + list.size());
 	for(u32 i = 0; i < count; i++)
 	{

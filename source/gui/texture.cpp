@@ -408,7 +408,7 @@ void STexture::_resize(u8 *dst, u32 dstWidth, u32 dstHeight, const u8 *src, u32 
 	float hc = (float)srcHeight / (float)dstHeight;
 	float ax1;
 	float ay1;
-	
+
 	for (u32 y = 0; y < dstHeight; ++y)
 	{
 		for (u32 x = 0; x < dstWidth; ++x)

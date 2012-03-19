@@ -64,7 +64,7 @@ static bool show_homebrew = true;
 void CMenu::_showMain(void)
 {
 	_hideWaitMessage();
-#ifdef SHOWMEM	
+#ifdef SHOWMEM
 	m_btnMgr.show(m_mem2FreeSize);
 #endif
 	m_vid.set2DViewport(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480),
@@ -114,7 +114,7 @@ void CMenu::LoadView(void)
 {
 	_showWaitMessage();
 	_hideMain();
-	
+
 	m_curGameId = m_cf.getId();
 
 	_loadList();
@@ -159,7 +159,7 @@ int CMenu::main(void)
 
 	static lwp_t coverStatus = LWP_THREAD_NULL;
 	unsigned int stack_size = (unsigned int)32768;
-	SmartBuf coverstatus_stack = smartMem2Alloc(stack_size);	
+	SmartBuf coverstatus_stack = smartMem2Alloc(stack_size);
 	LWP_CreateThread(&coverStatus, (void *(*)(void *))CMenu::GetCoverStatusAsync, (void *)this, coverstatus_stack.get(), stack_size, 40);
 	while (true)
 	{
@@ -184,15 +184,15 @@ int CMenu::main(void)
 			if(!m_locked && !m_disable_exit)
 			{
 				exitSet = true;
-				
+
 				if(BTN_PLUS_HELD) Sys_ExitTo(EXIT_TO_HBC);
 				else if(BTN_MINUS_HELD) Sys_ExitTo(EXIT_TO_MENU);
 				else if(BTN_1_HELD) Sys_ExitTo(EXIT_TO_PRIILOADER);
 				else if(BTN_2_HELD)	//Check that the files are there, or ios will hang.
 				{
 						struct stat dummy;
-						if(DeviceHandler::Instance()->IsInserted(SD) && 
-						stat(sfmt("%s:/bootmii/armboot.bin", DeviceName[SD]).c_str(), &dummy) == 0 && 
+						if(DeviceHandler::Instance()->IsInserted(SD) &&
+						stat(sfmt("%s:/bootmii/armboot.bin", DeviceName[SD]).c_str(), &dummy) == 0 &&
 						stat(sfmt("%s:/bootmii/ppcboot.elf", DeviceName[SD]).c_str(), &dummy) == 0)
 							Sys_ExitTo(EXIT_TO_BOOTMII);
 						else  Sys_ExitTo(EXIT_TO_HBC);
@@ -294,7 +294,7 @@ int CMenu::main(void)
 				else if (sort == SORT_CONTROLLERS)
 					curSort = m_loc.getWString(m_curLanguage, "bycontrollers", L"By Controllers");
 
-				m_showtimer=60; 
+				m_showtimer=60;
 				m_btnMgr.setText(m_mainLblNotice, curSort);
 				m_btnMgr.show(m_mainLblNotice);
 			}
@@ -350,7 +350,7 @@ int CMenu::main(void)
 				wchar_t c[2] = {0, 0};
 				m_btnMgr.selected(m_mainBtnPrev) ? m_cf.prevLetter(c) : m_cf.nextLetter(c);
 				m_showtimer = 60;
-				
+
 				curLetter.clear();
 				curLetter = wstringEx(c);
 
@@ -387,8 +387,8 @@ int CMenu::main(void)
 					else if(BTN_1_HELD) Sys_ExitTo(EXIT_TO_PRIILOADER);
 					else if(BTN_2_HELD)	//Check that the files are there, or ios will hang.
 					{
-						if(DeviceHandler::Instance()->IsInserted(SD) && 
-						stat(sfmt("%s:/bootmii/armboot.bin", DeviceName[SD]).c_str(), &dummy) == 0 && 
+						if(DeviceHandler::Instance()->IsInserted(SD) &&
+						stat(sfmt("%s:/bootmii/armboot.bin", DeviceName[SD]).c_str(), &dummy) == 0 &&
 						stat(sfmt("%s:/bootmii/ppcboot.elf", DeviceName[SD]).c_str(), &dummy) == 0)
 							Sys_ExitTo(EXIT_TO_BOOTMII);
 						 else Sys_ExitTo(EXIT_TO_HBC);
@@ -399,7 +399,7 @@ int CMenu::main(void)
 			}
 			else if (m_btnMgr.selected(m_mainBtnChannel) || m_btnMgr.selected(m_mainBtnUsb) || m_btnMgr.selected(m_mainBtnHomebrew))
 			{
-				if (m_current_view == COVERFLOW_USB) 
+				if (m_current_view == COVERFLOW_USB)
 					m_current_view = COVERFLOW_CHANNEL;
 				else if (m_current_view == COVERFLOW_CHANNEL)
 					m_current_view = (!m_locked && show_homebrew) ? COVERFLOW_HOMEBREW : COVERFLOW_USB;
@@ -546,7 +546,7 @@ int CMenu::main(void)
 			if (WPadIR_Valid(chan) || (m_show_pointer[chan] && !WPadIR_Valid(chan)))
 				m_cf.mouse(m_vid, chan, m_cursor[chan].x(), m_cursor[chan].y());
 			else
-				m_cf.mouse(m_vid, chan, -1, -1);		
+				m_cf.mouse(m_vid, chan, -1, -1);
 	}
 	_showWaitMessage();
 	//
@@ -645,22 +645,22 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainBtnFavoritesOn = _addPicButton(theme, "MAIN/FAVORITES_ON", texFavOn, texFavOnS, 300, 412, 56, 56);
 	m_mainBtnFavoritesOff = _addPicButton(theme, "MAIN/FAVORITES_OFF", texFavOff, texFavOffS, 300, 412, 56, 56);
 	m_mainLblNotice = _addLabel(theme, "MAIN/NOTICE", 340, 40, 280, 80, FTGX_JUSTIFY_RIGHT | FTGX_ALIGN_MIDDLE, emptyTex);
-#ifdef SHOWMEM	
+#ifdef SHOWMEM
 	m_mem2FreeSize = _addLabel(theme, "MEM2", 40, 300, 480, 80, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, emptyTex);
 #endif
-	// 
+	//
 	m_mainPrevZone.x = m_theme.getInt("MAIN/ZONES", "prev_x", -32);
 	m_mainPrevZone.y = m_theme.getInt("MAIN/ZONES", "prev_y", -32);
 	m_mainPrevZone.w = m_theme.getInt("MAIN/ZONES", "prev_w", 182);
 	m_mainPrevZone.h = m_theme.getInt("MAIN/ZONES", "prev_h", 382);
 	m_mainPrevZone.hide = m_theme.getBool("MAIN/ZONES", "prev_hide", true);
-	
+
 	m_mainNextZone.x = m_theme.getInt("MAIN/ZONES", "next_x", 490);
 	m_mainNextZone.y = m_theme.getInt("MAIN/ZONES", "next_y", -32);
 	m_mainNextZone.w = m_theme.getInt("MAIN/ZONES", "next_w", 182);
 	m_mainNextZone.h = m_theme.getInt("MAIN/ZONES", "next_h", 382);
 	m_mainNextZone.hide = m_theme.getBool("MAIN/ZONES", "next_hide", true);
-	
+
 	m_mainButtonsZone.x = m_theme.getInt("MAIN/ZONES", "buttons_x", -32);
 	m_mainButtonsZone.y = m_theme.getInt("MAIN/ZONES", "buttons_y", 350);
 	m_mainButtonsZone.w = m_theme.getInt("MAIN/ZONES", "buttons_w", 704);
@@ -672,7 +672,7 @@ void CMenu::_initMainMenu(CMenu::SThemeData &theme)
 	m_mainButtonsZone2.w = m_theme.getInt("MAIN/ZONES", "buttons2_w", 704);
 	m_mainButtonsZone2.h = m_theme.getInt("MAIN/ZONES", "buttons2_h", 162);
 	m_mainButtonsZone2.hide = m_theme.getBool("MAIN/ZONES", "buttons2_hide", true);
-	
+
 	m_mainButtonsZone3.x = m_theme.getInt("MAIN/ZONES", "buttons3_x", -32);
 	m_mainButtonsZone3.y = m_theme.getInt("MAIN/ZONES", "buttons3_y", 350);
 	m_mainButtonsZone3.w = m_theme.getInt("MAIN/ZONES", "buttons3_w", 704);
@@ -794,6 +794,6 @@ wstringEx CMenu::_getNoticeTranslation(int sorting, wstringEx curLetter)
 			}
 		}
 	}
-	
+
 	return curLetter;
 }

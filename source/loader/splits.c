@@ -80,7 +80,7 @@ int write_zero(int fd, off_t size)
 int split_fill(split_info_t *s, int idx, u64 size)
 {
 	int fd = split_open_file(s, idx);
-	
+
 	off64_t fsize = lseek(fd, 0, SEEK_END);
 	if (fsize < size) {
 //		gprintf("TRUNC %d "FMT_lld" "FMT_lld"\n", idx, size, fsize); // Wpad_WaitButtons();
@@ -142,7 +142,7 @@ int split_get_file(split_info_t *s, u32 lba, u32 *sec_count, int fill)
 int split_read_sector(void *_fp,u32 lba,u32 count,void*buf)
 {
 	split_info_t *s = _fp;
-	int fd;                                 
+	int fd;
 	u64 off = lba;
 	off *= 512ULL;
 	int i;
@@ -172,7 +172,7 @@ int split_read_sector(void *_fp,u32 lba,u32 count,void*buf)
 int split_write_sector(void *_fp,u32 lba,u32 count,void*buf)
 {
 	split_info_t *s = _fp;
-	int fd;                                 
+	int fd;
 	u64 off = lba;
 	off*=512ULL;
 	int i;

@@ -221,7 +221,7 @@ bool SFont::fromFile(const char *filename, u32 size, u32 lspacing, u32 w, u32 id
 	u32 fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
 	if (fileSize == 0) return false;
-	
+
 	SMART_FREE(data);
 	data = smartMem2Alloc(fileSize);
 	if (!data)
@@ -229,7 +229,7 @@ bool SFont::fromFile(const char *filename, u32 size, u32 lspacing, u32 w, u32 id
 		SAFE_CLOSE(file);
 		return false;
 	}
-		
+
 	fread(data.get(), 1, fileSize, file);
 
 	dataSize = fileSize;
@@ -249,7 +249,7 @@ void CText::setText(SFont font, const wstringEx &t)
 	// Don't care about performance
 	safe_vector<wstringEx> lines = stringToVector(t, L'\n');
 	m_lines.reserve(lines.size());
-	// 
+	//
 	for (u32 k = 0; k < lines.size(); ++k)
 	{
 		wstringEx &l = lines[k];
@@ -289,7 +289,7 @@ void CText::setText(SFont font, const wstringEx &t, u32 startline)
 	// Don't care about performance
 	safe_vector<wstringEx> lines = stringToVector(t, L'\n');
 	m_lines.reserve(lines.size());
-	// 
+	//
 	for (u32 k = 0; k < lines.size(); ++k)
 	{
 		wstringEx &l = lines[k];
@@ -373,7 +373,7 @@ void CText::setFrame(float width, u16 style, bool ignoreNewlines, bool instant)
 			posX = 9999999.f;
 	}
 	totalHeight = posY + m_font.lineSpacing;
-	
+
 	if ((style & (FTGX_JUSTIFY_CENTER | FTGX_JUSTIFY_RIGHT)) != 0)
 	{
 		posX -= space;
@@ -469,7 +469,7 @@ void Asciify( wchar_t *str )
 {
 	const wchar_t *ptr = str;
 	wchar_t *ctr = str;
-	
+
 	while(*ptr != '\0')
     {
 		switch(*ptr)
@@ -480,7 +480,7 @@ void Asciify( wchar_t *str )
 		}
 		*ctr = *ptr;
 		++ptr;
-		++ctr;	
+		++ctr;
 	}
 	*ctr = '\0';
 }

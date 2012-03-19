@@ -207,7 +207,7 @@ bool dogamehooks(void *addr, u32 len, bool channel)
 			{
 				multidolhook((u32)addr_start+sizeof(multidolhooks)-4);
 				hookpatched = true;
-			}			
+			}
 		}
 		addr_start += 4;
 	}
@@ -269,7 +269,7 @@ s32 IOSReloadBlock(u8 reqios)
 
 	s32 r = IOS_Ioctlv(ESHandle, 0xA0, 2, 0, vector);
 	gprintf("Enable/Disable Block IOS Reload for cIOS%uv%u %s\n", IOS_GetVersion(), IOS_GetRevision() % 100, r < 0 ? "FAILED!" : "SUCCEEDED!");
-	
+
 	IOS_Close(ESHandle);
 
 	return r;

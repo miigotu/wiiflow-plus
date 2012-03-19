@@ -247,7 +247,7 @@ bool CMenu::_isNetworkAvailable()
 s32 CMenu::_networkComplete(s32 ok, void *usrData)
 {
 	CMenu *m = (CMenu *) usrData;
-	
+
 	m->m_networkInit = ok == 0;
 	m->m_thrdNetwork = false;
 	if (m->m_cfg.getBool("DEBUG", "wifi_gecko"))
@@ -271,7 +271,7 @@ int CMenu::_initNetwork()
 
 	char ip[16];
 	int val = if_config(ip, NULL, NULL, true);
-	
+
 	m_networkInit = !val;
 	return val;
 }
@@ -462,7 +462,7 @@ void CMenu::_download(string gameId)
 	lwp_t thread = LWP_THREAD_NULL;
 	int msg = 0;
 	wstringEx prevMsg;
-	
+
 	bool _updateGametdb = false;
 
 	SetupInput();
@@ -512,10 +512,10 @@ void CMenu::_download(string gameId)
 				m_btnMgr.hide(m_downloadLblGameTDBDownload);
 				m_thrdStop = false;
 				m_thrdWorking = true;
-				
+
 				_updateGametdb = true;
 
-				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_gametdbDownloader, (void *)this, 0, 8192, 40);		
+				LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_gametdbDownloader, (void *)this, 0, 8192, 40);
 			}
 			else if (m_btnMgr.selected(m_downloadBtnCancel))
 			{
@@ -533,7 +533,7 @@ void CMenu::_download(string gameId)
 			m_thrdMessage = _t("dlmsg6", L"Canceling...");
 			m_thrdWorking = false;
 		}
-		// 
+		//
 		if (m_thrdMessageAdded)
 		{
 			LockMutex lock(m_mutex);
@@ -628,7 +628,7 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 	}
 
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
-	
+
 	if (_initNetwork() < 0)
 		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
 	else
@@ -644,7 +644,7 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 		else
 		{
 			_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
-			
+
 			FILE *file = fopen(m_ver.c_str(), "wb");
 			if (file != NULL)
 			{
@@ -684,7 +684,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 
 	if (m_app_update_size == 0)	 m_app_update_size	= 0x400000;
 	if (m_data_update_size == 0) m_data_update_size	= 0x400000;
-	
+
 	// check for existing dol
     ifstream filestr;
 	gprintf("DOL Path: %s\n", m_dol.c_str());
@@ -715,7 +715,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 	}
 
 	_setThrdMsg(_t("dlmsg1", L"Initializing network..."), 0.f);
-	
+
 	if (_initNetwork() < 0)
 	{
 		_setThrdMsg(_t("dlmsg2", L"Network initialization failed!"), 1.f);
@@ -731,7 +731,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 	m_thrdStepLen = 0.9f - 0.2f;
 	gprintf("App Update URL: %s\n", m_app_update_url);
 	gprintf("Data Update URL: %s\n", m_app_update_url);
-	
+
 	download = downloadfile(buffer.get(), bufferSize, m_app_update_url, CMenu::_downloadProgress, this);
 	if (download.data == 0 || download.size < m_app_update_size)
 	{
@@ -740,10 +740,10 @@ s8 CMenu::_versionDownloader() // code to download new version
 		m_thrdWorking = false;
 		return 0;
 	}
-	
+
 	// download finished, backup boot.dol and write new files.
 	_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.8f);
-	
+
 	remove(dol_backup);
 	rename(m_dol.c_str(), dol_backup);
 
@@ -754,7 +754,7 @@ s8 CMenu::_versionDownloader() // code to download new version
 	{
 		fwrite(download.data, 1, download.size, file);
 		SAFE_CLOSE(file);
-		
+
 		_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
 
 		ZipFile zFile(m_app_update_zip.c_str());
@@ -777,10 +777,10 @@ s8 CMenu::_versionDownloader() // code to download new version
 			_setThrdMsg(_t("dlmsg12", L"Download failed!"), 1.f);
 			goto success;
 		}
-		
+
 		// download finished, write new files.
 		_setThrdMsg(_t("dlmsg13", L"Saving..."), 0.9f);
-		
+
 		remove(m_data_update_zip.c_str());
 
 		file = fopen(m_data_update_zip.c_str(), "wb");
@@ -788,9 +788,9 @@ s8 CMenu::_versionDownloader() // code to download new version
 		{
 			fwrite(download.data, 1, download.size, file);
 			SAFE_CLOSE(file);
-			
+
 			_setThrdMsg(_t("dlmsg24", L"Extracting..."), 0.8f);
-			
+
 			ZipFile zDataFile(m_data_update_zip.c_str());
 			result = zDataFile.ExtractAll(m_dataDir.c_str());
 			remove(m_data_update_zip.c_str());
@@ -862,13 +862,13 @@ int CMenu::_gametdbDownloaderAsync()
 			gprintf("Downloading file to '%s'\n", zippath.c_str());
 
 			remove(zippath.c_str());
-			
+
 			_setThrdMsg(wfmt(_fmt("dlmsg4", L"Saving %s"), "wiitdb.zip"), 1.f);
 			FILE *file = fopen(zippath.c_str(), "wb");
 			if (file == NULL)
 			{
 				gprintf("Can't save zip file\n");
-	
+
 				_setThrdMsg(_t("dlmsg15", L"Couldn't save ZIP file"), 1.f);
 			}
 			else
@@ -877,19 +877,19 @@ int CMenu::_gametdbDownloaderAsync()
 				SAFE_CLOSE(file);
 
 				gprintf("Extracting zip file: ");
-				
+
 				ZipFile zFile(zippath.c_str());
 				bool zres = zFile.ExtractAll(m_settingsDir.c_str());
-				
+
 				gprintf(zres ? "success\n" : "failed\n");
 
 				// We don't need the zipfile anymore
 				remove(zippath.c_str());
-				
+
 				// Update cache
 				m_gameList.SetLanguage(m_loc.getString(m_curLanguage, "gametdb_code", "EN").c_str());
 				UpdateCache();
-				
+
 				_setThrdMsg(_t("dlmsg26", L"Updating cache..."), 0.f);
 
 				_loadList();

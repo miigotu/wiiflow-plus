@@ -19,7 +19,7 @@ void CMenu::_hideConfig3(bool instant)
 	m_btnMgr.hide(m_configLblPage, instant);
 	m_btnMgr.hide(m_configBtnPageM, instant);
 	m_btnMgr.hide(m_configBtnPageP, instant);
-	// 
+	//
 	m_btnMgr.hide(m_config3LblGameLanguage, instant);
 	m_btnMgr.hide(m_config3LblLanguage, instant);
 	m_btnMgr.hide(m_config3BtnLanguageP, instant);
@@ -45,7 +45,7 @@ void CMenu::_showConfig3(void)
 	m_btnMgr.show(m_configLblPage);
 	m_btnMgr.show(m_configBtnPageM);
 	m_btnMgr.show(m_configBtnPageP);
-	// 
+	//
 	m_btnMgr.show(m_config3LblGameLanguage);
 	m_btnMgr.show(m_config3LblLanguage);
 	m_btnMgr.show(m_config3BtnLanguageP);
@@ -62,7 +62,7 @@ void CMenu::_showConfig3(void)
 	for (u32 i = 0; i < ARRAY_SIZE(m_config3LblUser); ++i)
 		if (m_config3LblUser[i] != -1u)
 			m_btnMgr.show(m_config3LblUser[i]);
-	// 
+	//
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
 	int i = min(max(0, m_cfg.getInt("GENERAL", "video_mode")), (int)ARRAY_SIZE(CMenu::_videoModes) - 1);
 
@@ -152,7 +152,7 @@ void CMenu::_initConfig3Menu(CMenu::SThemeData &theme)
 	m_config3BtnAsyncNet = _addButton(theme, "CONFIG3/ASYNCNET_BTN", 330, 250, 270, 56);
 	m_config3LblOcarina = _addLabel(theme, "CONFIG3/OCARINA", 40, 310, 290, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_config3BtnOcarina = _addButton(theme, "CONFIG3/OCARINA_BTN", 330, 310, 270, 56);
-	// 
+	//
 	_setHideAnim(m_config3LblGameVideo, "CONFIG3/VIDEO", 0, 0, 1.f, 0.f);
 	_setHideAnim(m_config3LblVideo, "CONFIG3/VIDEO_BTN", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_config3BtnVideoM, "CONFIG3/VIDEO_MINUS", 0, 0, 1.f, -1.f);

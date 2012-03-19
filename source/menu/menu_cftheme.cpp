@@ -154,7 +154,7 @@ void CMenu::_hideCFTheme(bool instant)
 	m_btnMgr.hide(m_cfThemeBtnParamP, instant);
 	m_btnMgr.hide(m_cfThemeBtnSave, instant);
 	m_btnMgr.hide(m_cfThemeBtnCancel, instant);
-	// 
+	//
 	for (int i = 0; i < 16; ++i)
 	{
 		m_btnMgr.hide(m_cfThemeLblVal[i], instant);
@@ -192,7 +192,7 @@ void CMenu::_showCFTheme(u32 curParam, int version, bool wide)
 	m_btnMgr.show(m_cfThemeBtnParamM);
 	m_btnMgr.show(m_cfThemeBtnParamP);
 	m_btnMgr.setText(m_cfThemeLblParam, string(p.name));
-	// 
+	//
 	for (int i = 0; i < 4; ++i)
 	{
 		string domain = (p.domain != CMenu::SCFParamDesc::PDD_NORMAL && selected) || p.domain == CMenu::SCFParamDesc::PDD_SELECTED
@@ -561,7 +561,7 @@ void CMenu::_initCFThemeMenu(CMenu::SThemeData &theme)
 	m_cfThemeBtnParamP = _addPicButton(theme, "CFTHEME/PARAM_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 476, 20, 36, 36);
 	m_cfThemeBtnSave = _addButton(theme, "CFTHEME/SAVE_BTN", 530, 20, 80, 40);
 	m_cfThemeBtnCancel = _addButton(theme, "CFTHEME/CANCEL_BTN", 530, 70, 80, 40);
-	// 
+	//
 	for (int i = 0; i < 16; ++i)
 	{
 		domain = sfmt("CFTHEME/VAL%i%c_%%s", i / 3 + 1, (char)(i % 3) + 'A');

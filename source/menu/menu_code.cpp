@@ -123,12 +123,12 @@ void CMenu::_initCodeMenu(CMenu::SThemeData &theme)
 	m_codeBtnKey[0] = _addButton(theme, "CODE/0_BTN", 270, 340, 210, 50, L"0");
 	m_codeBtnErase = _addButton(theme, "CODE/ERASE_BTN", 20, 410, 200, 56);
 	m_codeBtnBack = _addButton(theme, "CODE/BACK_BTN", 420, 410, 200, 56);
-	// 
+	//
 	for (int i = 0; i < 10; ++i)
 		_setHideAnim(m_codeBtnKey[i], sfmt("CODE/%i_BTN", i).c_str(), 0, 0, 0.f, 0.f);
 	_setHideAnim(m_codeBtnErase, "CODE/ERASE_BTN", 0, 0, 1.f, 0.f);
 	_setHideAnim(m_codeBtnBack, "CODE/BACK_BTN", 0, 0, 1.f, 0.f);
-	// 
+	//
 	_hideCode(true);
 	_textCode();
 }

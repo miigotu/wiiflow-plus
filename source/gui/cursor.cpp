@@ -76,7 +76,7 @@ void CCursor::draw(int x, int y, float a)
 
 	m_x = x - m_texture.width / 2;
 	m_y = y - m_texture.height / 2;
-	// 
+	//
 	GX_SetNumChans(1);
 	GX_ClearVtxDesc();
 	GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
@@ -120,7 +120,7 @@ void CCursor::draw(int x, int y, float a)
 		GX_TexCoord2f32(1.f, 0.f);
 		GX_End();
 	}
-	// 
+	//
 	guMtxIdentity(modelViewMtx);
 	guMtxTransApply(modelViewMtx, modelViewMtx, (float)x - w, (float)y - h, 0.f);
 	GX_LoadPosMtxImm(modelViewMtx, GX_PNMTX0);

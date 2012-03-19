@@ -111,7 +111,7 @@ void CButtonsMgr::getDimensions(u32 id, int &x, int &y, u32 &width, u32 &height)
 		if (b.t == GUIELT_LABEL)
 		{
 			CButtonsMgr::SLabel *s = (CButtonsMgr::SLabel *) m_elts[id].get();
-			
+
 			// Calculate height
 			height = s->text.getTotalHeight();
 		}
@@ -225,7 +225,7 @@ void CButtonsMgr::mouse(int chan, int x, int y)
 				m_selected[chan] = i;
 				but.targetScaleX = 1.05f;
 				but.targetScaleY = 1.05f;
-				// 
+				//
 				if (s != m_selected[chan])
 				{
 					if (m_soundVolume > 0 && !!but.hoverSound)
@@ -250,7 +250,7 @@ bool CButtonsMgr::selected(u32 button)
 		if(m_selected[chan] == button)
 		{
 			if(m_selected[chan] != (u32)-1)
-				if(!m_noclick) 
+				if(!m_noclick)
 					click(m_selected[chan]);
 			return true;
 		}
@@ -805,7 +805,7 @@ void CButtonsMgr::_drawPBar(const CButtonsMgr::SProgressBar &b)
 		GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
 		GX_TexCoord2f32(0.f, 1.f);
 		GX_End();
-		// 
+		//
 		x2 = x1 + (2.f * w - 4.f * wh) * b.val;
 		tx = (2.f * b.w - 4.f * b.h) * b.val / b.h * b.tex.centerSel.height / b.tex.centerSel.width;
 		GX_LoadTexObj(&texObjBarL, GX_TEXMAP0);
@@ -875,7 +875,7 @@ void CButtonsMgr::draw(void)
 	GX_SetAlphaUpdate(GX_TRUE);
 	GX_SetCullMode(GX_CULL_NONE);
 	GX_SetZMode(GX_DISABLE, GX_LEQUAL, GX_TRUE);
-	
+
 	for (u32 i = 0; i < m_elts.size(); ++i)
 	{
 		switch (m_elts[i]->t)
@@ -883,7 +883,7 @@ void CButtonsMgr::draw(void)
 			case CButtonsMgr::GUIELT_BUTTON:
 			{
 				CButtonsMgr::SButton &b = (CButtonsMgr::SButton &)*m_elts[i];
-				
+
 				bool drawSelected = false;
 				for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
 				{

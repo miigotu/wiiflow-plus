@@ -28,7 +28,7 @@ void CMenu::_hideConfig4(bool instant)
 	m_btnMgr.hide(m_configLblPage, instant);
 	m_btnMgr.hide(m_configBtnPageM, instant);
 	m_btnMgr.hide(m_configBtnPageP, instant);
-	// 
+	//
 	m_btnMgr.hide(m_config4LblHome, instant);
 	m_btnMgr.hide(m_config4BtnHome, instant);
 	m_btnMgr.hide(m_config4LblSaveFavMode, instant);
@@ -52,7 +52,7 @@ void CMenu::_showConfig4(void)
 	m_btnMgr.show(m_configLblPage);
 	m_btnMgr.show(m_configBtnPageM);
 	m_btnMgr.show(m_configBtnPageP);
-	// 
+	//
 	m_btnMgr.show(m_config4LblHome);
 	m_btnMgr.show(m_config4BtnHome);
 	m_btnMgr.show(m_config4LblSaveFavMode);
@@ -67,7 +67,7 @@ void CMenu::_showConfig4(void)
 	for (u32 i = 0; i < ARRAY_SIZE(m_config4LblUser); ++i)
 		if (m_config4LblUser[i] != -1u)
 			m_btnMgr.show(m_config4LblUser[i]);
- 
+
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
 	int i;
 	i = min(max(0, m_cfg.getInt("GENERAL", "exit_to")), (int)ARRAY_SIZE(CMenu::_exitTo) - 1);

@@ -55,11 +55,11 @@ int Playlog_Update(const char ID[6], const u8 title[84])
 	{
 		gprintf("IOS_Open error ret: %i\n",playrec_fd);
 		IOS_Close(playrec_fd);
-		
+
 		//In case the play_rec.dat wasn´t found create one and try again
 		if(ISFS_CreateFile(PLAYRECPATH,0,3,3,3) < 0 )
 			goto error_2;
-			
+
 		playrec_fd = IOS_Open(PLAYRECPATH, IPC_OPEN_RW);
 		if(playrec_fd < 0)
 			goto error_2;
@@ -111,7 +111,7 @@ int Playlog_Delete(void) //Make Wiiflow not show in playlog
 
 	if(IOS_Seek(playrec_fd, 0, 0) < 0)
 		goto error_1;
-    
+
 	// invalidate checksum
 	playrec_buf.checksum=0;
 

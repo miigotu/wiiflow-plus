@@ -51,7 +51,7 @@ static inline int loopNum(int i, int s)
 	return i < 0 ? (s - (-i % s)) % s : i % s;
 }
 
-CCoverFlow::CCover::CCover(void) 
+CCoverFlow::CCover::CCover(void)
 {
 	index = 0;
 	txtAngle = 0.f;
@@ -167,7 +167,7 @@ CCoverFlow::CCoverFlow(void)
 	m_loSelected.bottomDeltaAngle = Vector3D(0.f, 0.f, 0.f);
 	m_loSelected.topAngle = Vector3D(0.f, 0.f, 0.f);
 	m_loSelected.bottomAngle = Vector3D(0.f, 0.f, 0.f);
-	// 
+	//
 	m_mirrorAlpha = 0.2f;
 	m_txtMirrorAlpha = 0.2f;
 	m_delay = 0;
@@ -182,7 +182,7 @@ CCoverFlow::CCoverFlow(void)
 	m_hqCover = -1;
 	m_blurRadius = 3;
 	m_blurFactor = 1.f;
-	// 
+	//
 	m_mirrorBlur = false;
 	m_effectTex.width = 96;
 	m_effectTex.height = 72;
@@ -211,7 +211,7 @@ CCoverFlow::CCoverFlow(void)
 	m_sorting = SORT_ALPHA;
 	//
 	LWP_MutexInit(&m_mutex, 0);
-	
+
 	coverLoaderThread = LWP_THREAD_NULL;
 }
 
@@ -222,7 +222,7 @@ bool CCoverFlow::init(const SmartBuf &font, u32 font_size)
 
 	bool wide = CONF_GetAspectRatio() == CONF_ASPECT_16_9;
 	guPerspective(m_projMtx, 45, wide ? 16.f / 9.f : 4.f / 3.f, .1f, 300.f);
-	
+
 	return true;
 }
 
@@ -1115,7 +1115,7 @@ void CCoverFlow::_drawTitle(int i, bool mirror, bool rectangle)
 		GX_SetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
 		GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLOR0A0);
 		GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
-		// 
+		//
 		Mtx rotMtx;
 		guMtxIdentity(modelMtx);
 		guMtxScaleApply(modelMtx, modelMtx, 0.005f, 0.005f, 0.005f);
@@ -1170,7 +1170,7 @@ void CCoverFlow::_drawTitle(int i, bool mirror, bool rectangle)
 	GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
 	GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
 	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
-	// 
+	//
 	guMtxIdentity(modelMtx);
 	guMtxRotAxisDeg(modelMtx, &rotAxis, m_covers[i].txtAngle);
 	guMtxTransApply(modelMtx, modelMtx, m_covers[i].txtPos.x, mirror ? -m_covers[i].txtPos.y : m_covers[i].txtPos.y, m_covers[i].txtPos.z);
@@ -1198,7 +1198,7 @@ void CCoverFlow::_drawCover(int i, bool mirror, CCoverFlow::DrawMode dm)
 		osc = _coverMovesA();
 		oscP = _coverMovesP();
 	}
-	// 
+	//
 	guMtxIdentity(modelMtx);
 	guMtxScaleApply(modelMtx, modelMtx, m_covers[i].scale.x, m_covers[i].scale.y, m_covers[i].scale.z);
 	if (dm == CCoverFlow::CFDR_SHADOW)
@@ -1672,7 +1672,7 @@ void CCoverFlow::_updateTarget(int i, bool instant)
 				cvr.targetShadowColor.a = 0;
 			}
 		}
-	// 
+	//
 	if (instant)
 		_instantTarget(i);
 }
@@ -1788,7 +1788,7 @@ bool CCoverFlow::start(const char *id)
 		if (m_pngNoCoverFlat.empty() || STexture::TE_OK != m_noCoverTexture.fromPNGFile(m_pngNoCoverFlat.c_str(), GX_TF_CMPR, ALLOC_MEM2, 32, 512))
 			if (STexture::TE_OK != m_noCoverTexture.fromPNG(flatnopic_png, GX_TF_CMPR, ALLOC_MEM2, 32, 512)) return false;
 	}
-		
+
 	m_covers.clear();
 	m_covers.resize(m_range);
 	m_jump = 0;
@@ -1966,7 +1966,7 @@ bool CCoverFlow::findId(const char *id, bool instant)
 	u32 i, curPos = _currentPos();
 	if (m_items.empty() || (instant && m_covers.empty()))
 		return false;
-	// 
+	//
 	for (i = 0; i < m_items.size(); ++i)
 		if (memcmp(&m_items[i].hdr->hdr.id, id, strlen(id)) == 0)
 			break;
@@ -2166,7 +2166,7 @@ void CCoverFlow::prevLetter(wchar_t *c)
 
 	_completeJump();
 	u32 curPos = _currentPos();
-	
+
 	while (!iswalnum(m_items[curPos].hdr->title[j]) && m_items[curPos].hdr->title[j+1] != L'\0') j++;
 	c[0] = upperCaseWChar(m_items[curPos].hdr->title[j]);
 
@@ -2308,7 +2308,7 @@ void CCoverFlow::prevID(wchar_t *c)
 	}
 
 	system[1] = '\0';
-	mbstowcs(c, system, 1); 	
+	mbstowcs(c, system, 1);
 
 	_updateAllTargets();
 }
@@ -2594,7 +2594,7 @@ CCoverFlow::CLRet CCoverFlow::_loadCoverTex(u32 i, bool box, bool hq)
 					u32 bufSize = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
 					if (!hq) CCoverFlow::_calcTexLQLOD(tex);
 					u32 texLen = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
-					
+
 					tex.data = smartMem2Alloc(texLen);
 					SmartBuf ptrTex = (header.zipped != 0) ? smartMem2Alloc(bufSize) : tex.data;
 

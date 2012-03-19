@@ -43,7 +43,7 @@ class safe_vector
 		}
 
 		size_type size() const { return thevector.size(); }
-		
+
 		void reserve(size_type n) {thevector.reserve(n);}
 
 		size_type capacity() const {return thevector.capacity();}
@@ -52,22 +52,22 @@ class safe_vector
 
 		reference operator[](size_type n) {return thevector[n];}
 		const_reference operator[](size_type n) const {return thevector[n];}
-		
+
 		iterator erase(iterator position) {return thevector.erase(position);}
 		iterator erase(iterator first, iterator last) {return thevector.erase(first, last);}
-		
+
 		iterator begin() {return thevector.begin();}
 		const_iterator begin() const {return thevector.begin();}
 
 		iterator end() {return thevector.end();}
 		const_iterator end() const {return thevector.end();}
-		
+
 		const_reference at (size_type n) const {return thevector.at(n);}
 		reference at (size_type n) {return thevector.at(n);}
 
 		reference back() {return thevector.back();}
 		const_reference back() const {return thevector.back();}
-		
+
 		void realloc(size_type sz)
 		{
 			if(thevector.size() * sizeof(T) < thevector.capacity() || sz * sizeof(T) < thevector.capacity() || sz < thevector.size())

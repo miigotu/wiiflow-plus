@@ -12,7 +12,7 @@ void CMenu::_hideConfigSnd(bool instant)
 	m_btnMgr.hide(m_configLblPage, instant);
 	m_btnMgr.hide(m_configBtnPageM, instant);
 	m_btnMgr.hide(m_configBtnPageP, instant);
-	// 
+	//
 	m_btnMgr.hide(m_configSndLblBnrVol, instant);
 	m_btnMgr.hide(m_configSndLblBnrVolVal, instant);
 	m_btnMgr.hide(m_configSndBtnBnrVolP, instant);
@@ -42,7 +42,7 @@ void CMenu::_showConfigSnd(void)
 	m_btnMgr.show(m_configLblPage);
 	m_btnMgr.show(m_configBtnPageM);
 	m_btnMgr.show(m_configBtnPageP);
-	// 
+	//
 	m_btnMgr.show(m_configSndLblBnrVol);
 	m_btnMgr.show(m_configSndLblBnrVolVal);
 	m_btnMgr.show(m_configSndBtnBnrVolP);
@@ -62,7 +62,7 @@ void CMenu::_showConfigSnd(void)
 	for (u32 i = 0; i < ARRAY_SIZE(m_configSndLblUser); ++i)
 		if (m_configSndLblUser[i] != -1u)
 			m_btnMgr.show(m_configSndLblUser[i]);
-	// 
+	//
 	m_btnMgr.setText(m_configLblPage, wfmt(L"%i / %i", g_curPage, m_locked ? g_curPage : CMenu::_nbCfgPages));
 	m_btnMgr.setText(m_configSndLblGuiVolVal, wfmt(L"%i", m_cfg.getInt("GENERAL", "sound_volume_gui", 255)));
 	m_btnMgr.setText(m_configSndLblCFVolVal, wfmt(L"%i", m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255)));
@@ -183,7 +183,7 @@ void CMenu::_initConfigSndMenu(CMenu::SThemeData &theme)
 	m_configSndLblBnrVolVal = _addLabel(theme, "CONFIGSND/BNR_VOL_BTN", 426, 310, 118, 56, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE, theme.btnTexC);
 	m_configSndBtnBnrVolM = _addPicButton(theme, "CONFIGSND/BNR_VOL_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 370, 310, 56, 56);
 	m_configSndBtnBnrVolP = _addPicButton(theme, "CONFIGSND/BNR_VOL_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 544, 310, 56, 56);
-	// 
+	//
 	_setHideAnim(m_configSndLblMusicVol, "CONFIGSND/MUSIC_VOL", 0, 0, 1.f, 0.f);
 	_setHideAnim(m_configSndLblMusicVolVal, "CONFIGSND/MUSIC_VOL_BTN", 0, 0, 1.f, -1.f);
 	_setHideAnim(m_configSndBtnMusicVolM, "CONFIGSND/MUSIC_VOL_MINUS", 0, 0, 1.f, -1.f);

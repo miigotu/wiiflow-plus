@@ -25,7 +25,7 @@ typedef struct nandDevice
 	u32 Mode;
 	u32 Mount;
 	u32 Unmount;
-} NandDevice; 
+} NandDevice;
 
 using namespace std;
 

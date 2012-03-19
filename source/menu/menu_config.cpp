@@ -46,7 +46,7 @@ void CMenu::SwitchPartition(bool direction, bool showLabel)
 		for(u8 i = 0; strncmp((const char *)&partition[i], "\0", 1) != 0; i++)
 			partition[i] = toupper(partition[i]);
 
-		m_showtimer=60; 
+		m_showtimer=60;
 		m_btnMgr.setText(m_mainLblNotice, (string)partition);
 		m_btnMgr.show(m_mainLblNotice);
 	}
@@ -166,7 +166,7 @@ int CMenu::_config1(void)
 	s32 bCurrentPartition = currentPartition;
 
 	gprintf("Current Partition: %d\n", currentPartition);
-	
+
 	_showConfig();
 	while (true)
 	{
@@ -253,7 +253,7 @@ int CMenu::_config1(void)
 	}
 
 	_hideConfig();
-	
+
 	return nextPage;
 }
 
@@ -279,7 +279,7 @@ void CMenu::_initConfigMenu(CMenu::SThemeData &theme)
 	m_configBtnPageM = _addPicButton(theme, "CONFIG/PAGE_MINUS", theme.btnTexMinus, theme.btnTexMinusS, 20, 410, 56, 56);
 	m_configBtnPageP = _addPicButton(theme, "CONFIG/PAGE_PLUS", theme.btnTexPlus, theme.btnTexPlusS, 156, 410, 56, 56);
 	m_configBtnBack = _addButton(theme, "CONFIG/BACK_BTN", 420, 410, 200, 56);
-	// 
+	//
 	_setHideAnim(m_configLblTitle, "CONFIG/TITLE", 0, 0, 1.f, 0.f);
 
 	_setHideAnim(m_configLblDownload, "CONFIG/DOWNLOAD", 0, 0, 1.f, 0.f);

@@ -72,10 +72,10 @@ int app_gameconfig_load(u8 *discid, const u8 *gameconfig, u32 tempgameconfsize)
 		if (gameconf == NULL)
 			return -1;
 	}
-	
+
 	if (gameconfig == NULL || tempgameconfsize == 0)
 		return -2;
-	
+
 	u8 *tempgameconf = (u8 *) gameconfig;
 
 	u32 ret;
@@ -625,7 +625,7 @@ int ocarina_do_code(u64 chantitle)
 		memcpy((void *)0x80001800, gameidbuffer, 8);
 		DCFlushRange((void *)0x80001800, 8);
 	}
-	
+
 	if(codelist)
 		memset(codelist, 0, (u32)codelistend - (u32)codelist);
 

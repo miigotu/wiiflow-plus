@@ -87,7 +87,7 @@ const SMeshVert g_boxMeshQ[] = {	// Quads
 	{ { g_frontCoverBL.x, g_frontCoverBL.y - g_boxBorderWidth, g_frontCoverBL.z - g_boxBorderWidth },	CTexCoord(w(10), h(256)) },
 	{ { g_backCoverBL.x, g_backCoverBL.y - g_boxBorderWidth, g_backCoverBL.z + g_boxBorderWidth },		CTexCoord(w(54), h(256)) },
 	{ { g_backCoverTR.x, g_backCoverBL.y - g_boxBorderWidth, g_backCoverBL.z + g_boxBorderWidth },		CTexCoord(w(54), h(224)) },
-	
+
 	// Face de gauche en haut
 	{ { g_frontCoverBL.x, g_frontCoverTR.y, g_frontCoverBL.z },											CTexCoord(w(0), h(0)) },
 	{ { g_frontCoverBL.x, g_frontCoverTR.y + g_boxBorderWidth, g_frontCoverBL.z - g_boxBorderWidth },	CTexCoord(w(0), h(0)) },

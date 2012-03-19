@@ -81,7 +81,7 @@ s32 Apploader_Run(entry_point *entry, u8 vidMode, GXRModeObj *vmode, bool vipatc
 		gprintf("Error: Could not patch the hook\n");
 		gprintf("Ocarina and debugger won't work\n");
 	}
-	
+
 	PrinceOfPersiaPatch();
 
 	/* Set entry point from apploader */
@@ -224,7 +224,7 @@ bool NewSuperMarioBrosPatch(void *Address, int Size)
 			0x48, 0x12, 0xD7, 0x89, 0x7C, 0x7B, 0x1B, 0x78,
 			0x7C, 0x9C, 0x23, 0x78, 0x7C, 0xBD, 0x2B, 0x78};
 		u8 PatchData[4] = {0x4E, 0x80, 0x00, 0x20};
-	
+
 		void *Addr = Address;
 		void *Addr_end = Address+Size;
 		while (Addr <= Addr_end-sizeof(SearchPattern1))
@@ -256,12 +256,12 @@ static bool maindolpatches(void *dst, int len, u8 vidMode, GXRModeObj *vmode, bo
 	if (countryString) PatchCountryStrings(dst, len); // Country Patch by WiiPower
 
 	Remove_001_Protection(dst, len);
-	
+
 	// NSMB Patch by WiiPower
 	NewSuperMarioBrosPatch(dst,len);
 
 	do_wip_code((u8 *) dst, len);
-	
+
 	DCFlushRange(dst, len);
 
 	return ret;
@@ -275,7 +275,7 @@ static bool Remove_001_Protection(void *Address, int Size)
 	u8 *Addr;
 
 	for (Addr = Address; Addr <= Addr_end - sizeof SearchPattern; Addr += 4)
-		if (memcmp(Addr, SearchPattern, sizeof SearchPattern) == 0) 
+		if (memcmp(Addr, SearchPattern, sizeof SearchPattern) == 0)
 		{
 			memcpy(Addr, PatchData, sizeof PatchData);
 			return true;

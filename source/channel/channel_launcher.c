@@ -50,7 +50,7 @@ s32 BootChannel(u8 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryS
 
 	/* Set time */
 	__Disc_SetTime();
-	
+
 	/* Set low memory */
 	__Disc_SetLowMem();
 
@@ -83,7 +83,7 @@ s32 BootChannel(u8 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryS
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 
 	gprintf("Jumping to entrypoint %08x\n", entryPoint);
-	
+
 	if (entryPoint != 0x3400)
 	{
 		if (hooktype != 0)
@@ -100,7 +100,7 @@ s32 BootChannel(u8 *data, u64 chantitle, u8 vidMode, bool vipatch, bool countryS
 				"bctr\n"
 			);
 		}
-		else  appJump();	
+		else  appJump();
 	}
  	else if (hooktype != 0)
 	{
@@ -157,7 +157,7 @@ u32 LoadChannel(u8 *buffer)
 		if(!(dolfile->section_start[i] & 0x80000000)) dolfile->section_start[i] |= 0x80000000;
 
 		dolchunkoffset[dolchunkcount] = (void *)dolfile->section_start[i];
-		dolchunksize[dolchunkcount] = dolfile->section_size[i];			
+		dolchunksize[dolchunkcount] = dolfile->section_size[i];
 
 		gprintf("Moving section %u from offset %08x to %08x-%08x...\n", i, dolfile->section_pos[i], dolchunkoffset[dolchunkcount], dolchunkoffset[dolchunkcount]+dolchunksize[dolchunkcount]);
 		ICInvalidateRange(dolchunkoffset[dolchunkcount], dolchunksize[dolchunkcount]);
@@ -175,7 +175,7 @@ void PatchChannel(u8 vidMode, GXRModeObj *vmode, bool vipatch, bool countryStrin
 	bool hookpatched = false;
 
 	for (i=0;i < dolchunkcount;i++)
-	{		
+	{
 		patchVideoModes(dolchunkoffset[i], dolchunksize[i], vidMode, vmode, patchVidModes);
 		PatchAspectRatio(dolchunkoffset[i], dolchunksize[i], aspectRatio);
 
@@ -216,7 +216,7 @@ bool Identify_GenerateTik(signed_blob **outbuf, u32 *outlen)
 bool Identify(u64 titleid, u32 *ios)
 {
 	char filepath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
-	
+
 	sprintf(filepath, "/title/%08x/%08x/content/title.tmd", TITLE_UPPER(titleid), TITLE_LOWER(titleid));
 	u32 tmdSize;
 	u8 *tmdBuffer = ISFS_GetFile((u8 *) &filepath, &tmdSize, -1);
@@ -247,7 +247,7 @@ bool Identify(u64 titleid, u32 *ios)
 		SAFE_FREE(tikBuffer);
 		return false;
 	}
-	
+
 	s32 ret = ES_Identify((signed_blob*)certBuffer, certSize, (signed_blob*)tmdBuffer, tmdSize, tikBuffer, tikSize, NULL);
 	if (ret < 0)
 	{
@@ -270,7 +270,7 @@ bool Identify(u64 titleid, u32 *ios)
 				break;
 		}
 	}
-	
+
 	SAFE_FREE(tmdBuffer);
 	SAFE_FREE(tikBuffer);
 	SAFE_FREE(certBuffer);
@@ -282,14 +282,14 @@ u8 * GetDol(u64 title, char *id, u32 bootcontent)
 {
 	char filepath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
 	sprintf(filepath, "/title/%08x/%08x/content/%08x.app", TITLE_UPPER(title), TITLE_LOWER(title), bootcontent);
-	
+
 	gprintf("Loading DOL: %s...", filepath);
 	u32 contentSize = 0;
 	u8 *data = ISFS_GetFile((u8 *) &filepath, &contentSize, -1);
 	if (data != NULL && contentSize != 0)
-	{	
+	{
 		gprintf("Done!\n");
-	
+
 		if (isLZ77compressed(data))
 		{
 			u8 *decompressed;
@@ -302,7 +302,7 @@ u8 * GetDol(u64 title, char *id, u32 bootcontent)
 			}
 			SAFE_FREE(data);
 			data = decompressed;
-		}	
+		}
 		return data;
 	}
 	gprintf("Failed!\n");

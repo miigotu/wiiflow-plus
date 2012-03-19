@@ -26,7 +26,7 @@
  *
  * for wiiflow 2011
  ***************************************************************************/
- 
+
 #include <stdio.h>
 #include <ogcsys.h>
 #include <malloc.h>
@@ -72,8 +72,8 @@ s32 Nand::Nand_Mount(NandDevice *Device)
 	s32 fd = IOS_Open("fat", 0);
 	if (fd < 0) return fd;
 
-	static ioctlv vector[1] ATTRIBUTE_ALIGN(32);	
-	
+	static ioctlv vector[1] ATTRIBUTE_ALIGN(32);
+
 	vector[0].data = &Partition;
 	vector[0].len = sizeof(u32);
 
@@ -114,7 +114,7 @@ s32 Nand::Nand_Enable(NandDevice *Device)
 	IOS_Close(fd);
 
 	return ret;
-} 
+}
 
 s32 Nand::Nand_Disable(void)
 {
@@ -126,7 +126,7 @@ s32 Nand::Nand_Disable(void)
 	IOS_Close(fd);
 
 	return ret;
-} 
+}
 
 s32 Nand::Enable_Emu()
 {
@@ -146,7 +146,7 @@ s32 Nand::Enable_Emu()
 	MountedDevice = EmuDevice;
 
 	return 0;
-}	
+}
 
 s32 Nand::Disable_Emu()
 {

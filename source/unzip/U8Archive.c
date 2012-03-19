@@ -52,7 +52,7 @@ const u8 *u8_get_file_by_index(const u8 *archive, u32 index, u32 *size)
 	const struct U8Entry *fst = (const struct U8Entry *)(archive + arcHdr->rootNodeOffset);
 	if (index < 1 || index >= fst[0].numEntries) return NULL;
 	if (fst[index].fileType != 0) return NULL; // Not a file, but a directory entry
-	
+
 	*size = fst[index].fileLength;
 	return archive + fst[index].fileOffset;
 }
@@ -62,14 +62,14 @@ const u8 *u8_get_file(const u8 *archive, const char *filename, u32 *size)
 	u32 i = 0;
 	struct U8Header *arcHdr = open_u8_archive(archive);
 	if (arcHdr == NULL) return NULL;
-	
+
 	const struct U8Entry *fst = (const struct U8Entry *)(archive + arcHdr->rootNodeOffset);
 	for (i = 1; i < fst[0].numEntries; ++i)
 		if (fst[i].fileType == 0 && strcasecmp(u8Filename(fst, i), filename) == 0)
 			break;
 	if (i >= fst[0].numEntries)
 		return NULL;
-		
+
 	*size = fst[i].fileLength;
 	return archive + fst[i].fileOffset;
 }

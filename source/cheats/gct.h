@@ -1,7 +1,7 @@
 /*
  * gct.h
  * Class to handle Ocarina TXT Cheatfiles
- * 
+ *
  */
 
 #ifndef _GCT_H
@@ -24,7 +24,7 @@ private:
     unsigned int iCntCheats;
 
 public:
-	//!Array which shows which cheat is selected 
+	//!Array which shows which cheat is selected
 	bool sCheatSelected[MAXCHEATS];
     //!Constructor
     GCTCheats(void);

@@ -45,9 +45,9 @@ void CMenu::_showWBFS(CMenu::WBFS_OP op)
 static void slotLight(bool state)
 {
 	if (state)
-		*(u32 *)0xCD0000C0 |= 0x20;        
+		*(u32 *)0xCD0000C0 |= 0x20;
 	else
-		*(u32 *)0xCD0000C0 &= ~0x20;        
+		*(u32 *)0xCD0000C0 &= ~0x20;
 }
 
 void CMenu::_addDiscProgress(int status, int total, void *user_data)
@@ -74,16 +74,16 @@ int CMenu::_gameInstaller(void *obj)
 	f32 free, used;
 	WBFS_DiskSpace(&used, &free);
 	WBFS_DVD_Size(&comp_size, &real_size);
-	
+
 	if ((f32)comp_size + (f32)128*1024 >= free * GB_SIZE)
 	{
 		m._setThrdMsg(wfmt(m._fmt("wbfsop10", L"Not enough space : %lld blocks needed, %i available"), comp_size, free), 0.f);
 		ret = -1;
 	}
 	else
-	{	
+	{
 		m._setThrdMsg(L"", 0);
-		
+
 		ret = WBFS_AddGame(CMenu::_addDiscProgress, obj);
 		if (ret == 0)
 			m._setThrdMsg(m._t("wbfsop8", L"Game installed"), 1.f);
@@ -164,7 +164,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 							break;
 						}
 						Disc_ReadHeader(&header);
-						
+
 						if (_searchGamesByID((const char *) header.id).size() != 0)
 						{
 							error(_t("wbfsoperr4", L"Game already installed"));
@@ -197,7 +197,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 					break;
 			}
 		}
-		// 
+		//
 		if (m_thrdMessageAdded)
 		{
 			LockMutex lock(m_mutex);
@@ -233,7 +233,7 @@ void CMenu::_initWBFSMenu(CMenu::SThemeData &theme)
 	m_wbfsPBar = _addProgressBar(theme, "WBFS/PROGRESS_BAR", 40, 270, 560, 20);
 	m_wbfsBtnBack = _addButton(theme, "WBFS/BACK_BTN", 420, 410, 200, 56);
 	m_wbfsBtnGo = _addButton(theme, "WBFS/GO_BTN", 245, 260, 150, 56);
-	// 
+	//
 	_setHideAnim(m_wbfsLblTitle, "WBFS/TITLE", 0, 0, 1.f, 0.f);
 	_setHideAnim(m_wbfsLblDialog, "WBFS/DIALOG", 0, 0, 1.f, 0.f);
 	_setHideAnim(m_wbfsLblMessage, "WBFS/MESSAGE", 0, 0, 1.f, 0.f);

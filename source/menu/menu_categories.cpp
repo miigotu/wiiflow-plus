@@ -53,11 +53,11 @@ void CMenu::_hideCategorySettings(bool instant)
 void CMenu::_showCategorySettings(void)
 {
 	_setBg(m_categoryBg, m_categoryBg);
-	
+
 	m_btnMgr.show(m_categoryBtnBack);
 	for (int i = 0; i < m_max_categories+1; ++i)
 		m_btnMgr.show(m_categoryBtn[i]);
-		
+
 	for (u32 i = 0; i < ARRAY_SIZE(m_categoryLblUser); ++i)
 		if (m_categoryLblUser[i] != -1u)
 			m_btnMgr.show(m_categoryLblUser[i]);
@@ -85,7 +85,7 @@ void CMenu::_initCategorySettingsMenu(CMenu::SThemeData &theme)
 	_setHideAnim(m_categoryBtn[0], "CATEGORY/ALL_BTN", 0, 0, 0.f, 0.f);
 	for (int i = 1; i < 12; ++i)
 		_setHideAnim(m_categoryBtn[i], sfmt("CATEGORY/%i_BTN", i).c_str(), 0, 0, 0.f, 0.f);
-	
+
 	_hideCategorySettings(true);
 	_textCategorySettings();
 }

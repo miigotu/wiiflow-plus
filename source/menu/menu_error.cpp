@@ -64,10 +64,10 @@ void CMenu::_initErrorMenu(CMenu::SThemeData &theme)
 	m_errorBg = _texture(theme.texSet, "ERROR/BG", "texture", theme.bg);
 	m_errorLblMessage = _addLabel(theme, "ERROR/MESSAGE", 112, 20, 500, 440, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_MIDDLE);
 	m_errorLblIcon = _addLabel(theme, "ERROR/ICON", 40, 200, 64, 64, 0, texIcon);
-	// 
+	//
 	_setHideAnim(m_errorLblMessage, "ERROR/MESSAGE", 0, 0, 0.f, 0.f);
 	_setHideAnim(m_errorLblIcon, "ERROR/ICON", -50, 0, 0.f, 0.f);
-	// 
+	//
 	_hideError(true);
 	_textError();
 }

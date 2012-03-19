@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 
 	int ret = 0;
 
-	do 
+	do
 	{
 		Open_Inputs();
 
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 		}
 
 	} while (ret == 1);
-	
+
 	WifiGecko_Close();
 
 	Nand::Instance()->Disable_Emu();

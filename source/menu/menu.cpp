@@ -107,7 +107,7 @@ void CMenu::init(void)
 				drive = DeviceName[i];
 				break;
 			}
-			
+
 	if(drive == check) //No boot.dol found
 		for(int i = SD; i <= USB8; i++) //Find the first partition with apps/wiiflow folder
 			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
@@ -136,6 +136,13 @@ void CMenu::init(void)
 	}
 
 	m_appDir = sfmt("%s:/%s", drive, APPDATA_DIR2);
+
+#ifdef FILE_GECKO
+	snprintf(gecko_logfile, sizeof(gecko_logfile), "%s/%s", m_appDir.c_str(), "gecko.txt");
+	if(stat(gecko_logfile, &dummy) == 0)
+		remove(gecko_logfile);
+#endif /* FILE_GECKO */
+
 	gprintf("Wiiflow boot.dol Location: %s\n", m_appDir.c_str());
 
 	m_cfg.load(sfmt("%s/" CFG_FILENAME, m_appDir.c_str()).c_str());
@@ -143,7 +150,7 @@ void CMenu::init(void)
 	__exception_setreload(dsi_timeout > 5 ? dsi_timeout : 5);
 
 	bool onUSB = m_cfg.getBool("GENERAL", "data_on_usb", strncmp(drive, "usb", 3) == 0);
-	
+
 	drive = check; //reset the drive variable for the check
 
 	if (onUSB)
@@ -175,7 +182,7 @@ void CMenu::init(void)
 			}
 
 	if(drive == check)
-	{	
+	{
 		_buildMenus();
 		if(DeviceHandler::Instance()->IsInserted(SD))
 		{
@@ -200,7 +207,7 @@ void CMenu::init(void)
 
 	m_dataDir = sfmt("%s:/%s", drive, APPDATA_DIR);
 	gprintf("Data Directory: %s\n", m_dataDir.c_str());
-	
+
 	m_dol = sfmt("%s/boot.dol", m_appDir.c_str());
 	m_ver = sfmt("%s/versions", m_appDir.c_str());
 	m_app_update_zip = sfmt("%s/update.zip", m_appDir.c_str());
@@ -212,7 +219,7 @@ void CMenu::init(void)
 	m_boxPicDir = m_cfg.getString("GENERAL", "dir_box_covers", sfmt("%s/boxcovers", m_dataDir.c_str()));
 	m_picDir = m_cfg.getString("GENERAL", "dir_flat_covers", sfmt("%s/covers", m_dataDir.c_str()));
 	m_themeDir = m_cfg.getString("GENERAL", "dir_themes", sfmt("%s/themes", m_dataDir.c_str()));
-	m_musicDir = m_cfg.getString("GENERAL", "dir_music", sfmt("%s/music", m_dataDir.c_str())); 
+	m_musicDir = m_cfg.getString("GENERAL", "dir_music", sfmt("%s/music", m_dataDir.c_str()));
 	m_videoDir = m_cfg.getString("GENERAL", "dir_trailers", sfmt("%s/trailers", m_dataDir.c_str()));
 	m_fanartDir = m_cfg.getString("GENERAL", "dir_fanart", sfmt("%s/fanart", m_dataDir.c_str()));
 	m_screenshotDir = m_cfg.getString("GENERAL", "dir_screenshot", sfmt("%s/screenshots", m_dataDir.c_str()));
@@ -330,7 +337,7 @@ void CMenu::init(void)
 			m_vid.wide(), pShadowColor, pShadowX, pShadowY, pShadowBlur, chan);
 		WPAD_SetVRes(chan, m_vid.width() + m_cursor[chan].width(), m_vid.height() + m_cursor[chan].height());
 	}
-		
+
 	m_btnMgr.init(m_vid);
 	MusicPlayer::Instance()->Init(m_cfg, m_musicDir, sfmt("%s/music", m_themeDataDir.c_str()));
 
@@ -342,8 +349,8 @@ void CMenu::init(void)
 	int exit_to = m_cfg.getInt("GENERAL", "exit_to");
 	m_disable_exit = exit_to == EXIT_TO_DISABLE;
 
-	if(exit_to == EXIT_TO_BOOTMII && (!DeviceHandler::Instance()->IsInserted(SD) || 
-	stat(sfmt("%s:/bootmii/armboot.bin",DeviceName[SD]).c_str(), &dummy) != 0 || 
+	if(exit_to == EXIT_TO_BOOTMII && (!DeviceHandler::Instance()->IsInserted(SD) ||
+	stat(sfmt("%s:/bootmii/armboot.bin",DeviceName[SD]).c_str(), &dummy) != 0 ||
 	stat(sfmt("%s:/bootmii/ppcboot.elf", DeviceName[SD]).c_str(), &dummy) != 0))
 		exit_to = EXIT_TO_HBC;
 	Sys_ExitTo(exit_to);
@@ -353,7 +360,7 @@ void CMenu::init(void)
 	m_cf.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_coverflow", 255));
 	m_btnMgr.setSoundVolume(m_cfg.getInt("GENERAL", "sound_volume_gui", 255));
 	m_bnrSndVol = m_cfg.getInt("GENERAL", "sound_volume_bnr", 255);
-	
+
 	if (m_cfg.getBool("GENERAL", "favorites_on_startup"))
 		m_favorites = m_cfg.getBool(domain, "favorites");
 	m_category = m_cat.getInt(domain, "category");
@@ -377,10 +384,10 @@ void CMenu::cleanup(bool ios_reload)
 	CheckGameSoundThread(true);
 
 	_stopSounds();
-	
+
 	if (!ios_reload)
 		SMART_FREE(m_cameraSound);
-	
+
 	MusicPlayer::DestroyInstance();
 	SoundHandler::DestroyInstance();
 	soundDeinit();
@@ -524,11 +531,11 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 	m_cf.setCameraPos(true,
 		_getCFV3D(domainSel, "camera_pos", Vector3D(0.f, 1.5f, 5.f), otherScrnFmt),
 		_getCFV3D(domainSel, "camera_aim", Vector3D(0.f, 0.f, -1.f), otherScrnFmt));
-		
+
 	m_cf.setCameraOsc(false,
 		_getCFV3D(domain, "camera_osc_speed", Vector3D(2.f, 1.1f, 1.3f), otherScrnFmt),
 		_getCFV3D(domain, "camera_osc_amp", Vector3D(0.1f, 0.2f, 0.1f), otherScrnFmt));
-		
+
 	m_cf.setCameraOsc(true,
 		_getCFV3D(domainSel, "camera_osc_speed", Vector3D(), otherScrnFmt),
 		_getCFV3D(domainSel, "camera_osc_amp", Vector3D(), otherScrnFmt));
@@ -548,19 +555,19 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 		_getCFV3D(domainSel, "right_pos", Vector3D(def_cvr_posX, def_cvr_posY, 0.f), otherScrnFmt),
 		_getCFV3D(domainSel, "center_pos", Vector3D(def_cvr_posX1, 0.f, 2.6f), otherScrnFmt),
 		_getCFV3D(domainSel, "row_center_pos", Vector3D(0.f, def_cvr_posY, 0.f), otherScrnFmt));
-		
+
 	m_cf.setCoverAngleOsc(false,
 		m_theme.getVector3D(domain, "cover_osc_speed", Vector3D(2.f, 2.f, 0.f)),
 		m_theme.getVector3D(domain, "cover_osc_amp", Vector3D(5.f, 10.f, 0.f)));
-		
+
 	m_cf.setCoverAngleOsc(true,
 		m_theme.getVector3D(domainSel, "cover_osc_speed", Vector3D(2.1f, 2.1f, 0.f)),
 		m_theme.getVector3D(domainSel, "cover_osc_amp", Vector3D(2.f, 5.f, 0.f)));
-		
+
 	m_cf.setCoverPosOsc(false,
 		m_theme.getVector3D(domain, "cover_pos_osc_speed"),
 		m_theme.getVector3D(domain, "cover_pos_osc_amp"));
-		
+
 	m_cf.setCoverPosOsc(true,
 		m_theme.getVector3D(domainSel, "cover_pos_osc_speed"),
 		m_theme.getVector3D(domainSel, "cover_pos_osc_amp"));
@@ -569,19 +576,19 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 	m_cf.setSpacers(false,
 		m_theme.getVector3D(domain, "left_spacer", Vector3D(-spacerX, 0.f, 0.f)),
 		m_theme.getVector3D(domain, "right_spacer", Vector3D(spacerX, 0.f, 0.f)));
-		
+
 	m_cf.setSpacers(true,
 		m_theme.getVector3D(domainSel, "left_spacer", Vector3D(-spacerX, 0.f, 0.f)),
 		m_theme.getVector3D(domainSel, "right_spacer", Vector3D(spacerX, 0.f, 0.f)));
-		
+
 	m_cf.setDeltaAngles(false,
 		m_theme.getVector3D(domain, "left_delta_angle"),
 		m_theme.getVector3D(domain, "right_delta_angle"));
-		
+
 	m_cf.setDeltaAngles(true,
 		m_theme.getVector3D(domainSel, "left_delta_angle"),
 		m_theme.getVector3D(domainSel, "right_delta_angle"));
-	
+
 	float angleY = smallbox ? 0.f : 70.f;
 	m_cf.setAngles(false,
 		m_theme.getVector3D(domain, "left_angle", Vector3D(0.f, angleY, 0.f)),
@@ -597,7 +604,7 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 		m_theme.getVector3D(domainSel, "right_angle", Vector3D(angleX, -angleY, 0.f)),
 		m_theme.getVector3D(domainSel, "center_angle", Vector3D(0.f, angleY1, 0.f)),
 		m_theme.getVector3D(domainSel, "row_center_angle"));
-	
+
 	angleX = smallbox ? 0.f : 55.f;
 	m_cf.setTitleAngles(false,
 		_getCFFloat(domain, "text_left_angle", -angleX, otherScrnFmt),
@@ -608,95 +615,95 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 		_getCFFloat(domainSel, "text_left_angle", -angleX, otherScrnFmt),
 		_getCFFloat(domainSel, "text_right_angle", angleX, otherScrnFmt),
 		_getCFFloat(domainSel, "text_center_angle", 0.f, otherScrnFmt));
-		
+
 	m_cf.setTitlePos(false,
 		_getCFV3D(domain, "text_left_pos", Vector3D(-4.f, 0.f, 1.3f), otherScrnFmt),
 		_getCFV3D(domain, "text_right_pos", Vector3D(4.f, 0.f, 1.3f), otherScrnFmt),
 		_getCFV3D(domain, "text_center_pos", Vector3D(0.f, 0.f, 2.6f), otherScrnFmt));
-		
+
 	m_cf.setTitlePos(true,
 		_getCFV3D(domainSel, "text_left_pos", Vector3D(-4.f, 0.f, 1.3f), otherScrnFmt),
 		_getCFV3D(domainSel, "text_right_pos", Vector3D(4.f, 0.f, 1.3f), otherScrnFmt),
 		_getCFV3D(domainSel, "text_center_pos", Vector3D(.6f, 1.6f, 1.6f), otherScrnFmt));
-		
+
 	m_cf.setTitleWidth(false,
 		_getCFFloat(domain, "text_side_wrap_width", 600.f, otherScrnFmt),
 		_getCFFloat(domain, "text_center_wrap_width", 600.f, otherScrnFmt));
-		
+
 	m_cf.setTitleWidth(true,
 		_getCFFloat(domainSel, "text_side_wrap_width", 600.f, otherScrnFmt),
 		_getCFFloat(domainSel, "text_center_wrap_width", 380.f, otherScrnFmt));
-		
+
 	m_cf.setTitleStyle(false,
 		_textStyle(domain.c_str(), "text_side_style", FTGX_ALIGN_MIDDLE | FTGX_JUSTIFY_CENTER),
 		_textStyle(domain.c_str(), "text_center_style", FTGX_ALIGN_BOTTOM | FTGX_JUSTIFY_CENTER));
-		
+
 	m_cf.setTitleStyle(true,
 		_textStyle(domainSel.c_str(), "text_side_style", FTGX_ALIGN_MIDDLE | FTGX_JUSTIFY_CENTER),
 		_textStyle(domainSel.c_str(), "text_center_style", FTGX_ALIGN_TOP | FTGX_JUSTIFY_LEFT));
-		
+
 	m_cf.setColors(false,
 		m_theme.getColor(domain, "color_beg", 0xCFFFFFFF),
 		m_theme.getColor(domain, "color_end", 0x3FFFFFFF),
 		m_theme.getColor(domain, "color_off", 0x7FFFFFFF));
-		
+
 	m_cf.setColors(true,
 		m_theme.getColor(domainSel, "color_beg", 0x7FFFFFFF),
 		m_theme.getColor(domainSel, "color_end", 0x1FFFFFFF),
 		m_theme.getColor(domain, "color_off", 0x7FFFFFFF));
-		
+
 	m_cf.setMirrorAlpha(m_theme.getFloat(domain, "mirror_alpha", 0.25f), m_theme.getFloat(domain, "title_mirror_alpha", 0.2f));
-	
+
 	m_cf.setMirrorBlur(m_theme.getBool(domain, "mirror_blur", true));
-	
+
 	m_cf.setShadowColors(false,
 		m_theme.getColor(domain, "color_shadow_center", 0x00000000),
 		m_theme.getColor(domain, "color_shadow_beg", 0x00000000),
 		m_theme.getColor(domain, "color_shadow_end", 0x00000000),
 		m_theme.getColor(domain, "color_shadow_off", 0x00000000));
-		
+
 	m_cf.setShadowColors(true,
 		m_theme.getColor(domainSel, "color_shadow_center", 0x0000007F),
 		m_theme.getColor(domainSel, "color_shadow_beg", 0x0000007F),
 		m_theme.getColor(domainSel, "color_shadow_end", 0x0000007F),
 		m_theme.getColor(domainSel, "color_shadow_off", 0x0000007F));
-		
+
 	m_cf.setShadowPos(m_theme.getFloat(domain, "shadow_scale", 1.1f),
 		m_theme.getFloat(domain, "shadow_x"),
 		m_theme.getFloat(domain, "shadow_y"));
 
-	float spacerY = smallbox ? 0.60f : 2.f;	
+	float spacerY = smallbox ? 0.60f : 2.f;
 	m_cf.setRowSpacers(false,
 		m_theme.getVector3D(domain, "top_spacer", Vector3D(0.f, spacerY, 0.f)),
 		m_theme.getVector3D(domain, "bottom_spacer", Vector3D(0.f, -spacerY, 0.f)));
-		
+
 	m_cf.setRowSpacers(true,
 		m_theme.getVector3D(domainSel, "top_spacer", Vector3D(0.f, spacerY, 0.f)),
 		m_theme.getVector3D(domainSel, "bottom_spacer", Vector3D(0.f, -spacerY, 0.f)));
-		
+
 	m_cf.setRowDeltaAngles(false,
 		m_theme.getVector3D(domain, "top_delta_angle"),
 		m_theme.getVector3D(domain, "bottom_delta_angle"));
-		
+
 	m_cf.setRowDeltaAngles(true,
 		m_theme.getVector3D(domainSel, "top_delta_angle"),
 		m_theme.getVector3D(domainSel, "bottom_delta_angle"));
-		
+
 	m_cf.setRowAngles(false,
 		m_theme.getVector3D(domain, "top_angle"),
 		m_theme.getVector3D(domain, "bottom_angle"));
-		
+
 	m_cf.setRowAngles(true,
 		m_theme.getVector3D(domainSel, "top_angle"),
 		m_theme.getVector3D(domainSel, "bottom_angle"));
-	
+
 	Vector3D def_cvr_scale = smallbox ? Vector3D(0.667f, 0.25f, 1.f) : Vector3D(1.f, 1.f, 1.f);
 	m_cf.setCoverScale(false,
 		m_theme.getVector3D(domain, "left_scale", def_cvr_scale),
 		m_theme.getVector3D(domain, "right_scale", def_cvr_scale),
 		m_theme.getVector3D(domain, "center_scale", def_cvr_scale),
 		m_theme.getVector3D(domain, "row_center_scale", def_cvr_scale));
-		
+
 	m_cf.setCoverScale(true,
 		m_theme.getVector3D(domainSel, "left_scale", def_cvr_scale),
 		m_theme.getVector3D(domainSel, "right_scale", def_cvr_scale),
@@ -708,7 +715,7 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 		_getCFV3D(domainSel, "flip_pos", Vector3D(), otherScrnFmt),
 		_getCFV3D(domainSel, "flip_angle", Vector3D(0.f, flipX, 0.f), otherScrnFmt),
 		_getCFV3D(domainSel, "flip_scale", def_cvr_scale, otherScrnFmt));
-		
+
 	m_cf.setBlur(
 		m_theme.getInt(domain, "blur_resolution", 1),
 		m_theme.getInt(domain, "blur_radius", 2),
@@ -729,7 +736,7 @@ void CMenu::_buildMenus(void)
 
 	_font(theme.fontSet, "GENERAL", TITLEFONT);
 	theme.titleFontColor = m_theme.getColor("GENERAL", "title_font_color", 0xD0BFDFFF);
-	
+
 	_font(theme.fontSet, "GENERAL", TEXTFONT);
 	theme.txtFontColor = m_theme.getColor("GENERAL", "text_font_color", 0xFFFFFFFF);
 
@@ -739,37 +746,37 @@ void CMenu::_buildMenus(void)
 	m_cameraSound = theme.cameraSound;
 
 	theme.btnTexL.fromPNG(butleft_png);
-	theme.btnTexL = _texture(theme.texSet, "GENERAL", "button_texture_left", theme.btnTexL); 
+	theme.btnTexL = _texture(theme.texSet, "GENERAL", "button_texture_left", theme.btnTexL);
 	theme.btnTexR.fromPNG(butright_png);
-	theme.btnTexR = _texture(theme.texSet, "GENERAL", "button_texture_right", theme.btnTexR); 
+	theme.btnTexR = _texture(theme.texSet, "GENERAL", "button_texture_right", theme.btnTexR);
 	theme.btnTexC.fromPNG(butcenter_png);
-	theme.btnTexC = _texture(theme.texSet, "GENERAL", "button_texture_center", theme.btnTexC); 
+	theme.btnTexC = _texture(theme.texSet, "GENERAL", "button_texture_center", theme.btnTexC);
 	theme.btnTexLS.fromPNG(butsleft_png);
-	theme.btnTexLS = _texture(theme.texSet, "GENERAL", "button_texture_left_selected", theme.btnTexLS); 
+	theme.btnTexLS = _texture(theme.texSet, "GENERAL", "button_texture_left_selected", theme.btnTexLS);
 	theme.btnTexRS.fromPNG(butsright_png);
-	theme.btnTexRS = _texture(theme.texSet, "GENERAL", "button_texture_right_selected", theme.btnTexRS); 
+	theme.btnTexRS = _texture(theme.texSet, "GENERAL", "button_texture_right_selected", theme.btnTexRS);
 	theme.btnTexCS.fromPNG(butscenter_png);
-	theme.btnTexCS = _texture(theme.texSet, "GENERAL", "button_texture_center_selected", theme.btnTexCS); 
+	theme.btnTexCS = _texture(theme.texSet, "GENERAL", "button_texture_center_selected", theme.btnTexCS);
 	theme.pbarTexL.fromPNG(pbarleft_png);
-	theme.pbarTexL = _texture(theme.texSet, "GENERAL", "progressbar_texture_left", theme.pbarTexL); 
+	theme.pbarTexL = _texture(theme.texSet, "GENERAL", "progressbar_texture_left", theme.pbarTexL);
 	theme.pbarTexR.fromPNG(pbarright_png);
-	theme.pbarTexR = _texture(theme.texSet, "GENERAL", "progressbar_texture_right", theme.pbarTexR); 
+	theme.pbarTexR = _texture(theme.texSet, "GENERAL", "progressbar_texture_right", theme.pbarTexR);
 	theme.pbarTexC.fromPNG(pbarcenter_png);
-	theme.pbarTexC = _texture(theme.texSet, "GENERAL", "progressbar_texture_center", theme.pbarTexC); 
+	theme.pbarTexC = _texture(theme.texSet, "GENERAL", "progressbar_texture_center", theme.pbarTexC);
 	theme.pbarTexLS.fromPNG(pbarlefts_png);
-	theme.pbarTexLS = _texture(theme.texSet, "GENERAL", "progressbar_texture_left_selected", theme.pbarTexLS); 
+	theme.pbarTexLS = _texture(theme.texSet, "GENERAL", "progressbar_texture_left_selected", theme.pbarTexLS);
 	theme.pbarTexRS.fromPNG(pbarrights_png);
-	theme.pbarTexRS = _texture(theme.texSet, "GENERAL", "progressbar_texture_right_selected", theme.pbarTexRS); 
+	theme.pbarTexRS = _texture(theme.texSet, "GENERAL", "progressbar_texture_right_selected", theme.pbarTexRS);
 	theme.pbarTexCS.fromPNG(pbarcenters_png);
-	theme.pbarTexCS = _texture(theme.texSet, "GENERAL", "progressbar_texture_center_selected", theme.pbarTexCS); 
+	theme.pbarTexCS = _texture(theme.texSet, "GENERAL", "progressbar_texture_center_selected", theme.pbarTexCS);
 	theme.btnTexPlus.fromPNG(btnplus_png);
-	theme.btnTexPlus = _texture(theme.texSet, "GENERAL", "plus_button_texture", theme.btnTexPlus); 
+	theme.btnTexPlus = _texture(theme.texSet, "GENERAL", "plus_button_texture", theme.btnTexPlus);
 	theme.btnTexPlusS.fromPNG(btnpluss_png);
-	theme.btnTexPlusS = _texture(theme.texSet, "GENERAL", "plus_button_texture_selected", theme.btnTexPlusS); 
+	theme.btnTexPlusS = _texture(theme.texSet, "GENERAL", "plus_button_texture_selected", theme.btnTexPlusS);
 	theme.btnTexMinus.fromPNG(btnminus_png);
-	theme.btnTexMinus = _texture(theme.texSet, "GENERAL", "minus_button_texture", theme.btnTexMinus); 
+	theme.btnTexMinus = _texture(theme.texSet, "GENERAL", "minus_button_texture", theme.btnTexMinus);
 	theme.btnTexMinusS.fromPNG(btnminuss_png);
-	theme.btnTexMinusS = _texture(theme.texSet, "GENERAL", "minus_button_texture_selected", theme.btnTexMinusS); 
+	theme.btnTexMinusS = _texture(theme.texSet, "GENERAL", "minus_button_texture_selected", theme.btnTexMinusS);
 	// Default background
 	theme.bg.fromPNG(background_png, GX_TF_RGBA8, ALLOC_MEM2);
 	m_mainBgLQ.fromPNG(background_png, GX_TF_CMPR, ALLOC_MEM2, 64, 64);
@@ -791,7 +798,7 @@ void CMenu::_buildMenus(void)
 	_initWBFSMenu(theme);
 	_initCFThemeMenu(theme);
 	_initGameSettingsMenu(theme);
-	_initCheatSettingsMenu(theme); 
+	_initCheatSettingsMenu(theme);
 	_initCategorySettingsMenu(theme);
 	_initSystemMenu(theme);
 	_initGameInfoMenu(theme);
@@ -836,7 +843,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 			if(fonts[i].res <= 0)
 				fonts[i].res = (u32)m_theme.getInt("GENERAL", value);
 
-			fonts[i].res = min(max(fonts[i].min, fonts[i].res <= 0 ? fonts[i].def : fonts[i].res), fonts[i].max);		
+			fonts[i].res = min(max(fonts[i].min, fonts[i].res <= 0 ? fonts[i].def : fonts[i].res), fonts[i].max);
 		}
 		else fonts[i].res = fonts[i].def;
 	}
@@ -922,7 +929,7 @@ SmartGuiSound CMenu::_sound(CMenu::SoundSet &soundSet, const char *domain, const
 
 	if(!defVal)
 		filename = sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str());
-	
+
 	CMenu::SoundSet::iterator i = soundSet.find(upperCase(defVal ? name.c_str() : filename.c_str()));
 	if (i != soundSet.end()) return i->second;
 
@@ -974,13 +981,13 @@ u32 CMenu::_addButton(CMenu::SThemeData &theme, const char *domain, int x, int y
 
 	SmartGuiSound clickSound = _sound(theme.soundSet, domain, "click_sound", theme.clickSound->GetSound(), theme.clickSound->GetLength(), theme.clickSound->GetName());
 	SmartGuiSound hoverSound = _sound(theme.soundSet, domain, "hover_sound", theme.hoverSound->GetSound(), theme.hoverSound->GetLength(), theme.hoverSound->GetName());
-	
+
 	u16 btnPos = _textStyle(domain, "elmstyle", FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	if (btnPos & FTGX_JUSTIFY_RIGHT)
 		x = m_vid.width() - x - width;
 	if (btnPos & FTGX_ALIGN_BOTTOM)
 		y = m_vid.height() - y - height;
-	
+
 	return m_btnMgr.addButton(font, text, x, y, width, height, c, btnTexSet, clickSound, hoverSound);
 }
 
@@ -1163,13 +1170,13 @@ void CMenu::_initCF(void)
 			strncpy((char *) m_gameList[i].hdr.id, "JODI", 6);
 
 		string id = string((const char *)m_gameList[i].hdr.id, m_current_view == COVERFLOW_CHANNEL || m_current_view == COVERFLOW_HOMEBREW ?  4 : 6);
-		
+
 		if ((!m_favorites || m_gcfg1.getBool("FAVORITES", id)) && (!m_locked || !m_gcfg1.getBool("ADULTONLY", id)) && !m_gcfg1.getBool("HIDDEN", id))
 		{
 			if (m_category != 0)
 			{
 				const char *categories = m_cat.getString("CATEGORIES", id).c_str();
-				if (strlen(categories) != 12 || categories[m_category] == '0') 
+				if (strlen(categories) != 12 || categories[m_category] == '0')
 					continue;
 			}
 
@@ -1249,7 +1256,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	}
 
 	m_fa.draw();
-	
+
 	m_btnMgr.draw();
 	ScanInput();
 
@@ -1280,9 +1287,9 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 	if (withCF && m_gameSoundThread == LWP_THREAD_NULL)
 		m_cf.startCoverLoader();
 
-	MusicPlayer::Instance()->Tick(m_video_playing || (m_gameSelected && 
+	MusicPlayer::Instance()->Tick(m_video_playing || (m_gameSelected &&
 		m_gameSound.IsLoaded()) ||  m_gameSound.IsPlaying());
-	
+
 	//Take Screenshot
 	if (gc_btnsPressed & PAD_TRIGGER_Z)
 	{
@@ -1479,7 +1486,7 @@ void CMenu::_loadList(void)
 			_loadGameList();
 			break;
 	}
-	
+
 	m_cfg.remove(_domainFromView(), "update_cache");
 }
 
@@ -1543,7 +1550,7 @@ void CMenu::_loadChannelList(void)
 		if(sysconf != NULL && sysconf_size > 0)
 		{
 			bzero(filepath, ISFS_MAXPATH);
-			sprintf(filepath, "%s:%sshared2/sys/SYSCONF", DeviceName[currentPartition], path.c_str());	
+			sprintf(filepath, "%s:%sshared2/sys/SYSCONF", DeviceName[currentPartition], path.c_str());
 			FILE *file = fopen(filepath, "wb");
 			if(file)
 			{
@@ -1614,14 +1621,14 @@ void CMenu::_stopSounds(void)
 		while (MusicPlayer::Instance()->GetVolume() > 0 || m_gameSound.GetVolume() > 0)
 		{
 			MusicPlayer::Instance()->Tick(true);
-			
+
 			if (m_gameSound.GetVolume() > 0)
 				m_gameSound.SetVolume(m_gameSound.GetVolume() < fade_rate ? 0 : m_gameSound.GetVolume() - fade_rate);
 
-			VIDEO_WaitVSync();		
+			VIDEO_WaitVSync();
 		}
 	}
-	
+
 	m_btnMgr.stopSounds();
 	m_cf.stopSound();
 
@@ -1634,7 +1641,7 @@ bool CMenu::_loadFile(SmartBuf &buffer, u32 &size, const char *path, const char 
 	SMART_FREE(buffer);
 	size = 0;
 	FILE *fp = fopen(file == NULL ? path : fmt("%s/%s", path, file), "rb");
-		
+
 	if (fp == 0) return false;
 
 	fseek(fp, 0, SEEK_END);
@@ -1661,7 +1668,7 @@ void CMenu::_load_installed_cioses()
 {
 	if (_installed_cios.size() > 0) return;
 	gprintf("Loading cIOS map\n");
-	
+
 	_installed_cios[0] = 1;
 	u8 base = 0;
 
@@ -1698,14 +1705,14 @@ void CMenu::_loadDefaultFont(bool korean)
 {
 	u32 size;
 	bool retry = false;
-	
+
 	// Read content.map from ISFS
 	u8 *content = ISFS_GetFile((u8 *) "/shared1/content.map", &size, 0);
 	int items = size / sizeof(map_entry_t);
-		
+
 	//gprintf("Open content.map, size %d, items %d\n", size, items);
 
-retry:	
+retry:
 	bool kor_font = (korean && !retry) || (!korean && retry);
 	map_entry_t *cm = (map_entry_t *) content;
 	for (int i = 0; i < items; i++)
@@ -1716,17 +1723,17 @@ retry:
 			char u8_font_filename[22] = {0};
 			strcpy(u8_font_filename, "/shared1/XXXXXXXX.app"); // Faster than sprintf
             memcpy(u8_font_filename+9, cm[i].filename, 8);
-			
+
 			u8 *u8_font_archive = ISFS_GetFile((u8 *) u8_font_filename, &size, 0);
-			
+
 			//gprintf("Opened fontfile: %s: %d bytes\n", u8_font_filename, size);
-			
+
 			if (u8_font_archive != NULL)
 			{
 				const u8 *font_file = u8_get_file_by_index(u8_font_archive, 1, &size); // There is only one file in that app
-				
+
 				//gprintf("Extracted font: %d\n", size);
-				
+
 				m_base_font = smartMem2Alloc(size);
 				memcpy(m_base_font.get(), font_file, size);
 				if(!!m_base_font)
@@ -1736,13 +1743,13 @@ retry:
 			break;
 		}
 	}
-	
+
 	if (!retry)
 	{
 		retry = true;
 		goto retry;
 	}
-	
+
 	SAFE_FREE(content);
 }
 

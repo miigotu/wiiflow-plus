@@ -4,12 +4,12 @@ using namespace std;
 
 MusicPlayer *MusicPlayer::instance = NULL;
 
-MusicPlayer *MusicPlayer::Instance() 
+MusicPlayer *MusicPlayer::Instance()
 {
 	if (instance == NULL)
 		instance = new MusicPlayer();
 
-	return instance; 
+	return instance;
 }
 
 void MusicPlayer::DestroyInstance()
@@ -20,7 +20,7 @@ void MusicPlayer::DestroyInstance()
 	instance = NULL;
 }
 
-void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir) 
+void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 {
 	m_music = NULL;
 	m_manual_stop = true;
@@ -29,7 +29,7 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 	m_music_volume = cfg.getInt("GENERAL", "sound_volume_music", 255);
 
 	SetVolume(0); // Fades in with tick()
-	
+
 	MusicDirectory dir = (MusicDirectory) cfg.getInt("GENERAL", "music_directories", NORMAL_MUSIC | THEME_MUSIC);
 	m_music_files.Init(cfg.getString("GENERAL", "dir_list_cache"), std::string(), std::string());
 
@@ -38,7 +38,7 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 
 	if (dir & NORMAL_MUSIC)
 		m_music_files.Load(musicDir, ".ogg|.mp3"); //|.mod|.xm|.s3m|.wav|.aiff");
-	
+
 	if (cfg.getBool("GENERAL", "randomize_music") && m_music_files.size() > 0)
 	{
 		srand(unsigned(time(NULL)));
@@ -89,7 +89,7 @@ void MusicPlayer::Next()
 	m_current_music++;
 	if (m_current_music == m_music_files.end())
 		m_current_music = m_music_files.begin();
-	
+
 	LoadCurrentFile();
 }
 
@@ -107,7 +107,7 @@ void MusicPlayer::Play()
 	if (m_music != NULL)
 		m_music->SetVolume(m_music_current_volume);
 }
-	
+
 void MusicPlayer::Stop()
 {
 	m_manual_stop = true;
@@ -141,7 +141,7 @@ void MusicPlayer::Tick(bool attenuate)
 			SetVolume(volume);
 		}
 	}
-		
+
 	if (!attenuate && !m_manual_stop && (m_music == NULL || m_stopped || !m_music->IsPlaying()))
 		Next();
 }
@@ -152,7 +152,7 @@ void MusicPlayer::LoadCurrentFile()
 
 	if (m_music != NULL)
 		m_music->Stop();
-	
+
 	if (m_music == NULL)
 		m_music = new GuiSound((*m_current_music).c_str(), ASND_MUSIC_VOICE);
 	else

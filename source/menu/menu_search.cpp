@@ -14,7 +14,7 @@ safe_vector<dir_discHdr> CMenu::_searchGamesByID(const char *gameId)
 
 	return retval;
 }
-/* 
+/*
 safe_vector<dir_discHdr> CMenu::_searchGamesByTitle(wchar_t letter)
 {
 	safe_vector<dir_discHdr> retval;
