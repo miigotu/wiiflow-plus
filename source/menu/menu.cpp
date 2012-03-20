@@ -84,50 +84,63 @@ CMenu::CMenu(CVideo &vid) :
 
 extern "C" { int makedir(char *newdir); }
 
-void CMenu::init(void)
+static bool SeekPathOnParts(string &drive, const string &fmt, const string &folder, bool direction)
 {
-	const char *drive = "empty";
-	const char *check = "empty";
+	struct stat dummy;
+
+	if(direction)
+	{
+		for(int i = SD; i <= USB8; i++)
+			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS
+				&& (fmt.empty() || stat(sfmt(fmt.c_str(), DeviceName[i], folder.c_str()).c_str(), &dummy) == 0))
+			{
+				drive.clear();
+				drive = DeviceName[i];
+				break;
+			}
+	}
+	else
+	{
+		for(int i = USB8; i >= SD; i--)
+			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS
+				&& (fmt.empty() || stat(sfmt(fmt.c_str(), DeviceName[i], folder.c_str()).c_str(), &dummy) == 0))
+			{
+				drive = DeviceName[i];
+				break;
+			}
+	}
+	return !drive.empty();
+}
+
+void CMenu::init(string/*  dolLocation */)
+{
+	string drive;
+	string games;
 	struct stat dummy;
 
 	/* Clear Playlog */
 	Playlog_Delete();
 
-	for(int i = SD; i <= USB8; i++) //Find the first partition with a wiiflow.ini
-		if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/%s/" CFG_FILENAME, DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
-		{
+/* 	if(!dolLocation.empty())
+	{
+		int i = DeviceHandler::Instance()->PathToDriveType(dolLocation.c_str());
+		if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS
+				&& (fmt.empty() || stat(dolLocation.c_str(), &dummy) == 0))
 			drive = DeviceName[i];
-			break;
-		}
+	} */
+	if(drive.empty() && !SeekPathOnParts(drive, string("%s:/%s/" CFG_FILENAME), string(APPDATA_DIR2), true))		// Look for /apps/wiiflow/wiiflow.ini
+		if(!SeekPathOnParts(drive, string("%s:/%s/boot.dol"), string(APPDATA_DIR2), true))							// Look for /apps/wiiflow/boot.dol
+			if(!SeekPathOnParts(drive, string("%s:/%s"), string(APPDATA_DIR2), true))								// Look for /apps/wiiflow
+				if(!SeekPathOnParts(drive, string("%s:/%s"), string("apps"), true))									// Look for /apps
+					if(!SeekPathOnParts(drive, string("%s/%s"), string(GAMES_DIR), true))							// Look for /wbfs
+						if(!SeekPathOnParts(drive, string(""), string(""), true))									// Look for a writable partition
 
-	if(drive == check) //No wiiflow.ini found
-		for(int i = SD; i <= USB8; i++) //Find the first partition with a boot.dol
-			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/%s/boot.dol", DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
-			{
-				drive = DeviceName[i];
-				break;
-			}
-
-	if(drive == check) //No boot.dol found
-		for(int i = SD; i <= USB8; i++) //Find the first partition with apps/wiiflow folder
-			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR2).c_str(), &dummy) == 0)
-			{
-				drive = DeviceName[i];
-				break;
-			}
-
-	if(drive == check) //No apps/wiiflow folder found
-		for(int i = SD; i <= USB8; i++) // Find the first writable partition
-			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS)
-			{
-				drive = DeviceName[i];
-				makedir((char *)sfmt("%s:/%s", DeviceName[i], APPDATA_DIR2).c_str()); //Make the apps dir, so saving wiiflow.ini does not fail.
-				break;
-			}
-
+	if(!drive.empty())
+		makedir((char *)sfmt("%s:/%s", drive.c_str(), APPDATA_DIR2).c_str()); //Make the apps dir, so saving wiiflow.ini does not fail.
+		
 	_loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 
-	if(drive == check) // Should not happen
+	if(drive.empty()) // Should not happen
 	{
 		_buildMenus();
 		error(L"No available partitions found!");
@@ -135,7 +148,7 @@ void CMenu::init(void)
 		return;
 	}
 
-	m_appDir = sfmt("%s:/%s", drive, APPDATA_DIR2);
+	m_appDir = sfmt("%s:/%s", drive.c_str(), APPDATA_DIR2);
 
 #ifdef FILE_GECKO
 	snprintf(gecko_logfile, sizeof(gecko_logfile), "%s/%s", m_appDir.c_str(), "gecko.txt");
@@ -149,53 +162,37 @@ void CMenu::init(void)
 	u8 dsi_timeout = m_cfg.getInt("DEBUG", "dsi_timeout");
 	__exception_setreload(dsi_timeout > 5 ? dsi_timeout : 5);
 
-	bool onUSB = m_cfg.getBool("GENERAL", "data_on_usb", strncmp(drive, "usb", 3) == 0);
+	bool onSD = drive[0] == 's';
+	
+	drive.clear();
 
-	drive = check; //reset the drive variable for the check
-
-	if (onUSB)
+	int i = 0;
+	if(!(m_cfg.getString2("GENERAL", "dir_data", m_dataDir)
+		&& DeviceHandler::Instance()->IsInserted((i = DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str())))
+		&& DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS))
 	{
-		for(int i = USB1; i <= USB8; i++) //Look for first partition with a wiiflow folder in root
-			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt("%s:/%s", DeviceName[i], APPDATA_DIR).c_str(), &dummy) == 0)
-			{
-				drive = DeviceName[i];
-				break;
-			}
-	}
-	else if(DeviceHandler::Instance()->IsInserted(SD)) drive = DeviceName[SD];
+		if(!SeekPathOnParts(drive, string("%s:/%s"), string(APPDATA_DIR), onSD))					// Look for /wiiflow
+			if(!SeekPathOnParts(drive, string("%s/%s"), string(GAMES_DIR), onSD))					// Look for /wbfs
+				if(!SeekPathOnParts(drive, string("%s:/%s/boot.dol"), string(APPDATA_DIR2), onSD))	// Look for /apps/wiiflow/boot.dol
+					if(!SeekPathOnParts(drive, string("%s:/%s"), string(APPDATA_DIR2), onSD))		// Look for /apps/wiiflow
+						if(!SeekPathOnParts(drive, string("%s:/%s"), string("apps"), onSD))			// Look for /apps
+							if(!SeekPathOnParts(drive, string(""), string(""), onSD))				// Look for a writable partition
 
-	if(drive == check && onUSB) //No wiiflow folder found in root of any usb partition, and data_on_usb=yes
-		for(int i = USB1; i <= USB8; i++) // Try first USB partition with wbfs folder.
-			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt(GAMES_DIR, DeviceName[i]).c_str(), &dummy) == 0)
-			{
-				drive = DeviceName[i];
-				currentPartition = i;
-				break;
-			}
-
-	if(drive == check && onUSB) // No wbfs folder found and data_on_usb=yes
-		for(int i = USB1; i <= USB8; i++) // Try first available USB partition.
-			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS)
-			{
-				drive = DeviceName[i];
-				break;
-			}
-
-	if(drive == check)
-	{
-		_buildMenus();
-		if(DeviceHandler::Instance()->IsInserted(SD))
+		if(drive.empty())
 		{
-			error(L"data_on_usb=yes and No available usb partitions for data!\nUsing SD.");
-			drive = DeviceName[SD];
-		}
-		else
-		{
-			error(L"No available usb partitions for data and no SD inserted!\nExitting.");
+			_buildMenus();
+			error(L"No available storage devices!\nExitting.");
 			m_exit = true;
 			return;
 		}
+
+		m_dataDir = sfmt("%s:/%s", drive.c_str(), APPDATA_DIR);
+		m_cfg.setString("GENERAL", "dir_data", m_dataDir.c_str());
+	
 	}
+
+	gprintf("Data Directory: %s\n", m_dataDir.c_str());
+
 	int emu_mode = EMU_DISABLED;
 	m_cfg.getInt("NAND", "emulation", &emu_mode);
 	Nand::Instance()->Init(m_cfg.getString("NAND", "path").c_str(),
@@ -204,9 +201,6 @@ void CMenu::init(void)
 	);
 
 	_load_installed_cioses();
-
-	m_dataDir = sfmt("%s:/%s", drive, APPDATA_DIR);
-	gprintf("Data Directory: %s\n", m_dataDir.c_str());
 
 	m_dol = sfmt("%s/boot.dol", m_appDir.c_str());
 	m_ver = sfmt("%s/versions", m_appDir.c_str());
@@ -235,7 +229,8 @@ void CMenu::init(void)
 	const char *checkDir = m_current_view == COVERFLOW_HOMEBREW ? HOMEBREW_DIR : GAMES_DIR;
 
 	currentPartition = m_cfg.getInt(domain, "partition", currentPartition);
-	if(m_current_view != COVERFLOW_CHANNEL && (currentPartition > USB8 || !DeviceHandler::Instance()->IsInserted(currentPartition)))
+	if(m_current_view != COVERFLOW_CHANNEL && (currentPartition > USB8 || !DeviceHandler::Instance()->IsInserted(currentPartition)
+		|| (m_current_view == COVERFLOW_USB && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt(checkDir, DeviceName[i]).c_str(), &dummy) == -1)))
 	{
 		m_cfg.remove(domain, "partition");
 		for(int i = SD; i <= USB8+1; i++) // Find a usb partition with the wbfs folder or wbfs file system, else leave it blank (defaults to 1 later)
@@ -366,7 +361,7 @@ void CMenu::init(void)
 	m_category = m_cat.getInt(domain, "category");
 	m_max_categories = m_cat.getInt(domain, "numcategories", 12);
 
-	safe_vector<string> gamercards = stringToVector(m_cfg.getString("GAMERCARD", "gamercards"), '|');
+	safe_vector<string> gamercards = stringToVector(m_cfg.getString("GAMERCARD", "gamercards"), "|");
 	for (safe_vector<string>::iterator itr = gamercards.begin(); itr != gamercards.end(); itr++)
 	{
 		string defval = itr->compare("wiinertag") ? WIINNERTAG_URL : itr->compare("dutag") ? DUTAG_URL : "";
@@ -450,7 +445,7 @@ void CMenu::_loadCFCfg(SThemeData &theme)
 
 	m_cf.setFont(_font(theme.fontSet, domain, TITLEFONT), m_theme.getColor(domain, "font_color", CColor(0xFFFFFFFF)));
 
-	m_numCFVersions = min(max(2, m_theme.getInt("_COVERFLOW", "number_of_modes", 2)), 8);
+	m_numCFVersions = min(max(2, m_theme.getInt(domain, "number_of_modes", 2)), 8);
 	for (u32 i = 1; i <= m_numCFVersions; ++i)
 		_loadCFLayout(i);
 
@@ -507,13 +502,30 @@ float CMenu::_getCFFloat(const string &domain, const string &key, float def, boo
 	return m_theme.getFloat(domain, key169, m_theme.getFloat(domain, key43, def));
 }
 
+const char *CMenu::_cfDomain(bool selected)
+{
+	if(m_cfg.getBool(_domainFromView(), "seperate_views", m_cfg.getBool(_domainFromView(), "smallbox", m_current_view == COVERFLOW_HOMEBREW)))
+	{
+		switch(m_current_view)
+		{
+			case COVERFLOW_CHANNEL:
+				return selected ? "_CHANFLOW_%i_S" : "_CHANFLOW_%i";
+			case COVERFLOW_HOMEBREW:
+				return selected ? "_BREWFLOW_%i_S" : "_BREWFLOW_%i";
+			default:
+				return selected ? "_COVERFLOW_%i_S" : "_COVERFLOW_%i";
+		}
+	}
+	else return selected ? "_COVERFLOW_%i_S" : "_COVERFLOW_%i";
+}
+
 void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 {
 	version = 1 + ((version + (int)m_numCFVersions) % (int)m_numCFVersions);
 
-	bool smallbox = m_current_view == COVERFLOW_HOMEBREW && m_cfg.getBool("HOMEBREW", "smallbox", true);
-	string domain(smallbox ? sfmt("BREWFLOW_%i", version).c_str() : sfmt("_COVERFLOW_%i", version).c_str());
-	string domainSel(smallbox ? sfmt("BREWFLOW_%i_S", version).c_str() : sfmt("_COVERFLOW_%i_S", version).c_str());
+	bool smallbox = m_cfg.getBool(_domainFromView(), "smallbox", m_current_view == COVERFLOW_HOMEBREW);
+	string domain(sfmt(_cfDomain(), version).c_str());
+	string domainSel(sfmt(_cfDomain(true), version).c_str());
 
 	int max_fsaa = m_theme.getInt(domain, "max_fsaa", 3);
 	_setAA(forceAA ? max_fsaa : min(max_fsaa, m_cfg.getInt("GENERAL", "max_fsaa", 3)));
@@ -1486,7 +1498,6 @@ void CMenu::_loadList(void)
 			_loadGameList();
 			break;
 	}
-
 	m_cfg.remove(_domainFromView(), "update_cache");
 }
 

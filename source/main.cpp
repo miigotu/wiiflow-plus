@@ -28,6 +28,7 @@ int main(int argc, char **argv)
 	SYS_SetArena1Hi(APPLOADER_START);
 
 	char *gameid = NULL;
+	string dolLoc; //(argv[0] != NULL ? argv[0] : "");
 
 	for (int i = 0; i < argc; i++)
 	{
@@ -89,7 +90,7 @@ int main(int argc, char **argv)
 		bool dipOK = Disc_Init() >= 0;
 
 		CMenu menu(vid);
-		menu.init();
+		menu.init(dolLoc);
 		mainMenu = &menu;
 		if(!deviceAvailable)
 		{

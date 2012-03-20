@@ -127,7 +127,6 @@ class CCoverFlow
 		std::string getId(void) const;
 		std::string getNextId(void) const;
 		dir_discHdr * getHdr(void) const;
-		dir_discHdr * getNextHdr(void) const;
 		wstringEx getTitle(void) const;
 		u64 getChanTitle(void) const;
 	private:
@@ -300,7 +299,6 @@ class CCoverFlow
 		void _drawCover(int i, bool mirror, CCoverFlow::DrawMode dm);
 		void _drawCoverFlat(int i, bool mirror, CCoverFlow::DrawMode dm);
 		void _drawCoverBox(int i, bool mirror, CCoverFlow::DrawMode dm);
-		bool _checkCoverColor(char* gameID, const char* checkID[], int len);
 		void _updateTarget(int i, bool instant = false);
 		void _updateAllTargets(bool instant = false);
 		void _loadCover(int i, int item);

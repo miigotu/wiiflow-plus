@@ -169,8 +169,9 @@ void CMenu::_showCFTheme(u32 curParam, int version, bool wide)
 {
 	const CMenu::SCFParamDesc &p = CMenu::_cfParams[curParam];
 	bool selected = m_cf.selected();
-	string domUnsel(sfmt("_COVERFLOW_%i", version).c_str());
-	string domSel(sfmt("_COVERFLOW_%i_S", version).c_str());
+
+	string domUnsel(sfmt(_cfDomain(), version));
+	string domSel(sfmt(_cfDomain(true), version));
 
 	m_cf.simulateOtherScreenFormat(p.scrnFmt && wide != m_vid.wide());
 	_setBg(m_mainBg, m_mainBgLQ);
@@ -195,8 +196,7 @@ void CMenu::_showCFTheme(u32 curParam, int version, bool wide)
 	//
 	for (int i = 0; i < 4; ++i)
 	{
-		string domain = (p.domain != CMenu::SCFParamDesc::PDD_NORMAL && selected) || p.domain == CMenu::SCFParamDesc::PDD_SELECTED
-			? domSel : domUnsel;
+		string domain = (p.domain != CMenu::SCFParamDesc::PDD_NORMAL && selected) || p.domain == CMenu::SCFParamDesc::PDD_SELECTED ? domSel : domUnsel;
 		int k = i * 4;
 		string key(p.key[i]);
 		if (!wide && p.scrnFmt && (p.paramType[i] == CMenu::SCFParamDesc::PDT_V3D || p.paramType[i] == CMenu::SCFParamDesc::PDT_FLOAT || p.paramType[i] == CMenu::SCFParamDesc::PDT_INT))
@@ -316,6 +316,7 @@ void CMenu::_cfTheme(void)
 	_showCFTheme(curParam, cfVersion, wide);
 	_loadCFLayout(cfVersion, true, wide != m_vid.wide());
 	m_cf.applySettings();
+
 	while (true)
 	{
 		_mainLoopCommon(true, false, curParam == 5 || curParam == 6 || curParam == 7);
@@ -338,8 +339,8 @@ void CMenu::_cfTheme(void)
 		}
 		else if (copyVersion > 0 && BTN_B_HELD && BTN_2_PRESSED)
 		{
-			string domSrc(sfmt(copySelected ? "_COVERFLOW_%i_S" : "_COVERFLOW_%i", copyVersion));
-			string domDst(sfmt(m_cf.selected() ? "_COVERFLOW_%i_S" : "_COVERFLOW_%i", cfVersion));
+			string domSrc(sfmt(_cfDomain(copySelected), copyVersion));
+			string domDst(sfmt(_cfDomain(m_cf.selected()), cfVersion));
 			if (copyVersion != cfVersion || copySelected != m_cf.selected())
 				m_theme.copyDomain(domDst, domSrc);
 			else if (copyWide != wide)
@@ -468,8 +469,8 @@ void CMenu::_cfParam(bool inc, int i, const CMenu::SCFParamDesc &p, int cfVersio
 {
 	int k = i / 4;
 	string key(p.key[k]);
-	const char *d = (p.domain != CMenu::SCFParamDesc::PDD_NORMAL && m_cf.selected()) || p.domain == CMenu::SCFParamDesc::PDD_SELECTED
-			? "_COVERFLOW_%i_S" : "_COVERFLOW_%i";
+
+	const char *d = _cfDomain((p.domain != CMenu::SCFParamDesc::PDD_NORMAL && m_cf.selected()) || p.domain == CMenu::SCFParamDesc::PDD_SELECTED);
 	string domain(sfmt(d, cfVersion));
 	float step = p.step[k];
 	if (!wide && p.scrnFmt && (p.paramType[k] == CMenu::SCFParamDesc::PDT_V3D || p.paramType[k] == CMenu::SCFParamDesc::PDT_FLOAT || p.paramType[k] == CMenu::SCFParamDesc::PDT_INT))

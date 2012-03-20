@@ -267,7 +267,6 @@ void CMenu::_game(bool launch)
 		if(startGameSound < 1) startGameSound++;
 
 		string id(m_cf.getId());
-		u64 chantitle = m_cf.getChanTitle();
 
 		if (startGameSound == -5)
 		{
@@ -374,6 +373,7 @@ void CMenu::_game(bool launch)
 			{
 				_hideGame();
 				dir_discHdr *hdr = m_cf.getHdr();
+				u64 chantitle = m_cf.getChanTitle();
 
 				m_cf.clear();
 				_showWaitMessage();

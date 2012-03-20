@@ -36,7 +36,7 @@ class CMenu
 	public:
 		CMenu(CVideo &vid);
 		~CMenu(void) {cleanup();}
-		void init(void);
+		void init(std::string dolLocation);
 		void error(const wstringEx &msg);
 		int main(void);
 		void cleanup(bool ios_reload = false);
@@ -701,6 +701,7 @@ class CMenu
 		void _loadDefaultFont(bool korean);
 		void _cleanupDefaultFont();
 		const char *_domainFromView(void);
+		const char *_cfDomain(bool selected = false);
 		void UpdateCache(u32 view = COVERFLOW_MAX);
 		SFont _font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize);
 		STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);

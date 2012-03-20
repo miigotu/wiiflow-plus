@@ -639,8 +639,6 @@ unsigned int GameTDB::GetPublishDate(const char * id)
 
 bool GameTDB::GetGenres(const char * id, string & gen)
 {
-	safe_vector<string> genre;
-
 	if(!id) return false;
 
 	char * data = GetGameNode(id);
@@ -653,35 +651,18 @@ bool GameTDB::GetGenres(const char * id, string & gen)
 		return false;
 	}
 
-	unsigned int genre_num = 0;
-	const char * ptr = the_genre;
-
-	while(*ptr != '\0')
-	{
-		if(genre_num >= genre.size())
-			genre.resize(genre_num+1);
-
-		if(*ptr == ',' || *ptr == '/' || *ptr == ';')
-		{
-			ptr++;
-			while(*ptr == ' ') ptr++;
-			genre[genre_num].push_back('\0');
-			genre_num++;
-			continue;
-		}
-
-		if(genre[genre_num].size() == 0)
-			genre[genre_num].push_back(toupper((int)*ptr));
-		else
-			genre[genre_num].push_back(*ptr);
-
-		++ptr;
-	}
-	genre[genre_num].push_back('\0');
-
+	safe_vector<string> genre = stringToVector(the_genre, (char *)"\\/;,");
 	delete [] data;
 	
-	gen = vectorToString(genre, ", ");
+	for(safe_vector<string>::iterator uppercase = genre.begin(); uppercase != genre.end(); uppercase++)
+	{
+		uppercase->at(0) = toupper(uppercase->at(0));
+		string::size_type i = 0;
+		while((i = uppercase->find_first_of(" -", i + 1)) != string::npos)
+			uppercase->at(i + 1) = toupper(uppercase->at(i + 1));
+	}
+	
+	gen = vectorToString(genre, (string)", ");
 
 	return true;
 }

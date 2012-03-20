@@ -14,7 +14,7 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 		DIR *dir_itr = opendir(directory.c_str());
 		if (!dir_itr) return;
 
-		safe_vector<string> compares = stringToVector(containing, '|');
+		safe_vector<string> compares = stringToVector(containing, "|");
 		safe_vector<string> temp_pathlist;
 
 		struct dirent *ent;
@@ -203,7 +203,6 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 					headerlist.push_back(tmp);
 				}
 				WBFS_Ext_ClosePart(part);
-				continue;
 			}
 		}
 		else if((*itr).rfind(".dol") != string::npos || (*itr).rfind(".DOL") != string::npos
@@ -241,7 +240,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			// Get info from custom titles
 			GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
 			int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, tmp.hdr.casecolor).intVal();
-			if(GTitle.size() > 0 || (gameTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
+			if(GTitle.size() > 0 || (gameTDB.IsLoaded() && gameTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
 			{
 				mbstowcs(tmp.title, GTitle.c_str(), sizeof(tmp.title));
 				tmp.hdr.casecolor = ccolor != 1 ? ccolor : gameTDB.GetCaseColor((char *)tmp.hdr.id);
@@ -264,7 +263,7 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 			count++;
 			if(ret != 0) continue;
 
-			if (tmp.hdr.magic == 0x5D1C9EA3	&& memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) != 0)
+			if (tmp.hdr.magic == 0x5D1C9EA3)
 			{
 				GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
 				int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, 1).intVal();

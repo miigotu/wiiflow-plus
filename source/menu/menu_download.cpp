@@ -308,8 +308,8 @@ int CMenu::_coverDownloader(bool missingOnly)
 	}
 	bool savePNG = m_cfg.getBool("GENERAL", "keep_png", true);
 
-	safe_vector<string> fmtURLBox = stringToVector(m_cfg.getString("GENERAL", "url_full_covers", FMT_BPIC_URL), '|');
-	safe_vector<string> fmtURLFlat = stringToVector(m_cfg.getString("GENERAL", "url_flat_covers", FMT_PIC_URL), '|');
+	safe_vector<string> fmtURLBox = stringToVector(m_cfg.getString("GENERAL", "url_full_covers", FMT_BPIC_URL), "|");
+	safe_vector<string> fmtURLFlat = stringToVector(m_cfg.getString("GENERAL", "url_flat_covers", FMT_PIC_URL), "|");
 
 	u32 nbSteps = m_gameList.size();
 	u32 step = 0;

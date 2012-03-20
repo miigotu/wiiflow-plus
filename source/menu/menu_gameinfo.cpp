@@ -250,11 +250,11 @@ void CMenu::_initGameInfoMenu(CMenu::SThemeData &theme)
 
 	m_gameinfoBg = _texture(theme.texSet, "GAMEINFO/BG", "texture", theme.bg);
 	m_gameinfoLblID = _addLabel(theme, "GAMEINFO/GAMEID", 125, 10, 420, 75, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE);
-	m_gameinfoLblGenre = _addLabel(theme, "GAMEINFO/GENRE", 40, 140, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
-	m_gameinfoLblDev = _addLabel(theme, "GAMEINFO/DEVELOPER", 40, 170, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
-	m_gameinfoLblPublisher = _addLabel(theme, "GAMEINFO/PUBLISHER", 40, 200, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
-	m_gameinfoLblRlsdate = _addLabel(theme, "GAMEINFO/RLSDATE", 40, 230, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
-	m_gameinfoLblRegion = _addLabel(theme, "GAMEINFO/REGION", 40, 260, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	m_gameinfoLblGenre = _addText(theme, "GAMEINFO/GENRE", 40, 140, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	m_gameinfoLblDev = _addText(theme, "GAMEINFO/DEVELOPER", 40, 170, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	m_gameinfoLblPublisher = _addText(theme, "GAMEINFO/PUBLISHER", 40, 200, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	m_gameinfoLblRlsdate = _addText(theme, "GAMEINFO/RLSDATE", 40, 230, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
+	m_gameinfoLblRegion = _addText(theme, "GAMEINFO/REGION", 40, 260, 560, 56, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblRating = _addLabel(theme, "GAMEINFO/RATING", 550, 380, 48, 60, 0, m_rating);
 	m_gameinfoLblSynopsis = _addText(theme, "GAMEINFO/SYNOPSIS", 40, 120, 560, 320, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP);
 	m_gameinfoLblWifiplayers = _addLabel(theme, "GAMEINFO/WIFIPLAYERS", 550, 110, 68, 60, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP, m_wifi);

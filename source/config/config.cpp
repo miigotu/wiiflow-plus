@@ -324,12 +324,26 @@ string Config::getString(const string &domain, const string &key, const string &
 {
 	if (domain.empty() || key.empty()) return defVal;
 	string &data = m_domains[upperCase(domain)][lowerCase(key)];
-	if (data.empty() || strncasecmp(data.c_str(), "usb:", 4) == 0)
+	if (data.empty())
 	{
 		data = defVal;
 		m_changed = true;
 	}
 	return data;
+}
+
+bool Config::getString2(const string &domain, const string &key, string &defVal)
+{
+	if (domain.empty() || key.empty()) return false;
+	string &data = m_domains[upperCase(domain)][lowerCase(key)];
+	if (data.empty())
+	{
+		data = defVal;
+		m_changed = true;
+	}
+	else defVal = data;
+
+	return !data.empty();
 }
 
 safe_vector<string> Config::getStrings(const string &domain, const string &key, char seperator, const string &defVal)
