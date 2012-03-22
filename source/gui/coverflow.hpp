@@ -234,7 +234,6 @@ class CCoverFlow
 		mutex_t m_mutex;
 		volatile bool m_loadingCovers;
 		volatile bool m_moved;
-		volatile int m_hqCover;
 		bool m_selected;
 		int m_tickCount;
 		STexture m_loadingTexture;
@@ -335,7 +334,6 @@ class CCoverFlow
 		CCoverFlow(const CCoverFlow &);
 		CCoverFlow &operator=(const CCoverFlow &);
 	protected:
-		SmartBuf coverLoaderThreadStack;
 		lwp_t coverLoaderThread;
 };
 

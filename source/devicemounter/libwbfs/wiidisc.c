@@ -78,6 +78,7 @@ static void partition_read_block(wiidisc_t *d, u32 blockno, u8 *block)
 
 static void partition_read(wiidisc_t *d, u32 offset, u8 *data, u32 len, int fake)
 {
+	if(!data) return;
 	u8 *block = d->tmp_buffer2;
 	u32 offset_in_block;
 	u32 len_in_block;

@@ -158,9 +158,7 @@ int CMenu::main(void)
 	_initCF();
 
 	static lwp_t coverStatus = LWP_THREAD_NULL;
-	unsigned int stack_size = (unsigned int)32768;
-	SmartBuf coverstatus_stack = smartMem2Alloc(stack_size);
-	LWP_CreateThread(&coverStatus, (void *(*)(void *))CMenu::GetCoverStatusAsync, (void *)this, coverstatus_stack.get(), stack_size, 40);
+	LWP_CreateThread(&coverStatus, (void *(*)(void *))CMenu::GetCoverStatusAsync, (void *)this, 0, 8192, 40);
 	while (true)
 	{
 		_mainLoopCommon(true);
@@ -172,7 +170,6 @@ int CMenu::main(void)
 
 			LWP_JoinThread(coverStatus, NULL);
 			coverStatus = LWP_THREAD_NULL;
-			SMART_FREE(coverstatus_stack);
 			WDVD_GetCoverStatus(&disc_check);
 		}
 
@@ -568,7 +565,6 @@ int CMenu::main(void)
 
 		LWP_JoinThread(coverStatus, NULL);
 		coverStatus = LWP_THREAD_NULL;
-		SMART_FREE(coverstatus_stack);
 	}
 	gprintf("Done with main\n");
 	return m_reload ? 1 : 0;

@@ -29,6 +29,8 @@
 #include "homebrew.h"
 #include "defines.h"
 
+#include "lockMutex.hpp"
+
 using namespace std;
 
 extern const u8 btngamecfg_png[];
@@ -150,7 +152,7 @@ static Banner *_extractChannelBnr(const u64 chantitle)
 	return Channels::GetBanner(chantitle);
 }
 
-static Banner *_extractBnr(volatile dir_discHdr *hdr)
+static Banner *_extractBnr(volatile const dir_discHdr *hdr)
 {
 	Banner *banner = NULL;
 	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *) &hdr->hdr.id, (char *) hdr->path);
@@ -202,7 +204,6 @@ static u8 GetRequestedGameIOS(dir_discHdr *hdr)
 
 void CMenu::_hideGame(bool instant)
 {
-	m_gameSelected = false;
 	m_fa.unload();
 	m_cf.showCover();
 
@@ -240,6 +241,8 @@ void CMenu::_showGame(void)
 	for (u32 i = 0; i < ARRAY_SIZE(m_gameLblUser); ++i)
 		if (m_gameLblUser[i] != -1u)
 			m_btnMgr.show(m_gameLblUser[i]);
+
+	m_video_playing = false;
 }
 
 static void setLanguage(int l)
@@ -253,123 +256,19 @@ static void setLanguage(int l)
 void CMenu::_game(bool launch)
 {
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
-	if (!launch)
-	{
-		SetupInput();
-		_playGameSound();
-		_showGame();
-		m_gameSelected = true;
-	}
 
-	s8 startGameSound = 1;
+	if (!launch) SetupInput();
+	m_moved = false;
+
 	while (true)
 	{
-		if(startGameSound < 1) startGameSound++;
-
 		string id(m_cf.getId());
 
-		if (startGameSound == -5)
-		{
-			_playGameSound();
-			_showGame();
-		}
 		_mainLoopCommon(true);
-
-		if (startGameSound == 0)
+		m_gameSelected = true;
+		if (launch || BTN_A_PRESSED)
 		{
-			m_gameSelected = true;
-			startGameSound = 1;
-		}
-
-		if (BTN_HOME_PRESSED || BTN_B_PRESSED)
-		{
-			m_gameSound.Stop();
-			break;
-		}
-		else if (BTN_PLUS_PRESSED)
-		{
-			_hideGame();
-			m_gameSelected = true;
-			_gameinfo();
-			_showGame();
-			if (!m_gameSound.IsPlaying()) startGameSound = -6;
-		}
-		else if (BTN_MINUS_PRESSED)
-		{
-			string videoPath = sfmt("%s/%.3s.thp", m_videoDir.c_str(), id.c_str());
-
-			FILE *file = fopen(videoPath.c_str(), "rb");
-			if (file)
-			{
-				SAFE_CLOSE(file);
-
-				_hideGame();
-				WiiMovie movie(videoPath.c_str());
-				movie.SetScreenSize(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480), m_cfg.getInt("GENERAL", "tv_x"), m_cfg.getInt("GENERAL", "tv_y"));
-				movie.SetVolume(m_cfg.getInt("GENERAL", "sound_volume_bnr", 255));
-				//_stopSounds();
-				movie.Play();
-
-				m_video_playing = true;
-
-				STexture videoBg;
-				while (!BTN_B_PRESSED && !BTN_A_PRESSED && !BTN_HOME_PRESSED && movie.GetNextFrame(&videoBg))
-				{
-					_setBg(videoBg, videoBg);
-					m_bgCrossFade = 10;
-					_mainLoopCommon(); // Redraw the background every frame
-				}
-				movie.Stop();
-				_showGame();
-				m_video_playing = false;
-				//m_gameSound.play(m_bnrSndVol);
-			}
-		}
-		else if ((BTN_1_PRESSED) || (BTN_2_PRESSED))
-		{
-			s8 direction = BTN_1_PRESSED ? 1 : -1;
-			const char *domain = _domainFromView();
-			int cfVersion = loopNum(m_cfg.getInt(domain, "last_cf_mode" , 1) + direction, m_numCFVersions);
-			_loadCFLayout(cfVersion);
-			m_cf.applySettings();
-			m_cfg.setInt(domain, "last_cf_mode" , cfVersion);
-		}
-		else if (launch || BTN_A_PRESSED)
-		{
-			if (m_btnMgr.selected(m_mainBtnQuit))
-				break;
-			else if (m_btnMgr.selected(m_gameBtnDelete))
-			{
-				if (!m_locked)
-				{
-					_hideGame();
-					CheckGameSoundThread(true);
-					if (_wbfsOp(CMenu::WO_REMOVE_GAME))
-					{
-						m_gameSound.Stop();
-						break;
-					}
-					_showGame();
-				}
-			}
-			else if (m_btnMgr.selected(m_gameBtnFavoriteOn) || m_btnMgr.selected(m_gameBtnFavoriteOff))
-				m_gcfg1.setBool("FAVORITES", id, !m_gcfg1.getBool("FAVORITES", id));
-			else if (m_btnMgr.selected(m_gameBtnAdultOn) || m_btnMgr.selected(m_gameBtnAdultOff))
-				m_gcfg1.setBool("ADULTONLY", id, !m_gcfg1.getBool("ADULTONLY", id));
-			else if (m_btnMgr.selected(m_gameBtnBack))
-			{
-				m_gameSound.Stop();
-				break;
-			}
-			else if (m_btnMgr.selected(m_gameBtnSettings))
-			{
-				_hideGame();
-				m_gameSelected = true;
-				_gameSettings();
-				_showGame();
-				if (!m_gameSound.IsPlaying()) startGameSound = -6;
-			}
-			else if (launch || m_btnMgr.selected(m_gameBtnPlay) || (!WPadIR_Valid(0) && !WPadIR_Valid(1) && !WPadIR_Valid(2) && !WPadIR_Valid(3) && m_btnMgr.selected((u32)-1)))
+			if (launch || m_btnMgr.selected(m_gameBtnPlay) || (!WPadIR_Valid(0) && !WPadIR_Valid(1) && !WPadIR_Valid(2) && !WPadIR_Valid(3) && m_btnMgr.selected((u32)-1)))
 			{
 				_hideGame();
 				dir_discHdr *hdr = m_cf.getHdr();
@@ -409,6 +308,32 @@ void CMenu::_game(bool launch)
 				_initCF();
 				m_cf.select();
 			}
+			else if (m_btnMgr.selected(m_mainBtnQuit))
+				break;
+			else if (m_btnMgr.selected(m_gameBtnDelete))
+			{
+				if (!m_locked)
+				{
+					_hideGame();
+					CheckGameSoundThread(true);
+					if (_wbfsOp(CMenu::WO_REMOVE_GAME))
+						break;
+
+					_showGame();
+				}
+			}
+			else if (m_btnMgr.selected(m_gameBtnFavoriteOn) || m_btnMgr.selected(m_gameBtnFavoriteOff))
+				m_gcfg1.setBool("FAVORITES", id, !m_gcfg1.getBool("FAVORITES", id));
+			else if (m_btnMgr.selected(m_gameBtnAdultOn) || m_btnMgr.selected(m_gameBtnAdultOff))
+				m_gcfg1.setBool("ADULTONLY", id, !m_gcfg1.getBool("ADULTONLY", id));
+			else if (m_btnMgr.selected(m_gameBtnBack))
+				break;
+			else if (m_btnMgr.selected(m_gameBtnSettings))
+			{
+				_hideGame();
+				_gameSettings();
+				_showGame();
+			}
 			else
 			{
 				for(int chan = WPAD_MAX_WIIMOTES-1; chan >= 0; chan--)
@@ -416,33 +341,80 @@ void CMenu::_game(bool launch)
 						m_cf.flip();
 			}
 		}
-		if ((startGameSound == 1 || startGameSound < -8) && (BTN_UP_REPEAT || RIGHT_STICK_UP))
+		else if (BTN_HOME_PRESSED || BTN_B_PRESSED)
+			break;
+		else if (BTN_PLUS_PRESSED)
+		{
+			_hideGame();
+			_gameinfo();
+			_showGame();
+		}
+		else if (BTN_MINUS_PRESSED)
+		{
+			string videoPath = sfmt("%s/%.3s.thp", m_videoDir.c_str(), id.c_str());
+
+			FILE *file = fopen(videoPath.c_str(), "rb");
+			if (file)
+			{
+				SAFE_CLOSE(file);
+
+				_hideGame();
+				WiiMovie movie(videoPath.c_str());
+				movie.SetScreenSize(m_cfg.getInt("GENERAL", "tv_width", 640), m_cfg.getInt("GENERAL", "tv_height", 480), m_cfg.getInt("GENERAL", "tv_x"), m_cfg.getInt("GENERAL", "tv_y"));
+				movie.SetVolume(m_cfg.getInt("GENERAL", "sound_volume_bnr", 255));
+				_stopSounds();
+				movie.Play();
+
+				m_video_playing = true;
+
+				STexture videoBg;
+				while (!BTN_B_PRESSED && !BTN_A_PRESSED && !BTN_HOME_PRESSED && movie.GetNextFrame(&videoBg))
+				{
+					_setBg(videoBg, videoBg);
+					m_bgCrossFade = 10;
+					_mainLoopCommon(); // Redraw the background every frame
+				}
+				movie.Stop();
+				_showGame();
+			}
+		}
+		else if ((BTN_1_PRESSED) || (BTN_2_PRESSED))
+		{
+			s8 direction = BTN_1_PRESSED ? 1 : -1;
+			const char *domain = _domainFromView();
+			int cfVersion = loopNum(m_cfg.getInt(domain, "last_cf_mode" , 1) + direction, m_numCFVersions);
+			_loadCFLayout(cfVersion);
+			m_cf.applySettings();
+			m_cfg.setInt(domain, "last_cf_mode" , cfVersion);
+		}
+
+		if(BTN_UP_REPEAT || RIGHT_STICK_UP)
 		{
 			m_cf.up();
-			startGameSound = -10;
+			m_moved = true;
 		}
-		if ((startGameSound == 1 || startGameSound < -8) && (BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT))
+		if(BTN_RIGHT_REPEAT || RIGHT_STICK_RIGHT)
 		{
 			m_cf.right();
-			startGameSound = -10;
+			m_moved = true;
 		}
-		if ((startGameSound == 1 || startGameSound < -8) && (BTN_DOWN_REPEAT || RIGHT_STICK_DOWN))
+		if(BTN_DOWN_REPEAT || RIGHT_STICK_DOWN)
 		{
 			m_cf.down();
-			startGameSound = -10;
+			m_moved = true;
 		}
-		if ((startGameSound == 1 || startGameSound < -8) && (BTN_LEFT_REPEAT || RIGHT_STICK_LEFT))
+		if(BTN_LEFT_REPEAT || RIGHT_STICK_LEFT)
 		{
 			m_cf.left();
-			startGameSound = -10;
+			m_moved = true;
 		}
-		if (startGameSound == -10)
+
+		if (m_moved)
 		{
-			m_gameSound.Stop();
-			m_gameSelected = false;
 			m_fa.unload();
 			_setBg(m_mainBg, m_mainBgLQ);
 		}
+
 		if (m_show_zone_game)
 		{
 			bool b = m_gcfg1.getBool("FAVORITES", id);
@@ -481,8 +453,8 @@ void CMenu::_game(bool launch)
 		}
 	}
 	m_gcfg1.save(true);
-
 	_hideGame();
+	m_gameSelected = false;
 }
 
 void CMenu::_directlaunch(const string &id)
@@ -1079,65 +1051,45 @@ struct IMD5Header
 
 void CMenu::_gameSoundThread(CMenu *m)
 {
-	m->m_gamesound_changed = false;
-	u32 sndSize = 0;
-	m->m_gameSoundHdr = m->m_cf.getHdr();
+	m->m_game_thread_complete = false;
+
+	const dir_discHdr *hdr = m->m_cf.getHdr();
 
 	Banner *banner = m->m_current_view == COVERFLOW_USB ?
-		_extractBnr(m->m_gameSoundHdr) : m->m_current_view == COVERFLOW_CHANNEL ?
-		_extractChannelBnr(m->m_gameSoundHdr->hdr.chantitle) : NULL;
+		_extractBnr(hdr) : m->m_current_view == COVERFLOW_CHANNEL ?
+		_extractChannelBnr(hdr->hdr.chantitle) : NULL;
 
 	if (banner == NULL || !banner->IsValid())
 	{
 		gprintf("no valid banner found\n");
 		SAFE_DELETE(banner);
-		m->m_gameSoundHdr = NULL;
+		m->m_game_thread_complete = true;
 		return;
 	}
-	_extractBannerTitle(banner, GetLanguage(m->m_loc.getString(m->m_curLanguage, "gametdb_code", "EN").c_str()));
 
+	u32 sndSize = 0;
 	const u8 *soundBin = banner->GetFile((char *) "sound.bin", &sndSize);
 	SAFE_DELETE(banner);
 
-	if (soundBin == NULL)
-	{
-		gprintf("Failed to load banner sound!\n\n");
-		m->m_gameSoundHdr = NULL;
-		return;
-	}
-	m->m_gamesound_changed = m->m_gameSound.Load(soundBin, sndSize, false);
-	m->m_gameSoundHdr = NULL;
+	m->m_gameSound_changed = m->m_gameSound.Load(soundBin, sndSize, false);
+	m->m_game_thread_complete = true;
 }
 
 void CMenu::_playGameSound(void)
 {
-	m_gamesound_changed = false;
-	if (m_bnrSndVol == 0 || m_gameSoundHdr != NULL || m_gameSoundThread != LWP_THREAD_NULL) return;
-
-	m_cf.stopCoverLoader();
-
-	unsigned int stack_size = (unsigned int)32768;
-	if(!gameSoundThreadStack.get())
-		gameSoundThreadStack = smartMem2Alloc(stack_size);
-	LWP_CreateThread(&m_gameSoundThread, (void *(*)(void *))CMenu::_gameSoundThread, (void *)this, gameSoundThreadStack.get(), stack_size, 40);
+	if (m_bnrSndVol == 0 || m_gameSoundThread != LWP_THREAD_NULL) return;
+	LWP_CreateThread(&m_gameSoundThread, (void *(*)(void *))CMenu::_gameSoundThread, (void *)this, 0, 8192, 40);
+	_showGame();
 }
 
 void CMenu::CheckGameSoundThread(bool force)
 {
-	if (force || (m_gameSoundHdr == NULL && m_gameSoundThread != LWP_THREAD_NULL))
+	if (force || (m_game_thread_complete && m_gameSoundThread != LWP_THREAD_NULL))
 	{
 		if(LWP_ThreadIsSuspended(m_gameSoundThread))
 			LWP_ResumeThread(m_gameSoundThread);
 
 		LWP_JoinThread(m_gameSoundThread, NULL);
-
-		SMART_FREE(gameSoundThreadStack);
 		m_gameSoundThread = LWP_THREAD_NULL;
 	}
-}
-
-void CMenu::CheckThreads(bool force)
-{
-	CheckGameSoundThread(force);
-	m_vid.CheckWaitThread(force);
 }

@@ -534,11 +534,7 @@ void CVideo::CheckWaitThread(bool force)
 			LWP_ResumeThread(waitThread);
 
 		LWP_JoinThread(waitThread, NULL);
-
-		SMART_FREE(waitThreadStack);
 		waitThread = LWP_THREAD_NULL;
-
-		m_waitMessages.clear();
 	}
 }
 
@@ -583,16 +579,7 @@ void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool use
 	else if (m_waitMessages.size() > 1)
 	{
 		m_showWaitMessage = true;
-		unsigned int stack_size = (unsigned int)32768;  //Try 32768?
-		if(!waitThreadStack.get())
-			waitThreadStack = smartMem2Alloc(stack_size);
-			//waitThreadStack = SmartBuf((unsigned char *)__real_malloc(stack_size), SmartBuf::SRCALL_MALLOC);
-		if(!waitThreadStack.get())
-		{
-			m_showWaitMessage = false;
-			return;
-		}
-		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, waitThreadStack.get(), stack_size, 30);
+		LWP_CreateThread(&waitThread, (void *(*)(void *))CVideo::_showWaitMessages, (void *)this, 0, 8192, 30);
 	}
 }
 

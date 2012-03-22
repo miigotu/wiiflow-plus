@@ -67,7 +67,6 @@ CMenu::CMenu(CVideo &vid) :
 	m_mutex = 0;
 	m_showtimer = 0;
 	m_gameSoundThread = LWP_THREAD_NULL;
-	m_gameSoundHdr = NULL;
 	m_numCFVersions = 0;
 	m_bgCrossFade = 0;
 	m_bnrSndVol = 0;
@@ -77,12 +76,16 @@ CMenu::CMenu(CVideo &vid) :
 	m_initialCoverStatusComplete = false;
 	m_reload = false;
 	bootHB = false;
-	m_gamesound_changed = false;
+	m_game_thread_complete = true;
+	m_gameSound_changed = false;
+	m_video_playing = false;
+	m_gameSelected = false;
 	m_base_font_size = 0;
 	m_current_view = COVERFLOW_USB;
 }
 
 extern "C" { int makedir(char *newdir); }
+extern "C" { char gecko_logfile[MAX_FAT_PATH]; }
 
 static bool SeekPathOnParts(string &drive, const string &fmt, const string &folder, bool direction)
 {
@@ -425,7 +428,7 @@ void CMenu::_loadCFCfg(SThemeData &theme)
 	const char *domain = "_COVERFLOW";
 
 	m_cf.setCachePath(m_cacheDir.c_str(), !m_cfg.getBool("GENERAL", "keep_png", true), m_cfg.getBool("GENERAL", "compress_cache"));
-	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 60));
+	m_cf.setBufferSize(m_cfg.getInt("GENERAL", "cover_buffer", 18));
 
 	u32 flip_wav_size = 0, select_wav_size = 0, cancel_wav_size = 0;
 	u8 *flip_wav = 0, *select_wav = 0, *cancel_wav = 0;
@@ -1218,6 +1221,7 @@ void CMenu::_initCF(void)
 	m_cf.setSorting((Sorting)m_cfg.getInt(domain, "sort"));
 	if (m_curGameId.empty() || !m_cf.findId(m_curGameId.c_str(), true))
 		m_cf.findId(m_cfg.getString(domain, "current_item").c_str(), true);
+
 	m_cf.startCoverLoader();
 }
 
@@ -1286,21 +1290,32 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 		Sys_Test();
 	}
 
-	if (withCF && m_gameSelected && m_gamesound_changed && m_gameSoundHdr == NULL && !m_gameSound.IsPlaying() && MusicPlayer::Instance()->GetVolume() == 0)
+	if(m_gameSoundThread == LWP_THREAD_NULL)
 	{
-		m_gameSound.Play(m_bnrSndVol);
-		m_gamesound_changed = false;
+		MusicPlayer::Instance()->Tick(m_video_playing || (m_gameSelected && ((m_gameSound.IsLoaded() && m_gameSound_changed)||  m_gameSound.IsPlaying())));
+		if(withCF && m_gameSelected && !m_moved && !m_gameSound.IsPlaying())
+		{
+			if(!m_gameSound_changed && !m_gameSound.IsLoaded())
+			{
+				_playGameSound();
+			}
+			else if (m_gameSound_changed && m_gameSound.IsLoaded() && MusicPlayer::Instance()->GetVolume() == 0)
+			{
+				m_gameSound.Play(m_bnrSndVol);
+				m_gameSound_changed = false;
+			}
+		}
+		else if (!m_gameSelected || m_moved)
+		{
+			m_gameSound = GuiSound();
+			m_gameSound_changed = false;
+			m_moved = false;
+		}
+		if(withCF) m_cf.startCoverLoader();
 	}
-	else if (!m_gameSelected)
-		m_gameSound.Stop();
+	else CheckGameSoundThread();
 
-	CheckThreads();
-
-	if (withCF && m_gameSoundThread == LWP_THREAD_NULL)
-		m_cf.startCoverLoader();
-
-	MusicPlayer::Instance()->Tick(m_video_playing || (m_gameSelected &&
-		m_gameSound.IsLoaded()) ||  m_gameSound.IsPlaying());
+	m_vid.CheckWaitThread();
 
 	//Take Screenshot
 	if (gc_btnsPressed & PAD_TRIGGER_Z)
@@ -1627,17 +1642,15 @@ void CMenu::_stopSounds(void)
 	// Fade out sounds
 	int fade_rate = m_cfg.getInt("GENERAL", "music_fade_rate", 8);
 
-	if (!MusicPlayer::Instance()->IsStopped())
+	while ((!MusicPlayer::Instance()->IsStopped() && MusicPlayer::Instance()->GetVolume() > 0) || m_gameSound.GetVolume() > 0)
 	{
-		while (MusicPlayer::Instance()->GetVolume() > 0 || m_gameSound.GetVolume() > 0)
-		{
+		if(!MusicPlayer::Instance()->IsStopped())
 			MusicPlayer::Instance()->Tick(true);
 
-			if (m_gameSound.GetVolume() > 0)
-				m_gameSound.SetVolume(m_gameSound.GetVolume() < fade_rate ? 0 : m_gameSound.GetVolume() - fade_rate);
+		if (m_gameSound.GetVolume() > 0)
+			m_gameSound.SetVolume(m_gameSound.GetVolume() < fade_rate ? 0 : m_gameSound.GetVolume() - fade_rate);
 
-			VIDEO_WaitVSync();
-		}
+		VIDEO_WaitVSync();
 	}
 
 	m_btnMgr.stopSounds();

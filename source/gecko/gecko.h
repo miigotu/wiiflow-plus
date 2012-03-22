@@ -7,9 +7,8 @@
 extern "C" {
 #endif
 
-#ifdef FILE_GECKO
-	extern char gecko_logfile[MAX_FAT_PATH];
-#endif /* FILE_GECKO */
+#define MAX_FAT_PATH 1024
+//#define FILE_GECKO
 
 	extern bool geckoinit;
 

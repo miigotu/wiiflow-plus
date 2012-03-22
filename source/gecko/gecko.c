@@ -59,8 +59,9 @@ static void USBGeckoOutput()
         devoptab_list[STD_ERR] = &gecko_out;
 }
 
-#ifdef FILE_GECKO
 char gecko_logfile[MAX_FAT_PATH];
+
+#ifdef FILE_GECKO
 static FILE *file = NULL;
 static void write_log(char *line)
 {

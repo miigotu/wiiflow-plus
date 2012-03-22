@@ -508,10 +508,11 @@ class CMenu
 		volatile float m_thrdProgress;
 		volatile bool m_thrdMessageAdded;
 		volatile bool m_gameSelected;
+		bool m_moved;
 		GuiSound m_gameSound;
 		SmartGuiSound m_cameraSound;
-		volatile dir_discHdr *m_gameSoundHdr;
-		volatile bool m_gamesound_changed;
+		volatile bool m_game_thread_complete;
+		bool m_gameSound_changed;
 		u8 m_bnrSndVol;
 
 		bool m_video_playing;
@@ -758,7 +759,6 @@ class CMenu
 		//
 		void _playGameSound(void);
 		void CheckGameSoundThread(bool force = false);
-		void CheckThreads(bool force = false);
 		static void _gameSoundThread(CMenu *m);
 		//
 		static void _load_installed_cioses();
@@ -780,7 +780,6 @@ class CMenu
 		static inline int loopNum(int i, int s) { return i < 0 ? (s - (-i % s)) % s : i % s; }
 		void SwitchPartition(bool direction, bool showLabel = false);
 	protected:
-		SmartBuf gameSoundThreadStack;
 		lwp_t m_gameSoundThread;
 };
 

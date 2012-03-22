@@ -113,7 +113,6 @@ private:
 	void _setViewPort(float x, float y, float w, float h);
 	static void _showWaitMessages(CVideo *m);
 protected:
-	SmartBuf waitThreadStack;
 	lwp_t waitThread;
 private:
 	CVideo(const CVideo &);
