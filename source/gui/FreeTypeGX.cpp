@@ -63,7 +63,7 @@ FreeTypeGX::~FreeTypeGX() {
  */
 wchar_t* FreeTypeGX::charToWideChar(char* strChar) {
       wchar_t *strWChar;
-      strWChar = new wchar_t[strlen(strChar) + 1];
+      strWChar = new wchar_t[strlen(strChar) + 1]();
 
       char *tempSrc = strChar;
       wchar_t *tempDest = strWChar;
@@ -207,9 +207,15 @@ uint16_t FreeTypeGX::adjustTextureHeight(uint16_t textureHeight, uint8_t texture
  * @param charCode	The requested glyph's character code.
  * @return A pointer to the allocated font structure.
  */
+
+static inline uint16_t int_to_short(uint32_t value)
+{
+	return (value >>  0) & 0x0000FFFF;
+}
+
 ftgxCharData *FreeTypeGX::cacheGlyphData(wchar_t charCode) {
 	FT_UInt gIndex;
-	uint16_t textureWidth = 0, textureHeight = 0;
+	uint16_t textureWidth = 0, textureHeight = 0, renderOffsetY = 0;
 
 	gIndex = FT_Get_Char_Index( this->ftFace, charCode );
 	if (!FT_Load_Glyph(this->ftFace, gIndex, FT_LOAD_DEFAULT )) {
@@ -221,15 +227,16 @@ ftgxCharData *FreeTypeGX::cacheGlyphData(wchar_t charCode) {
 			
 			textureWidth = adjustTextureWidth(glyphBitmap->width, this->textureFormat);
 			textureHeight = adjustTextureHeight(glyphBitmap->rows, this->textureFormat);
+			renderOffsetY = int_to_short(this->ftSlot->bitmap_top);
 
 			this->fontData[charCode] = (ftgxCharData){
-				this->ftSlot->advance.x >> 6,
-				gIndex,
+				int_to_short(this->ftSlot->advance.x >> 6),
+				int_to_short(gIndex),
 				textureWidth,
 				textureHeight,
-				this->ftSlot->bitmap_top,
-				this->ftSlot->bitmap_top,
-				textureHeight - this->ftSlot->bitmap_top,
+				renderOffsetY,
+				renderOffsetY,
+				int_to_short(textureHeight - renderOffsetY),
 				NULL
 			};
 			this->loadGlyphData(glyphBitmap, &this->fontData[charCode]);

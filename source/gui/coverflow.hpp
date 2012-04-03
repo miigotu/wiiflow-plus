@@ -6,7 +6,7 @@
 #include <ogcsys.h>
 #include <gccore.h>
 #include <string>
-#include "safe_vector.hpp"
+#include <vector>
 
 #include <wiiuse/wpad.h>
 #include <ogc/pad.h>
@@ -39,16 +39,18 @@ class CCoverFlow
 		CCoverFlow(void);
 		~CCoverFlow(void);
 		//
-		bool init(const SmartBuf &font, u32 font_size);
+		bool init(const SmartBuf &font, u32 font_size, std::string &boxPicDir, std::string &picDir);
 		// Cover list management
 		void clear(void);
 		void reserve(u32 capacity);
-		void addItem(dir_discHdr *hdr, const char *picPath, const char *boxPicPath, int playcount = 0, unsigned int lastPlayed = 0);
+		void addItem(dir_discHdr *hdr, int playcount = 0, unsigned int lastPlayed = 0);
 		bool empty(void) const { return m_items.empty(); }
 		//
 		bool start(const char *id = 0);
 		void stopCoverLoader(bool empty = false);
 		void startCoverLoader(void);
+		std::pair<std::string, std::string> getCoverPaths(std::string id, bool icon = false, u32 index = 0);
+		void removeCover(std::string id);
 		//
 		void simulateOtherScreenFormat(bool s);
 		// Commands
@@ -113,6 +115,7 @@ class CCoverFlow
 		void setCoverFlipping(const Vector3D &pos, const Vector3D &angle, const Vector3D &scale);
 		void setBlur(u32 blurResolution, u32 blurRadius, float blurFactor);
 		bool setSorting(Sorting sorting);
+		void setCurrentView(u32 mode);
 		//
 		void setSounds(const SmartGuiSound &sound, const SmartGuiSound &hoverSound, const SmartGuiSound &selectSound, const SmartGuiSound &cancelSound);
 		void setSoundVolume(u8 vol);
@@ -126,7 +129,7 @@ class CCoverFlow
 		//
 		std::string getId(void) const;
 		std::string getNextId(void) const;
-		dir_discHdr * getHdr(void) const;
+		dir_discHdr *getHdr(void) const;
 		wstringEx getTitle(void) const;
 		u64 getChanTitle(void) const;
 	private:
@@ -185,15 +188,13 @@ class CCoverFlow
 		struct CItem
 		{
 			dir_discHdr *hdr;
-			std::string picPath;
-			std::string boxPicPath;
 			int playcount;
 			unsigned int lastPlayed;
 			STexture texture;
 			volatile bool boxTexture;
 			volatile enum TexState state;
 			//
-			CItem(dir_discHdr *itemHdr, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed);
+			CItem(dir_discHdr *itemHdr, int playcount, unsigned int lastPlayed);
 		};
 		struct CCover
 		{
@@ -226,8 +227,8 @@ class CCoverFlow
 		Vector3D m_cameraAim;
 		Vector3D m_targetCameraPos;
 		Vector3D m_targetCameraAim;
-		safe_vector<CItem> m_items;
-		safe_vector<CCover> m_covers;
+		std::vector<CItem> m_items;
+		std::vector<CCover> m_covers;
 		int m_delay;
 		int m_minDelay;
 		int m_jump;
@@ -255,6 +256,7 @@ class CCoverFlow
 		CColor m_fanartFontColor;
 		bool m_fanartPlaying;
 		bool m_box;
+		u32 m_current_view;
 		u32 m_range;
 		u32 m_rows;
 		u32 m_columns;
@@ -265,6 +267,8 @@ class CCoverFlow
 		bool m_compressTextures;
 		bool m_compressCache;
 		std::string m_cachePath;
+		std::string m_boxPicDir;
+		std::string m_picDir;
 		bool m_deletePicsAfterCaching;
 		bool m_mirrorBlur;
 		float m_mirrorAlpha;
@@ -320,7 +324,7 @@ class CCoverFlow
 		CLRet _loadCoverTex(u32 i, bool box, bool hq);
 		bool _invisibleCover(u32 x, u32 y);
 		void _instantTarget(int i);
-		void _transposeCover(safe_vector<CCover> &dst, u32 rows, u32 columns, int pos);
+		void _transposeCover(std::vector<CCover> &dst, u32 rows, u32 columns, int pos);
 		static bool _sortByPlayCount(CItem item1, CItem item2);
 		static bool _sortByLastPlayed(CItem item1, CItem item2);
 		static bool _sortByGameID(CItem item1, CItem item2);

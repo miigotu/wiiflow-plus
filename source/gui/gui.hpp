@@ -14,7 +14,7 @@
 #include "text.hpp"
 #include "gui_sound.h"
 
-#include "safe_vector.hpp"
+#include <vector>
 
 struct SButtonTextureSet
 {
@@ -137,7 +137,7 @@ private:
 		virtual void tick(void);
 	};
 private:
-	safe_vector<SmartPtr<SElement> > m_elts;
+	std::vector<SmartPtr<SElement> > m_elts;
 	u32 m_selected[WPAD_MAX_WIIMOTES];
 	bool m_rumbleEnabled;
 	u8 m_rumble[WPAD_MAX_WIIMOTES];

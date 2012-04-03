@@ -4,7 +4,8 @@
 #include <wiiuse/wpad.h>
 #include <ogc/pad.h>
 
-#include "safe_vector.hpp"
+#include <vector>
+#include <deque>
 #include "cachedlist.hpp"
 
 #include <map>
@@ -56,7 +57,7 @@ class CMenu
 
 		CCoverFlow m_cf;
 		CFanart m_fa;
-		CachedList<dir_discHdr> m_gameList;
+		CachedList m_gameList;
 		Config m_cfg;
 		Config m_loc;
 		Config m_cat;
@@ -66,7 +67,7 @@ class CMenu
 		Config m_titles;
 		Config m_version;
 		Channels m_channels;
-		safe_vector<std::string> m_homebrewArgs;
+		std::vector<std::string> m_homebrewArgs;
 		SmartBuf m_base_font;
 		u32 m_base_font_size;
 		u8 m_aa;
@@ -84,8 +85,6 @@ class CMenu
 		std::string m_themeDataDir;
 		std::string m_appDir;
 		std::string m_dataDir;
-		std::string m_picDir;
-		std::string m_boxPicDir;
 		std::string m_cacheDir;
 		std::string m_themeDir;
 		std::string m_musicDir;
@@ -679,10 +678,10 @@ class CMenu
 		//
 		void _mainLoopCommon(bool withCF = false, bool blockReboot = false, bool adjusting = false);
 		//
-		safe_vector<dir_discHdr> _searchGamesByID(const char *gameId);
-	/* 	safe_vector<dir_discHdr> _searchGamesByTitle(wchar_t letter);
-		safe_vector<dir_discHdr> _searchGamesByType(const char type);
-		safe_vector<dir_discHdr> _searchGamesByRegion(const char region); */
+		std::deque<dir_discHdr> _searchGamesByID(std::string gameId);
+	/* 	std::deque<dir_discHdr> _searchGamesByTitle(wchar_t letter);
+		std::deque<dir_discHdr> _searchGamesByType(const char type);
+		std::deque<dir_discHdr> _searchGamesByRegion(const char region); */
 	public:
 		void _directlaunch(const std::string &id);
 	private:
@@ -690,7 +689,7 @@ class CMenu
 		void _launch(dir_discHdr *hdr);
 		void _launchGame(dir_discHdr *hdr, bool dvd);
 		void _launchChannel(dir_discHdr *hdr);
-		void _launchHomebrew(const char *filepath, safe_vector<std::string> arguments);
+		void _launchHomebrew(const char *filepath, std::vector<std::string> arguments);
 		void _setAA(int aa);
 		void _loadCFCfg(SThemeData &theme);
 		void _loadCFLayout(int version, bool forceAA = false, bool otherScrnFmt = false);
@@ -706,7 +705,7 @@ class CMenu
 		void UpdateCache(u32 view = COVERFLOW_MAX);
 		SFont _font(CMenu::FontSet &fontSet, const char *domain, const char *key, u32 fontSize);
 		STexture _texture(TexSet &texSet, const char *domain, const char *key, STexture def);
-		safe_vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key);
+		std::vector<STexture> _textures(TexSet &texSet, const char *domain, const char *key);
 		void _showWaitMessage();
 	public:
 		void _hideWaitMessage(bool force = false);
@@ -779,6 +778,7 @@ class CMenu
 
 		static inline int loopNum(int i, int s) { return i < 0 ? (s - (-i % s)) % s : i % s; }
 		void SwitchPartition(bool direction, bool showLabel = false);
+		typedef deque<dir_discHdr>::iterator GameListIter;
 	protected:
 		lwp_t m_gameSoundThread;
 };

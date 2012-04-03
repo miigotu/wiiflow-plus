@@ -1,12 +1,12 @@
-#define APP_NAME				"WiiFlow"
-#define APP_VERSION				"3.0a2"
+#define APP_NAME				"WiiFlow Advanced"
+#define APP_VERSION				"3.0a3"
 
-#define APPDATA_DIR				"wiiflow"
-#define APPDATA_DIR2			"apps/wiiflow"
+#define APPDATA_DIR				"wiiflow_advanced"
+#define APPDATA_DIR2			"apps/wiiflow_advanced"
 
 #define GAMES_DIR 				"%s:/wbfs"
 #define HOMEBREW_DIR 			"%s:/apps"
-#define CFG_FILENAME			"wiiflow.ini"
+#define CFG_FILENAME			"wiiflow_advanced.ini"
 #define LANG_FILENAME			"languages.ini"
 #define CAT_FILENAME			"categories.ini"
 #define TITLES_FILENAME			"titles.ini"

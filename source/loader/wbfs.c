@@ -248,7 +248,7 @@ s32 WBFS_Format(u32 lba, u32 size)
 	return 0;
 }
 
-s32 WBFS_CheckGame(u8 *discid, char *path)
+s32 WBFS_CheckGame(char *discid, char *path)
 {
 	/* Try to open game disc */
 	wbfs_disc_t *disc = WBFS_OpenDisc(discid, path);
@@ -273,9 +273,9 @@ s32 WBFS_AddGame(progress_callback_t spinner, void *spinner_data)
 	return ret < 0 ? ret : 0;
 }
 
-s32 WBFS_RemoveGame(u8 *discid, char *path)
+s32 WBFS_RemoveGame(char *discid, char *gamepath)
 {
-	if (wbfs_part_fs) return WBFS_Ext_RemoveGame(discid, path);
+	if (wbfs_part_fs) return WBFS_Ext_RemoveGame(gamepath);
 
 	/* No device open */
 	if (!hdd) return -1;
@@ -286,7 +286,7 @@ s32 WBFS_RemoveGame(u8 *discid, char *path)
 	return ret < 0 ? ret : 0;
 }
 
-s32 WBFS_GameSize(u8 *discid, char *path, f32 *size)
+s32 WBFS_GameSize(char *discid, char *path, f32 *size)
 {
 	/* Open disc */
 	wbfs_disc_t *disc = WBFS_OpenDisc(discid, path);
@@ -346,7 +346,7 @@ s32 WBFS_DiskSpace(f32 *used, f32 *free)
 	return 0;
 }
 
-wbfs_disc_t* WBFS_OpenDisc(u8 *discid, char *path)
+wbfs_disc_t* WBFS_OpenDisc(char *discid, char *path)
 {
 	if (wbfs_part_fs) return WBFS_Ext_OpenDisc(discid, path);
 

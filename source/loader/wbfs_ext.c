@@ -46,7 +46,7 @@ char* strcopy(char *dest, const char *src, int size)
 	return dest;
 }
 
-wbfs_disc_t* WBFS_Ext_OpenDisc(u8 *discid, char *fname)
+wbfs_disc_t* WBFS_Ext_OpenDisc(char *discid, char *fname)
 {
 	if (strcasecmp(strrchr(fname,'.'), ".iso") == 0)
 	{
@@ -146,7 +146,7 @@ void WBFS_Ext_ClosePart(wbfs_t* part)
 	if (s) split_close(s);
 }
 
-s32 WBFS_Ext_RemoveGame(u8 *discid, char *gamepath)
+s32 WBFS_Ext_RemoveGame(char *gamepath)
 {
 	if(strlen(gamepath) + 1 >= MAX_FAT_PATH) return -1;
 
@@ -181,7 +181,7 @@ s32 WBFS_Ext_AddGame(progress_callback_t spinner, void *spinner_data)
 	bzero(folder, MAX_FAT_PATH);
 
 	snprintf(folder, sizeof(folder), "%s%s", wbfs_fs_drive, wbfs_ext_dir);
-	makedir((char *)folder);
+	makedir(folder);
 
 	struct discHdr header ATTRIBUTE_ALIGN(32);
 	Disc_ReadHeader(&header);
@@ -228,7 +228,7 @@ s32 WBFS_Ext_AddGame(progress_callback_t spinner, void *spinner_data)
 
 	WBFS_Ext_ClosePart(part);
 	
-	if(ret < 0) WBFS_Ext_RemoveGame(header.id, gamepath);
+	if(ret < 0) WBFS_Ext_RemoveGame(gamepath);
 
 	return ret < 0 ? ret : 0;
 }

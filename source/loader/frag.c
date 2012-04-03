@@ -153,7 +153,7 @@ int frag_remap(FragList *ff, FragList *log, FragList *phy)
 	return 0;
 }
 
-int get_frag_list(u8 *id, char *path, const u32 hdd_sector_size)
+int get_frag_list(char *id, char *path, const u32 hdd_sector_size)
 {
 	char fname[1024];
 	bzero(fname, 1024);
@@ -271,7 +271,7 @@ out:
 	return ret_val;
 }
 
-int set_frag_list(u8 *id)
+int set_frag_list(char *id)
 {
 	if (frag_list == NULL) return -2;
 
@@ -296,5 +296,5 @@ int set_frag_list(u8 *id)
 
 	ret = WDVD_UnencryptedRead(discid, 32, 0);
 	gprintf("Reading ID after setting fraglist: %s (expected: %s)\n", discid, id);
-	return (strncasecmp((char *) id, discid, 6) != 0) ? -3 : 0;
+	return (strncasecmp(id, discid, 6) != 0) ? -3 : 0;
 }

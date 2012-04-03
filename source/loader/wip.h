@@ -8,7 +8,7 @@ extern "C" {
 void wip_reset_counter();
 void free_wip();
 void do_wip_code(u8 * dst, u32 len);
-void load_wip_patches(u8 *wippath, u8 *discid);
+void load_wip_patches(const char *wippath, const char *discid);
 
 #ifdef __cplusplus
 }

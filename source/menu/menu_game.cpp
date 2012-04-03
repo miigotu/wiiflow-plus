@@ -152,10 +152,10 @@ static Banner *_extractChannelBnr(const u64 chantitle)
 	return Channels::GetBanner(chantitle);
 }
 
-static Banner *_extractBnr(volatile const dir_discHdr *hdr)
+static Banner *_extractBnr(dir_discHdr *hdr)
 {
 	Banner *banner = NULL;
-	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *) &hdr->hdr.id, (char *) hdr->path);
+	wbfs_disc_t *disc = WBFS_OpenDisc(hdr->id, hdr->path);
 	if (disc != NULL)
 	{
 		void *bnr = NULL;
@@ -188,7 +188,7 @@ static u8 GetRequestedGameIOS(dir_discHdr *hdr)
 {
 	u8 IOS = 0;
 
-	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *) &hdr->hdr.id, (char *) hdr->path);
+	wbfs_disc_t *disc = WBFS_OpenDisc(hdr->id, hdr->path);
 	if (!disc) return IOS;
 
 	u8 *titleTMD = NULL;
@@ -466,9 +466,9 @@ void CMenu::_directlaunch(const string &id)
 		if(!DeviceHandler::Instance()->IsInserted(i)) continue;
 
 		DeviceHandler::Instance()->Open_WBFS(i);
-		CList<dir_discHdr> list;
+		CList list;
 		string path = sfmt(GAMES_DIR, DeviceName[i]);
-		safe_vector<string> pathlist;
+		vector<string> pathlist;
 		list.GetPaths(pathlist, id.c_str(), path,
 			strncasecmp(DeviceHandler::Instance()->PathToFSName(path.c_str()), "WBFS", 4) == 0);
 
@@ -477,7 +477,7 @@ void CMenu::_directlaunch(const string &id)
 		if(m_gameList.size() > 0)
 		{
 			gprintf("Game found on partition #%i\n", i);
-			_launch(&m_gameList[0]); // Launch will exit wiiflow
+			_launch(&m_gameList[0]); // Launch will exit wiiflow_advanced
 		}
 	}
 
@@ -490,7 +490,7 @@ void CMenu::_launch(dir_discHdr *hdr)
 	switch(m_current_view)
 	{
 		case COVERFLOW_HOMEBREW:
-			_launchHomebrew((char *)hdr->path, m_homebrewArgs);
+			_launchHomebrew(hdr->path, m_homebrewArgs);
 			break;
 		case COVERFLOW_CHANNEL:
 			_launchChannel(hdr);
@@ -504,7 +504,7 @@ void CMenu::_launch(dir_discHdr *hdr)
 
 extern "C" {extern void USBStorage_Deinit(void);}
 
-void CMenu::_launchHomebrew(const char *filepath, safe_vector<std::string> arguments)
+void CMenu::_launchHomebrew(const char *filepath, std::vector<std::string> arguments)
 {
 	if(LoadHomebrew(filepath))
 	{
@@ -535,10 +535,10 @@ static const char systems[11] = { 'C', 'E', 'F', 'J', 'L', 'M', 'N', 'P', 'Q', '
 void CMenu::_launchChannel(dir_discHdr *hdr)
 {
 	Channels channel;
-	u8 ios = channel.GetRequestedIOS(hdr->hdr.chantitle);
+	u8 ios = channel.GetRequestedIOS(hdr->chantitle);
 	u8 *data = NULL;
 
-	string id = string((const char *) hdr->hdr.id);
+	string id = string(hdr->id);
 
 	bool forwarder = true;
 	for (u8 num = 0; num < ARRAY_SIZE(systems); num++)
@@ -553,7 +553,7 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 	forwarder = m_gcfg2.getBool(id, "custom", forwarder) || strncmp(id.c_str(), "WIMC", 4) == 0;
 
 	if(!forwarder)
-		data = channel.Load(hdr->hdr.chantitle, (char *)id.c_str());
+		data = channel.Load(hdr->chantitle, (char *)id.c_str());
 
 	Nand::Instance()->Disable_Emu();
 
@@ -619,8 +619,8 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 
 		SmartBuf cheatFile;
 		u32 cheatSize = 0;
-		if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
-		ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
+		if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->id));
+		ocarina_load_code(hdr->id, cheatFile.get(), cheatSize);
 
 		// Reload IOS, if requested
 		if (gameIOS != mainIOS)
@@ -708,16 +708,16 @@ void CMenu::_launchChannel(dir_discHdr *hdr)
 	if(forwarder)
 	{
 		WII_Initialize();
-		if (WII_LaunchTitle(hdr->hdr.chantitle) < 0)
+		if (WII_LaunchTitle(hdr->chantitle) < 0)
 			Sys_LoadMenu();
 	}
-	else if(!channel.Launch(data, hdr->hdr.chantitle, videoMode, vipatch, countryPatch, patchVidMode, m_vid.wide()))
+	else if(!channel.Launch(data, hdr->chantitle, videoMode, vipatch, countryPatch, patchVidMode, m_vid.wide()))
 		Sys_LoadMenu();
 }
 
 void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 {
-	string id = string((const char *) hdr->hdr.id);
+	string id = string(hdr->id);
 	Nand::Instance()->Disable_Emu();
 
 	bool gc = false;
@@ -781,7 +781,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 	if(!m_gcfg2.getInt(id, "emulation", &emu_mode) || emu_mode == EMU_DEFAULT)
 		m_cfg.getInt("GAMES", "emulation", &emu_mode);
 
-	if (!dvd && get_frag_list((u8 *) hdr->hdr.id, (char *) hdr->path, currentPartition == 0 ? 0x200 : sector_size) < 0)
+	if (!dvd && get_frag_list(hdr->id, hdr->path, currentPartition == 0 ? 0x200 : sector_size) < 0)
 		return;
 
 	if(!dvd && emu_mode && !emuPath.empty())
@@ -836,13 +836,13 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 
 	setLanguage(language);
 
-	if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->hdr.id));
+	if (cheat) _loadFile(cheatFile, cheatSize, m_cheatDir.c_str(), fmt("%s.gct", hdr->id));
 
 	_loadFile(gameconfig, gameconfigSize, m_txtCheatDir.c_str(), "gameconfig.txt");
 
-	load_wip_patches((u8 *) m_wipDir.c_str(), (u8 *) &hdr->hdr.id);
-	app_gameconfig_load((u8 *) &hdr->hdr.id, gameconfig.get(), gameconfigSize);
-	ocarina_load_code((u8 *) &hdr->hdr.id, cheatFile.get(), cheatSize);
+	load_wip_patches(m_wipDir.c_str(), hdr->id);
+	app_gameconfig_load(hdr->id, gameconfig.get(), gameconfigSize);
+	ocarina_load_code(hdr->id, cheatFile.get(), cheatSize);
 
 	net_wc24cleanup();
 
@@ -937,7 +937,7 @@ void CMenu::_launchGame(dir_discHdr *hdr, bool dvd)
 
 	if (!dvd)
 	{
-		s32 ret = Disc_SetUSB((u8 *) hdr->hdr.id);
+		s32 ret = Disc_SetUSB(hdr->id);
 		if (ret < 0)
 		{
 			gprintf("Set USB failed: %d\n", ret);
@@ -1053,11 +1053,11 @@ void CMenu::_gameSoundThread(CMenu *m)
 {
 	m->m_game_thread_complete = false;
 
-	const dir_discHdr *hdr = m->m_cf.getHdr();
+	dir_discHdr *hdr = m->m_cf.getHdr();
 
 	Banner *banner = m->m_current_view == COVERFLOW_USB ?
 		_extractBnr(hdr) : m->m_current_view == COVERFLOW_CHANNEL ?
-		_extractChannelBnr(hdr->hdr.chantitle) : NULL;
+		_extractChannelBnr(hdr->chantitle) : NULL;
 
 	if (banner == NULL || !banner->IsValid())
 	{

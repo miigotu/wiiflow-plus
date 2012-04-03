@@ -27,7 +27,7 @@
 #define PARTITION_HANDLE_H
 
 #include <gccore.h>
-#include "safe_vector.hpp"
+#include <vector>
 #include "libwbfs/libwbfs.h"
 #include <string>
 
@@ -211,8 +211,8 @@ class PartitionHandle
 		bool CheckGPT(void);
 
         const DISC_INTERFACE *interface;
-        safe_vector<PartitionFS> PartitionList;
-        safe_vector<std::string> MountNameList;
+        std::vector<PartitionFS> PartitionList;
+        std::vector<std::string> MountNameList;
 };
 
 #endif

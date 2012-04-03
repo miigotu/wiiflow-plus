@@ -165,14 +165,14 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 						}
 						Disc_ReadHeader(&header);
 
-						if (_searchGamesByID((const char *) header.id).size() != 0)
+						if (_searchGamesByID(header.id).size() != 0)
 						{
 							error(_t("wbfsoperr4", L"Game already installed"));
 							out = true;
 							break;
 						}
-						cfPos = string((char *) header.id);
-						m_btnMgr.setText(m_wbfsLblDialog, wfmt(_fmt("wbfsop6", L"Installing [%s] %s..."), string((const char *)header.id, sizeof header.id).c_str(), string((const char *)header.title, sizeof header.title).c_str()));
+						cfPos = string(header.id);
+						m_btnMgr.setText(m_wbfsLblDialog, wfmt(_fmt("wbfsop6", L"Installing [%s] %s..."), header.id, header.title));
 						done = true;
 						m_thrdWorking = true;
 						m_thrdProgress = 0.f;
@@ -180,7 +180,7 @@ bool CMenu::_wbfsOp(CMenu::WBFS_OP op)
 						LWP_CreateThread(&thread, (void *(*)(void *))CMenu::_gameInstaller, (void *)this, 0, 8 * 1024, 64);
 						break;
 					case CMenu::WO_REMOVE_GAME:
-						done = WBFS_RemoveGame((u8 *)m_cf.getId().c_str(), (char *) m_cf.getHdr()->path) == 0;
+						done = WBFS_RemoveGame((char *)m_cf.getId().c_str(), m_cf.getHdr()->path) == 0;
 						m_btnMgr.setText(m_wbfsLblMessage, done ? _t("wbfsop7", L"Game deleted") : _t("wbfsop11", L"Deleting game failed!"));
 						out = !done;
 						m_btnMgr.show(m_wbfsPBar);

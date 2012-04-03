@@ -29,7 +29,6 @@
 #ifndef _BANNER_H_
 #define _BANNER_H_
 
-#include "safe_vector.hpp"
 #include <string>
 
 #define IMET_MAX_NAME_LEN 0x2a

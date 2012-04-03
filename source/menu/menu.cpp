@@ -97,7 +97,6 @@ static bool SeekPathOnParts(string &drive, const string &fmt, const string &fold
 			if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS
 				&& (fmt.empty() || stat(sfmt(fmt.c_str(), DeviceName[i], folder.c_str()).c_str(), &dummy) == 0))
 			{
-				drive.clear();
 				drive = DeviceName[i];
 				break;
 			}
@@ -111,36 +110,33 @@ static bool SeekPathOnParts(string &drive, const string &fmt, const string &fold
 				drive = DeviceName[i];
 				break;
 			}
+
 	}
 	return !drive.empty();
 }
 
-void CMenu::init(string/*  dolLocation */)
+void CMenu::init(string)
 {
 	string drive;
-	string games;
 	struct stat dummy;
 
 	/* Clear Playlog */
 	Playlog_Delete();
 
-/* 	if(!dolLocation.empty())
+/*	if(!dolLocation.empty())
 	{
 		int i = DeviceHandler::Instance()->PathToDriveType(dolLocation.c_str());
 		if (DeviceHandler::Instance()->IsInserted(i) && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS
-				&& (fmt.empty() || stat(dolLocation.c_str(), &dummy) == 0))
-			drive = DeviceName[i];
+				&& stat(dolLocation.c_str(), &dummy) == 0))
+				drive = DeviceName[i];
 	} */
-	if(drive.empty() && !SeekPathOnParts(drive, string("%s:/%s/" CFG_FILENAME), string(APPDATA_DIR2), true))		// Look for /apps/wiiflow/wiiflow.ini
-		if(!SeekPathOnParts(drive, string("%s:/%s/boot.dol"), string(APPDATA_DIR2), true))							// Look for /apps/wiiflow/boot.dol
-			if(!SeekPathOnParts(drive, string("%s:/%s"), string(APPDATA_DIR2), true))								// Look for /apps/wiiflow
+	if(drive.empty() && !SeekPathOnParts(drive, string("%s:/%s/" CFG_FILENAME), string(APPDATA_DIR2), true))		// Look for /apps/wiiflow_advanced/wiiflow_advanced.ini
+		if(!SeekPathOnParts(drive, string("%s:/%s/boot.dol"), string(APPDATA_DIR2), true))							// Look for /apps/wiiflow_advanced/boot.dol
+			if(!SeekPathOnParts(drive, string("%s:/%s"), string(APPDATA_DIR2), true))								// Look for /apps/wiiflow_advanced
 				if(!SeekPathOnParts(drive, string("%s:/%s"), string("apps"), true))									// Look for /apps
 					if(!SeekPathOnParts(drive, string("%s/%s"), string(GAMES_DIR), true))							// Look for /wbfs
 						if(!SeekPathOnParts(drive, string(""), string(""), true))									// Look for a writable partition
 
-	if(!drive.empty())
-		makedir((char *)sfmt("%s:/%s", drive.c_str(), APPDATA_DIR2).c_str()); //Make the apps dir, so saving wiiflow.ini does not fail.
-		
 	_loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
 
 	if(drive.empty()) // Should not happen
@@ -152,6 +148,7 @@ void CMenu::init(string/*  dolLocation */)
 	}
 
 	m_appDir = sfmt("%s:/%s", drive.c_str(), APPDATA_DIR2);
+	makedir((char *)m_appDir.c_str()); //Make the apps dir, so saving wiiflow_advanced.ini does not fail.
 
 #ifdef FILE_GECKO
 	snprintf(gecko_logfile, sizeof(gecko_logfile), "%s/%s", m_appDir.c_str(), "gecko.txt");
@@ -166,7 +163,7 @@ void CMenu::init(string/*  dolLocation */)
 	__exception_setreload(dsi_timeout > 5 ? dsi_timeout : 5);
 
 	bool onSD = drive[0] == 's';
-	
+
 	drive.clear();
 
 	int i = 0;
@@ -174,10 +171,10 @@ void CMenu::init(string/*  dolLocation */)
 		&& DeviceHandler::Instance()->IsInserted((i = DeviceHandler::Instance()->PathToDriveType(m_dataDir.c_str())))
 		&& DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS))
 	{
-		if(!SeekPathOnParts(drive, string("%s:/%s"), string(APPDATA_DIR), onSD))					// Look for /wiiflow
+		if(!SeekPathOnParts(drive, string("%s:/%s"), string(APPDATA_DIR), onSD))					// Look for /wiiflow_advanced
 			if(!SeekPathOnParts(drive, string("%s/%s"), string(GAMES_DIR), onSD))					// Look for /wbfs
-				if(!SeekPathOnParts(drive, string("%s:/%s/boot.dol"), string(APPDATA_DIR2), onSD))	// Look for /apps/wiiflow/boot.dol
-					if(!SeekPathOnParts(drive, string("%s:/%s"), string(APPDATA_DIR2), onSD))		// Look for /apps/wiiflow
+				if(!SeekPathOnParts(drive, string("%s:/%s/boot.dol"), string(APPDATA_DIR2), onSD))	// Look for /apps/wiiflow_advanced/boot.dol
+					if(!SeekPathOnParts(drive, string("%s:/%s"), string(APPDATA_DIR2), onSD))		// Look for /apps/wiiflow_advanced
 						if(!SeekPathOnParts(drive, string("%s:/%s"), string("apps"), onSD))			// Look for /apps
 							if(!SeekPathOnParts(drive, string(""), string(""), onSD))				// Look for a writable partition
 
@@ -191,7 +188,7 @@ void CMenu::init(string/*  dolLocation */)
 
 		m_dataDir = sfmt("%s:/%s", drive.c_str(), APPDATA_DIR);
 		m_cfg.setString("GENERAL", "dir_data", m_dataDir.c_str());
-	
+
 	}
 
 	gprintf("Data Directory: %s\n", m_dataDir.c_str());
@@ -213,8 +210,6 @@ void CMenu::init(string/*  dolLocation */)
 	m_cacheDir = m_cfg.getString("GENERAL", "dir_cache", sfmt("%s/cache", m_dataDir.c_str()));
 	m_settingsDir = m_cfg.getString("GENERAL", "dir_settings", sfmt("%s/settings", m_dataDir.c_str()));
 	m_languagesDir = m_cfg.getString("GENERAL", "dir_languages", sfmt("%s/languages", m_dataDir.c_str()));
-	m_boxPicDir = m_cfg.getString("GENERAL", "dir_box_covers", sfmt("%s/boxcovers", m_dataDir.c_str()));
-	m_picDir = m_cfg.getString("GENERAL", "dir_flat_covers", sfmt("%s/covers", m_dataDir.c_str()));
 	m_themeDir = m_cfg.getString("GENERAL", "dir_themes", sfmt("%s/themes", m_dataDir.c_str()));
 	m_musicDir = m_cfg.getString("GENERAL", "dir_music", sfmt("%s/music", m_dataDir.c_str()));
 	m_videoDir = m_cfg.getString("GENERAL", "dir_trailers", sfmt("%s/trailers", m_dataDir.c_str()));
@@ -228,12 +223,26 @@ void CMenu::init(string/*  dolLocation */)
 
 	DeviceHandler::SetWatchdog(m_cfg.getUInt("GENERAL", "watchdog_timeout", 10));
 
+	const char *checkDir = NULL;
+	switch(m_current_view)
+	{
+		case COVERFLOW_HOMEBREW:
+				checkDir = HOMEBREW_DIR;
+				break;
+		case COVERFLOW_CHANNEL:
+				break;
+		case COVERFLOW_USB:
+		default:
+				checkDir = GAMES_DIR;
+				break;
+
+	}
 	const char *domain = _domainFromView();
-	const char *checkDir = m_current_view == COVERFLOW_HOMEBREW ? HOMEBREW_DIR : GAMES_DIR;
 
 	currentPartition = m_cfg.getInt(domain, "partition", currentPartition);
 	if(m_current_view != COVERFLOW_CHANNEL && (currentPartition > USB8 || !DeviceHandler::Instance()->IsInserted(currentPartition)
-		|| (m_current_view == COVERFLOW_USB && DeviceHandler::Instance()->GetFSType(i) != PART_FS_WBFS && stat(sfmt(checkDir, DeviceName[i]).c_str(), &dummy) == -1)))
+		|| (m_current_view == COVERFLOW_USB && DeviceHandler::Instance()->GetFSType(currentPartition) != PART_FS_WBFS
+		&& (checkDir != NULL && stat(sfmt(checkDir, DeviceName[currentPartition]).c_str(), &dummy) == -1))))
 	{
 		m_cfg.remove(domain, "partition");
 		for(int i = SD; i <= USB8+1; i++) // Find a usb partition with the wbfs folder or wbfs file system, else leave it blank (defaults to 1 later)
@@ -254,14 +263,14 @@ void CMenu::init(string/*  dolLocation */)
 		}
 	}
 
-	m_cf.init(m_base_font, m_base_font_size);
+	string boxPicDir = m_cfg.getString("GENERAL", "dir_box_covers", sfmt("%s/boxcovers", m_dataDir.c_str()));
+	string picDir = m_cfg.getString("GENERAL", "dir_flat_covers", sfmt("%s/covers", m_dataDir.c_str()));
+	m_cf.init(m_base_font, m_base_font_size, boxPicDir, picDir);
 
 	//Make important folders first.
 	makedir((char *)m_cacheDir.c_str());
 	makedir((char *)m_settingsDir.c_str());
 	makedir((char *)m_languagesDir.c_str());
-	makedir((char *)m_boxPicDir.c_str());
-	makedir((char *)m_picDir.c_str());
 	makedir((char *)m_themeDir.c_str());
 	makedir((char *)m_musicDir.c_str());
 	makedir((char *)m_videoDir.c_str());
@@ -271,6 +280,9 @@ void CMenu::init(string/*  dolLocation */)
 	makedir((char *)m_cheatDir.c_str());
 	makedir((char *)m_wipDir.c_str());
 	makedir((char *)m_listCacheDir.c_str());
+
+	makedir((char *)boxPicDir.c_str());
+	makedir((char *)picDir.c_str());
 
 	m_gameList.Init(m_listCacheDir, m_settingsDir, m_loc.getString(m_curLanguage, "gametdb_code", "EN"));
 
@@ -308,7 +320,7 @@ void CMenu::init(string/*  dolLocation */)
 			defaultMenuLanguage = 4; //Chinese_T
 			break;
 		case CONF_LANG_KOREAN:
-			defaultMenuLanguage = 7; // No Korean translation has been done for wiiflow, so the menu will use english in this case.
+			defaultMenuLanguage = 7; // No Korean translation has been done for wiiflow_advanced, so the menu will use english in this case.
 			break;
 	}
 	if (CONF_GetArea() == CONF_AREA_BRA)
@@ -364,8 +376,10 @@ void CMenu::init(string/*  dolLocation */)
 	m_category = m_cat.getInt(domain, "category");
 	m_max_categories = m_cat.getInt(domain, "numcategories", 12);
 
-	safe_vector<string> gamercards = stringToVector(m_cfg.getString("GAMERCARD", "gamercards"), "|");
-	for (safe_vector<string>::iterator itr = gamercards.begin(); itr != gamercards.end(); itr++)
+	vector<string> gamercards = stringToVector(m_cfg.getString("GAMERCARD", "gamercards"), "|");
+	if(gamercards.size() == 0)
+		m_cfg.remove("GAMERCARD");
+	else for (vector<string>::iterator itr = gamercards.begin(); itr != gamercards.end(); itr++)
 	{
 		string defval = itr->compare("wiinertag") ? WIINNERTAG_URL : itr->compare("dutag") ? DUTAG_URL : "";
 		register_card_provider(
@@ -526,6 +540,7 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 {
 	version = 1 + ((version + (int)m_numCFVersions) % (int)m_numCFVersions);
 
+	bool sf = otherScrnFmt;
 	bool smallbox = m_cfg.getBool(_domainFromView(), "smallbox", m_current_view == COVERFLOW_HOMEBREW);
 	string domain(sfmt(_cfDomain(), version).c_str());
 	string domainSel(sfmt(_cfDomain(true), version).c_str());
@@ -537,39 +552,39 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 		m_theme.getInt(domain, "tex_aniso", 2),
 		m_theme.getBool(domain, "tex_edge_lod", true));
 
-	m_cf.setRange(_getCFInt(domain, "rows", smallbox ? 5 : 1, otherScrnFmt), _getCFInt(domain, "columns", 9, otherScrnFmt));
+	m_cf.setRange(_getCFInt(domain, "rows", smallbox ? 5 : 1, sf), _getCFInt(domain, "columns", smallbox ? 5 : 9, sf));
 
 	m_cf.setCameraPos(false,
-		_getCFV3D(domain, "camera_pos", Vector3D(0.f, 1.5f, 5.f), otherScrnFmt),
-		_getCFV3D(domain, "camera_aim", Vector3D(0.f, 0.f, -1.f), otherScrnFmt));
+		_getCFV3D(domain, "camera_pos", Vector3D(0.f, 1.5f, 5.f), sf),
+		_getCFV3D(domain, "camera_aim", Vector3D(0.f, 0.f, -1.f), sf));
 
 	m_cf.setCameraPos(true,
-		_getCFV3D(domainSel, "camera_pos", Vector3D(0.f, 1.5f, 5.f), otherScrnFmt),
-		_getCFV3D(domainSel, "camera_aim", Vector3D(0.f, 0.f, -1.f), otherScrnFmt));
+		_getCFV3D(domainSel, "camera_pos", Vector3D(0.f, 1.5f, 5.f), sf),
+		_getCFV3D(domainSel, "camera_aim", Vector3D(0.f, 0.f, -1.f), sf));
 
 	m_cf.setCameraOsc(false,
-		_getCFV3D(domain, "camera_osc_speed", Vector3D(2.f, 1.1f, 1.3f), otherScrnFmt),
-		_getCFV3D(domain, "camera_osc_amp", Vector3D(0.1f, 0.2f, 0.1f), otherScrnFmt));
+		_getCFV3D(domain, "camera_osc_speed", Vector3D(2.f, 1.1f, 1.3f), sf),
+		_getCFV3D(domain, "camera_osc_amp", Vector3D(0.1f, 0.2f, 0.1f), sf));
 
 	m_cf.setCameraOsc(true,
-		_getCFV3D(domainSel, "camera_osc_speed", Vector3D(), otherScrnFmt),
-		_getCFV3D(domainSel, "camera_osc_amp", Vector3D(), otherScrnFmt));
+		_getCFV3D(domainSel, "camera_osc_speed", Vector3D(), sf),
+		_getCFV3D(domainSel, "camera_osc_amp", Vector3D(), sf));
 
-	float def_cvr_posX = smallbox ? 1.f : 1.6f;
 	float def_cvr_posY = smallbox ? -0.6f : 0.f;
+	float def_cvr_posY1 = smallbox ? -0.3f : 0.f;
 	m_cf.setCoverPos(false,
-		_getCFV3D(domain, "left_pos", Vector3D(-def_cvr_posX, def_cvr_posY, 0.f), otherScrnFmt),
-		_getCFV3D(domain, "right_pos", Vector3D(def_cvr_posX, def_cvr_posY, 0.f), otherScrnFmt),
-		_getCFV3D(domain, "center_pos", Vector3D(0.f, def_cvr_posY, 1.f), otherScrnFmt),
-		_getCFV3D(domain, "row_center_pos", Vector3D(0.f, def_cvr_posY, 0.f), otherScrnFmt));
+		_getCFV3D(domain, "left_pos", Vector3D(-1.6f, def_cvr_posY, 0.f), sf),
+		_getCFV3D(domain, "right_pos", Vector3D(1.6f, def_cvr_posY, 0.f), sf),
+		_getCFV3D(domain, "center_pos", Vector3D(0.f, def_cvr_posY1, 1.f), sf),
+		_getCFV3D(domain, "row_center_pos", Vector3D(0.f, def_cvr_posY, 0.f), sf));
 
-	def_cvr_posX = smallbox ? 1.f : 4.6f;
+	float def_cvr_posX = smallbox ? 1.6f : 4.6f;
 	float def_cvr_posX1 = smallbox ? 0.f : -0.6f;
 	m_cf.setCoverPos(true,
-		_getCFV3D(domainSel, "left_pos", Vector3D(-def_cvr_posX, def_cvr_posY, 0.f), otherScrnFmt),
-		_getCFV3D(domainSel, "right_pos", Vector3D(def_cvr_posX, def_cvr_posY, 0.f), otherScrnFmt),
-		_getCFV3D(domainSel, "center_pos", Vector3D(def_cvr_posX1, 0.f, 2.6f), otherScrnFmt),
-		_getCFV3D(domainSel, "row_center_pos", Vector3D(0.f, def_cvr_posY, 0.f), otherScrnFmt));
+		_getCFV3D(domainSel, "left_pos", Vector3D(-def_cvr_posX, def_cvr_posY, 0.f), sf),
+		_getCFV3D(domainSel, "right_pos", Vector3D(def_cvr_posX, def_cvr_posY, 0.f), sf),
+		_getCFV3D(domainSel, "center_pos", Vector3D(def_cvr_posX1, 0.f, 2.6f), sf),
+		_getCFV3D(domainSel, "row_center_pos", Vector3D(0.f, def_cvr_posY, 0.f), sf));
 
 	m_cf.setCoverAngleOsc(false,
 		m_theme.getVector3D(domain, "cover_osc_speed", Vector3D(2.f, 2.f, 0.f)),
@@ -587,7 +602,7 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 		m_theme.getVector3D(domainSel, "cover_pos_osc_speed"),
 		m_theme.getVector3D(domainSel, "cover_pos_osc_amp"));
 
-	float spacerX = smallbox ? 	1.f : 0.35f;
+	float spacerX = smallbox ? 1.6f : 0.35f;
 	m_cf.setSpacers(false,
 		m_theme.getVector3D(domain, "left_spacer", Vector3D(-spacerX, 0.f, 0.f)),
 		m_theme.getVector3D(domain, "right_spacer", Vector3D(spacerX, 0.f, 0.f)));
@@ -622,32 +637,32 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 
 	angleX = smallbox ? 0.f : 55.f;
 	m_cf.setTitleAngles(false,
-		_getCFFloat(domain, "text_left_angle", -angleX, otherScrnFmt),
-		_getCFFloat(domain, "text_right_angle", angleX, otherScrnFmt),
-		_getCFFloat(domain, "text_center_angle", 0.f, otherScrnFmt));
+		_getCFFloat(domain, "text_left_angle", -angleX, sf),
+		_getCFFloat(domain, "text_right_angle", angleX, sf),
+		_getCFFloat(domain, "text_center_angle", 0.f, sf));
 
 	m_cf.setTitleAngles(true,
-		_getCFFloat(domainSel, "text_left_angle", -angleX, otherScrnFmt),
-		_getCFFloat(domainSel, "text_right_angle", angleX, otherScrnFmt),
-		_getCFFloat(domainSel, "text_center_angle", 0.f, otherScrnFmt));
+		_getCFFloat(domainSel, "text_left_angle", -angleX, sf),
+		_getCFFloat(domainSel, "text_right_angle", angleX, sf),
+		_getCFFloat(domainSel, "text_center_angle", 0.f, sf));
 
 	m_cf.setTitlePos(false,
-		_getCFV3D(domain, "text_left_pos", Vector3D(-4.f, 0.f, 1.3f), otherScrnFmt),
-		_getCFV3D(domain, "text_right_pos", Vector3D(4.f, 0.f, 1.3f), otherScrnFmt),
-		_getCFV3D(domain, "text_center_pos", Vector3D(0.f, 0.f, 2.6f), otherScrnFmt));
+		_getCFV3D(domain, "text_left_pos", Vector3D(-4.f, 0.f, 1.3f), sf),
+		_getCFV3D(domain, "text_right_pos", Vector3D(4.f, 0.f, 1.3f), sf),
+		_getCFV3D(domain, "text_center_pos", Vector3D(0.f, 0.f, 2.6f), sf));
 
 	m_cf.setTitlePos(true,
-		_getCFV3D(domainSel, "text_left_pos", Vector3D(-4.f, 0.f, 1.3f), otherScrnFmt),
-		_getCFV3D(domainSel, "text_right_pos", Vector3D(4.f, 0.f, 1.3f), otherScrnFmt),
-		_getCFV3D(domainSel, "text_center_pos", Vector3D(.6f, 1.6f, 1.6f), otherScrnFmt));
+		_getCFV3D(domainSel, "text_left_pos", Vector3D(-4.f, 0.f, 1.3f), sf),
+		_getCFV3D(domainSel, "text_right_pos", Vector3D(4.f, 0.f, 1.3f), sf),
+		_getCFV3D(domainSel, "text_center_pos", Vector3D(.6f, 1.6f, 1.6f), sf));
 
 	m_cf.setTitleWidth(false,
-		_getCFFloat(domain, "text_side_wrap_width", 600.f, otherScrnFmt),
-		_getCFFloat(domain, "text_center_wrap_width", 600.f, otherScrnFmt));
+		_getCFFloat(domain, "text_side_wrap_width", 600.f, sf),
+		_getCFFloat(domain, "text_center_wrap_width", 600.f, sf));
 
 	m_cf.setTitleWidth(true,
-		_getCFFloat(domainSel, "text_side_wrap_width", 600.f, otherScrnFmt),
-		_getCFFloat(domainSel, "text_center_wrap_width", 380.f, otherScrnFmt));
+		_getCFFloat(domainSel, "text_side_wrap_width", 600.f, sf),
+		_getCFFloat(domainSel, "text_center_wrap_width", 380.f, sf));
 
 	m_cf.setTitleStyle(false,
 		_textStyle(domain.c_str(), "text_side_style", FTGX_ALIGN_MIDDLE | FTGX_JUSTIFY_CENTER),
@@ -668,7 +683,6 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 		m_theme.getColor(domain, "color_off", 0x7FFFFFFF));
 
 	m_cf.setMirrorAlpha(m_theme.getFloat(domain, "mirror_alpha", 0.25f), m_theme.getFloat(domain, "title_mirror_alpha", 0.2f));
-
 	m_cf.setMirrorBlur(m_theme.getBool(domain, "mirror_blur", true));
 
 	m_cf.setShadowColors(false,
@@ -687,7 +701,7 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 		m_theme.getFloat(domain, "shadow_x"),
 		m_theme.getFloat(domain, "shadow_y"));
 
-	float spacerY = smallbox ? 0.60f : 2.f;
+	float spacerY = smallbox ? 1.0f : 2.f;
 	m_cf.setRowSpacers(false,
 		m_theme.getVector3D(domain, "top_spacer", Vector3D(0.f, spacerY, 0.f)),
 		m_theme.getVector3D(domain, "bottom_spacer", Vector3D(0.f, -spacerY, 0.f)));
@@ -712,7 +726,7 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 		m_theme.getVector3D(domainSel, "top_angle"),
 		m_theme.getVector3D(domainSel, "bottom_angle"));
 
-	Vector3D def_cvr_scale = smallbox ? Vector3D(0.667f, 0.25f, 1.f) : Vector3D(1.f, 1.f, 1.f);
+	Vector3D def_cvr_scale = smallbox ? Vector3D(1.f, 0.4f, 1.f) : Vector3D(1.f, 1.f, 1.f);
 	m_cf.setCoverScale(false,
 		m_theme.getVector3D(domain, "left_scale", def_cvr_scale),
 		m_theme.getVector3D(domain, "right_scale", def_cvr_scale),
@@ -725,11 +739,13 @@ void CMenu::_loadCFLayout(int version, bool forceAA, bool otherScrnFmt)
 		m_theme.getVector3D(domainSel, "center_scale", def_cvr_scale),
 		m_theme.getVector3D(domainSel, "row_center_scale", def_cvr_scale));
 
-	float flipX = smallbox ? 359.f : 180.f;
+	float flipX = smallbox ? 359.f : 0.f;
+	float flipY = smallbox ? 0.f : 180.f;
+
 	m_cf.setCoverFlipping(
-		_getCFV3D(domainSel, "flip_pos", Vector3D(), otherScrnFmt),
-		_getCFV3D(domainSel, "flip_angle", Vector3D(0.f, flipX, 0.f), otherScrnFmt),
-		_getCFV3D(domainSel, "flip_scale", def_cvr_scale, otherScrnFmt));
+		_getCFV3D(domainSel, "flip_pos", Vector3D(), sf),
+		_getCFV3D(domainSel, "flip_angle", Vector3D(flipX, flipY, 0.f), sf),
+		_getCFV3D(domainSel, "flip_scale", Vector3D(1.f, 1.f, 1.f), sf));
 
 	m_cf.setBlur(
 		m_theme.getInt(domain, "blur_resolution", 1),
@@ -867,7 +883,7 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 	if (i != fontSet.end()) return i->second;
 
 	SFont retFont;
- 	if (!useDefault && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fonts[0].res, fonts[1].res, fonts[2].res, 1))
+	if (!useDefault && retFont.fromFile(sfmt("%s/%s", m_themeDataDir.c_str(), filename.c_str()).c_str(), fonts[0].res, fonts[1].res, fonts[2].res, 1))
 		return fontSet[CMenu::FontDesc(upperCase(filename.c_str()), fonts[0].res)] = retFont;
 
 	if(!m_base_font) _loadDefaultFont(CONF_GetLanguage() == CONF_LANG_KOREAN);
@@ -877,16 +893,16 @@ SFont CMenu::_font(CMenu::FontSet &fontSet, const char *domain, const char *key,
 	return retFont;
 }
 
-safe_vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char *key)
+vector<STexture> CMenu::_textures(TexSet &texSet, const char *domain, const char *key)
 {
-	safe_vector<STexture> textures;
+	vector<STexture> textures;
 
 	if (m_theme.loaded())
 	{
-		safe_vector<string> filenames = m_theme.getStrings(domain, key);
+		vector<string> filenames = m_theme.getStrings(domain, key);
 		if (filenames.size() > 0)
 		{
-			for (safe_vector<string>::iterator itr = filenames.begin(); itr != filenames.end(); itr++)
+			for (vector<string>::iterator itr = filenames.begin(); itr != filenames.end(); itr++)
 			{
 				string filename = *itr;
 
@@ -1038,7 +1054,7 @@ u32 CMenu::_addLabel(CMenu::SThemeData &theme, const char *domain, int x, int y,
 	switch(type)
 	{
 		case ADD_TEXT:
-			 font = _font(theme.fontSet, domain, TEXTFONT);
+			font = _font(theme.fontSet, domain, TEXTFONT);
 			c = CColor(theme.txtFontColor);
 			break;
 		case ADD_TITLE:
@@ -1174,17 +1190,17 @@ void CMenu::_initCF(void)
 	m_cf.clear();
 	m_cf.reserve(m_gameList.size());
 
- 	m_gamelistdump = m_cfg.getBool(domain, "dump_list");
+	m_gamelistdump = m_cfg.getBool(domain, "dump_list");
 	if(m_gamelistdump) m_dump.load(sfmt("%s/titlesdump.ini", m_settingsDir.c_str()).c_str());
 
 	m_gcfg1.load(sfmt("%s/gameconfig1.ini", m_settingsDir.c_str()).c_str());
-	for (u32 i = 0; i < m_gameList.size(); ++i)
+	for (GameListIter itr = m_gameList.begin(); itr != m_gameList.end(); itr++)
 	{
-		u64 chantitle = m_gameList[i].hdr.chantitle;
+		u64 chantitle = itr->chantitle;
 		if (m_current_view == COVERFLOW_CHANNEL && chantitle == HBC_108)
-			strncpy((char *) m_gameList[i].hdr.id, "JODI", 6);
+			strncpy(itr->id, "JODI", 6);
 
-		string id = string((const char *)m_gameList[i].hdr.id, m_current_view == COVERFLOW_CHANNEL || m_current_view == COVERFLOW_HOMEBREW ?  4 : 6);
+		string id = string(itr->id, m_current_view == COVERFLOW_CHANNEL || m_current_view == COVERFLOW_HOMEBREW ?  4 : 6);
 
 		if ((!m_favorites || m_gcfg1.getBool("FAVORITES", id)) && (!m_locked || !m_gcfg1.getBool("ADULTONLY", id)) && !m_gcfg1.getBool("HIDDEN", id))
 		{
@@ -1199,24 +1215,19 @@ void CMenu::_initCF(void)
 			unsigned int lastPlayed = m_gcfg1.getUInt("LASTPLAYED", id);
 
 			if(m_gamelistdump)
-				m_dump.setWString(domain, id, m_gameList[i].title);
+				m_dump.setWString(domain, id, itr->wtitle);
 
-			if (m_current_view != COVERFLOW_HOMEBREW) // Fixme
-				m_cf.addItem(&m_gameList[i], sfmt("%s/%s.png", m_picDir.c_str(), id.c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
-			else
-			{
-				string s = sfmt("%s", m_gameList[i].path);
-				m_cf.addItem(&m_gameList[i], sfmt("%s/icon.png", s.substr(0, s.find_last_of("/")).c_str()).c_str(), sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()).c_str(), playcount, lastPlayed);
-			}
+			m_cf.addItem(&(*itr), playcount, lastPlayed);
 		}
 	}
 	m_gcfg1.unload();
- 	if (m_gamelistdump)
+	if (m_gamelistdump)
 	{
 		m_dump.save(true);
 		m_cfg.remove(domain, "dump_list");
 	}
- 	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode", true));
+	m_cf.setCurrentView(m_current_view);
+	m_cf.setBoxMode(m_cfg.getBool("GENERAL", "box_mode", true));
 	m_cf.setCompression(m_cfg.getBool("GENERAL", "allow_texture_compression", true));
 	m_cf.setSorting((Sorting)m_cfg.getInt(domain, "sort"));
 	if (m_curGameId.empty() || !m_cf.findId(m_curGameId.c_str(), true))
@@ -1235,7 +1246,7 @@ void CMenu::_mainLoopCommon(bool withCF, bool blockReboot, bool adjusting)
 
 	_updateBg();
 
-	m_fa.hideCover() ? 	m_cf.hideCover() : m_cf.showCover();
+	m_fa.hideCover() ?	m_cf.hideCover() : m_cf.showCover();
 
 	if (withCF) m_cf.makeEffectTexture(m_vid, m_lqBg);
 	if (withCF && m_aa > 0)
@@ -1647,7 +1658,7 @@ void CMenu::_stopSounds(void)
 		if(!MusicPlayer::Instance()->IsStopped())
 			MusicPlayer::Instance()->Tick(true);
 
-		if (m_gameSound.GetVolume() > 0)
+		if(m_gameSound.GetVolume() > 0)
 			m_gameSound.SetVolume(m_gameSound.GetVolume() < fade_rate ? 0 : m_gameSound.GetVolume() - fade_rate);
 
 		VIDEO_WaitVSync();
@@ -1730,11 +1741,8 @@ void CMenu::_loadDefaultFont(bool korean)
 	u32 size;
 	bool retry = false;
 
-	// Read content.map from ISFS
 	u8 *content = ISFS_GetFile((u8 *) "/shared1/content.map", &size, 0);
 	int items = size / sizeof(map_entry_t);
-
-	//gprintf("Open content.map, size %d, items %d\n", size, items);
 
 retry:
 	bool kor_font = (korean && !retry) || (!korean && retry);
@@ -1743,21 +1751,14 @@ retry:
 	{
 		if (memcmp(cm[i].sha1, kor_font ? WIIFONT_HASH_KOR : WIIFONT_HASH, 20) == 0)
 		{
-			// Name found, load it and unpack it
 			char u8_font_filename[22] = {0};
 			strcpy(u8_font_filename, "/shared1/XXXXXXXX.app"); // Faster than sprintf
-            memcpy(u8_font_filename+9, cm[i].filename, 8);
+			memcpy(u8_font_filename+9, cm[i].filename, 8);
 
 			u8 *u8_font_archive = ISFS_GetFile((u8 *) u8_font_filename, &size, 0);
-
-			//gprintf("Opened fontfile: %s: %d bytes\n", u8_font_filename, size);
-
 			if (u8_font_archive != NULL)
 			{
 				const u8 *font_file = u8_get_file_by_index(u8_font_archive, 1, &size); // There is only one file in that app
-
-				//gprintf("Extracted font: %d\n", size);
-
 				m_base_font = smartMem2Alloc(size);
 				memcpy(m_base_font.get(), font_file, size);
 				if(!!m_base_font)

@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #include "DeviceHandler.hpp"
-#include "safe_vector.hpp"
+#include <deque>
 #include "wbfs_ext.h"
 #include "libwbfs/libwbfs.h"
 #include "disc.h"
@@ -17,16 +17,12 @@
 #include "cache.hpp"
 
 using namespace std;
-template <typename T>
+
 class CList
 {
     public:
-		 CList(){};
-		~CList(){};
-		void GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs = false);
-		void GetHeaders(safe_vector<string> pathlist, safe_vector<T> &headerlist, string, string);
-		void GetChannels(safe_vector<T> &headerlist, string, u32, string);
-	private:
-		void Check_For_ID(u8 *id, string path, string one, string two);
+		void GetPaths(vector<string> &pathlist, string containing, string directory, bool wbfs_fs = false);
+		void GetHeaders(vector<string> pathlist, deque<dir_discHdr> &headerlist, string, string);
+		void GetChannels(deque<dir_discHdr> &headerlist, string, u32, string);
 };
 #endif

@@ -73,18 +73,17 @@ void free_wip()
     ProcessedLength = 0;
 }
 
-int load_wip_patches(u8 *dir, u8 *gameid)
+int load_wip_patches(const char *dir, const char *gameid)
 {
 	char filepath[150];
-	char GameID[8];
-	memset(GameID, 0, sizeof(GameID));
+	char GameID[7];
     memcpy(GameID, gameid, 6);
 	snprintf(filepath, sizeof(filepath), "%s/%s.wip", dir, GameID);
 
 	FILE * fp = fopen(filepath, "rb");
 	if (!fp)
 	{
-        memset(GameID, 0, sizeof(GameID));
+		bzero(GameID, sizeof GameID);
         memcpy(GameID, gameid, 3);
 		snprintf(filepath, sizeof(filepath), "%s/%s.wip", dir, GameID);
 		fp = fopen(filepath, "rb");

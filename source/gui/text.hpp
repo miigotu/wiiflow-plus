@@ -2,7 +2,7 @@
 #ifndef __TEXT_HPP
 #define __TEXT_HPP
 
-#include "safe_vector.hpp"
+#include <vector>
 #include <string>
 
 #include "wstringEx.hpp"
@@ -28,8 +28,8 @@ class CText
 			Vector3D targetPos;
 		};
 	private:
-		typedef safe_vector<SWord> CLine;
-		safe_vector<CLine> m_lines;
+		typedef std::vector<SWord> CLine;
+		std::vector<CLine> m_lines;
 		SFont m_font;
 		CColor m_color;
 		u32 firstLine;
@@ -42,11 +42,11 @@ std::string sfmt(const char *format, ...);
 wstringEx wfmt(const wstringEx &format, ...);
 bool checkFmt(const wstringEx &ref, const wstringEx &format);
 
-wstringEx vectorToString(const safe_vector<wstringEx> &vect, const wchar_t &sep);
-safe_vector<wstringEx> stringToVector(const wstringEx &text, const wstringEx &sep);
+wstringEx vectorToString(const std::vector<wstringEx> &vect, const wchar_t &sep);
+std::vector<wstringEx> stringToVector(const wstringEx &text, const wstringEx &sep);
 
-std::string vectorToString(const safe_vector<std::string> &vect, const std::string &sep);
-safe_vector<std::string> stringToVector(const std::string &text, const std::string &sep);
+std::string vectorToString(const std::vector<std::string> &vect, const std::string &sep);
+std::vector<std::string> stringToVector(const std::string &text, const std::string &sep);
 
 std::string upperCase(std::string text);
 std::string lowerCase(std::string text);

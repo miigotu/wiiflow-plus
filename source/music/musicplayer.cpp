@@ -31,13 +31,12 @@ void MusicPlayer::Init(Config &cfg, string musicDir, string themeMusicDir)
 	SetVolume(0); // Fades in with tick()
 
 	MusicDirectory dir = (MusicDirectory) cfg.getInt("GENERAL", "music_directories", NORMAL_MUSIC | THEME_MUSIC);
-	m_music_files.Init(cfg.getString("GENERAL", "dir_list_cache"), std::string(), std::string());
-
+	CList list;
 	if (dir & THEME_MUSIC)
-		m_music_files.Load(themeMusicDir, ".ogg|.mp3"); //|.mod|.xm|.s3m|.wav|.aiff");
+		list.GetPaths(m_music_files, themeMusicDir, ".ogg|.mp3"); //|.mod|.xm|.s3m|.wav|.aiff");
 
 	if (dir & NORMAL_MUSIC)
-		m_music_files.Load(musicDir, ".ogg|.mp3"); //|.mod|.xm|.s3m|.wav|.aiff");
+		list.GetPaths(m_music_files, musicDir, ".ogg|.mp3"); //|.mod|.xm|.s3m|.wav|.aiff");
 
 	if (cfg.getBool("GENERAL", "randomize_music") && m_music_files.size() > 0)
 	{

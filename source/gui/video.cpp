@@ -187,10 +187,10 @@ void CVideo::init(void)
 
 void CVideo::set2DViewport(u32 w, u32 h, int x, int y)
 {
-	m_width2D = std::min(std::max(512u, w), 800u);
-	m_height2D = std::min(std::max(384u, h), 600u);
-	m_x2D = std::min(std::max(-50, x), 50);
-	m_y2D = std::min(std::max(-50, y), 50);
+	m_width2D = min(max(512u, w), 800u);
+	m_height2D = min(max(384u, h), 600u);
+	m_x2D = min(max(-50, x), 50);
+	m_y2D = min(max(-50, y), 50);
 }
 
 void CVideo::setup2DProjection(bool setViewPort, bool noScale)
@@ -456,7 +456,7 @@ void CVideo::_showWaitMessages(CVideo *m)
 	s8 fadeDirection = 1;
 	s16 currentLightLevel = 0;
 
-	safe_vector<STexture>::iterator waitItr = m->m_waitMessages.begin();
+	vector<STexture>::iterator waitItr = m->m_waitMessages.begin();
 
 	gprintf("Going to show a wait message screen, delay: %d, # images: %d\n", waitFrames, m->m_waitMessages.size());
 
@@ -540,10 +540,10 @@ void CVideo::CheckWaitThread(bool force)
 
 void CVideo::waitMessage(float delay)
 {
-	waitMessage(safe_vector<STexture>(), delay);
+	waitMessage(vector<STexture>(), delay);
 }
 
-void CVideo::waitMessage(const safe_vector<STexture> &tex, float delay, bool useWiiLight)
+void CVideo::waitMessage(const vector<STexture> &tex, float delay, bool useWiiLight)
 {
 	hideWaitMessage(true);
 
@@ -588,8 +588,8 @@ void CVideo::waitMessage(const STexture &tex)
 	Mtx modelViewMtx;
 	GXTexObj texObj;
 
-	for (int i = 0; i < 3; ++i)
-	{
+	//for (int i = 0; i < 3; ++i)
+	//{
 		prepare();
 		setup2DProjection();
 		//prepareAAPass(i);
@@ -626,7 +626,7 @@ void CVideo::waitMessage(const STexture &tex)
 		GX_TexCoord2f32(0.f, 1.f);
 		GX_End();
 		render();
-	}
+	//}
 	GX_SetNumChans(1);
 }
 

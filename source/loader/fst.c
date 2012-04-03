@@ -62,7 +62,7 @@ extern const u32 axnextframehooks[4];
 extern const u32 wpadbuttonsdownhooks[4];
 extern const u32 wpadbuttonsdown2hooks[4];
 
-int app_gameconfig_load(u8 *discid, const u8 *gameconfig, u32 tempgameconfsize)
+int app_gameconfig_load(char *discid, const u8 *gameconfig, u32 tempgameconfsize)
 {
 	gameconfsize = 0;
 
@@ -135,7 +135,7 @@ int app_gameconfig_load(u8 *discid, const u8 *gameconfig, u32 tempgameconfsize)
 					gameidmatch = 0;
 					goto idmatch;
 				}
-				if (strncmp((char *) discid, parsebuffer, strlen(parsebuffer)) == 0)
+				if (strncmp(discid, parsebuffer, strlen(parsebuffer)) == 0)
 				{
 					gameidmatch += strlen(parsebuffer);
 				idmatch:
@@ -438,7 +438,7 @@ int app_gameconfig_load(u8 *discid, const u8 *gameconfig, u32 tempgameconfsize)
 u8 *code_buf = NULL;
 int code_size = 0;
 
-int ocarina_load_code(u8 *id, const u8 *cheat, u32 cheatSize)
+int ocarina_load_code(char *id, const u8 *cheat, u32 cheatSize)
 {
 	if (debuggerselect == 0x00)
 		codelist = (u8 *) 0x800022A8;
@@ -446,7 +446,7 @@ int ocarina_load_code(u8 *id, const u8 *cheat, u32 cheatSize)
 		codelist = (u8 *) 0x800028B8;
 	codelistend = (u8 *) 0x80003000;
 
-//	app_loadgameconfig((char *)id);
+//	app_loadgameconfig(id);
 
 	code_buf = (u8 *)cheat;
     code_size = cheatSize;

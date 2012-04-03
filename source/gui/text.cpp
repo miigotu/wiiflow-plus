@@ -109,7 +109,7 @@ wstringEx wfmt(const wstringEx &format, ...)
 	return ws;
 }
 
-string vectorToString(const safe_vector<string> &vect, const string &sep)
+string vectorToString(const vector<string> &vect, const string &sep)
 {
 	string s;
 	for (u32 i = 0; i < vect.size(); ++i)
@@ -121,7 +121,7 @@ string vectorToString(const safe_vector<string> &vect, const string &sep)
 	return s;
 }
 
-wstringEx vectorToString(const safe_vector<wstringEx> &vect, const wchar_t &sep)
+wstringEx vectorToString(const vector<wstringEx> &vect, const wchar_t &sep)
 {
 	wstringEx s;
 	for (u32 i = 0; i < vect.size(); ++i)
@@ -133,9 +133,9 @@ wstringEx vectorToString(const safe_vector<wstringEx> &vect, const wchar_t &sep)
 	return s;
 }
 
-safe_vector<string> stringToVector(const string &text, const string &sep)
+vector<string> stringToVector(const string &text, const string &sep)
 {
-	safe_vector<string> v;
+	vector<string> v;
 	if (text.empty()) return v;
 	u32 count = 1;
 	string::size_type off = 0, i = 0;
@@ -163,9 +163,9 @@ safe_vector<string> stringToVector(const string &text, const string &sep)
 	return v;
 }
 
-safe_vector<wstringEx> stringToVector(const wstringEx &text, const wstringEx &sep)
+vector<wstringEx> stringToVector(const wstringEx &text, const wstringEx &sep)
 {
-	safe_vector<wstringEx> v;
+	vector<wstringEx> v;
 	if (text.empty()) return v;
 	u32 count = 1;
 	string::size_type off = 0, i = 0;
@@ -201,7 +201,7 @@ void CText::setText(SFont font, const wstringEx &t)
 
 	firstLine = 0;
 	// Don't care about performance
-	safe_vector<wstringEx> lines = stringToVector(t, L"\n");
+	vector<wstringEx> lines = stringToVector(t, L"\n");
 	m_lines.reserve(lines.size());
 	//
 	for (u32 k = 0; k < lines.size(); ++k)
@@ -241,7 +241,7 @@ void CText::setText(SFont font, const wstringEx &t, u32 startline)
 
 	firstLine = startline;
 	// Don't care about performance
-	safe_vector<wstringEx> lines = stringToVector(t, L"\n");
+	vector<wstringEx> lines = stringToVector(t, L"\n");
 	m_lines.reserve(lines.size());
 	//
 	for (u32 k = 0; k < lines.size(); ++k)

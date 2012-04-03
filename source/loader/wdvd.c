@@ -320,7 +320,7 @@ s32 WDVD_GetCoverStatus(u32 *status)
 	return -ret;
 }
 
-s32 WDVD_SetUSBMode(u32 mode, const u8 *id, s32 partition) 
+s32 WDVD_SetUSBMode(u32 mode, char *id, s32 partition) 
 {
     memset(inbuf, 0, sizeof(inbuf));
 

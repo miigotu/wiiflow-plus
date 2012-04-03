@@ -4,7 +4,7 @@
 
 #include <map>
 #include <string>
-#include "safe_vector.hpp"
+#include <vector>
 
 #include "video.hpp"
 #include "smartptr.hpp"
@@ -23,6 +23,8 @@ public:
 	void save(bool unload = false);
 	bool loaded(void) const { return m_loaded; }
 	bool has(const std::string &domain, const std::string &key) const;
+	void remove(const std::string &domain, const std::string &key);
+	void remove(std::string domain);
 	// Set
 	void setWString(const std::string &domain, const std::string &key, const wstringEx &val);
 	void setString(const std::string &domain, const std::string &key, const std::string &val);
@@ -37,7 +39,7 @@ public:
 	wstringEx getWString(const std::string &domain, const std::string &key, const wstringEx &defVal = wstringEx());
 	std::string getString(const std::string &domain, const std::string &key, const std::string &defVal = std::string());
 	bool getString2(const std::string &domain, const std::string &key, std::string &defVal);
-	safe_vector<std::string> getStrings(const std::string &domain, const std::string &key, char seperator = ',', const std::string &defval = std::string());
+	std::vector<std::string> getStrings(const std::string &domain, const std::string &key, char seperator = ',', const std::string &defval = std::string());
 	bool getBool(const std::string &domain, const std::string &key, bool defVal = false);
 	int getOptBool(const std::string &domain, const std::string &key, int defVal = 2);
 	bool testOptBool(const std::string &domain, const std::string &key, bool defVal);
@@ -47,9 +49,7 @@ public:
 	float getFloat(const std::string &domain, const std::string &key, float defVal = 0.f);
 	Vector3D getVector3D(const std::string &domain, const std::string &key, const Vector3D &defVal = Vector3D());
 	CColor getColor(const std::string &domain, const std::string &key, const CColor &defVal = CColor());
-	// Remove
-	void remove(const std::string &domain, const std::string &key);
-	//
+
 	const std::string &firstDomain(void);
 	const std::string &nextDomain(void);
 	const std::string &nextDomain(const std::string &start) const;

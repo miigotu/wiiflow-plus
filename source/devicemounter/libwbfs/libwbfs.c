@@ -162,7 +162,7 @@ error:
 	return;
 }
 
-wbfs_disc_t *wbfs_open_disc(wbfs_t* p, const u8 *discid)
+wbfs_disc_t *wbfs_open_disc(wbfs_t* p, char *discid)
 {
 	u32 i;
 	int disc_info_sz_lba = p->disc_info_sz>>p->hd_sec_sz_s;
@@ -514,7 +514,7 @@ error:
 	return retval;
 }
 
-u32 wbfs_rm_disc(wbfs_t *p, u8* discid)
+u32 wbfs_rm_disc(wbfs_t *p, char* discid)
 {
 	wbfs_disc_t *d = wbfs_open_disc(p,discid);
 	int i;

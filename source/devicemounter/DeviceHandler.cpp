@@ -243,9 +243,14 @@ int DeviceHandler::PathToDriveType(const char * path)
 {
     if(!path) return -1;
 
-    for(int i = SD; i <= GCSDB; i++)
-        if(strncmp(path, DeviceName[i], strlen(DeviceName[i])) == 0)
-            return i;
+	if(strncmp(path, "usb:/", 5) == 0)
+		return 1;
+	else if(strncmp(path, "sd:/", 4) == 0)
+		return 0;
+    else
+		for(int i = SD; i <= GCSDB; i++)
+			if(strncmp(path, DeviceName[i], strlen(DeviceName[i])) == 0)
+				return i;
 
     return -1;
 }

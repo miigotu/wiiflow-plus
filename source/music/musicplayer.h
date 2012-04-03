@@ -43,8 +43,8 @@ private:
 
 	void LoadCurrentFile();
 
-	CachedList<std::string> m_music_files;
-	safe_vector<std::string>::iterator m_current_music;
+	std::vector<std::string> m_music_files;
+	std::vector<std::string>::iterator m_current_music;
 
 	int m_fade_rate;
 

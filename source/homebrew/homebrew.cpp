@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ogc/machine/processor.h>
-#include "safe_vector.hpp"
+#include <vector>
 #include <string>
 #include "smartptr.hpp"
 #include "gecko.h"
@@ -21,7 +21,7 @@ extern "C" { void __exception_closeall(); }
 
 static u8 *homebrewbuffer = EXECUTE_ADDR;
 static u32 homebrewsize = 0;
-static safe_vector<std::string> Arguments;
+static std::vector<std::string> Arguments;
 
 bool bootHB;
 

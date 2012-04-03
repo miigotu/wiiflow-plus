@@ -38,7 +38,6 @@
 #include "gecko.h"
 #include "utils.h"
 #include "fs.h"
-#include "config.hpp"
 #include "text.hpp"
 
 #include "channel_launcher.h"

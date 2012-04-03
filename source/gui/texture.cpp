@@ -324,7 +324,7 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 			PNGU_ReleaseImageContext(ctx);
 			return STexture::TE_NOMEM;
 		}
-		PNGU_DecodeToRGBA8(ctx, imgProp.imgWidth, imgProp.imgHeight, tmpData2.get(), 0, 0xFF);
+		PNGU_DecodeToRGBA8(ctx, imgProp.imgWidth, imgProp.imgHeight, tmpData2.get(), 0, 0x00);
 		PNGU_ReleaseImageContext(ctx);
 		DCFlushRange(tmpData2.get(), imgProp.imgWidth * imgProp.imgHeight * 4);
 
@@ -387,7 +387,7 @@ STexture::TexErr STexture::fromPNG(const u8 *buffer, u8 f, Alloc alloc, u32 minM
 		switch (f)
 		{
 			case GX_TF_RGBA8:
-				PNGU_DecodeTo4x4RGBA8(ctx, imgProp.imgWidth, imgProp.imgHeight, data.get(), 0xFF);
+				PNGU_DecodeTo4x4RGBA8(ctx, imgProp.imgWidth, imgProp.imgHeight, data.get(), 0x00);
 				break;
 			case GX_TF_RGB565:
 				PNGU_DecodeTo4x4RGB565(ctx, imgProp.imgWidth, imgProp.imgHeight, data.get());

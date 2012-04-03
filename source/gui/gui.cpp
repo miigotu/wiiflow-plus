@@ -31,7 +31,7 @@ bool CButtonsMgr::init(CVideo &vid)
 u32 CButtonsMgr::addButton(SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color,
 	const SButtonTextureSet &texSet, const SmartGuiSound &clickSound, const SmartGuiSound &hoverSound)
 {
-	CButtonsMgr::SButton *b = new CButtonsMgr::SButton;
+	CButtonsMgr::SButton *b = new CButtonsMgr::SButton();
 	SmartPtr<CButtonsMgr::SElement> elt(b);
 
 	b->font = font;
@@ -379,7 +379,7 @@ void CButtonsMgr::tick(void)
 
 u32 CButtonsMgr::addLabel(SFont font, const wstringEx &text, int x, int y, u32 width, u32 height, const CColor &color, u16 style, const STexture &bg)
 {
-	CButtonsMgr::SLabel *b = new CButtonsMgr::SLabel;
+	CButtonsMgr::SLabel *b = new CButtonsMgr::SLabel();
 	SmartPtr<CButtonsMgr::SElement> elt(b);
 
 	b->font = font;
@@ -410,7 +410,7 @@ u32 CButtonsMgr::addLabel(SFont font, const wstringEx &text, int x, int y, u32 w
 
 u32 CButtonsMgr::addProgressBar(int x, int y, u32 width, u32 height, SButtonTextureSet &texSet)
 {
-	CButtonsMgr::SProgressBar *b = new CButtonsMgr::SProgressBar;
+	CButtonsMgr::SProgressBar *b = new CButtonsMgr::SProgressBar();
 	SmartPtr<CButtonsMgr::SElement> elt(b);
 
 	b->visible = false;

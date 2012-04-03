@@ -80,7 +80,7 @@ int WifiGecko_Connect()
 	}
 
 	// First time connect, send hello message
-	char *msg = "Wiiflow WiFi Gecko output console connected\n";
+	char *msg = "Wiiflow Advanced WiFi Gecko output console connected\n";
 	net_send(connection, msg, strlen(msg), 0);
 
 	return connection;

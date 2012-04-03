@@ -27,7 +27,7 @@ void CMenu::_CategorySettings()
 				{
 					// handling code for clicked favorite
 					m_category = i;
-					m_cat.setInt("GENERAL", "category", i);
+					m_cat.setInt(_domainFromView(), "category", i);
 					exitloop = true;
 					break;
 				}

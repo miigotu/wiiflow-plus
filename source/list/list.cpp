@@ -5,61 +5,56 @@
 #include "defines.h"
 #include "channels.h"
 
-template <typename T>
-void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string directory, bool wbfs_fs)
+void CList::GetPaths(vector<string> &pathlist, string containing, string directory, bool wbfs_fs)
 {
-	if (!wbfs_fs)
+	if(!wbfs_fs)
 	{
 		/* Open primary directory */
 		DIR *dir_itr = opendir(directory.c_str());
-		if (!dir_itr) return;
+		if(!dir_itr) return;
 
-		safe_vector<string> compares = stringToVector(containing, "|");
-		safe_vector<string> temp_pathlist;
+		vector<string> compares = stringToVector(containing, "|");
+		vector<string> subdirs;
 
 		struct dirent *ent;
 
 		/* Read primary entries */
 		while((ent = readdir(dir_itr)) != NULL)
 		{
-			if (ent->d_name[0] == '.') continue;
-			//if (strlen(ent->d_name) < 6) continue;
+			if(ent->d_name[0] == '.' || strlen(ent->d_name) < 6) continue;
 
 			if(ent->d_type == DT_REG)
 			{
-				for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
-					if (strcasestr(ent->d_name, (*compare).c_str()) != NULL)
+				for(vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
+					if(strcasestr(ent->d_name, (*compare).c_str()) != NULL)
 					{
 						//gprintf("Pushing %s to the list.\n", sfmt("%s/%s", directory.c_str(), ent->d_name).c_str());
 						pathlist.push_back(sfmt("%s/%s", directory.c_str(), ent->d_name));
 						break;
 					}
 			}
-			else
-			{
-				temp_pathlist.push_back(sfmt("%s/%s", directory.c_str(), ent->d_name));
-			}
+			else subdirs.push_back(sfmt("%s/%s", directory.c_str(), ent->d_name));
 		}
 		closedir(dir_itr);
 
-		if(temp_pathlist.size() > 0)
+		if(subdirs.size() > 0)
 		{
-			for(safe_vector<string>::iterator templist = temp_pathlist.begin(); templist != temp_pathlist.end(); templist++)
+			for(vector<string>::iterator subdir = subdirs.begin(); subdir != subdirs.end(); subdir++)
 			{
-				dir_itr = opendir((*templist).c_str());
-				if (!dir_itr) continue;
+				dir_itr = opendir((*subdir).c_str());
+				if(!dir_itr) continue;
 
 				/* Read secondary entries */
 				while((ent = readdir(dir_itr)) != NULL)
 				{
 					if(ent->d_type != DT_REG) continue;
-					if (strlen(ent->d_name) < 8) continue;
+					if(strlen(ent->d_name) < 8) continue;
 
-					for(safe_vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
-						if (strcasestr(ent->d_name, (*compare).c_str()) != NULL)
+					for(vector<string>::iterator compare = compares.begin(); compare != compares.end(); compare++)
+						if(strcasestr(ent->d_name, (*compare).c_str()) != NULL)
 						{
-							//gprintf("Pushing %s to the list.\n", sfmt("%s/%s", (*templist).c_str(), ent->d_name).c_str());
-							pathlist.push_back(sfmt("%s/%s", (*templist).c_str(), ent->d_name));
+							//gprintf("Pushing %s to the list.\n", sfmt("%s/%s", (*subdir).c_str(), ent->d_name).c_str());
+							pathlist.push_back(sfmt("%s/%s", (*subdir).c_str(), ent->d_name));
 							break;
 						}
 				}
@@ -73,7 +68,7 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 
 		int partition = DeviceHandler::Instance()->PathToDriveType(directory.c_str());
 		wbfs_t* handle = DeviceHandler::Instance()->GetWbfsHandle(partition);
-		if (!handle) return;
+		if(!handle) return;
 
 		u32 count = wbfs_count_discs(handle);
 		for(u32 i = 0; i < count; i++)
@@ -81,208 +76,218 @@ void CList<T>::GetPaths(safe_vector<string> &pathlist, string containing, string
 	}
 }
 
-template <>
-void CList<string>::GetHeaders(safe_vector<string> pathlist, safe_vector<string> &headerlist, string, string)
+#define NUM_CONVENTIONS 5
+static const string test_strings[NUM_CONVENTIONS][2] = 
 {
-	//gprintf("Getting headers for CList<string>\n");
+	{"[", "]"},	/* [GAMEID] Title, [GAMEID]_Title, Title [GAMEID], Title_[GAMEID] */
+	{"/", "."},	/* GAMEID.wbfs, GAMEID.iso */
+	{"/", "_"},	/* GAMEID_Title */
+	{"_", "."},	/* Title_GAMEID */ // <-- Unsafe?
+	{" ", "."}	/* Title GAMEID */ //<-- Unsafe?
+};
 
-	if(pathlist.size() < 1) return;
-	headerlist.reserve(pathlist.size() + headerlist.size());
+static bool Check_For_ID(char *id, string path)
+{
+	for(u32 i = 0; i < NUM_CONVENTIONS; i++)
+	{
+		size_t idstart = path.find_last_of(test_strings[i][0]);
+		size_t idend = path.find_last_of(test_strings[i][1]);
+		if(idend != string::npos && idstart != string::npos && idend > idstart && idend - idstart == 7)
+		{
+			for(u8 pos = 0; pos < 6; pos++)
+			{
+				id[pos] = toupper(path[idstart + 1 + pos]);
+				if(!isalnum(id[pos])) return false;
+			}
 
-	for(safe_vector<string>::iterator itr = pathlist.begin(); itr != pathlist.end(); itr++)
-		headerlist.push_back((*itr).c_str());
+			return true;
+		}
+	}
+	return false;
 }
 
-template <>
-void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<dir_discHdr> &headerlist, string settingsDir, string curLanguage)
+void CList::GetHeaders(vector<string> pathlist, deque<dir_discHdr> &headerlist, string settingsDir, string curLanguage)
 {
 	if(pathlist.size() < 1) return;
-	headerlist.reserve(pathlist.size() + headerlist.size());
 
 	gprintf("Getting headers for paths in pathlist (%d)\n", pathlist.size());
 
-	dir_discHdr tmp;
+	dir_discHdr game;
+	discHdr hdr;
 	u32 count = 0;
 	string GTitle;
 
 	Config custom_titles;
-	if (settingsDir.size() > 0)
+	if(settingsDir.size() > 0)
 	{
 		string custom_titles_path = sfmt("%s/" CTITLES_FILENAME, settingsDir.c_str());
 		custom_titles.load(custom_titles_path.c_str());
 	}
 
 	GameTDB gameTDB;
-	if (settingsDir.size() > 0)
+	if(settingsDir.size() > 0)
 	{
 		gameTDB.OpenFile(sfmt("%s/wiitdb.xml", settingsDir.c_str()).c_str());
 		if(curLanguage.size() == 0) curLanguage = "EN";
 		gameTDB.SetLanguageCode(curLanguage.c_str());
 	}
 
-	for(safe_vector<string>::iterator itr = pathlist.begin(); itr != pathlist.end(); itr++)
+	for(vector<string>::iterator itr = pathlist.begin(); itr != pathlist.end(); itr++)
 	{
-		bzero(&tmp, sizeof(dir_discHdr));
-		strncpy(tmp.path, (*itr).c_str(), sizeof(tmp.path));
-		tmp.hdr.index = headerlist.size();
-		tmp.hdr.casecolor = 1;
+		bzero(&game, sizeof(dir_discHdr));
+		bzero(&hdr, sizeof(discHdr));
+		strncpy(game.path, itr->c_str(), sizeof(game.path));
+		game.casecolor = 1;
+		
+		size_t dotPos = itr->rfind(".");
+		if(dotPos >= itr->size()) continue;
 
-		bool wbfs = (*itr).rfind(".wbfs") != string::npos || (*itr).rfind(".WBFS") != string::npos;
-		if (wbfs || (*itr).rfind(".iso")  != string::npos || (*itr).rfind(".ISO")  != string::npos)
+		string extension = lowerCase(string(*itr, dotPos));
+		bool wbfs = extension == ".wbfs";
+		if(wbfs || extension == ".iso")
 		{
-			Check_For_ID(tmp.hdr.id, (*itr).c_str(), "[", "]"); 	 			/* [GAMEID] Title, [GAMEID]_Title, Title [GAMEID], Title_[GAMEID] */
-			if(tmp.hdr.id[0] == 0)
+			if(!Check_For_ID(game.id, *itr))
 			{
-				Check_For_ID(tmp.hdr.id, (*itr).c_str(), "/", "."); 			/* GAMEID.wbfs, GAMEID.iso */
-				if(tmp.hdr.id[0] == 0)
-				{
-					Check_For_ID(tmp.hdr.id, (*itr).c_str(), "/", "_"); 		/* GAMEID_Title */
-					if(tmp.hdr.id[0] == 0)
-					{
-						Check_For_ID(tmp.hdr.id, (*itr).c_str(), "_", "."); 	/* Title_GAMEID */ // <-- Unsafe?
-						if(tmp.hdr.id[0] == 0)
-							Check_For_ID(tmp.hdr.id, (*itr).c_str(), " ", "."); /* Title GAMEID */ //<-- Unsafe?
-					}
-				}
-			}
-
-			if (!isalnum(tmp.hdr.id[0]) || tmp.hdr.id[0] == 0 || memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) == 0)
-			{
-				gprintf("Skipping file: '%s'\n", (*itr).c_str());
+				gprintf("Skipping file: '%s'\n", itr->c_str());
 				continue;
 			}
 
 			// Get info from custom titles
-			GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
-			int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, tmp.hdr.casecolor).intVal();
+			GTitle = custom_titles.getString("TITLES", game.id);
+			int ccolor = custom_titles.getColor("COVERS", game.id, game.casecolor).intVal();
 
-			if(GTitle.size() > 0 || (gameTDB.IsLoaded() && gameTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
+			if(GTitle.size() > 0 || (gameTDB.IsLoaded() && gameTDB.GetTitle(game.id, GTitle)))
 			{
-				mbstowcs(tmp.title, GTitle.c_str(), sizeof(tmp.title));
-				Asciify(tmp.title);
-				tmp.hdr.casecolor = ccolor != 1 ? ccolor : gameTDB.GetCaseColor((char *)tmp.hdr.id);
+				mbstowcs(game.wtitle, GTitle.c_str(), sizeof(game.wtitle));
+				Asciify(game.wtitle);
+				game.casecolor = ccolor != 1 ? ccolor : gameTDB.GetCaseColor(game.id);
 
-				tmp.hdr.wifi = gameTDB.GetWifiPlayers((char *)tmp.hdr.id);
-				tmp.hdr.players = gameTDB.GetPlayers((char *)tmp.hdr.id);
-				//tmp.hdr.controllers = gameTDB.GetAccessories((char *)tmp.hdr.id);
+				game.wifi = gameTDB.GetWifiPlayers(game.id);
+				game.players = gameTDB.GetPlayers(game.id);
+				//game.controllers = gameTDB.GetAccessories(game.id);
 
-				tmp.hdr.magic = 0x5D1C9EA3;
-				headerlist.push_back(tmp);
+				headerlist.push_back(game);
 				continue;
 			}
 
-			FILE *fp = fopen((*itr).c_str(), "rb");
-			if (fp)
+			FILE *fp = fopen(itr->c_str(), "rb");
+			if(fp)
 			{
 				fseek(fp, wbfs ? 512 : 0, SEEK_SET);
-				fread(&tmp.hdr, sizeof(discHdr), 1, fp);
+				fread(&hdr, sizeof(discHdr), 1, fp);
 				SAFE_CLOSE(fp);
 			}
 
-			if (tmp.hdr.magic == 0x5D1C9EA3)
+			if(hdr.magic == 0x5D1C9EA3 && memcmp(game.id, hdr.id, sizeof hdr.id) == 0)
 			{
-				mbstowcs(tmp.title, (const char *)tmp.hdr.title, sizeof(tmp.hdr.title));
-				Asciify(tmp.title);
-				tmp.hdr.casecolor = ccolor;
-				headerlist.push_back(tmp);
+				mbstowcs(game.wtitle, hdr.title, sizeof(game.wtitle));
+				Asciify(game.wtitle);
+				game.casecolor = ccolor;
+				headerlist.push_back(game);
 				continue;
 			}
-
-			if(wbfs)
-			{
-				wbfs_t *part = WBFS_Ext_OpenPart((char *)(*itr).c_str());
-				if (!part) continue;
-
-				/* Get header */
-				if(wbfs_get_disc_info(part, 0, (u8*)&tmp.hdr, sizeof(discHdr), NULL) == 0
-				&& memcmp(tmp.hdr.id, "__CFG_", sizeof tmp.hdr.id) != 0)
-				{
-					mbstowcs(tmp.title, (const char *)tmp.hdr.title, sizeof(tmp.title));
-					Asciify(tmp.title);
-
-					headerlist.push_back(tmp);
-				}
-				WBFS_Ext_ClosePart(part);
-			}
 		}
-		else if((*itr).rfind(".dol") != string::npos || (*itr).rfind(".DOL") != string::npos
-			|| (*itr).rfind(".elf") != string::npos || (*itr).rfind(".ELF")  != string::npos)
+		else if(extension == ".dol" || extension == ".elf")
 		{
-			char *filename = &(*itr)[(*itr).find_last_of('/')+1];
+			string filename = lowerCase(string(*itr, itr->find_last_of('/') + 1));
+			if(filename != "boot.dol" && filename != "boot.elf") continue;
 
-			if(strcasecmp(filename, "boot.dol") != 0 && strcasecmp(filename, "boot.elf") != 0) continue;
+			itr->resize(itr->find_last_of('/'));
+			string name = string(*itr, itr->find_last_of('/') + 1);
 
-			(*itr)[(*itr).find_last_of('/')] = 0;
-			(*itr).assign(&(*itr)[(*itr).find_last_of('/') + 1]);
-
-			(*itr)[0] = toupper((*itr)[0]);
-			for (u32 i = 1; i < (*itr).size(); ++i)
-			{
-				if((*itr)[i] == '_' || (*itr)[i] == '-')
-					(*itr)[i] = ' ';
-
-				if((*itr)[i] == ' ')
-				{
-					(*itr)[i + 1] = toupper((*itr)[i + 1]);
-					i++;
-				}
-				else (*itr)[i] = tolower((*itr)[i]);
-			}
-
-			memcpy(tmp.hdr.id, (*itr).c_str(), 6);
+			strncpy(game.id, upperCase(name).c_str(), 6);
 			for (u32 i = 0; i < 6; ++i)
+				if(!isalnum(game.id[i]) || game.id[i] == ' ' || game.id[i] == '\0')
+					game.id[i] = '_';
+
+			string line;
+			bool xml_good = false;
+			struct stat dummy;
+			string xmlfile = itr->append("/meta.xml");
+			if(stat(xmlfile.c_str(), &dummy) != -1)
 			{
-				tmp.hdr.id[i] = toupper(tmp.hdr.id[i]);
-				if(!isalnum(tmp.hdr.id[i]) || tmp.hdr.id[i] == ' ' || tmp.hdr.id[i] == '\0')
-					tmp.hdr.id[i] = '_';
+				string templine;
+				size_t pos1, pos2;
+				ifstream xml (xmlfile.c_str(), ifstream::in);
+				while(xml.good())
+				{
+					getline(xml, templine);
+					pos1 = templine.find("name>");
+					pos2 = templine.find("</name");
+					if(pos1 != string::npos || pos2 != string::npos)
+						line += templine;
+						
+					if((pos1 = line.find("name>") != string::npos) && (pos2 = line.find("</name")) != string::npos)
+					{
+						line = string(line, line.find(">") + 1);
+						line.resize(line.find("<"));
+						xml_good = true;
+						break;
+					}
+				}
+			}
+			if(xml_good)
+				name = line;
+			else
+			{
+				name[0] = toupper(name[0]);
+				for (u32 i = 1; i < name.size(); ++i)
+				{
+					if(name[i] == '_' || name[i] == '-')
+						name[i] = ' ';
+
+					name[i] = name[i - 1] == ' ' ? toupper(name[i]): tolower(name[i]);
+				}
 			}
 
 			// Get info from custom titles
-			GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
-			int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, tmp.hdr.casecolor).intVal();
-			if(GTitle.size() > 0 || (gameTDB.IsLoaded() && gameTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
+			GTitle = custom_titles.getString("TITLES", game.id);
+			int ccolor = custom_titles.getColor("COVERS", game.id, game.casecolor).intVal();
+			if(GTitle.size() > 0 || (gameTDB.IsLoaded() && gameTDB.GetTitle(game.id, GTitle)))
 			{
-				mbstowcs(tmp.title, GTitle.c_str(), sizeof(tmp.title));
-				tmp.hdr.casecolor = ccolor != 1 ? ccolor : gameTDB.GetCaseColor((char *)tmp.hdr.id);
+				mbstowcs(game.wtitle, GTitle.c_str(), sizeof(game.wtitle));
+				game.casecolor = ccolor != 1 ? ccolor : gameTDB.GetCaseColor(game.id);
 			}
 			else
 			{
-				mbstowcs(tmp.title, (*itr).c_str(), sizeof(tmp.title));
-				tmp.hdr.casecolor = ccolor;
+				mbstowcs(game.wtitle, name.c_str(), sizeof(game.wtitle));
+				game.casecolor = ccolor;
 			}
-			Asciify(tmp.title);
-			headerlist.push_back(tmp);
+			Asciify(game.wtitle);
+			headerlist.push_back(game);
 		}
-		else if(strncasecmp(DeviceHandler::Instance()->PathToFSName((*itr).c_str()), "WBFS", 4) == 0)
+		else if(strncasecmp(DeviceHandler::Instance()->PathToFSName(itr->c_str()), "WBFS", 4) == 0)
 		{
-			u8 partition = DeviceHandler::Instance()->PathToDriveType((*itr).c_str());
+			u8 partition = DeviceHandler::Instance()->PathToDriveType(itr->c_str());
 			wbfs_t* handle = DeviceHandler::Instance()->GetWbfsHandle(partition);
-			if (!handle) return;
+			if(!handle) return;
 
-			s32 ret = wbfs_get_disc_info(handle, count, (u8 *)&tmp.hdr, sizeof(struct discHdr), NULL);
+			s32 ret = wbfs_get_disc_info(handle, count, (u8 *)&hdr, sizeof(struct discHdr), NULL);
 			count++;
+
 			if(ret != 0) continue;
 
-			if (tmp.hdr.magic == 0x5D1C9EA3)
+			if(hdr.magic == 0x5D1C9EA3 && isalnum(hdr.id[0]))
 			{
-				GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
-				int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, 1).intVal();
-				if(GTitle.size() > 0 || (gameTDB.IsLoaded() && gameTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
+				memcpy(game.id, hdr.id, 6);
+				GTitle = custom_titles.getString("TITLES", game.id);
+				int ccolor = custom_titles.getColor("COVERS", game.id, 1).intVal();
+				if(GTitle.size() > 0 || (gameTDB.IsLoaded() && gameTDB.GetTitle(game.id, GTitle)))
 				{
-					mbstowcs(tmp.title, GTitle.c_str(), sizeof(tmp.title));
-					tmp.hdr.casecolor = ccolor != 1 ? ccolor : gameTDB.GetCaseColor((char *)tmp.hdr.id);
+					mbstowcs(game.wtitle, GTitle.c_str(), sizeof(game.wtitle));
+					game.casecolor = ccolor != 1 ? ccolor : gameTDB.GetCaseColor(game.id);
 
-					tmp.hdr.wifi = gameTDB.GetWifiPlayers((char *)tmp.hdr.id);
-					tmp.hdr.players = gameTDB.GetPlayers((char *)tmp.hdr.id);
-					//tmp.hdr.controllers = gameTDB.GetAccessories((char *)tmp.hdr.id);
+					game.wifi = gameTDB.GetWifiPlayers(game.id);
+					game.players = gameTDB.GetPlayers(game.id);
+					//game.hdr.controllers = gameTDB.GetAccessories(game.id);
 				}
 				else
 				{
-					mbstowcs(tmp.title, (const char *)tmp.hdr.title, sizeof(tmp.hdr.title));
-					tmp.hdr.casecolor = ccolor;
+					mbstowcs(game.wtitle, hdr.title, sizeof(game.wtitle));
+					game.casecolor = ccolor;
 				}
-				Asciify(tmp.title);
-				headerlist.push_back(tmp);
+				Asciify(game.wtitle);
+				headerlist.push_back(game);
 			}
 		}
 	}
@@ -291,21 +296,20 @@ void CList<dir_discHdr>::GetHeaders(safe_vector<string> pathlist, safe_vector<di
 		gameTDB.CloseFile();
 }
 
-template <>
-void CList<dir_discHdr>::GetChannels(safe_vector<dir_discHdr> &headerlist, string settingsDir, u32 channelType, string curLanguage)
+void CList::GetChannels(deque<dir_discHdr> &headerlist, string settingsDir, u32 channelType, string curLanguage)
 {
 	Channels m_channels;
 	m_channels.Init(channelType, curLanguage, true);
 
 	Config custom_titles;
-	if (settingsDir.size() > 0)
+	if(settingsDir.size() > 0)
 	{
 		string custom_titles_path = sfmt("%s/" CTITLES_FILENAME, settingsDir.c_str());
 		custom_titles.load(custom_titles_path.c_str());
 	}
 
 	GameTDB gameTDB;
-	if (settingsDir.size() > 0)
+	if(settingsDir.size() > 0)
 	{
 		gameTDB.OpenFile(sfmt("%s/wiitdb.xml", settingsDir.c_str()).c_str());
 		if(curLanguage.size() == 0) curLanguage = "EN";
@@ -314,53 +318,39 @@ void CList<dir_discHdr>::GetChannels(safe_vector<dir_discHdr> &headerlist, strin
 
 	u32 count = m_channels.Count();
 
-	headerlist.reserve(count);
-
 	for (u32 i = 0; i < count; ++i)
 	{
 		Channel *chan = m_channels.GetChannel(i);
 
-		if (chan->id == NULL) continue; // Skip invalid channels
+		if(chan->id == NULL) continue; // Skip invalid channels
 
-		dir_discHdr tmp;
-		bzero(&tmp, sizeof(dir_discHdr));
-		tmp.hdr.index = headerlist.size();
-		tmp.hdr.casecolor = 1;
+		dir_discHdr game;
+		bzero(&game, sizeof(dir_discHdr));
+		game.casecolor = 1;
 
-		memcpy(tmp.hdr.id, chan->id, 4);
-		memcpy(tmp.title, chan->name, sizeof(tmp.title));
-		string GTitle = custom_titles.getString("TITLES", (const char *) tmp.hdr.id);
-		int ccolor = custom_titles.getColor("COVERS", (const char *) tmp.hdr.id, tmp.hdr.casecolor).intVal();
+		memcpy(game.id, chan->id, 4);
 
-		if(GTitle.size() > 0 || (gameTDB.IsLoaded() && gameTDB.GetTitle((char *)tmp.hdr.id, GTitle)))
-			mbstowcs(tmp.title, GTitle.c_str(), sizeof(tmp.title));
+		string GTitle = custom_titles.getString("TITLES", game.id);
+		int ccolor = custom_titles.getColor("COVERS", game.id, game.casecolor).intVal();
 
-		Asciify(tmp.title);
+		if(GTitle.size() > 0 || (gameTDB.IsLoaded() && gameTDB.GetTitle(game.id, GTitle)))
+			mbstowcs(game.wtitle, GTitle.c_str(), sizeof(game.wtitle));
+		else
+			memcpy(game.wtitle, chan->name, sizeof(game.wtitle));
 
-		tmp.hdr.casecolor = ccolor != 1 ? ccolor : gameTDB.GetCaseColor((char *)tmp.hdr.id);
+		Asciify(game.wtitle);
 
-		tmp.hdr.wifi = gameTDB.GetWifiPlayers((char *)tmp.hdr.id);
-		tmp.hdr.players = gameTDB.GetPlayers((char *)tmp.hdr.id);
-		//tmp.hdr.controllers = gameTDB.GetAccessories((char *)tmp.hdr.id);
+		game.casecolor = ccolor != 1 ? ccolor : gameTDB.GetCaseColor(game.id);
 
-		tmp.hdr.chantitle = chan->title;
+		game.wifi = gameTDB.GetWifiPlayers(game.id);
+		game.players = gameTDB.GetPlayers(game.id);
+		//game.hdr.controllers = gameTDB.GetAccessories(game.id);
 
-		headerlist.push_back(tmp);
+		game.chantitle = chan->title;
+
+		headerlist.push_back(game);
 	}
 
 	if(gameTDB.IsLoaded())
 		gameTDB.CloseFile();
 }
-
-template <typename T>
-void CList<T>::Check_For_ID(u8 *id, string path, string one, string two)
-{
-	size_t idstart = path.find_last_of(one);
-	size_t idend = path.find_last_of(two);
-	if (idend != string::npos && idstart != string::npos && idend - idstart == 7)
-		for(u8 pos = 0; pos < 6; pos++)
-			id[pos] = toupper(path[idstart + 1 + pos]);
-}
-
-template class CList<dir_discHdr>;
-template class CList<string>;

@@ -283,11 +283,11 @@ s32 Disc_Wait(void)
 	return 0;
 }
 
-s32 Disc_SetUSB(const u8 *id)
+s32 Disc_SetUSB(char *id)
 {
-	if (id) return set_frag_list((u8 *) id);
+	if (id) return set_frag_list(id);
 
-	return WDVD_SetUSBMode(wbfsDev, (u8 *) id, -1);
+	return WDVD_SetUSBMode(wbfsDev, id, -1);
 }
 
 s32 Disc_ReadHeader(void *outbuf)

@@ -580,7 +580,7 @@ void MthVideoFile::getCurrentFrame(VideoFrame& f) const
 JpgVideoFile::JpgVideoFile(FILE* f)
 : VideoFile(f)
 {
-	safe_vector<u8> data(getFilesize(f));
+	vector<u8> data(getFilesize(f));
 	fread(&data[0], 1, getFilesize(f), f);
 
 	loadFrame(_currFrame, &data[0], getFilesize(f));
@@ -697,7 +697,7 @@ void decodeJpeg(const u8* data, int size, VideoFrame& dest)
 	//convert format so jpeglib understands it...
 	int start, end;
 	int newSize = countRequiredSize(data, size, start, end);
-	u8* buff = new u8[newSize];
+	u8* buff = new u8[newSize]();
 	convertToRealJpeg(buff, data, size, start, end);
 
 	//...and feed it to jpeglib

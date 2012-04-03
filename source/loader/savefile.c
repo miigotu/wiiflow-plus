@@ -58,7 +58,7 @@ void CreateTitleTMD(const char *path, struct dir_discHdr *hdr)
 	}
 	gprintf("Creating Game TMD: %s\n", path);
 
-	wbfs_disc_t *disc = WBFS_OpenDisc((u8 *) &hdr->hdr.id, (char *) hdr->path);
+	wbfs_disc_t *disc = WBFS_OpenDisc(hdr->id, hdr->path);
 	if (!disc) return;
 
 	u8 *titleTMD = NULL;
@@ -93,7 +93,7 @@ void CreateSavePath(const char *basepath, struct  dir_discHdr *hdr)
 
 	const char *titlePath = "/title/00010000";
 
-	if(	memcmp(hdr->hdr.id, "RGW", 3) == 0)
+	if(	memcmp(hdr->id, "RGW", 3) == 0)
 		titlePath = "/title/00010004";
 
 	char fullpath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
@@ -102,7 +102,7 @@ void CreateSavePath(const char *basepath, struct  dir_discHdr *hdr)
 	CreateNandPath(fullpath);
 
 	char nandPath[ISFS_MAXPATH] ATTRIBUTE_ALIGN(32);
-	snprintf(nandPath, sizeof(nandPath), "%s/%02x%02x%02x%02x", fullpath, hdr->hdr.id[0], hdr->hdr.id[1], hdr->hdr.id[2], hdr->hdr.id[3]);
+	snprintf(nandPath, sizeof(nandPath), "%s/%02x%02x%02x%02x", fullpath, hdr->id[0], hdr->id[1], hdr->id[2], hdr->id[3]);
 	CreateNandPath(nandPath);
 
 	CreateNandPath("%s/data", nandPath);

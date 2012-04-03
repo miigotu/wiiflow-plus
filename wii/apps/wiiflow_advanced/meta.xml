@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <app version="3.0">
-        <name>  WiiFlow  </name>
+        <name>  WiiFlow Advanced </name>
         <coder>Miigotu</coder>
         <version>r423</version>
         <release_date>TBD</release_date>
         <short_description>USB Loader / Nand Emulator</short_description>
-        <long_description>WiiFlow is a Wii Game, Channel, Wiiware, Virtual Console, and Savegame Emulator intended for use with legal backups.
+        <long_description>WiiFlow Advanced is a Wii Game, Channel, Wiiware, Virtual Console, and Savegame Emulator intended for use with legal backups, based on WiiFlow.
 Controls :
 - Main menu (coverflow) :
 -- Up / Down            Previous / next game (vertical)

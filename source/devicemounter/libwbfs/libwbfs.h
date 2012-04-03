@@ -149,7 +149,7 @@ void wbfs_close(wbfs_t*);
 /*! @brief open a disc inside a wbfs partition use a 6 char discid+vendorid
   @return NULL if discid is not present
 */
-wbfs_disc_t *wbfs_open_disc(wbfs_t* p, const u8 *diskid);
+wbfs_disc_t *wbfs_open_disc(wbfs_t* p, char *diskid);
 
 /*! @brief close a already open disc inside a wbfs partition */
 void wbfs_close_disc(wbfs_disc_t*d);
@@ -194,7 +194,7 @@ u32 wbfs_add_disc(wbfs_t*p,read_wiidisc_callback_t read_src_wii_disc, void *call
 
 
 /*! remove a wiidvd inside a partition */
-u32 wbfs_rm_disc(wbfs_t*p, u8* discid);
+u32 wbfs_rm_disc(wbfs_t*p, char* discid);
 
 
 

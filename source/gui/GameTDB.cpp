@@ -256,7 +256,7 @@ char * GameTDB::LoadGameNode(const char * id)
 	if(!offset)
 		return NULL;
 
-	char * data = new (std::nothrow) char[offset->nodesize+1];
+	char * data = new (std::nothrow) char[offset->nodesize+1]();
 	if(!data)
 		return NULL;
 
@@ -277,7 +277,7 @@ char * GameTDB::GetGameNode(const char * id)
 
 	if(GameNodeCache != 0 && strncmp(id, GameIDCache, strlen(GameIDCache)) == 0)
 	{
-		data = new (std::nothrow) char[strlen(GameNodeCache)+1];
+		data = new (std::nothrow) char[strlen(GameNodeCache)+1]();
 		if(data)
 			strcpy(data, GameNodeCache);
 	}
@@ -651,10 +651,10 @@ bool GameTDB::GetGenres(const char * id, string & gen)
 		return false;
 	}
 
-	safe_vector<string> genre = stringToVector(the_genre, (char *)"\\/;,");
+	vector<string> genre = stringToVector(the_genre, (char *)"\\/;,");
 	delete [] data;
 	
-	for(safe_vector<string>::iterator uppercase = genre.begin(); uppercase != genre.end(); uppercase++)
+	for(vector<string>::iterator uppercase = genre.begin(); uppercase != genre.end(); uppercase++)
 	{
 		uppercase->at(0) = toupper(uppercase->at(0));
 		string::size_type i = 0;
@@ -742,7 +742,7 @@ bool GameTDB::GetRatingValue(const char * id, string & rating_value)
 	return true;
 }
 
-int GameTDB::GetRatingDescriptors(const char * id, safe_vector<string> & desc_list)
+int GameTDB::GetRatingDescriptors(const char * id, vector<string> & desc_list)
 {
 	if(!id)
 		return -1;
@@ -809,7 +809,7 @@ int GameTDB::GetWifiPlayers(const char * id)
 	return players;
 }
 
-int GameTDB::GetWifiFeatures(const char * id, safe_vector<string> & feat_list)
+int GameTDB::GetWifiFeatures(const char * id, vector<string> & feat_list)
 {
 	if(!id)
 		return -1;
@@ -881,7 +881,7 @@ int GameTDB::GetPlayers(const char * id)
 	return players;
 }
 
-int GameTDB::GetAccessories(const char * id, safe_vector<Accessory> & acc_list)
+int GameTDB::GetAccessories(const char * id, vector<Accessory> & acc_list)
 {
 	if(!id)
 		return -1;

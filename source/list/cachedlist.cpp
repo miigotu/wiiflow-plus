@@ -1,8 +1,22 @@
 #include "cachedlist.hpp"
-#include <typeinfo>
 
-template <class T>
-void CachedList<T>::Load(string path, string containing)													/* Load All */
+static inline string make_db_name(string path)
+{
+	string buffer = path;
+	size_t find = buffer.find(":/");
+	if(find != string::npos)
+		buffer.replace(find, 2, "_");
+
+	find = buffer.find("/");
+	while(find != string::npos)
+	{
+		buffer[find] = '_';
+		find = buffer.find("/");
+	}
+	return buffer;
+}
+
+void CachedList::Load(string path, string containing)													/* Load All */
 {
 	gprintf("\nLoading files containing %s in %s\n", containing.c_str(), path.c_str());
 	m_loaded = false;
@@ -37,12 +51,10 @@ void CachedList<T>::Load(string path, string containing)													/* Load All
 	if(update_games) force_update[COVERFLOW_USB] = false;
 	if(update_homebrew) force_update[COVERFLOW_HOMEBREW] = false;
 
-	bool music = typeid(T) == typeid(std::string);
-
-	if(m_update || m_wbfsFS || music)
+	if(m_update || m_wbfsFS)
 	{
 		gprintf("Calling list to update filelist\n");
-		safe_vector<string> pathlist;
+		vector<string> pathlist;
 		list.GetPaths(pathlist, containing, path, m_wbfsFS);
 		list.GetHeaders(pathlist, *this, m_settingsDir, m_curLanguage);
 
@@ -51,22 +63,21 @@ void CachedList<T>::Load(string path, string containing)													/* Load All
 		fclose(file);
 		remove(path.c_str());
 
-		if(!music && pathlist.size() > 0)
+		if(pathlist.size() > 0)
 		{
 			Save();
 			pathlist.clear();
 		}
 	}
 	else
-		CCache<T>(*this, m_database, LOAD);
+		CCache(*this, m_database, LOAD);
 
 	m_lastLanguage = m_curLanguage;
 	m_update = false;
 	m_loaded = true;
 }
 
-template<>
-void CachedList<dir_discHdr>::LoadChannels(string path, u32 channelType)													/* Load All */
+void CachedList::LoadChannels(string path, u32 channelType)													/* Load All */
 {
 	m_loaded = false;
 	m_update = true;
@@ -76,8 +87,8 @@ void CachedList<dir_discHdr>::LoadChannels(string path, u32 channelType)								
 	{
 		m_database = sfmt("%s/%s.db", m_cacheDir.c_str(), make_db_name(sfmt("%s/emu", path.c_str())).c_str());
 
-		size_t find = m_database.find("//");
-		if(find != string::npos)
+		size_t find = 0;
+		while((find = m_database.find("//")) != string::npos)
 			m_database.replace(find, 2, "/");
 
 		if(force_update[COVERFLOW_CHANNEL])
@@ -101,29 +112,9 @@ void CachedList<dir_discHdr>::LoadChannels(string path, u32 channelType)								
 		if(this->size() > 0 && emu) Save();
 	}
 	else
-		CCache<dir_discHdr>(*this, m_database, LOAD);
+		CCache(*this, m_database, LOAD);
 
 	m_lastchannelLang = m_channelLang;
 	m_update = false;
 	m_loaded = true;
 }
-
-template <class T>
-string CachedList<T>::make_db_name(string path)
-{
-	string buffer = path;
-	size_t find = buffer.find(":/");
-	if(find != string::npos)
-		buffer.replace(find, 2, "_");
-
-	find = buffer.find("/");
-	while(find != string::npos)
-	{
-		buffer[find] = '_';
-		find = buffer.find("/");
-	}
-	return buffer;
-}
-
-template class CachedList<string>;
-template class CachedList<dir_discHdr>;

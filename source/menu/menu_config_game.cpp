@@ -459,17 +459,8 @@ void CMenu::_gameSettings(void)
 					break;
 				}
 		}
-		else if ((WBTN_2_HELD && WBTN_1_PRESSED) || (WBTN_1_HELD && WBTN_2_PRESSED))
-		{
-			if (m_btnMgr.selected(m_gameSettingsBtnCover))
-			{
-					m_cf.stopCoverLoader(true);	// Empty cover cache
-					remove(fmt("%s/%s.png", m_picDir.c_str(), m_cf.getId().c_str()));
-					remove(fmt("%s/%s.png", m_boxPicDir.c_str(), m_cf.getId().c_str()));
-					remove(fmt("%s/%s.wfc", m_cacheDir.c_str(), m_cf.getId().c_str()));
-					m_cf.startCoverLoader();
-			}
-		}
+		else if (((WBTN_2_HELD && WBTN_1_PRESSED) || (WBTN_1_HELD && WBTN_2_PRESSED)) && m_btnMgr.selected(m_gameSettingsBtnCover))
+			m_cf.removeCover(m_cf.getId());
 
 	}
 	m_gcfg2.save(true);

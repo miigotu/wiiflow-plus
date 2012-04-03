@@ -20,8 +20,16 @@ CMenu *mainMenu;
 extern "C" void ShowError(const wstringEx &error){mainMenu->error(error); }
 extern "C" void HideWaitMessage() {mainMenu->_hideWaitMessage(true); }
 
+void no_memory()
+{
+  gprintf("Failed to allocate memory!\n");
+  sleep(3);
+  exit(1);
+}
+
 int main(int argc, char **argv)
 {
+	set_new_handler(no_memory);
 	geckoinit = InitGecko();
 	__exception_setreload(5);
 

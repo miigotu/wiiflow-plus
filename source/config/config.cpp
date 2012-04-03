@@ -253,6 +253,17 @@ void Config::remove(const string &domain, const string &key)
 	m_domains[upperCase(domain)].erase(lowerCase(key));
 }
 
+void Config::remove(string domain)
+{
+	if (domain.empty()) return;
+	m_changed = true;
+	if(domain.find('[') == string::npos)
+		domain.insert(domain.begin(), '[');
+	if(domain.find(']') == string::npos)
+		domain.append("]");	
+	m_domains.erase(upperCase(domain));
+}
+
 void Config::setOptBool(const string &domain, const string &key, int val)
 {
 	if (domain.empty() || key.empty()) return;
@@ -346,9 +357,9 @@ bool Config::getString2(const string &domain, const string &key, string &defVal)
 	return !data.empty();
 }
 
-safe_vector<string> Config::getStrings(const string &domain, const string &key, char seperator, const string &defVal)
+vector<string> Config::getStrings(const string &domain, const string &key, char seperator, const string &defVal)
 {
-	safe_vector<string> retval;
+	vector<string> retval;
 
 	if (domain.empty() || key.empty())
 	{

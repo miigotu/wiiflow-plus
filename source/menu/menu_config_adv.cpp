@@ -75,7 +75,7 @@ void CMenu::_showConfigAdv(void)
 	m_btnMgr.setText(m_configAdvLblCurTheme, m_cfg.getString("GENERAL", "theme"));
 }
 
-static void listThemes(const char * path, safe_vector<string> &themes)
+static void listThemes(const char * path, vector<string> &themes)
 {
 	DIR *d;
 	struct dirent *dir;
@@ -104,7 +104,7 @@ static void listThemes(const char * path, safe_vector<string> &themes)
 int CMenu::_configAdv(void)
 {
 	int nextPage = 0;
-	safe_vector<string> themes;
+	vector<string> themes;
 	string prevTheme = m_cfg.getString("GENERAL", "theme");
 
 	bool lang_changed = false;

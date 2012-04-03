@@ -128,11 +128,8 @@ void CMenu::LoadView(void)
 	m_cfg.getInt("NAND", "emulation", &emu_mode);
 	char *mode = m_current_view == COVERFLOW_CHANNEL && emu_mode ? (char *)DeviceName[currentPartition] : (char *)"NAND";
 
-	for(u8 i = 0; strncmp((const char *)&mode[i], "\0", 1) != 0; i++)
-			mode[i] = toupper(mode[i]);
-
 	m_showtimer=60;
-	m_btnMgr.setText(m_mainLblNotice, (string)mode);
+	m_btnMgr.setText(m_mainLblNotice, upperCase(string(mode)));
 	m_btnMgr.show(m_mainLblNotice);
 }
 
@@ -442,7 +439,7 @@ int CMenu::main(void)
 				_hideMain(true);
 				dir_discHdr hdr;
 				memset(&hdr, 0, sizeof(dir_discHdr));
-				memcpy(&hdr.hdr.id, "dvddvd", 6);
+				memcpy(&hdr.id, "DVD", 3);
 				_launchGame(&hdr, true);
 				_showMain();
 			}
@@ -701,7 +698,7 @@ void CMenu::_textMain(void)
 {
 	m_btnMgr.setText(m_mainBtnInit, _t("main1", L"Install Game"));
 	m_btnMgr.setText(m_mainBtnInit2, _t("main3", L"Select Partition"));
-	m_btnMgr.setText(m_mainLblInit, _t("main2", L"Welcome to WiiFlow. I have not found any games. Click Install to install games, or Select partition to select your partition type."), true);
+	m_btnMgr.setText(m_mainLblInit, _t("main2", L"Welcome to Wiiflow Advanced. I have not found any games. Click Install to install games, or Select partition to select your partition type."), true);
 }
 
 wstringEx CMenu::_getNoticeTranslation(int sorting, wstringEx curLetter)

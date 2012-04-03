@@ -66,16 +66,8 @@ CCoverFlow::CCover::CCover(void)
 	targetScale = Vector3D(1.f, 1.f, 1.f);
 }
 
-CCoverFlow::CItem::CItem(dir_discHdr *itemHdr, const char *itemPic, const char *itemBoxPic, int playcount, unsigned int lastPlayed) :
-	hdr(itemHdr),
-	picPath(itemPic),
-	boxPicPath(itemBoxPic),
-	playcount(playcount),
-	lastPlayed(lastPlayed)
-{
-	state = CCoverFlow::STATE_Loading;
-	boxTexture = false;
-}
+CCoverFlow::CItem::CItem(dir_discHdr *itemHdr, int playcount, unsigned int lastPlayed) :
+	hdr(itemHdr), playcount(playcount),	lastPlayed(lastPlayed), boxTexture(false), state(CCoverFlow::STATE_Loading) {}
 
 static inline wchar_t upperCaseWChar(wchar_t c)
 {
@@ -214,13 +206,16 @@ CCoverFlow::CCoverFlow(void)
 	coverLoaderThread = LWP_THREAD_NULL;
 }
 
-bool CCoverFlow::init(const SmartBuf &font, u32 font_size)
+bool CCoverFlow::init(const SmartBuf &font, u32 font_size, string &boxPicDir, string &picDir)
 {
 	m_font.fromBuffer(font, font_size, TITLEFONT_PT_SZ, TITLEFONT_PT_SZ + 4u, FONT_BOLD, 1u);
 	m_fontColor = m_fanartFontColor = CColor(0xFFFFFFFF);
 
 	bool wide = CONF_GetAspectRatio() == CONF_ASPECT_16_9;
 	guPerspective(m_projMtx, 45, wide ? 16.f / 9.f : 4.f / 3.f, .1f, 300.f);
+	
+	m_boxPicDir = boxPicDir;
+	m_picDir = picDir;
 
 	return true;
 }
@@ -270,10 +265,15 @@ void CCoverFlow::setBoxMode(bool box)
 	m_box = box;
 }
 
+void CCoverFlow::setCurrentView(u32 mode)
+{
+	m_current_view = mode;
+}
+
 void CCoverFlow::setBufferSize(u32 numCovers)
 {
 	if (!m_covers.empty()) return;
-	m_numBufCovers = min(max(3u, numCovers), 400u);
+	m_numBufCovers = min(max(3u, numCovers), 20u);
 }
 
 void CCoverFlow::setTextures(const string &loadingPic, const string &loadingPicFlat, const string &noCoverPic, const string &noCoverPicFlat)
@@ -297,7 +297,7 @@ void CCoverFlow::setFont(SFont font, const CColor &color)
 	}
 }
 
-void CCoverFlow::_transposeCover(safe_vector<CCoverFlow::CCover> &dst, u32 rows, u32 columns, int pos)
+void CCoverFlow::_transposeCover(vector<CCoverFlow::CCover> &dst, u32 rows, u32 columns, int pos)
 {
 	int i = pos - (int)(rows * columns / 2);
 	int j = rows >= 3 ? abs(i) - ((abs(i) + (int)rows / 2) / (int)rows) * 2 : abs(i);
@@ -318,7 +318,7 @@ void CCoverFlow::setRange(u32 rows, u32 columns)
 	if (!m_covers.empty())
 	{
 		stopCoverLoader();
-		safe_vector<CCoverFlow::CCover> tmpCovers;
+		vector<CCoverFlow::CCover> tmpCovers;
 		tmpCovers.resize(range);
 		if (rows >= 3)
 			for (u32 x = 0; x < columns; ++x)
@@ -615,10 +615,10 @@ void CCoverFlow::reserve(u32 capacity)
 	m_items.reserve(capacity);
 }
 
-void CCoverFlow::addItem(dir_discHdr *hdr, const char *picPath, const char *boxPicPath, int playcount, unsigned int lastPlayed)
+void CCoverFlow::addItem(dir_discHdr *hdr, int playcount, unsigned int lastPlayed)
 {
 	if (!m_covers.empty()) return;
-	m_items.push_back(CCoverFlow::CItem(hdr, picPath, boxPicPath, playcount, lastPlayed));
+	m_items.push_back(CCoverFlow::CItem(hdr, playcount, lastPlayed));
 }
 
 // Draws a plane in the Z-Buffer only.
@@ -1179,9 +1179,7 @@ void CCoverFlow::_drawCover(int i, bool mirror, CCoverFlow::DrawMode dm)
 	Vector3D osc;
 	Vector3D oscP;
 
-	if (m_hideCover)
-		return;
-	if (m_covers[i].color.a == 0 || (dm == CCoverFlow::CFDR_SHADOW && m_covers[i].shadowColor.a == 0))
+	if (m_hideCover || m_covers[i].color.a == 0 || (dm == CCoverFlow::CFDR_SHADOW && m_covers[i].shadowColor.a == 0))
 		return;
 	if (dm == CCoverFlow::CFDR_STENCIL && (i > 0xFF || _invisibleCover(i / m_rows, i % m_rows)))
 		return;
@@ -1270,7 +1268,7 @@ void CCoverFlow::_drawCoverFlat(int i, bool mirror, CCoverFlow::DrawMode dm)
 	GX_End();
 }
 
-static bool _checkCoverColor(u8 gameID[6], const char* checkID[], int len)
+static bool _checkCoverColor(char gameID[6], const char* checkID[], int len)
 {
 	for (int num = 0; num < len; num++)
 	{
@@ -1307,7 +1305,7 @@ void CCoverFlow::_drawCoverBox(int i, bool mirror, CCoverFlow::DrawMode dm)
 	}
 	if (dm == CCoverFlow::CFDR_NORMAL)
 	{
-		u32 casecolor = m_items[m_covers[i].index].hdr->hdr.casecolor;
+		u32 casecolor = m_items[m_covers[i].index].hdr->casecolor;
 		// set dvd box texture, depending on game
 		if(casecolor == 0xFFFFFF)
 			GX_InitTexObj(&texObj, m_dvdSkin.data.get(), m_dvdSkin.width, m_dvdSkin.height, m_dvdSkin.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
@@ -1321,15 +1319,15 @@ void CCoverFlow::_drawCoverBox(int i, bool mirror, CCoverFlow::DrawMode dm)
 			GX_InitTexObj(&texObj, m_dvdSkin_GreenOne.data.get(), m_dvdSkin_GreenOne.width, m_dvdSkin_GreenOne.height, m_dvdSkin_GreenOne.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
 		else if (casecolor == 0x00E360)
 			GX_InitTexObj(&texObj, m_dvdSkin_GreenTwo.data.get(), m_dvdSkin_GreenTwo.width, m_dvdSkin_GreenTwo.height, m_dvdSkin_GreenTwo.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
-		else if(_checkCoverColor(m_items[m_covers[i].index].hdr->hdr.id, red, red_len))
+		else if(_checkCoverColor(m_items[m_covers[i].index].hdr->id, red, red_len))
 			GX_InitTexObj(&texObj, m_dvdSkin_Red.data.get(), m_dvdSkin_Red.width, m_dvdSkin_Red.height, m_dvdSkin_Red.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
-		else if(_checkCoverColor(m_items[m_covers[i].index].hdr->hdr.id, black, black_len))
+		else if(_checkCoverColor(m_items[m_covers[i].index].hdr->id, black, black_len))
 			GX_InitTexObj(&texObj, m_dvdSkin_Black.data.get(), m_dvdSkin_Black.width, m_dvdSkin_Black.height, m_dvdSkin_Black.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
-		else if(_checkCoverColor(m_items[m_covers[i].index].hdr->hdr.id, yellow, yellow_len))
+		else if(_checkCoverColor(m_items[m_covers[i].index].hdr->id, yellow, yellow_len))
 			GX_InitTexObj(&texObj, m_dvdSkin_Yellow.data.get(), m_dvdSkin_Yellow.width, m_dvdSkin_Yellow.height, m_dvdSkin_Yellow.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
-		else if(_checkCoverColor(m_items[m_covers[i].index].hdr->hdr.id, greenOne, greenOne_len))
+		else if(_checkCoverColor(m_items[m_covers[i].index].hdr->id, greenOne, greenOne_len))
 			GX_InitTexObj(&texObj, m_dvdSkin_GreenOne.data.get(), m_dvdSkin_GreenOne.width, m_dvdSkin_GreenOne.height, m_dvdSkin_GreenOne.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
-		else if(_checkCoverColor(m_items[m_covers[i].index].hdr->hdr.id, greenTwo, greenTwo_len))
+		else if(_checkCoverColor(m_items[m_covers[i].index].hdr->id, greenTwo, greenTwo_len))
 			GX_InitTexObj(&texObj, m_dvdSkin_GreenTwo.data.get(), m_dvdSkin_GreenTwo.width, m_dvdSkin_GreenTwo.height, m_dvdSkin_GreenTwo.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
 		else
 			GX_InitTexObj(&texObj, m_dvdSkin.data.get(), m_dvdSkin.width, m_dvdSkin.height, m_dvdSkin.format, GX_CLAMP, GX_CLAMP, GX_FALSE);
@@ -1395,22 +1393,22 @@ void CCoverFlow::_drawCoverBox(int i, bool mirror, CCoverFlow::DrawMode dm)
 void CCoverFlow::_loadCover(int i, int item)
 {
 	m_covers[i].index = item;
-	m_covers[i].title.setText(m_font, m_items[item].hdr->title);
+	m_covers[i].title.setText(m_font, m_items[item].hdr->wtitle);
 }
 
 std::string CCoverFlow::getId(void) const
 {
 	if (m_covers.empty() || m_items.empty()) return "";
-	return std::string((char *) &m_items[loopNum(m_covers[m_range / 2].index + m_jump, m_items.size())].hdr->hdr.id);
+	return std::string(m_items[loopNum(m_covers[m_range / 2].index + m_jump, m_items.size())].hdr->id);
 }
 
 std::string CCoverFlow::getNextId(void) const
 {
 	if (m_covers.empty() || m_items.empty()) return "";
-	return std::string((char *) &m_items[loopNum(m_covers[m_range / 2].index + m_jump + 1, m_items.size())].hdr->hdr.id);
+	return std::string(m_items[loopNum(m_covers[m_range / 2].index + m_jump + 1, m_items.size())].hdr->id);
 }
 
-dir_discHdr * CCoverFlow::getHdr(void) const
+dir_discHdr *CCoverFlow::getHdr(void) const
 {
 	if (m_covers.empty() || m_items.empty()) return NULL;
 	return m_items[loopNum(m_covers[m_range / 2].index + m_jump, m_items.size())].hdr;
@@ -1420,16 +1418,15 @@ wstringEx CCoverFlow::getTitle(void) const
 {
 	if (m_covers.empty()) return L"";
 
-	return m_items[m_covers[m_range / 2].index].hdr->title;
+	return m_items[m_covers[m_range / 2].index].hdr->wtitle;
 }
 
 u64 CCoverFlow::getChanTitle(void) const
 {
 	if (m_covers.empty() || m_items.empty()) return 0;
 
-	return m_items[loopNum(m_covers[m_range / 2].index + m_jump, m_items.size())].hdr->hdr.chantitle;
+	return m_items[loopNum(m_covers[m_range / 2].index + m_jump, m_items.size())].hdr->chantitle;
 }
-
 
 bool CCoverFlow::select(void)
 {
@@ -1671,23 +1668,23 @@ bool CCoverFlow::_sortByLastPlayed(CItem item1, CItem item2)
 
 bool CCoverFlow::_sortByGameID(CItem item1, CItem item2)
 {
-	u32 s = min(strlen((char *) &item1.hdr->hdr.id), strlen((char *) &item2.hdr->hdr.id));
+	u32 s = min(strlen(item1.hdr->id), strlen(item2.hdr->id));
 	for (u32 k = 0; k < s; ++k)
 	{
-		if (toupper(item1.hdr->hdr.id[k]) > toupper(item2.hdr->hdr.id[k]))
+		if (toupper(item1.hdr->id[k]) > toupper(item2.hdr->id[k]))
 			return false;
-		else if (toupper(item1.hdr->hdr.id[k]) < toupper(item2.hdr->hdr.id[k]))
+		else if (toupper(item1.hdr->id[k]) < toupper(item2.hdr->id[k]))
 			return true;
 	}
 
-	return strlen((char *) &item1.hdr->hdr.id) < strlen((char *) &item2.hdr->hdr.id);
+	return strlen(item1.hdr->id) < strlen(item2.hdr->id);
 }
 
 bool CCoverFlow::_sortByAlpha(CItem item1, CItem item2)
 {
-	u32 s = min(wcslen(item1.hdr->title), wcslen(item2.hdr->title));
-	wstringEx title1 = item1.hdr->title;
-	wstringEx title2 = item2.hdr->title;
+	u32 s = min(wcslen(item1.hdr->wtitle), wcslen(item2.hdr->wtitle));
+	wstringEx title1 = item1.hdr->wtitle;
+	wstringEx title2 = item2.hdr->wtitle;
 
 	for (u32 j = 0, k = 0; j < s && k < s; ++j && ++k)
 	{
@@ -1704,14 +1701,14 @@ bool CCoverFlow::_sortByAlpha(CItem item1, CItem item2)
 
 bool CCoverFlow::_sortByPlayers(CItem item1, CItem item2)
 {
-	if(item1.hdr->hdr.players == item2.hdr->hdr.players) return _sortByAlpha(item1, item2);
-	return item1.hdr->hdr.players < item2.hdr->hdr.players;
+	if(item1.hdr->players == item2.hdr->players) return _sortByAlpha(item1, item2);
+	return item1.hdr->players < item2.hdr->players;
 }
 
 bool CCoverFlow::_sortByWifiPlayers(CItem item1, CItem item2)
 {
-	if(item1.hdr->hdr.wifi == item2.hdr->hdr.wifi) return _sortByAlpha(item1, item2);
-	return item1.hdr->hdr.wifi < item2.hdr->hdr.wifi;
+	if(item1.hdr->wifi == item2.hdr->wifi) return _sortByAlpha(item1, item2);
+	return item1.hdr->wifi < item2.hdr->wifi;
 }
 
 bool CCoverFlow::start(const char *id)
@@ -1934,7 +1931,7 @@ bool CCoverFlow::findId(const char *id, bool instant)
 		return false;
 	//
 	for (i = 0; i < m_items.size(); ++i)
-		if (memcmp(&m_items[i].hdr->hdr.id, id, strlen(id)) == 0)
+		if (strncmp(m_items[i].hdr->id, id, strlen(id)) == 0)
 			break;
 	if (i >= m_items.size())
 		return false;
@@ -2095,20 +2092,20 @@ void CCoverFlow::nextLetter(wchar_t *c)
 	_completeJump();
 	u32 curPos = _currentPos();
 
-	while (!iswalnum(m_items[curPos].hdr->title[j]) && m_items[curPos].hdr->title[j+1] != L'\0') j++;
-	c[0] = upperCaseWChar(m_items[curPos].hdr->title[j]);
+	while (!iswalnum(m_items[curPos].hdr->wtitle[j]) && m_items[curPos].hdr->wtitle[j+1] != L'\0') j++;
+	c[0] = upperCaseWChar(m_items[curPos].hdr->wtitle[j]);
 
 	for (i = 1; i < n; ++i)
 	{
 		k = 0;
-		while (!iswalnum(m_items[loopNum(curPos + i, n)].hdr->title[k]) && m_items[loopNum(curPos + i, n)].hdr->title[k+1] != L'\0') k++;
-		if (upperCaseWChar(m_items[loopNum(curPos + i, n)].hdr->title[k]) != c[0])
+		while (!iswalnum(m_items[loopNum(curPos + i, n)].hdr->wtitle[k]) && m_items[loopNum(curPos + i, n)].hdr->wtitle[k+1] != L'\0') k++;
+		if (upperCaseWChar(m_items[loopNum(curPos + i, n)].hdr->wtitle[k]) != c[0])
 			break;
 	}
 	if (i < n)
 	{
 		_setJump(i);
-		c[0] = upperCaseWChar(m_items[loopNum(curPos + i, n)].hdr->title[k]);
+		c[0] = upperCaseWChar(m_items[loopNum(curPos + i, n)].hdr->wtitle[k]);
 	}
 	_updateAllTargets();
 }
@@ -2133,22 +2130,22 @@ void CCoverFlow::prevLetter(wchar_t *c)
 	_completeJump();
 	u32 curPos = _currentPos();
 
-	while (!iswalnum(m_items[curPos].hdr->title[j]) && m_items[curPos].hdr->title[j+1] != L'\0') j++;
-	c[0] = upperCaseWChar(m_items[curPos].hdr->title[j]);
+	while (!iswalnum(m_items[curPos].hdr->wtitle[j]) && m_items[curPos].hdr->wtitle[j+1] != L'\0') j++;
+	c[0] = upperCaseWChar(m_items[curPos].hdr->wtitle[j]);
 
 	for (i = 1; i < n; ++i)
 	{
 		k = 0;
-		while (!iswalnum(m_items[loopNum(curPos - i, n)].hdr->title[k]) && m_items[loopNum(curPos - i, n)].hdr->title[k+1] != L'\0') k++;
-		if (upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[k]) != c[0])
+		while (!iswalnum(m_items[loopNum(curPos - i, n)].hdr->wtitle[k]) && m_items[loopNum(curPos - i, n)].hdr->wtitle[k+1] != L'\0') k++;
+		if (upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->wtitle[k]) != c[0])
 		{
-			c[0] = upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[k]);
+			c[0] = upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->wtitle[k]);
 			while(i < n)
 			{
 				++i;
 				k = 0;
-				while (!iswalnum(m_items[loopNum(curPos - i, n)].hdr->title[k]) && m_items[loopNum(curPos - i, n)].hdr->title[k+1] != L'\0') k++;
-				if(upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[k]) != c[0])
+				while (!iswalnum(m_items[loopNum(curPos - i, n)].hdr->wtitle[k]) && m_items[loopNum(curPos - i, n)].hdr->wtitle[k+1] != L'\0') k++;
+				if(upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->wtitle[k]) != c[0])
 					break;
 			}
 			i--;
@@ -2160,8 +2157,8 @@ void CCoverFlow::prevLetter(wchar_t *c)
 	{
 		_setJump(-i);
 		k = 0;
-		while (!iswalnum(m_items[loopNum(curPos - i, n)].hdr->title[k]) && m_items[loopNum(curPos - i, n)].hdr->title[k+1] != L'\0') k++;
-		c[0] = upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->title[k]);
+		while (!iswalnum(m_items[loopNum(curPos - i, n)].hdr->wtitle[k]) && m_items[loopNum(curPos - i, n)].hdr->wtitle[k+1] != L'\0') k++;
+		c[0] = upperCaseWChar(m_items[loopNum(curPos - i, n)].hdr->wtitle[k]);
 	}
 
 	_updateAllTargets();
@@ -2174,16 +2171,16 @@ void CCoverFlow::nextPlayers(bool wifi, wchar_t *c)
 
 	_completeJump();
 	u32 curPos = _currentPos();
-	int players = wifi ? m_items[curPos].hdr->hdr.wifi : m_items[curPos].hdr->hdr.players;
+	int players = wifi ? m_items[curPos].hdr->wifi : m_items[curPos].hdr->players;
 
 	for (i = 1; i < n; ++i)
-		if ((wifi ? m_items[loopNum(curPos + i, n)].hdr->hdr.wifi : m_items[loopNum(curPos + i, n)].hdr->hdr.players) != players)
+		if ((wifi ? m_items[loopNum(curPos + i, n)].hdr->wifi : m_items[loopNum(curPos + i, n)].hdr->players) != players)
 			break;
 
 	if (i < n)
 	{
 		_setJump(i);
-		players = wifi ? m_items[loopNum(curPos + i, n)].hdr->hdr.wifi : m_items[loopNum(curPos + i, n)].hdr->hdr.players;
+		players = wifi ? m_items[loopNum(curPos + i, n)].hdr->wifi : m_items[loopNum(curPos + i, n)].hdr->players;
 	}
 
 	char p[4] = {0 ,0 ,0 ,0};
@@ -2200,13 +2197,13 @@ void CCoverFlow::prevPlayers(bool wifi, wchar_t *c)
 
 	_completeJump();
 	u32 curPos = _currentPos();
-	int players = wifi ? m_items[curPos].hdr->hdr.wifi : m_items[curPos].hdr->hdr.players;
+	int players = wifi ? m_items[curPos].hdr->wifi : m_items[curPos].hdr->players;
 
 	for (i = 1; i < n; ++i)
-		if ((wifi ? m_items[loopNum(curPos - i, n)].hdr->hdr.wifi : m_items[loopNum(curPos - i, n)].hdr->hdr.players) != players)
+		if ((wifi ? m_items[loopNum(curPos - i, n)].hdr->wifi : m_items[loopNum(curPos - i, n)].hdr->players) != players)
 		{
-			players = wifi ? m_items[loopNum(curPos - i, n)].hdr->hdr.wifi : m_items[loopNum(curPos - i, n)].hdr->hdr.players;
-			while(i < n && (wifi ? m_items[loopNum(curPos - i, n)].hdr->hdr.wifi : m_items[loopNum(curPos - i, n)].hdr->hdr.players) == players) ++i;
+			players = wifi ? m_items[loopNum(curPos - i, n)].hdr->wifi : m_items[loopNum(curPos - i, n)].hdr->players;
+			while(i < n && (wifi ? m_items[loopNum(curPos - i, n)].hdr->wifi : m_items[loopNum(curPos - i, n)].hdr->players) == players) ++i;
 			i--;
 			break;
 		}
@@ -2214,7 +2211,7 @@ void CCoverFlow::prevPlayers(bool wifi, wchar_t *c)
 	if (i < n)
 	{
 		_setJump(-i);
-		players = wifi ? m_items[loopNum(curPos - i, n)].hdr->hdr.wifi : m_items[loopNum(curPos - i, n)].hdr->hdr.players;
+		players = wifi ? m_items[loopNum(curPos - i, n)].hdr->wifi : m_items[loopNum(curPos - i, n)].hdr->players;
 	}
 
 	char p[4] = {0 ,0 ,0 ,0};
@@ -2231,16 +2228,16 @@ void CCoverFlow::nextID(wchar_t *c)
 
 	_completeJump();
 	u32 curPos = _currentPos();
-	char *system = (char *)m_items[curPos].hdr->hdr.id;
+	char *system = m_items[curPos].hdr->id;
 
 	for (i = 1; i < n; ++i)
-		if ((char)m_items[loopNum(curPos + i, n)].hdr->hdr.id[0] != system[0])
+		if ((char)m_items[loopNum(curPos + i, n)].hdr->id[0] != system[0])
 			break;
 
 	if (i < n)
 	{
 		_setJump(i);
-		system = (char *)m_items[loopNum(curPos + i, n)].hdr->hdr.id;
+		system = m_items[loopNum(curPos + i, n)].hdr->id;
 	}
 
 	system[1] = '\0';
@@ -2256,13 +2253,13 @@ void CCoverFlow::prevID(wchar_t *c)
 
 	_completeJump();
 	u32 curPos = _currentPos();
-	char *system = (char *)m_items[curPos].hdr->hdr.id;
+	char *system = m_items[curPos].hdr->id;
 
 	for (i = 1; i < n; ++i)
-		if ((char)m_items[loopNum(curPos - i, n)].hdr->hdr.id[0] != system[0])
+		if ((char)m_items[loopNum(curPos - i, n)].hdr->id[0] != system[0])
 		{
-			system = (char *)m_items[loopNum(curPos - i, n)].hdr->hdr.id;
-			while(i < n && (char)m_items[loopNum(curPos - i, n)].hdr->hdr.id[0] == system[0]) ++i;
+			system = m_items[loopNum(curPos - i, n)].hdr->id;
+			while(i < n && (char)m_items[loopNum(curPos - i, n)].hdr->id[0] == system[0]) ++i;
 			i--;
 			break;
 		}
@@ -2270,7 +2267,7 @@ void CCoverFlow::prevID(wchar_t *c)
 	if (i < n)
 	{
 		_setJump(-i);
-		system = (char *)m_items[loopNum(curPos - i, n)].hdr->hdr.id;
+		system = m_items[loopNum(curPos - i, n)].hdr->id;
 	}
 
 	system[1] = '\0';
@@ -2450,13 +2447,14 @@ bool CCoverFlow::_loadCoverTexPNG(u32 i, bool box, bool hq)
 {
 	if (!m_loadingCovers) return false;
 
-	u8 textureFmt = m_compressTextures ? GX_TF_CMPR : GX_TF_RGB565;
+	u8 textureFmt = m_current_view == 2 ? GX_TF_RGBA8 : m_compressTextures ? GX_TF_CMPR : GX_TF_RGB565;
 	STexture tex;
 
-	const char *path = box ? m_items[i].boxPicPath.c_str() : m_items[i].picPath.c_str();
-	if (STexture::TE_OK != tex.fromPNGFile(path, textureFmt, ALLOC_MEM2, 32)) return false;
+	pair<string,string> coverPaths = getCoverPaths(m_items[i].hdr->id, m_current_view == 2, i);
+	const char *path = box ? coverPaths.first.c_str() : coverPaths.second.c_str();
 
-	if (!m_loadingCovers) return false;
+	if (!path || !strlen(path) || STexture::TE_OK != tex.fromPNGFile(path, textureFmt, ALLOC_MEM2, 32)) return false;
+
 	LWP_MutexLock(m_mutex);
 	m_items[i].texture = tex;
 	m_items[i].boxTexture = box;
@@ -2464,14 +2462,14 @@ bool CCoverFlow::_loadCoverTexPNG(u32 i, bool box, bool hq)
 	LWP_MutexUnlock(m_mutex);
 
 	// Save the texture to the cache folder for the next time
-	if (!m_cachePath.empty())
+	if (m_current_view != 2 && !m_cachePath.empty())
 	{
 		u32 bufSize = fixGX_GetTexBufferSize(tex.width, tex.height, tex.format, tex.maxLOD > 0 ? GX_TRUE : GX_FALSE, tex.maxLOD);
 		uLongf zBufferSize = m_compressCache ? bufSize + bufSize / 100 + 12 : bufSize;
 		SmartBuf zBuffer = m_compressCache ? smartMem2Alloc(zBufferSize) : tex.data;
 		if (!!zBuffer && (!m_compressCache || compress(zBuffer.get(), &zBufferSize, tex.data.get(), bufSize) == Z_OK))
 		{
-			FILE *file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), m_items[i].hdr->hdr.id).c_str(), "wb");
+			FILE *file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), m_items[i].hdr->id).c_str(), "wb");
 			if (file != 0)
 			{
 				SWFCHeader header(tex, box, m_compressCache);
@@ -2483,7 +2481,7 @@ bool CCoverFlow::_loadCoverTexPNG(u32 i, bool box, bool hq)
 			}
 		}
 	}
-	if (!hq) _dropHQLOD(i);
+	if (!hq && m_current_view !=2) _dropHQLOD(i);
 
 	return true;
 }
@@ -2535,9 +2533,9 @@ CCoverFlow::CLRet CCoverFlow::_loadCoverTex(u32 i, bool box, bool hq)
 	bool allocFailed = false;
 
 	// Try to find the texture in the cache
-	if (!m_cachePath.empty())
+	if (m_current_view != 2 && !m_cachePath.empty())
 	{
-		FILE *file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), m_items[i].hdr->hdr.id).c_str(), "rb");
+		FILE *file = fopen(sfmt("%s/%s.wfc", m_cachePath.c_str(), m_items[i].hdr->id).c_str(), "rb");
 		if (file != 0)
 		{
 			bool success = false;
@@ -2645,4 +2643,30 @@ int CCoverFlow::_coverLoader(CCoverFlow *cf)
 			bufferSize -= 2;
 	}
 	return 0;
+}
+
+pair<string, string> CCoverFlow::getCoverPaths(string id, bool icon, u32 index)
+{
+	pair<string, string> coverPaths;
+	if(!icon) 
+	{
+		coverPaths.first = sfmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str());
+		coverPaths.second = sfmt("%s/%s.png", m_picDir.c_str(), id.c_str());
+	}
+ 	else 
+	{
+		string icon_png = m_items[index].hdr->path;
+		coverPaths.first = "";
+		coverPaths.second = icon_png.replace(icon_png.rfind("/") + 1, icon_png.size(), "icon.png");;
+	}
+	return coverPaths;
+}
+
+void CCoverFlow::removeCover(string id)
+{
+	stopCoverLoader(true);	// Empty cover cache
+	remove(fmt("%s/%s.png", m_picDir.c_str(), id.c_str()));
+	remove(fmt("%s/%s.png", m_boxPicDir.c_str(), id.c_str()));
+	remove(fmt("%s/%s.wfc", m_cachePath.c_str(), id.c_str()));
+	startCoverLoader();
 }
