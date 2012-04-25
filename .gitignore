@@ -1,0 +1,8 @@
+build
+#ignore dols and elfs
+*.dol
+*.elf
+#ignore objects and dependancy files
+*.[od]
+#ignore the linker map
+*.map
