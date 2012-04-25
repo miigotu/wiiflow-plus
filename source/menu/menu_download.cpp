@@ -1,5 +1,5 @@
 #include "menu.hpp"
-#include "svnrev.h"
+#include "gitrev.h"
 #include "loader/sys.h"
 #include "loader/wbfs.h"
 #include "http.h"
@@ -623,15 +623,15 @@ s8 CMenu::_versionTxtDownloader() // code to download new version txt file
 				fwrite(download.data, 1, download.size, file);
 				SAFE_CLOSE(file);
 
-				// version file valid, check for version with SVN_REV
-				int svnrev = atoi(SVN_REV);
-				gprintf("Installed Version: %d\n", svnrev);
-				m_version.load(m_ver.c_str());
-				int rev = m_version.getInt("GENERAL", "version");
-				gprintf("Latest available Version: %d\n", rev);
-				if(svnrev < rev)
-					_setThrdMsg(_t("dlmsg19", L"New update available!"), 1.f);
-				else
+// 				// version file valid, check for version with GIT_REV
+// 				int svnrev = atoi(SVN_REV);
+// 				gprintf("Installed Version: %d\n", svnrev);
+// 				m_version.load(m_ver.c_str());
+// 				int rev = m_version.getInt("GENERAL", "version");
+// 				gprintf("Latest available Version: %d\n", rev);
+// 				if(svnrev < rev)
+// 					_setThrdMsg(_t("dlmsg19", L"New update available!"), 1.f);
+// 				else
 					_setThrdMsg(_t("dlmsg17", L"No new updates found."), 1.f);
 			}
 			else

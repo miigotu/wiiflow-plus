@@ -6,5 +6,6 @@ build
 *.[od]
 #ignore the linker map
 *.map
-#ignore alt_ios_gen
+#ignore auto generated source files
 alt_ios_gen.c
+gitrev.h

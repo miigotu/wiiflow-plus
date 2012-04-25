@@ -1,4 +1,4 @@
-#include "svnrev.h"
+#include "gitrev.h"
 #include "menu.hpp"
 
 #include "loader/sys.h"
@@ -8,6 +8,7 @@
 #include "defines.h"
 
 #define newIOS 249
+#define SVN_REV "426"
 
 extern int mainIOS;
 

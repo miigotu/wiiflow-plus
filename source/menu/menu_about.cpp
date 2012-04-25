@@ -1,7 +1,7 @@
 
 #include "menu.hpp"
 #include "nand.hpp"
-#include "svnrev.h"
+#include "gitrev.h"
 
 #include "sys.h"
 #include "alt_ios.h"
@@ -123,8 +123,8 @@ void CMenu::_initAboutMenu(CMenu::SThemeData &theme)
 void CMenu::_textAbout(void)
 {
 	m_btnMgr.setText(m_aboutBtnSystem, _t("sys4", L"Update"));
-	m_btnMgr.setText(m_aboutLblTitle, wfmt(_fmt("appname", L"%s v%s r%s"), APP_NAME, APP_VERSION, SVN_REV));
-
+	m_btnMgr.setText(m_aboutLblTitle, wfmt(_fmt("appname", L"%s v%s"), APP_NAME, APP_VERSION));
+	// Add the compile date from GIT_REV here!
 	wstringEx developers(wfmt(_fmt("about6", L"Current Developers:\n%s"), DEVELOPERS));
 	wstringEx pDevelopers(wfmt(_fmt("about7", L"Past Developers:\n%s"), PAST_DEVELOPERS));
 
