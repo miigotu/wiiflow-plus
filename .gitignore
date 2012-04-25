@@ -6,3 +6,5 @@ build
 *.[od]
 #ignore the linker map
 *.map
+#ignore alt_ios_gen
+alt_ios_gen.c
